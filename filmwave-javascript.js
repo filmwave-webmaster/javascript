@@ -1,3 +1,250 @@
+// ============================================
+// BARBA COMPREHENSIVE DIAGNOSTIC
+// ============================================
+// This will tell us EXACTLY what's breaking
+
+if (typeof barba !== 'undefined') {
+  console.log('🔍 === BARBA DIAGNOSTIC MODE ACTIVE ===');
+  
+  barba.init({
+    prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
+    
+    transitions: [{
+      name: 'comprehensive-diagnostic',
+      
+      // ===== BEFORE LEAVE =====
+      beforeLeave(data) {
+        console.log('\n🔴 ========== BEFORE LEAVING PAGE ==========');
+        console.log('From:', data.current.url.path);
+        console.log('To:', data.next.url.path);
+        
+        // Check Webflow state
+        console.log('\n📊 WEBFLOW STATE (before leave):');
+        console.log('  - window.Webflow exists:', !!window.Webflow);
+        if (window.Webflow) {
+          const ix2 = window.Webflow.require('ix2');
+          console.log('  - IX2 module exists:', !!ix2);
+          if (ix2) {
+            console.log('  - IX2.store exists:', !!ix2.store);
+            console.log('  - IX2.init exists:', typeof ix2.init);
+            console.log('  - IX2.destroy exists:', typeof ix2.destroy);
+          }
+        }
+        
+        // Check containers
+        console.log('\n📦 CONTAINERS (before leave):');
+        const mainContent = document.querySelector('.main-content');
+        const mainContentMusic = document.querySelector('.main-content-music');
+        
+        if (mainContent) {
+          console.log('  .main-content:');
+          console.log('    - Inline styles:', mainContent.getAttribute('style') || 'none');
+          console.log('    - Computed overflow:', window.getComputedStyle(mainContent).overflow);
+          console.log('    - Computed position:', window.getComputedStyle(mainContent).position);
+        }
+        
+        if (mainContentMusic) {
+          console.log('  .main-content-music:');
+          console.log('    - Inline styles:', mainContentMusic.getAttribute('style') || 'none');
+          console.log('    - Computed overflow:', window.getComputedStyle(mainContentMusic).overflow);
+          console.log('    - Computed position:', window.getComputedStyle(mainContentMusic).position);
+        }
+        
+        // Check navigation
+        console.log('\n🧭 NAVIGATION (before leave):');
+        const nav = document.querySelector('.navigation');
+        if (nav) {
+          console.log('  - Found:', true);
+          console.log('  - Height:', window.getComputedStyle(nav).height);
+          console.log('  - Position:', window.getComputedStyle(nav).position);
+          console.log('  - Inline styles:', nav.getAttribute('style') || 'none');
+        } else {
+          console.log('  - Found:', false);
+        }
+        
+        // Check elements with data-w-id
+        const ix2Elements = document.querySelectorAll('[data-w-id]');
+        console.log('\n⚙️ IX2 ELEMENTS (before leave):', ix2Elements.length);
+        if (ix2Elements.length > 0) {
+          console.log('  Sample element classes:', Array.from(ix2Elements[0].classList).join(', '));
+        }
+        
+        console.log('=========================================\n');
+      },
+      
+      // ===== LEAVE =====
+      leave(data) {
+        console.log('🚪 LEAVING...');
+        return Promise.resolve();
+      },
+      
+      // ===== ENTER =====
+      enter(data) {
+        console.log('\n🟢 ========== ENTERING NEW PAGE ==========');
+        console.log('URL:', data.next.url.path);
+        
+        // Check what Barba loaded
+        console.log('\n📦 CONTAINERS (immediately after Barba loads):');
+        const mainContent = document.querySelector('.main-content');
+        const mainContentMusic = document.querySelector('.main-content-music');
+        
+        if (mainContent) {
+          console.log('  .main-content:');
+          console.log('    - Inline styles:', mainContent.getAttribute('style') || 'none');
+          console.log('    ⚠️ DID BARBA ADD STYLES?', mainContent.hasAttribute('style'));
+        }
+        
+        if (mainContentMusic) {
+          console.log('  .main-content-music:');
+          console.log('    - Inline styles:', mainContentMusic.getAttribute('style') || 'none');
+          console.log('    ⚠️ DID BARBA ADD STYLES?', mainContentMusic.hasAttribute('style'));
+        }
+        
+        console.log('=========================================\n');
+        
+        return initMusicPage();
+      },
+      
+      // ===== AFTER ENTER =====
+      afterEnter(data) {
+        console.log('\n🟡 ========== AFTER ENTER ==========');
+        
+        // Check if initMusicPage worked
+        const isMusicPage = !!document.querySelector('.music-list-wrapper');
+        if (isMusicPage) {
+          const songCards = document.querySelectorAll('.song-wrapper');
+          console.log('🎵 Music page detected');
+          console.log('  - Song cards found:', songCards.length);
+        }
+        
+        console.log('=========================================\n');
+      },
+      
+      // ===== AFTER =====
+      after(data) {
+        console.log('\n🔵 ========== AFTER TRANSITION ==========');
+        
+        const isMusicPage = !!document.querySelector('.music-list-wrapper');
+        console.log('📍 Current page type:', isMusicPage ? 'MUSIC' : 'OTHER');
+        
+        // STEP 1: Clear containers
+        console.log('\n🧹 STEP 1: Clearing containers...');
+        const mainContent = document.querySelector('.main-content');
+        const mainContentMusic = document.querySelector('.main-content-music');
+        
+        if (mainContent) {
+          const hadStyles = mainContent.hasAttribute('style');
+          mainContent.removeAttribute('style');
+          console.log('  ✓ .main-content cleared (had styles:', hadStyles + ')');
+        }
+        
+        if (mainContentMusic) {
+          const hadStyles = mainContentMusic.hasAttribute('style');
+          mainContentMusic.removeAttribute('style');
+          console.log('  ✓ .main-content-music cleared (had styles:', hadStyles + ')');
+        }
+        
+        // STEP 2: Reset scroll
+        console.log('\n📜 STEP 2: Resetting scroll...');
+        window.scrollTo(0, 0);
+        console.log('  ✓ Scrolled to top');
+        
+        // STEP 3: Webflow reset
+        console.log('\n⚙️ STEP 3: Resetting Webflow...');
+        if (window.Webflow) {
+          try {
+            console.log('  - Calling destroy()...');
+            window.Webflow.destroy();
+            
+            console.log('  - Calling ready()...');
+            window.Webflow.ready();
+            
+            console.log('  - Calling IX2.init()...');
+            const ix2 = window.Webflow.require('ix2');
+            if (ix2 && ix2.init) {
+              ix2.init();
+              console.log('  ✓ Webflow reset complete');
+            } else {
+              console.error('  ✗ IX2.init not available!');
+            }
+          } catch (e) {
+            console.error('  ✗ Webflow reset error:', e);
+          }
+        } else {
+          console.error('  ✗ window.Webflow not found!');
+        }
+        
+        // STEP 4: Check if IX2 is working
+        console.log('\n🔍 STEP 4: Checking IX2 status...');
+        setTimeout(() => {
+          const ix2Elements = document.querySelectorAll('[data-w-id]');
+          console.log('  - Elements with data-w-id:', ix2Elements.length);
+          
+          if (ix2Elements.length > 0) {
+            const firstEl = ix2Elements[0];
+            const hasIX2Classes = Array.from(firstEl.classList).some(cls => 
+              cls.startsWith('w-') && !cls.includes('w-node')
+            );
+            console.log('  - First element has IX2 classes:', hasIX2Classes);
+            console.log('  - Classes:', Array.from(firstEl.classList).join(', '));
+          }
+          
+          // STEP 5: Trigger scroll events
+          console.log('\n📡 STEP 5: Dispatching events...');
+          window.scrollTo(0, 1);
+          
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+            window.dispatchEvent(new Event('scroll'));
+            window.dispatchEvent(new Event('resize'));
+            window.dispatchEvent(new CustomEvent('barbaAfterTransition', {
+              detail: {
+                url: window.location.pathname,
+                isMusicPage: isMusicPage
+              }
+            }));
+            
+            console.log('  ✓ Events dispatched');
+            
+            // FINAL CHECK: Nav status
+            console.log('\n🧭 STEP 6: Navigation check...');
+            const nav = document.querySelector('.navigation');
+            if (nav) {
+              console.log('  - Height:', window.getComputedStyle(nav).height);
+              console.log('  - Position:', window.getComputedStyle(nav).position);
+              
+              // Check if scroll listener is attached
+              const scrollHandlerExists = !!window.getEventListeners && 
+                window.getEventListeners(window).scroll && 
+                window.getEventListeners(window).scroll.length > 0;
+              console.log('  - Has scroll listeners:', scrollHandlerExists || 'unknown');
+            } else {
+              console.log('  ✗ Navigation not found!');
+            }
+            
+            console.log('\n✅ ========== DIAGNOSTIC COMPLETE ==========');
+            console.log('🧪 NOW TEST:');
+            console.log('   1. Scroll down slowly');
+            console.log('   2. Does nav height change from 150px to 105px?');
+            console.log('   3. Do elements animate as you scroll?');
+            console.log('   4. On music page: Is overflow working?');
+            console.log('===========================================\n');
+            
+          }, 50);
+        }, 150);
+      }
+    }]
+  });
+}
+
+
+
+
+
+
+
+
+
 
 /**
  * ============================================================
