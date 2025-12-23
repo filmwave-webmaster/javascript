@@ -801,12 +801,15 @@ async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
-  // Show/hide player based on state
+  // CRITICAL FIX: Only hide player if no music is currently playing
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
-    if (g.currentSongData) {
+    // Only hide if there's no active song data
+    if (!g.currentSongData) {
+      playerWrapper.style.display = 'none';
+    } else {
+      // Keep it visible and re-sync the UI
       playerWrapper.style.display = 'flex';
-      // Re-sync UI
       if (g.currentWavesurfer) {
         updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
         updateMasterControllerIcons(g.isPlaying);
@@ -816,8 +819,6 @@ async function initMusicPage() {
           drawMasterWaveform(g.currentPeaksData, progress);
         }
       }
-    } else {
-      playerWrapper.style.display = 'none';
     }
   }
   
@@ -1184,7 +1185,7 @@ if (typeof barba !== 'undefined') {
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
     
     transitions: [{
-      name: 'mutation-observer',
+      name: 'music-persist',
       
       enter() {
         console.log('🚪 Entering...');
@@ -1202,55 +1203,17 @@ if (typeof barba !== 'undefined') {
           window.Webflow.require('ix2').init();
         }
         
-        // Watch for IX2 to apply interaction classes
-        let ix2Applied = false;
-        let retryCount = 0;
-        const maxRetries = 5;
-        
-        function checkForIX2() {
-          // Check if any elements have IX2 data attributes
-          const ix2Elements = document.querySelectorAll('[data-w-id]');
-          
-          console.log(`  🔍 Checking for IX2... (attempt ${retryCount + 1})`);
-          console.log(`     Found ${ix2Elements.length} elements with data-w-id`);
-          
-          if (ix2Elements.length > 0) {
-            // Found IX2 elements, now check if they have been initialized
-            const hasIX2Classes = Array.from(ix2Elements).some(el => {
-              return Array.from(el.classList).some(cls => cls.startsWith('w-'));
-            });
-            
-            if (hasIX2Classes) {
-              console.log('  ✅ IX2 interactions detected');
-              ix2Applied = true;
-            }
-          }
-          
-          if (!ix2Applied && retryCount < maxRetries) {
-            retryCount++;
-            console.log('  ⚠️ IX2 not applied yet, forcing reinit...');
-            
-            // Force reinit again
-            if (window.Webflow) {
-              window.Webflow.destroy();
-              window.Webflow.ready();
-              window.Webflow.require('ix2').init();
-            }
-            
-            // Trigger scroll
-            window.scrollTo(0, 1);
-            setTimeout(() => window.scrollTo(0, 0), 20);
-            
-            // Check again
-            setTimeout(checkForIX2, 200);
-          } else {
-            console.log('  ✅ IX2 check complete');
+        // Dispatch events after delay
+        setTimeout(() => {
+          window.scrollTo(0, 1);
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+            window.dispatchEvent(new Event('scroll'));
+            window.dispatchEvent(new Event('resize'));
             window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          }
-        }
-        
-        // Start checking after initial delay
-        setTimeout(checkForIX2, 150);
+            console.log('✅ Complete');
+          }, 50);
+        }, 150);
       }
     }]
   });
