@@ -1,8 +1,4 @@
-<script src="https://unpkg.com/wavesurfer.js@7"></script>
-<script src="https://unpkg.com/@barba/core"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-<script>
 /**
  * ============================================================
  * GLOBAL STATE - Persists across Barba page transitions
@@ -1190,4 +1186,3 @@ if (typeof barba !== 'undefined') {
     }]
   });
 }
-</script> 
