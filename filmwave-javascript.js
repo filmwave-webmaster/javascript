@@ -106,35 +106,21 @@ function navigateStandaloneTrack(direction) {
   
   if (!audioUrl) return;
   
-  // CRITICAL FIX: Mark old audio as inactive and destroy it
-  if (g.standaloneAudio) {
-    console.log('🛑 Stopping old standalone audio');
-    
-    const oldAudio = g.standaloneAudio;
-    
-    // Mark as inactive so event listeners are ignored
-    oldAudio._inactive = true;
-    
-    try {
-      // Pause and reset
-      oldAudio.pause();
-      oldAudio.currentTime = 0;
-      
-      // Remove the source
-      oldAudio.src = '';
-      oldAudio.load();
-      
-    } catch (e) {
-      console.warn('Error stopping audio:', e);
-    }
-    
-    g.standaloneAudio = null;
-  }
-  
+  console.log('🛑 Stopping old standalone audio');
   console.log('🎵 Loading new song:', nextSong.fields['Song Title']);
   
+  // CRITICAL: Completely destroy old audio element
+  if (g.standaloneAudio) {
+    try {
+      g.standaloneAudio.pause();
+      g.standaloneAudio.removeAttribute('src');
+      g.standaloneAudio.load();
+      delete g.standaloneAudio;
+    } catch (e) {}
+  }
+  
   // Create new audio element
-  const audio = new Audio();
+  const audio = new Audio(audioUrl);
   g.standaloneAudio = audio;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
@@ -143,62 +129,62 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, null);
   updateMasterPlayerVisibility();
   
-  // Setup event listeners with inactive check
-  audio.addEventListener('loadedmetadata', () => {
-    if (audio._inactive) return; // Ignore if this audio is now inactive
-    
+  // Setup event listeners - use arrow functions that capture current audio reference
+  const handleLoadedMetadata = () => {
+    if (g.standaloneAudio !== audio) return;
     g.currentDuration = audio.duration;
     const masterDuration = document.querySelector('.player-duration');
     if (masterDuration) {
       masterDuration.textContent = formatDuration(audio.duration);
     }
     console.log('📊 Audio loaded, duration:', g.currentDuration);
-  });
+  };
   
-  audio.addEventListener('timeupdate', () => {
-    if (audio._inactive) return; // Ignore if this audio is now inactive
-    
+  const handleTimeUpdate = () => {
+    if (g.standaloneAudio !== audio) return;
     g.currentTime = audio.currentTime;
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
     }
-    
     if (g.currentPeaksData && g.currentDuration > 0) {
       const progress = audio.currentTime / audio.duration;
       drawMasterWaveform(g.currentPeaksData, progress);
     }
-  });
+  };
   
-  audio.addEventListener('play', () => {
-    if (audio._inactive) return; // Ignore if this audio is now inactive
-    
+  const handlePlay = () => {
+    if (g.standaloneAudio !== audio) return;
     g.isPlaying = true;
     updateMasterControllerIcons(true);
     console.log('▶️ New standalone audio playing');
-  });
+  };
   
-  audio.addEventListener('pause', () => {
-    if (audio._inactive) return; // Ignore if this audio is now inactive
-    
+  const handlePause = () => {
+    if (g.standaloneAudio !== audio) return;
     g.isPlaying = false;
     updateMasterControllerIcons(false);
     console.log('⏸️ Standalone audio paused');
-  });
+  };
   
-  audio.addEventListener('ended', () => {
-    if (audio._inactive) return; // Ignore if this audio is now inactive
+  const handleEnded = () => {
+    if (g.standaloneAudio !== audio) return;
     navigateStandaloneTrack('next');
-  });
+  };
   
-  audio.addEventListener('error', (e) => {
-    if (audio._inactive) return; // Ignore if this audio is now inactive
+  const handleError = (e) => {
+    if (g.standaloneAudio !== audio) return;
     console.error('❌ Audio error:', e);
-  });
+  };
   
-  // NOW load and play the audio
-  audio.src = audioUrl;
-  audio.load();
+  audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+  audio.addEventListener('timeupdate', handleTimeUpdate);
+  audio.addEventListener('play', handlePlay);
+  audio.addEventListener('pause', handlePause);
+  audio.addEventListener('ended', handleEnded);
+  audio.addEventListener('error', handleError);
+  
+  // Play the audio
   audio.play().catch(err => console.error('Playback error:', err));
   
   g.isPlaying = true;
@@ -208,6 +194,7 @@ function navigateStandaloneTrack(direction) {
   g.currentPeaksData = null;
   drawMasterWaveform(null, 0);
 }
+
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
