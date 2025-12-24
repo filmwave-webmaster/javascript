@@ -14,7 +14,6 @@ if (!window.musicPlayerPersistent) {
   };
 }
 
-// Local variables that reset per page load
 let allWavesurfers = [];
 let waveformData = [];
 let lastPlayState = false;
@@ -112,7 +111,6 @@ function populateMasterStems(fields, playerScope) {
           masterStemsWrapper.style.display = 'none';
         }
       } catch (e) {
-        console.error('Error parsing master stems:', e);
         masterStemsWrapper.style.display = 'none';
       }
     } else {
@@ -233,11 +231,8 @@ function updateMasterControllerIcons(isPlaying) {
 
 function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   const g = window.musicPlayerPersistent;
-  
-  // Store globally
   g.currentWavesurfer = wavesurfer;
   g.currentSongData = songData;
-  
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
@@ -255,9 +250,7 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
         const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
         drawMasterWaveform(g.currentPeaksData, progress);
       }
-    } catch (e) {
-      console.error('Error extracting peaks:', e);
-    }
+    } catch (e) {}
   };
   if (wavesurfer.getDecodedData()) {
     getAndDrawPeaks();
@@ -268,7 +261,6 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
 
 function setupMasterPlayerControls() {
   const g = window.musicPlayerPersistent;
-  
   const masterPlayButton = document.querySelector('.player-play-pause-button');
   const controllerPlay = document.querySelector('.controller-play');
   const controllerPause = document.querySelector('.controller-pause');
@@ -342,7 +334,6 @@ function populateSongCard(cardElement, song) {
   const coverArt = cardElement.querySelector('.cover-art');
   if (coverArt && fields['Cover Art']) {
     coverArt.src = fields['Cover Art'][0].url;
-    coverArt.alt = fields['Song Title'] || 'Song';
   }
   const songName = cardElement.querySelector('.song-name');
   if (songName) songName.textContent = fields['Song Title'] || 'Untitled';
@@ -398,7 +389,6 @@ function populateSongCard(cardElement, song) {
         stemsWrapper.style.display = 'none';
       }
     } catch (error) {
-      console.error('Error parsing stems data:', error);
       stemsWrapper.style.display = 'none';
     }
   } else if (stemsWrapper) {
@@ -432,11 +422,7 @@ function updatePlayButtonVisibility(cardElement, wavesurfer) {
  */
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
-  
-  console.log('🎵 Init card waveforms...');
-  
   const songCards = document.querySelectorAll('.song-wrapper');
-  console.log(`Found ${songCards.length} cards`);
   
   songCards.forEach(cardElement => {
     const audioUrl = cardElement.dataset.audioUrl;
@@ -544,7 +530,7 @@ function initializeWaveforms() {
       if (nextWavesurfer) {
         g.currentWavesurfer = nextWavesurfer;
         setTimeout(() => {
-          nextWavesurfer.play().catch(err => console.error("Safari auto-play block: ", err));
+          nextWavesurfer.play().catch(() => {});
         }, 100);
       }
     });
@@ -604,8 +590,6 @@ function initializeWaveforms() {
       }
     });
   });
-  
-  console.log(`✅ Initialized ${allWavesurfers.length} card waveforms`);
 }
 
 /**
@@ -624,7 +608,6 @@ async function fetchSongs() {
     window.musicPlayerPersistent.MASTER_DATA = data.records;
     return data.records;
   } catch (error) {
-    console.error('Error fetching songs:', error);
     return [];
   }
 }
@@ -645,7 +628,11 @@ function displaySongs(songs) {
     populateSongCard(newCard, song);
     container.appendChild(newCard);
   });
-  
+  if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+    window.Webflow.require('ix2').init();
+  }
   setTimeout(() => initializeWaveforms(), 100);
 }
 
@@ -657,62 +644,38 @@ function displaySongs(songs) {
 document.addEventListener('keydown', function (e) {
   const g = window.musicPlayerPersistent;
   const activeEl = document.activeElement;
-  const activeTag = activeEl.tagName;
-  const activeType = activeEl.type;
-  if (activeTag === 'TEXTAREA' || (activeTag === 'INPUT' && !['checkbox', 'radio'].includes(activeType))) {
-    return;
-  }
+  if (activeEl.tagName === 'TEXTAREA' || (activeEl.tagName === 'INPUT' && !['checkbox', 'radio'].includes(activeEl.type))) return;
   if (e.code === 'Space') {
-    if (activeTag === 'INPUT' && (activeType === 'checkbox' || activeType === 'radio')) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    } else {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-    if (g.currentWavesurfer) {
-      g.currentWavesurfer.playPause();
-    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (g.currentWavesurfer) g.currentWavesurfer.playPause();
     return false;
   }
   if (['ArrowDown', 'ArrowUp'].includes(e.code)) {
     e.preventDefault();
     if (!g.currentWavesurfer) return;
     const currentIndex = allWavesurfers.indexOf(g.currentWavesurfer);
-    let nextWavesurfer = null;
+    let nextWS = null;
     if (e.code === 'ArrowDown') {
       for (let i = currentIndex + 1; i < allWavesurfers.length; i++) {
-        const data = waveformData.find(d => d.wavesurfer === allWavesurfers[i]);
-        if (data && data.cardElement.offsetParent !== null) {
-          nextWavesurfer = allWavesurfers[i];
-          break;
-        }
+        const d = waveformData.find(wf => wf.wavesurfer === allWavesurfers[i]);
+        if (d && d.cardElement.offsetParent !== null) { nextWS = allWavesurfers[i]; break; }
       }
     } else {
       for (let i = currentIndex - 1; i >= 0; i--) {
-        const data = waveformData.find(d => d.wavesurfer === allWavesurfers[i]);
-        if (data && data.cardElement.offsetParent !== null) {
-          nextWavesurfer = allWavesurfers[i];
-          break;
-        }
+        const d = waveformData.find(wf => wf.wavesurfer === allWavesurfers[i]);
+        if (d && d.cardElement.offsetParent !== null) { nextWS = allWavesurfers[i]; break; }
       }
     }
-    if (nextWavesurfer) {
+    if (nextWS) {
       const wasPlaying = g.currentWavesurfer.isPlaying();
-      const prevData = waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-      if (prevData?.cardElement.querySelector('.play-button')) {
-        prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-      }
       g.currentWavesurfer.pause();
       g.currentWavesurfer.seekTo(0);
-      g.currentWavesurfer = nextWavesurfer;
-      const nextData = waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-      if (nextData?.cardElement.querySelector('.play-button')) {
-        nextData.cardElement.querySelector('.play-button').style.opacity = '1';
-      }
-      scrollToSelected(nextData.cardElement);
+      g.currentWavesurfer = nextWS;
+      const nextD = waveformData.find(wf => wf.wavesurfer === nextWS);
+      scrollToSelected(nextD.cardElement);
       if (wasPlaying) g.currentWavesurfer.play();
-      else syncMasterTrack(g.currentWavesurfer, nextData.songData, 0);
+      else syncMasterTrack(g.currentWavesurfer, nextD.songData, 0);
     }
   }
 }, true);
@@ -723,389 +686,137 @@ document.addEventListener('keydown', function (e) {
  * ============================================================
  */
 async function initMusicPage() {
-  console.log('🎵 Init Music Page...');
-  
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  
-  // Show/hide player based on state
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (playerWrapper) {
-    if (g.currentSongData) {
-      playerWrapper.style.display = 'flex';
-      // Re-sync UI
-      if (g.currentWavesurfer) {
-        updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-        updateMasterControllerIcons(g.isPlaying);
-        // Redraw waveform
-        if (g.currentPeaksData) {
-          const progress = g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration();
-          drawMasterWaveform(g.currentPeaksData, progress);
-        }
+  
+  if (playerWrapper && g.currentSongData) {
+    playerWrapper.style.display = 'flex';
+    if (g.currentWavesurfer) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+      if (g.currentPeaksData) {
+        const prog = g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration();
+        drawMasterWaveform(g.currentPeaksData, prog);
       }
-    } else {
-      playerWrapper.style.display = 'none';
     }
   }
-  
-  // Only init music page features if on music page
+
   if (isMusicPage) {
-    console.log('📄 On music page - full init');
-    
-    // Prevent form submit
     const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
     if (searchForm) {
-      searchForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      });
-      const successMessage = searchForm.querySelector('.w-form-done');
-      const errorMessage = searchForm.querySelector('.w-form-fail');
-      if (successMessage) successMessage.style.display = 'none';
-      if (errorMessage) errorMessage.style.display = 'none';
-      const formBlock = searchForm.querySelector('.w-form');
-      if (formBlock) formBlock.style.display = 'block';
+      searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
     }
-    
-    // Initialize filter features
     initFilterAccordions();
     initCheckboxTextColor();
     initFilterItemBackground();
     initDynamicTagging();
     initMutualExclusion();
     initSearchAndFilters();
-    
-    // Fetch and display
     const songs = await fetchSongs();
     displaySongs(songs);
     initMasterPlayer();
-  } else {
-    console.log('📄 Not on music page');
   }
 }
 
 /**
  * ============================================================
- * FILTER ACCORDIONS
+ * FILTER HELPERS
  * ============================================================
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    // Remove old listeners by cloning
-    const newHeader = header.cloneNode(true);
-    header.parentNode.replaceChild(newHeader, header);
-    
-    newHeader.addEventListener('click', function() {
+    header.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
-      
-      document.querySelectorAll('.filter-list').forEach(list => {
-        list.style.maxHeight = '0px';
-        list.classList.remove('open');
-      });
-      
-      document.querySelectorAll('.arrow-icon').forEach(arr => {
-        arr.style.transform = 'rotate(0deg)';
-      });
-      
+      document.querySelectorAll('.filter-list').forEach(l => { l.style.maxHeight = '0px'; l.classList.remove('open'); });
+      document.querySelectorAll('.arrow-icon').forEach(a => a.style.transform = 'rotate(0deg)');
       if (!isOpen) {
-        const actualHeight = Math.min(content.scrollHeight, 300);
-        content.style.maxHeight = actualHeight + 'px';
+        content.style.maxHeight = Math.min(content.scrollHeight, 300) + 'px';
         content.classList.add('open');
         if (arrow) arrow.style.transform = 'rotate(180deg)';
       }
     });
   });
 }
-
-/**
- * ============================================================
- * CHECKBOX TEXT COLOR
- * ============================================================
- */
 function initCheckboxTextColor() {
-  document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      const label = this.parentElement.querySelector('.w-form-label');
-      if (label) {
-        if (this.checked) {
-          label.style.color = '#191919';
-        } else {
-          label.style.color = '';
-        }
-      }
+  document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(c => {
+    c.addEventListener('change', function() {
+      const l = this.parentElement.querySelector('.w-form-label');
+      if (l) l.style.color = this.checked ? '#191919' : '';
     });
   });
 }
-
-/**
- * ============================================================
- * FILTER ITEM BACKGROUND
- * ============================================================
- */
 function initFilterItemBackground() {
-  setTimeout(function() {
-    let checkboxes = document.querySelectorAll('.checkbox-wrapper input[type="checkbox"]');
-    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
-    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    
-    function updateBackgroundColor(checkbox) {
-      const filterItem = checkbox.closest('.filter-item');
-      if (checkbox.checked) {
-        if (filterItem) filterItem.classList.add('is-selected');
-      } else {
-        if (filterItem) filterItem.classList.remove('is-selected');
-      }
-    }
-    
-    checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        updateBackgroundColor(this);
+  setTimeout(() => {
+    document.querySelectorAll('input[type="checkbox"]').forEach(c => {
+      c.addEventListener('change', function() {
+        const fi = this.closest('.filter-item');
+        if (fi) this.checked ? fi.classList.add('is-selected') : fi.classList.remove('is-selected');
       });
     });
   }, 100);
 }
-
-/**
- * ============================================================
- * DYNAMIC TAGGING WITH DESELECTABLE RADIOS
- * ============================================================
- */
 function initDynamicTagging() {
-  setTimeout(function() {
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (!tagsContainer) return;
-    
-    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
-    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
-    
-    function createTag(input, labelText) {
-      const tag = document.createElement('div');
-      tag.className = 'filter-tag';
-      tag.innerHTML = `
-        <span class="filter-tag-text">${labelText}</span>
-        <span class="filter-tag-remove x-button-style">×</span>
-      `;
-      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-        input.checked = false;
-        const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        tag.remove();
-      });
-      return tag;
-    }
-
-    checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        let label;
-        const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
-        if (this.closest('.checkbox-single-select-wrapper')) {
-          label = this.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
-        } else {
-          label = wrapper ? wrapper.querySelector('.w-form-label, .filter-text') : null;
-        }
-        const labelText = label ? label.textContent.trim() : 'Filter';
+  setTimeout(() => {
+    const container = document.querySelector('.filter-tags-container');
+    if (!container) return;
+    document.querySelectorAll('.filter-list input[type="checkbox"]').forEach(c => {
+      c.addEventListener('change', function() {
+        const label = this.closest('.checkbox-single-select-wrapper, .w-checkbox')?.querySelector('.filter-single-select-text, .w-form-label')?.textContent.trim() || 'Filter';
         if (this.checked) {
-          if (wrapper) wrapper.classList.add('is-active');
-          const tag = createTag(this, labelText);
-          tagsContainer.appendChild(tag);
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          tag.innerHTML = `<span class="filter-tag-text">${label}</span><span class="filter-tag-remove x-button-style">×</span>`;
+          tag.querySelector('.filter-tag-remove').addEventListener('click', () => { this.checked = false; this.dispatchEvent(new Event('change', { bubbles: true })); tag.remove(); });
+          container.appendChild(tag);
         } else {
-          if (wrapper) wrapper.classList.remove('is-active');
-          const tags = tagsContainer.querySelectorAll('.filter-tag');
-          tags.forEach(tag => {
-            if (tag.querySelector('.filter-tag-text').textContent === labelText) tag.remove();
-          });
+          container.querySelectorAll('.filter-tag').forEach(t => { if (t.querySelector('.filter-tag-text').textContent === label) t.remove(); });
         }
-      });
-    });
-
-    radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
-        const radio = this.querySelector('input[type="radio"]');
-        if (radio) this.dataset.wasChecked = radio.checked;
-      });
-
-      wrapper.addEventListener('click', function() {
-        const radio = this.querySelector('input[type="radio"]');
-        const label = this.querySelector('.radio-button-label');
-        if (!radio || !label) return;
-        const labelText = label.innerText.trim();
-        const radioName = radio.name;
-
-        setTimeout(() => {
-          if (this.dataset.wasChecked === "true") {
-            radio.checked = false;
-            this.classList.remove('is-active');
-            const tags = tagsContainer.querySelectorAll('.filter-tag');
-            tags.forEach(tag => { if (tag.dataset.radioName === radioName) tag.remove(); });
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-          } else {
-            document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
-              const otherWrapper = r.closest('.radio-wrapper, .w-radio');
-              if (otherWrapper) otherWrapper.classList.remove('is-active');
-            });
-            this.classList.add('is-active');
-            const tags = tagsContainer.querySelectorAll('.filter-tag');
-            tags.forEach(tag => { if (tag.dataset.radioName === radioName) tag.remove(); });
-            const tag = createTag(radio, labelText);
-            tag.dataset.radioName = radioName;
-            tagsContainer.appendChild(tag);
-          }
-        }, 50);
       });
     });
   }, 100);
 }
-
-/**
- * ============================================================
- * MUTUAL EXCLUSION
- * ============================================================
- */
 function initMutualExclusion() {
-  const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
-  const acapWrapper = document.querySelector('[data-exclusive="acapella"]');
-  const instInput = instWrapper ? instWrapper.querySelector('input[type="checkbox"]') : null;
-  const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
-
-  if (instInput && acapInput) {
-    function clearOther(otherInput, otherWrapper) {
-      if (otherInput.checked) {
-        otherInput.checked = false;
-        if (otherWrapper) otherWrapper.classList.remove('is-active');
-        otherInput.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    }
-    instInput.addEventListener('change', function() {
-      if (this.checked) clearOther(acapInput, acapWrapper);
-    });
-    acapInput.addEventListener('change', function() {
-      if (this.checked) clearOther(instInput, instWrapper);
-    });
+  const inst = document.querySelector('[data-exclusive="instrumental"] input');
+  const acap = document.querySelector('[data-exclusive="acapella"] input');
+  if (inst && acap) {
+    inst.addEventListener('change', () => { if (inst.checked && acap.checked) { acap.checked = false; acap.dispatchEvent(new Event('change', { bubbles: true })); } });
+    acap.addEventListener('change', () => { if (acap.checked && inst.checked) { inst.checked = false; inst.dispatchEvent(new Event('change', { bubbles: true })); } });
   }
 }
-
-/**
- * ============================================================
- * SEARCH AND FILTERS
- * ============================================================
- */
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
-  
-  function toggleClearButton() {
-    const clearBtn = document.querySelector('.circle-x');
-    const searchBar = document.querySelector('[data-filter-search="true"]');
-    const filterInputs = document.querySelectorAll('[data-filter-group]');
-    
-    if (!clearBtn) return;
-
-    const hasSearch = searchBar && searchBar.value.trim().length > 0;
-    const hasFilters = Array.from(filterInputs).some(input => input.checked);
-
-    clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
-  }
-
-  function clearAllFilters() {
-    const searchBar = document.querySelector('[data-filter-search="true"]');
-    const filterInputs = document.querySelectorAll('[data-filter-group]');
-    
-    if (searchBar) searchBar.value = '';
-
-    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-    if (tagRemoveButtons.length > 0) {
-      tagRemoveButtons.forEach(btn => btn.click());
-    } else {
-      filterInputs.forEach(input => {
-        input.checked = false;
-        const parent = input.closest('.w-checkbox') || input.parentElement;
-        if (parent) {
-          const visualCheckbox = parent.querySelector('.w-checkbox-input');
-          if (visualCheckbox) visualCheckbox.classList.remove('w--redirected-checked');
-        }
-      });
-    }
-    
-    toggleClearButton();
-    applyFilters();
-  }
-
-  function applyFilters() {
-    const searchBar = document.querySelector('[data-filter-search="true"]');
-    const filterInputs = document.querySelectorAll('[data-filter-group]');
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const clearBtn = document.querySelector('.circle-x');
+  const apply = () => {
     const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
     const keywords = query.split(/\s+/).filter(k => k.length > 0);
-    const selectedFilters = [];
-    
-    filterInputs.forEach(input => {
-      if (input.checked) {
-        selectedFilters.push({
-          group: input.getAttribute('data-filter-group'),
-          value: input.getAttribute('data-filter-value').toLowerCase()
-        });
-      }
-    });
-
-    const visibleIds = g.MASTER_DATA.filter(record => {
-      const fields = record.fields;
-      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-      const matchesSearch = keywords.every(k => allText.includes(k));
-      const matchesAttributes = selectedFilters.every(filter => {
-        let recVal = fields[filter.group];
-        if (recVal === undefined || recVal === null) return false;
-        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
-        return String(recVal).toLowerCase() === filter.value;
+    const filters = Array.from(document.querySelectorAll('[data-filter-group]')).filter(i => i.checked).map(i => ({ group: i.getAttribute('data-filter-group'), value: i.getAttribute('data-filter-value').toLowerCase() }));
+    const ids = g.MASTER_DATA.filter(r => {
+      const text = Object.values(r.fields).join(' ').toLowerCase();
+      const mS = keywords.every(k => text.includes(k));
+      const mF = filters.every(f => {
+        let v = r.fields[f.group];
+        return Array.isArray(v) ? v.some(val => String(val).toLowerCase() === f.value) : String(v).toLowerCase() === f.value;
       });
-      return matchesSearch && matchesAttributes;
+      return mS && mF;
     }).map(r => r.id);
-
-    document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
-    });
-    
-    toggleClearButton();
-  }
-
-  // Setup listeners
-  const clearBtn = document.querySelector('.circle-x');
-  if (clearBtn) {
-    clearBtn.style.display = 'none';
-    clearBtn.addEventListener('click', clearAllFilters);
-  }
-
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  if (searchBar) {
-    searchBar.addEventListener('keydown', (e) => {
-      if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
-        e.stopPropagation();
-      }
-    });
-    searchBar.addEventListener('input', () => {
-      clearTimeout(searchTimeout);
-      toggleClearButton();
-      searchTimeout = setTimeout(applyFilters, 400);
-    });
-  }
-  
-  document.querySelectorAll('[data-filter-group]').forEach(input => {
-    input.addEventListener('change', () => {
-      applyFilters();
-      toggleClearButton();
-    });
-  });
+    document.querySelectorAll('.song-wrapper').forEach(card => card.style.display = ids.includes(card.dataset.songId) ? 'flex' : 'none');
+    if (clearBtn) clearBtn.style.display = (query || filters.length) ? 'flex' : 'none';
+  };
+  if (searchBar) searchBar.addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(apply, 400); });
+  document.querySelectorAll('[data-filter-group]').forEach(i => i.addEventListener('change', apply));
+  if (clearBtn) clearBtn.addEventListener('click', () => { if (searchBar) searchBar.value = ''; document.querySelectorAll('[data-filter-group]').forEach(i => { i.checked = false; i.dispatchEvent(new Event('change', { bubbles: true })); }); apply(); });
 }
 
 /**
  * ============================================================
- * LOAD & BARBA
+ * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
-window.addEventListener('load', () => {
-  initMusicPage();
-});
+window.addEventListener('load', () => initMusicPage());
 
 if (typeof barba !== 'undefined') {
   barba.init({
@@ -1114,27 +825,7 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
       beforeLeave(data) {
-        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-        if (isMusicPage && window.musicPlayerPersistent.currentWavesurfer) {
-          window.musicPlayerPersistent.currentTime = window.musicPlayerPersistent.currentWavesurfer.getCurrentTime();
-          window.musicPlayerPersistent.currentDuration = window.musicPlayerPersistent.currentWavesurfer.getDuration();
-          window.musicPlayerPersistent.isPlaying = window.musicPlayerPersistent.currentWavesurfer.isPlaying();
-          const currentD = waveformData.find(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
-          if (currentD) {
-            const persistentDiv = document.createElement('div');
-            persistentDiv.style.display = 'none';
-            document.body.appendChild(persistentDiv);
-            persistentDiv.appendChild(currentD.waveformContainer);
-            window.musicPlayerPersistent.persistedWaveformContainer = currentD.waveformContainer;
-          }
-        }
-        if (isMusicPage) {
-          allWavesurfers.forEach(ws => {
-            if (ws !== window.musicPlayerPersistent.currentWavesurfer) ws.destroy();
-          });
-          allWavesurfers = allWavesurfers.filter(ws => ws === window.musicPlayerPersistent.currentWavesurfer);
-          waveformData = waveformData.filter(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
-        }
+        // Reset body and html overflow before transition starts
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
         document.body.style.height = '';
@@ -1144,8 +835,9 @@ if (typeof barba !== 'undefined') {
       beforeEnter(data) {
         const nextContainer = data.next.container;
         const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-        const g = window.musicPlayerPersistent;
 
+        // FORCE RESET OF GLOBAL STYLES
+        // This stops the Home page from inheriting the Music page's hidden overflow
         if (!isMusicPage) {
           document.body.style.overflow = 'visible';
           document.documentElement.style.overflow = 'visible';
@@ -1155,6 +847,7 @@ if (typeof barba !== 'undefined') {
           const mainContent = nextContainer.querySelector('.main-content');
           if (mainContent) mainContent.style.overflow = 'visible';
         } else {
+          // It is the music page, force the hidden state
           document.body.style.overflow = 'hidden';
           document.documentElement.style.overflow = 'hidden';
           document.body.style.height = '100vh';
@@ -1162,13 +855,6 @@ if (typeof barba !== 'undefined') {
           
           const musicArea = nextContainer.querySelector('.music-area-wrapper');
           if (musicArea) musicArea.style.overflow = 'hidden';
-        }
-
-        // Force player visibility
-        const playerWrapper = nextContainer.querySelector('.music-player-wrapper');
-        if (playerWrapper && g.hasActiveSong) {
-          playerWrapper.style.display = 'flex';
-          playerWrapper.style.alignItems = 'center';
         }
       },
 
@@ -1186,7 +872,6 @@ if (typeof barba !== 'undefined') {
           } catch (e) {}
         }
         setTimeout(() => {
-          updateMasterPlayerVisibility();
           window.dispatchEvent(new Event('scroll'));
           window.dispatchEvent(new Event('resize'));
           window.dispatchEvent(new CustomEvent('barbaAfterTransition', {
