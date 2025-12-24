@@ -1426,45 +1426,83 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
       beforeLeave(data) {
-        const g = window.musicPlayerPersistent;
-        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+  const g = window.musicPlayerPersistent;
+  const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+  
+  if (isMusicPage && g.currentWavesurfer) {
+    // Save current state
+    g.currentTime = g.currentWavesurfer.getCurrentTime();
+    g.currentDuration = g.currentWavesurfer.getDuration();
+    const wasPlaying = g.currentWavesurfer.isPlaying();
+    
+    // CRITICAL: Extract and preserve the audio element
+    try {
+      const mediaElement = g.currentWavesurfer.getMediaElement();
+      if (mediaElement) {
+        // Clone the audio element to keep it alive
+        const audioClone = mediaElement.cloneNode();
+        audioClone.currentTime = g.currentTime;
+        audioClone.volume = mediaElement.volume;
         
-        if (isMusicPage && g.currentWavesurfer) {
-          g.currentTime = g.currentWavesurfer.getCurrentTime();
-          g.currentDuration = g.currentWavesurfer.getDuration();
-          g.isPlaying = g.currentWavesurfer.isPlaying();
-          
-          const currentD = g.waveformData.find(d => d.wavesurfer === g.currentWavesurfer);
-          if (currentD) {
-            const persistentDiv = document.createElement('div');
-            persistentDiv.style.display = 'none';
-            persistentDiv.id = 'persistent-waveform';
-            document.body.appendChild(persistentDiv);
-            persistentDiv.appendChild(currentD.waveformContainer);
-            g.persistedWaveformContainer = currentD.waveformContainer;
+        // Store as standalone audio
+        g.standaloneAudio = audioClone;
+        g.isPlaying = wasPlaying;
+        
+        // Setup event listeners
+        audioClone.addEventListener('timeupdate', () => {
+          g.currentTime = audioClone.currentTime;
+          const masterCounter = document.querySelector('.player-duration-counter');
+          if (masterCounter) {
+            masterCounter.textContent = formatDuration(audioClone.currentTime);
           }
+        });
+        
+        audioClone.addEventListener('play', () => {
+          g.isPlaying = true;
+          updateMasterControllerIcons(true);
+        });
+        
+        audioClone.addEventListener('pause', () => {
+          g.isPlaying = false;
+          updateMasterControllerIcons(false);
+        });
+        
+        audioClone.addEventListener('ended', () => {
+          navigateStandaloneTrack('next');
+        });
+        
+        // Resume playback if it was playing
+        if (wasPlaying) {
+          audioClone.play().catch(err => console.error('Resume playback error:', err));
         }
         
-        if (isMusicPage) {
-          // Destroy ALL wavesurfers
-          g.allWavesurfers.forEach(ws => ws.destroy());
-          
-          // Clear ALL waveform containers
-          document.querySelectorAll('.waveform').forEach(container => {
-            if (g.persistedWaveformContainer && container === g.persistedWaveformContainer) return;
-            container.innerHTML = '';
-          });
-          
-          // Clear the arrays
-          g.allWavesurfers = [];
-          g.waveformData = [];
-        }
-        
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.body.style.height = '';
-        return Promise.resolve();
-      },
+        console.log('✓ Converted to standalone audio');
+      }
+    } catch (e) {
+      console.error('Error extracting audio:', e);
+    }
+  }
+  
+  if (isMusicPage) {
+    // Destroy ALL wavesurfers
+    g.allWavesurfers.forEach(ws => ws.destroy());
+    
+    // Clear ALL waveform containers
+    document.querySelectorAll('.waveform').forEach(container => {
+      container.innerHTML = '';
+    });
+    
+    // Clear the arrays
+    g.allWavesurfers = [];
+    g.waveformData = [];
+    g.persistedWaveformContainer = null;
+  }
+  
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+  document.body.style.height = '';
+  return Promise.resolve();
+},
 
       beforeEnter(data) {
         const nextContainer = data.next.container;
