@@ -502,7 +502,7 @@ function initializeWaveforms() {
 
 /**
  * ============================================================
- * FILTERING SYSTEM
+ * FILTERING SYSTEM (Restored from Code 7)
  * ============================================================
  */
 function applyFilters() {
@@ -513,25 +513,44 @@ function applyFilters() {
 
   const cards = document.querySelectorAll('.song-wrapper');
   cards.forEach(card => {
+    // Skip the template if it exists
+    if (card.closest('.template-wrapper')) return;
+
     const data = JSON.parse(card.dataset.songData || '{}').fields || {};
+    
     const matchesSearch = !searchVal || 
                          (data['Song Title'] || "").toLowerCase().includes(searchVal) || 
                          (data['Artist'] || "").toLowerCase().includes(searchVal);
+    
     const matchesKey = keyVal === "All Keys" || data['Key'] === keyVal;
-    const matchesBPM = bpmVal === "All BPM" || (data['BPM'] && data['BPM'].toString() === bpmVal.replace(' BPM', ''));
+    
+    // Normalize BPM comparison
+    const targetBpm = bpmVal.replace(' BPM', '');
+    const matchesBPM = bpmVal === "All BPM" || (data['BPM'] && data['BPM'].toString() === targetBpm);
+    
     const matchesCat = catVal === "All Categories" || (data['Category'] && data['Category'].includes(catVal));
 
-    card.style.display = (matchesSearch && matchesKey && matchesBPM && matchesCat) ? 'flex' : 'none';
+    if (matchesSearch && matchesKey && matchesBPM && matchesCat) {
+      card.style.display = 'flex';
+      card.style.opacity = '1';
+    } else {
+      card.style.display = 'none';
+      card.style.opacity = '0';
+    }
   });
 }
 
 function setupFilters() {
   const searchInput = document.querySelector('.search-input');
   const clearBtn = document.querySelector('.search-clear-button');
-  const searchForm = document.querySelector('.search-wrapper form') || document.querySelector('form.search-wrapper');
+  const searchForm = document.querySelector('.search-wrapper form') || document.querySelector('form.search-wrapper') || document.querySelector('.search-input-wrapper form');
 
   if (searchForm) {
-    searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
+    searchForm.addEventListener('submit', (e) => { 
+      e.preventDefault(); 
+      e.stopPropagation(); 
+      return false; 
+    });
   }
   
   if (searchInput) {
@@ -550,12 +569,15 @@ function setupFilters() {
     });
   }
 
+  // Handle Dropdown Filter Links
   document.querySelectorAll('.filter-link').forEach(link => {
     link.addEventListener('click', function(e) {
       e.preventDefault();
       const dropdown = this.closest('.w-dropdown');
       const toggle = dropdown.querySelector('.w-dropdown-toggle');
       if (toggle) toggle.textContent = this.textContent;
+      
+      // Close Webflow dropdown
       dropdown.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
       applyFilters();
     });
@@ -625,7 +647,7 @@ async function initMusicPage() {
   setupMasterPlayerControls();
 }
 
-// Keyboard Controls (Full Code 7 Version)
+// Keyboard Controls
 document.addEventListener('keydown', (e) => {
   const g = window.musicPlayerPersistent;
   const activeTag = document.activeElement.tagName;
@@ -668,7 +690,7 @@ document.addEventListener('keydown', (e) => {
   }
 }, true);
 
-// Barba Initialization (Full Code 7 Version with Overflow Controls)
+// Barba Initialization
 if (typeof barba !== 'undefined') {
   barba.init({
     transitions: [{
