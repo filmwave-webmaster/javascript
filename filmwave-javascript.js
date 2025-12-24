@@ -656,53 +656,66 @@ function initializeWaveforms() {
       if (g.isPlaying) {
         wavesurfer.play().catch(() => {});
       }
-    } else if (g.standaloneAudio && g.currentSongData && songId === g.currentSongData.id) {
-      // We were playing this song with standalone audio - create wavesurfer and sync it
-      wavesurfer = WaveSurfer.create({
-        container: waveformContainer,
-        waveColor: '#e2e2e2',
-        progressColor: '#191919',
-        cursorColor: 'transparent',
-        cursorWidth: 0,
-        height: 40,
-        barWidth: 2,
-        barGap: 1,
-        normalize: true,
-        backend: 'WebAudio',
-        fillParent: true,
-        scrollParent: false,
-        responsive: 300,
-        interact: true,
-        hideScrollbar: true,
-        minPxPerSec: 1
-      });
+    // Around line 650 - when checking if this is the currently playing song with standalone audio
+} else if (g.standaloneAudio && g.currentSongData && songId === g.currentSongData.id) {
+  console.log('🔄 Syncing standalone audio to waveform for:', songId);
+  
+  // Stop standalone audio - we'll replace it with wavesurfer
+  const currentTime = g.standaloneAudio.currentTime;
+  const wasPlaying = !g.standaloneAudio.paused;
+  g.standaloneAudio.pause();
+  g.standaloneAudio.remove();
+  g.standaloneAudio = null;
+  
+  // Create wavesurfer
+  wavesurfer = WaveSurfer.create({
+    container: waveformContainer,
+    waveColor: '#e2e2e2',
+    progressColor: '#191919',
+    cursorColor: 'transparent',
+    cursorWidth: 0,
+    height: 40,
+    barWidth: 2,
+    barGap: 1,
+    normalize: true,
+    backend: 'WebAudio',
+    fillParent: true,
+    scrollParent: false,
+    responsive: 300,
+    interact: true,
+    hideScrollbar: true,
+    minPxPerSec: 1
+  });
+  
+  wavesurfer.load(audioUrl);
+  
+  wavesurfer.on('ready', function () {
+    const duration = wavesurfer.getDuration();
+    const containerWidth = waveformContainer.offsetWidth || 300;
+    wavesurfer.zoom(containerWidth / duration);
+    if (durationElement) durationElement.textContent = formatDuration(duration);
+    
+    // Sync with standalone audio position
+    if (currentTime > 0) {
+      const progress = currentTime / duration;
+      wavesurfer.seekTo(progress);
       
-      wavesurfer.load(audioUrl);
+      // Switch to wavesurfer
+      g.currentWavesurfer = wavesurfer;
+      syncMasterTrack(wavesurfer, songData, progress);
       
-      wavesurfer.on('ready', function () {
-        const duration = wavesurfer.getDuration();
-        const containerWidth = waveformContainer.offsetWidth || 300;
-        wavesurfer.zoom(containerWidth / duration);
-        if (durationElement) durationElement.textContent = formatDuration(duration);
-        
-        // Sync with standalone audio position
-        if (g.standaloneAudio && g.standaloneAudio.currentTime > 0) {
-          const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-          wavesurfer.seekTo(progress);
-          
-          if (!g.standaloneAudio.paused) {
-            // Stop standalone and switch to wavesurfer
-            g.standaloneAudio.pause();
-            g.standaloneAudio.remove();
-            g.standaloneAudio = null;
-            
-            wavesurfer.play().catch(() => {});
-            syncMasterTrack(wavesurfer, songData, progress);
-          } else {
-            syncMasterTrack(wavesurfer, songData, progress);
-          }
-        }
-      });
+      // Resume playback if it was playing
+      if (wasPlaying) {
+        setTimeout(() => {
+          wavesurfer.play().catch(() => {});
+          updatePlayPauseIcons(cardElement, true);
+        }, 100);
+      }
+      
+      // Scroll to this card
+      scrollToSelected(cardElement);
+    }
+  });
     } else {
       wavesurfer = WaveSurfer.create({
         container: waveformContainer,
@@ -1426,83 +1439,100 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
       beforeLeave(data) {
-  const g = window.musicPlayerPersistent;
-  const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-  
-  if (isMusicPage && g.currentWavesurfer) {
-    // Save current state
-    g.currentTime = g.currentWavesurfer.getCurrentTime();
-    g.currentDuration = g.currentWavesurfer.getDuration();
-    const wasPlaying = g.currentWavesurfer.isPlaying();
-    
-    // CRITICAL: Extract and preserve the audio element
-    try {
-      const mediaElement = g.currentWavesurfer.getMediaElement();
-      if (mediaElement) {
-        // Clone the audio element to keep it alive
-        const audioClone = mediaElement.cloneNode();
-        audioClone.currentTime = g.currentTime;
-        audioClone.volume = mediaElement.volume;
+        const g = window.musicPlayerPersistent;
+        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
         
-        // Store as standalone audio
-        g.standaloneAudio = audioClone;
-        g.isPlaying = wasPlaying;
-        
-        // Setup event listeners
-        audioClone.addEventListener('timeupdate', () => {
-          g.currentTime = audioClone.currentTime;
-          const masterCounter = document.querySelector('.player-duration-counter');
-          if (masterCounter) {
-            masterCounter.textContent = formatDuration(audioClone.currentTime);
+        if (isMusicPage && g.currentWavesurfer) {
+          console.log('💾 Leaving music page - converting to standalone audio');
+          
+          // Save current state
+          g.currentTime = g.currentWavesurfer.getCurrentTime();
+          g.currentDuration = g.currentWavesurfer.getDuration();
+          const wasPlaying = g.currentWavesurfer.isPlaying();
+          
+          // Extract and preserve the audio element
+          try {
+            const mediaElement = g.currentWavesurfer.getMediaElement();
+            if (mediaElement && g.currentSongData) {
+              // Create standalone audio from the media element
+              const audioUrl = g.currentSongData.fields['R2 Audio URL'];
+              const audio = new Audio(audioUrl);
+              audio.currentTime = g.currentTime;
+              
+              // Stop old standalone if exists
+              if (g.standaloneAudio) {
+                g.standaloneAudio.pause();
+                g.standaloneAudio = null;
+              }
+              
+              g.standaloneAudio = audio;
+              
+              // Setup event listeners
+              audio.addEventListener('timeupdate', () => {
+                g.currentTime = audio.currentTime;
+                const masterCounter = document.querySelector('.player-duration-counter');
+                if (masterCounter) {
+                  masterCounter.textContent = formatDuration(audio.currentTime);
+                }
+                
+                // Update waveform if we have peaks
+                if (g.currentPeaksData && g.currentDuration > 0) {
+                  const progress = audio.currentTime / g.currentDuration;
+                  drawMasterWaveform(g.currentPeaksData, progress);
+                }
+              });
+              
+              audio.addEventListener('loadedmetadata', () => {
+                g.currentDuration = audio.duration;
+              });
+              
+              audio.addEventListener('play', () => {
+                g.isPlaying = true;
+                updateMasterControllerIcons(true);
+              });
+              
+              audio.addEventListener('pause', () => {
+                g.isPlaying = false;
+                updateMasterControllerIcons(false);
+              });
+              
+              audio.addEventListener('ended', () => {
+                navigateStandaloneTrack('next');
+              });
+              
+              // Resume playback if it was playing
+              if (wasPlaying) {
+                audio.play().catch(err => console.error('Resume playback error:', err));
+              }
+              
+              console.log('✓ Converted to standalone audio');
+            }
+          } catch (e) {
+            console.error('Error creating standalone audio:', e);
           }
-        });
-        
-        audioClone.addEventListener('play', () => {
-          g.isPlaying = true;
-          updateMasterControllerIcons(true);
-        });
-        
-        audioClone.addEventListener('pause', () => {
-          g.isPlaying = false;
-          updateMasterControllerIcons(false);
-        });
-        
-        audioClone.addEventListener('ended', () => {
-          navigateStandaloneTrack('next');
-        });
-        
-        // Resume playback if it was playing
-        if (wasPlaying) {
-          audioClone.play().catch(err => console.error('Resume playback error:', err));
         }
         
-        console.log('✓ Converted to standalone audio');
-      }
-    } catch (e) {
-      console.error('Error extracting audio:', e);
-    }
-  }
-  
-  if (isMusicPage) {
-    // Destroy ALL wavesurfers
-    g.allWavesurfers.forEach(ws => ws.destroy());
-    
-    // Clear ALL waveform containers
-    document.querySelectorAll('.waveform').forEach(container => {
-      container.innerHTML = '';
-    });
-    
-    // Clear the arrays
-    g.allWavesurfers = [];
-    g.waveformData = [];
-    g.persistedWaveformContainer = null;
-  }
-  
-  document.body.style.overflow = '';
-  document.documentElement.style.overflow = '';
-  document.body.style.height = '';
-  return Promise.resolve();
-},
+        if (isMusicPage) {
+          // Destroy ALL wavesurfers
+          g.allWavesurfers.forEach(ws => ws.destroy());
+          
+          // Clear ALL waveform containers
+          document.querySelectorAll('.waveform').forEach(container => {
+            container.innerHTML = '';
+          });
+          
+          // Clear the arrays
+          g.allWavesurfers = [];
+          g.waveformData = [];
+          g.persistedWaveformContainer = null;
+          g.currentWavesurfer = null;
+        }
+        
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.height = '';
+        return Promise.resolve();
+      },
 
       beforeEnter(data) {
         const nextContainer = data.next.container;
@@ -1527,11 +1557,8 @@ if (typeof barba !== 'undefined') {
           if (musicArea) musicArea.style.overflow = 'hidden';
         }
 
-        const playerWrapper = nextContainer.querySelector('.music-player-wrapper');
-        if (playerWrapper && g.hasActiveSong) {
-          playerWrapper.style.display = 'flex';
-          playerWrapper.style.alignItems = 'center';
-        }
+        // Keep player visible if there's active audio
+        updateMasterPlayerVisibility();
       },
 
       enter(data) {
@@ -1539,7 +1566,10 @@ if (typeof barba !== 'undefined') {
       },
 
       after(data) {
+        const g = window.musicPlayerPersistent;
+        
         window.scrollTo(0, 0);
+        
         if (window.Webflow) {
           try {
             window.Webflow.destroy();
@@ -1549,15 +1579,20 @@ if (typeof barba !== 'undefined') {
         }
         
         setTimeout(() => {
+          // Update player visibility and UI
           updateMasterPlayerVisibility();
+          
+          // If we have active song data, update the player info
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+          }
+          
           window.dispatchEvent(new Event('scroll'));
           window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition', {
-            detail: {
-              url: window.location.pathname,
-              isMusicPage: !!document.querySelector('.music-list-wrapper')
-            }
-          }));
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+          
+          console.log('✅ Transition complete');
         }, 100);
       }
     }]
