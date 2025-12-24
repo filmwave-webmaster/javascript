@@ -14,7 +14,8 @@ if (!window.musicPlayerPersistent) {
     hasActiveSong: false,
     persistedWaveformContainer: null,
     standaloneAudio: null,
-    shouldAutoPlay: false,  // NEW: Track if we should resume playback
+    shouldAutoPlay: false,
+    savedTime: 0,  // NEW: Separate saved position
     MASTER_DATA: [],
     allWavesurfers: [],
     waveformData: []
@@ -1113,17 +1114,18 @@ if (typeof barba !== 'undefined') {
   if (isMusicPage && g.currentWavesurfer) {
     console.log('💾 Saving playback state');
     
-    // Save the state BEFORE pausing
+    // Save to a SEPARATE variable that won't be overwritten
     const wasPlaying = g.currentWavesurfer.isPlaying();
-    g.currentTime = g.currentWavesurfer.getCurrentTime();
+    g.savedTime = g.currentWavesurfer.getCurrentTime();  // NEW: Different variable
+    g.currentTime = g.savedTime;
     g.currentDuration = g.currentWavesurfer.getDuration();
-    g.shouldAutoPlay = wasPlaying; // NEW: Save this separately
+    g.shouldAutoPlay = wasPlaying;
     
     // Pause the wavesurfer
     g.currentWavesurfer.pause();
-    g.isPlaying = false; // Update the flag
+    g.isPlaying = false;
     
-    console.log('💾 Saved - time:', g.currentTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
+    console.log('💾 Saved - time:', g.savedTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
   }
   
   if (isMusicPage) {
@@ -1219,28 +1221,28 @@ if (typeof barba !== 'undefined') {
         console.log('📊 Audio loaded, duration:', g.currentDuration);
       });
       
-      // Use 'canplay' event - fires when audio is ready to play
-      audio.addEventListener('canplay', () => {
-        console.log('🎵 canplay event - currentTime before seek:', audio.currentTime, 'target:', g.currentTime);
-        
-        // Seek to saved position
-        if (g.currentTime > 0) {
-          audio.currentTime = g.currentTime;
-          console.log('⏩ Seeked to:', audio.currentTime);
-        }
-        
-        // Resume if was playing - WAIT for seek to complete
-        if (g.shouldAutoPlay) {
-          // Small delay to ensure seek completes
-          setTimeout(() => {
-            console.log('▶️ Auto-playing from:', audio.currentTime);
-            audio.play().then(() => {
-              g.shouldAutoPlay = false; // Clear the flag
-              console.log('✅ Playback started successfully');
-            }).catch(err => console.error('Auto-play error:', err));
-          }, 100);
-        }
-      }, { once: true });
+    // Use 'canplay' event - fires when audio is ready to play
+audio.addEventListener('canplay', () => {
+  console.log('🎵 canplay event - currentTime:', audio.currentTime, 'savedTime:', g.savedTime);
+  
+  // Seek to saved position using savedTime (not currentTime)
+  if (g.savedTime > 0) {
+    audio.currentTime = g.savedTime;
+    console.log('⏩ Seeked to:', g.savedTime);
+    g.savedTime = 0; // Clear it after using
+  }
+  
+  // Resume if was playing
+  if (g.shouldAutoPlay) {
+    setTimeout(() => {
+      console.log('▶️ Auto-playing from:', audio.currentTime);
+      audio.play().then(() => {
+        g.shouldAutoPlay = false;
+        console.log('✅ Playback started successfully');
+      }).catch(err => console.error('Auto-play error:', err));
+    }, 100);
+  }
+}, { once: true });
       
       audio.addEventListener('timeupdate', () => {
         g.currentTime = audio.currentTime;
