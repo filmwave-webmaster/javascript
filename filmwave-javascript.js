@@ -716,36 +716,36 @@ function initializeWaveforms() {
       scrollToSelected(cardElement);
     }
   });
-    } else {
-      wavesurfer = WaveSurfer.create({
-        container: waveformContainer,
-        waveColor: '#e2e2e2',
-        progressColor: '#191919',
-        cursorColor: 'transparent',
-        cursorWidth: 0,
-        height: 40,
-        barWidth: 2,
-        barGap: 1,
-        normalize: true,
-        backend: 'WebAudio',
-        fillParent: true,
-        scrollParent: false,
-        responsive: 300,
-        interact: true,
-        hideScrollbar: true,
-        minPxPerSec: 1
-      });
-      
-      wavesurfer.load(audioUrl);
-      
-      wavesurfer.on('ready', function () {
-        const duration = wavesurfer.getDuration();
-        const containerWidth = waveformContainer.offsetWidth || 300;
-        wavesurfer.zoom(containerWidth / duration);
-        if (durationElement) durationElement.textContent = formatDuration(duration);
-        if (g.currentWavesurfer === wavesurfer) g.currentDuration = duration;
-      });
-    }
+} else {
+  wavesurfer = WaveSurfer.create({
+    container: waveformContainer,
+    waveColor: '#e2e2e2',
+    progressColor: '#191919',
+    cursorColor: 'transparent',
+    cursorWidth: 0,
+    height: 40,
+    barWidth: 2,
+    barGap: 1,
+    normalize: true,
+    backend: 'WebAudio',
+    fillParent: true,
+    scrollParent: false,
+    responsive: 300,
+    interact: true,
+    hideScrollbar: true,
+    minPxPerSec: 1
+  });
+  
+  wavesurfer.load(audioUrl);
+  
+  wavesurfer.on('ready', function () {
+    const duration = wavesurfer.getDuration();
+    const containerWidth = waveformContainer.offsetWidth || 300;
+    wavesurfer.zoom(containerWidth / duration);
+    if (durationElement) durationElement.textContent = formatDuration(duration);
+    if (g.currentWavesurfer === wavesurfer) g.currentDuration = duration;
+  });
+}
     
     wavesurfer.on('play', function () {
       // Stop standalone audio if playing
