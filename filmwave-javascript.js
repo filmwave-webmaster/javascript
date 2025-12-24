@@ -106,26 +106,23 @@ function navigateStandaloneTrack(direction) {
   
   if (!audioUrl) return;
   
-  // CRITICAL FIX: Properly stop and destroy old audio
+  // CRITICAL FIX: Mark old audio as inactive and destroy it
   if (g.standaloneAudio) {
     console.log('🛑 Stopping old standalone audio');
     
+    const oldAudio = g.standaloneAudio;
+    
+    // Mark as inactive so event listeners are ignored
+    oldAudio._inactive = true;
+    
     try {
       // Pause and reset
-      g.standaloneAudio.pause();
-      g.standaloneAudio.currentTime = 0;
+      oldAudio.pause();
+      oldAudio.currentTime = 0;
       
-      // Remove all event listeners by setting to null
-      g.standaloneAudio.onloadedmetadata = null;
-      g.standaloneAudio.ontimeupdate = null;
-      g.standaloneAudio.onplay = null;
-      g.standaloneAudio.onpause = null;
-      g.standaloneAudio.onended = null;
-      g.standaloneAudio.onerror = null;
-      
-      // Clear the source to stop network activity
-      g.standaloneAudio.removeAttribute('src');
-      g.standaloneAudio.load(); // This aborts the network request
+      // Remove the source
+      oldAudio.src = '';
+      oldAudio.load();
       
     } catch (e) {
       console.warn('Error stopping audio:', e);
@@ -146,8 +143,10 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, null);
   updateMasterPlayerVisibility();
   
-  // Setup event listeners BEFORE loading
+  // Setup event listeners with inactive check
   audio.addEventListener('loadedmetadata', () => {
+    if (audio._inactive) return; // Ignore if this audio is now inactive
+    
     g.currentDuration = audio.duration;
     const masterDuration = document.querySelector('.player-duration');
     if (masterDuration) {
@@ -157,6 +156,8 @@ function navigateStandaloneTrack(direction) {
   });
   
   audio.addEventListener('timeupdate', () => {
+    if (audio._inactive) return; // Ignore if this audio is now inactive
+    
     g.currentTime = audio.currentTime;
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
@@ -170,22 +171,28 @@ function navigateStandaloneTrack(direction) {
   });
   
   audio.addEventListener('play', () => {
+    if (audio._inactive) return; // Ignore if this audio is now inactive
+    
     g.isPlaying = true;
     updateMasterControllerIcons(true);
     console.log('▶️ New standalone audio playing');
   });
   
   audio.addEventListener('pause', () => {
+    if (audio._inactive) return; // Ignore if this audio is now inactive
+    
     g.isPlaying = false;
     updateMasterControllerIcons(false);
     console.log('⏸️ Standalone audio paused');
   });
   
   audio.addEventListener('ended', () => {
+    if (audio._inactive) return; // Ignore if this audio is now inactive
     navigateStandaloneTrack('next');
   });
   
   audio.addEventListener('error', (e) => {
+    if (audio._inactive) return; // Ignore if this audio is now inactive
     console.error('❌ Audio error:', e);
   });
   
@@ -201,7 +208,6 @@ function navigateStandaloneTrack(direction) {
   g.currentPeaksData = null;
   drawMasterWaveform(null, 0);
 }
-
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
