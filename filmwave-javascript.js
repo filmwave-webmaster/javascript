@@ -1108,22 +1108,24 @@ if (typeof barba !== 'undefined') {
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   
   console.log('🚪 beforeLeave - isMusicPage:', isMusicPage);
-  console.log('🚪 currentWavesurfer:', g.currentWavesurfer);
-  console.log('🚪 currentSongData:', g.currentSongData);
-  console.log('🚪 isPlaying:', g.isPlaying);
-  console.log('🚪 standaloneAudio exists:', !!g.standaloneAudio);
   
   if (isMusicPage && g.currentWavesurfer) {
     console.log('💾 Leaving music page - converting to standalone audio');
     
-    // Save current state
+    // CRITICAL: Pause the wavesurfer FIRST before saving state
+    const wasPlaying = g.currentWavesurfer.isPlaying();
     g.currentTime = g.currentWavesurfer.getCurrentTime();
     g.currentDuration = g.currentWavesurfer.getDuration();
-    const wasPlaying = g.currentWavesurfer.isPlaying();
+    
+    // Stop the wavesurfer immediately
+    if (wasPlaying) {
+      g.currentWavesurfer.pause();
+    }
     
     console.log('💾 Saved state - time:', g.currentTime, 'duration:', g.currentDuration, 'playing:', wasPlaying);
+    console.log('🚪 standaloneAudio exists:', !!g.standaloneAudio);
     
-    // CRITICAL CHECK: Only create standalone audio if it doesn't exist
+    // Only create standalone audio if it doesn't exist
     if (!g.standaloneAudio && g.currentSongData) {
       const audioUrl = g.currentSongData.fields['R2 Audio URL'];
       console.log('💾 Creating NEW standalone audio from:', audioUrl);
@@ -1170,11 +1172,16 @@ if (typeof barba !== 'undefined') {
         navigateStandaloneTrack('next');
       });
       
-      // Load and resume playback
+      // Load the audio
       audio.src = audioUrl;
-      audio.currentTime = g.currentTime;
       audio.load();
       
+      // Seek to saved position AFTER load starts
+      audio.addEventListener('loadedmetadata', () => {
+        audio.currentTime = g.currentTime;
+      }, { once: true });
+      
+      // Resume playback if it was playing
       if (wasPlaying) {
         audio.play().catch(err => console.error('Resume playback error:', err));
       }
@@ -1187,7 +1194,10 @@ if (typeof barba !== 'undefined') {
   
   if (isMusicPage) {
     // Destroy ALL wavesurfers
-    g.allWavesurfers.forEach(ws => ws.destroy());
+    g.allWavesurfers.forEach(ws => {
+      ws.pause(); // Pause before destroying
+      ws.destroy();
+    });
     
     // Clear ALL waveform containers
     document.querySelectorAll('.waveform').forEach(container => {
