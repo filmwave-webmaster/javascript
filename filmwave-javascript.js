@@ -10,12 +10,10 @@ if (!window.musicPlayerPersistent) {
     currentSongData: null,
     currentPeaksData: null,
     isPlaying: false,
-    MASTER_DATA: [],
-    hasActiveSong: false // Track if a song has been initialized
+    MASTER_DATA: []
   };
 }
 
-// Local variables that reset per page load
 let allWavesurfers = [];
 let waveformData = [];
 let lastPlayState = false;
@@ -100,24 +98,14 @@ function populateMasterStems(fields, playerScope) {
               stems.forEach(stem => {
                 const stemRow = templateCopy.cloneNode(true);
                 const link = stemRow.querySelector('.stem-link');
-                if (link) {
-                  link.textContent = stem.name;
-                  link.href = stem.url;
-                  link.setAttribute('download', '');
-                }
+                if (link) { link.textContent = stem.name; link.href = stem.url; link.setAttribute('download', ''); }
                 stemsList.appendChild(stemRow);
               });
             }
           }
-        } else {
-          masterStemsWrapper.style.display = 'none';
-        }
-      } catch (e) {
-        masterStemsWrapper.style.display = 'none';
-      }
-    } else {
-      masterStemsWrapper.style.display = 'none';
-    }
+        } else { masterStemsWrapper.style.display = 'none'; }
+      } catch (e) { masterStemsWrapper.style.display = 'none'; }
+    } else { masterStemsWrapper.style.display = 'none'; }
   }
 }
 
@@ -226,8 +214,6 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   const g = window.musicPlayerPersistent;
   g.currentWavesurfer = wavesurfer;
   g.currentSongData = songData;
-  g.hasActiveSong = true; // Mark as active for site-wide visibility
-  
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
@@ -262,6 +248,7 @@ function setupMasterPlayerControls() {
   if (masterPlayButton) masterPlayButton.onclick = handlePlayPause;
   if (controllerPlay) controllerPlay.onclick = handlePlayPause;
   if (controllerPause) controllerPause.onclick = handlePlayPause;
+  
   const navigateTrack = (direction) => {
     if (!g.currentWavesurfer) return;
     const currentIndex = allWavesurfers.indexOf(g.currentWavesurfer);
@@ -303,10 +290,7 @@ function setupMasterPlayerControls() {
 function populateSongCard(cardElement, song) {
   const fields = song.fields;
   const coverArt = cardElement.querySelector('.cover-art');
-  if (coverArt && fields['Cover Art']) {
-    coverArt.src = fields['Cover Art'][0].url;
-    coverArt.alt = fields['Song Title'] || 'Song';
-  }
+  if (coverArt && fields['Cover Art']) { coverArt.src = fields['Cover Art'][0].url; coverArt.alt = fields['Song Title'] || 'Song'; }
   const songName = cardElement.querySelector('.song-name');
   if (songName) songName.textContent = fields['Song Title'] || 'Untitled';
   const artistName = cardElement.querySelector('.artist-name');
@@ -367,9 +351,7 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
 
 function updatePlayButtonVisibility(cardElement, wavesurfer) {
   const playButton = cardElement.querySelector('.play-button');
-  if (playButton && (wavesurfer.isPlaying() || wavesurfer.getCurrentTime() > 0)) {
-    playButton.style.opacity = '1';
-  }
+  if (playButton && (wavesurfer.isPlaying() || wavesurfer.getCurrentTime() > 0)) playButton.style.opacity = '1';
 }
 
 /**
@@ -398,38 +380,39 @@ function initializeWaveforms() {
     if (playButton) {
       playButton.style.opacity = '0';
       cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
-      cardElement.addEventListener('mouseleave', () => {
-        if (!wavesurfer.isPlaying() && wavesurfer.getCurrentTime() === 0) playButton.style.opacity = '0';
-      });
+      cardElement.addEventListener('mouseleave', () => { if (!wavesurfer.isPlaying() && wavesurfer.getCurrentTime() === 0) playButton.style.opacity = '0'; });
     }
 
     const wavesurfer = WaveSurfer.create({
       container: waveformContainer,
       waveColor: '#e2e2e2',
       progressColor: '#191919',
+      cursorColor: 'transparent',
+      cursorWidth: 0,
       height: 40,
       barWidth: 2,
       barGap: 1,
       normalize: true,
       backend: 'WebAudio',
-      interact: true
+      fillParent: true,
+      scrollParent: false,
+      responsive: 300,
+      interact: true,
+      hideScrollbar: true,
+      minPxPerSec: 1
     });
 
     wavesurfer.load(audioUrl);
     wavesurfer.on('ready', () => {
       const duration = wavesurfer.getDuration();
+      const containerWidth = waveformContainer.offsetWidth || 300;
+      wavesurfer.zoom(containerWidth / duration);
       if (durationElement) durationElement.textContent = formatDuration(duration);
     });
 
     wavesurfer.on('play', () => {
-      allWavesurfers.forEach(ws => { if (ws !== wavesurfer && ws.isPlaying()) { ws.pause(); ws.seekTo(0); }});
-      waveformData.forEach(data => {
-        if (data.wavesurfer !== wavesurfer) {
-          updatePlayPauseIcons(data.cardElement, false);
-          const pb = data.cardElement.querySelector('.play-button');
-          if (pb) pb.style.opacity = '0';
-        }
-      });
+      allWavesurfers.forEach(ws => { if (ws !== wavesurfer && ws.isPlaying()) { ws.pause(); ws.seekTo(0); } });
+      waveformData.forEach(data => { if (data.wavesurfer !== wavesurfer) { updatePlayPauseIcons(data.cardElement, false); const pb = data.cardElement.querySelector('.play-button'); if (pb) pb.style.opacity = '0'; } });
       g.currentWavesurfer = wavesurfer;
       g.isPlaying = true;
       lastPlayState = true;
@@ -437,6 +420,15 @@ function initializeWaveforms() {
       updateMasterControllerIcons(true);
       updatePlayButtonVisibility(cardElement, wavesurfer);
       syncMasterTrack(wavesurfer, songData);
+    });
+
+    wavesurfer.on('timeupdate', () => {
+      if (g.currentWavesurfer === wavesurfer) {
+        const progress = wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0;
+        if (g.currentPeaksData) drawMasterWaveform(g.currentPeaksData, progress);
+        const masterCounter = document.querySelector('.music-player-wrapper .player-duration-counter');
+        if (masterCounter) masterCounter.textContent = formatDuration(wavesurfer.getCurrentTime());
+      }
     });
 
     wavesurfer.on('pause', () => {
@@ -447,11 +439,26 @@ function initializeWaveforms() {
       updatePlayButtonVisibility(cardElement, wavesurfer);
     });
 
+    wavesurfer.on('finish', () => {
+      wavesurfer.seekTo(0);
+      updateMasterControllerIcons(false);
+      const currentIndex = allWavesurfers.indexOf(wavesurfer);
+      let nextWS = null;
+      for (let i = currentIndex + 1; i < allWavesurfers.length; i++) {
+        const data = waveformData.find(d => d.wavesurfer === allWavesurfers[i]);
+        if (data && data.cardElement.offsetParent !== null) { nextWS = allWavesurfers[i]; break; }
+      }
+      if (nextWS) { g.currentWavesurfer = nextWS; setTimeout(() => nextWS.play(), 100); }
+    });
+
+    allWavesurfers.push(wavesurfer);
+    waveformData.push({ wavesurfer, cardElement, songData });
+
     const playPauseElements = [coverArtWrapper, songName];
-    playPauseElements.forEach(element => {
-      if (element) {
-        element.style.cursor = 'pointer';
-        element.addEventListener('click', (e) => {
+    playPauseElements.forEach(el => {
+      if (el) {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', (e) => {
           if (e.target.closest('.w-dropdown-toggle') || e.target.closest('.w-dropdown-list')) return;
           e.stopPropagation();
           if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
@@ -466,30 +473,93 @@ function initializeWaveforms() {
       }
     });
 
-    allWavesurfers.push(wavesurfer);
-    waveformData.push({ wavesurfer, cardElement, waveformContainer, audioUrl, songData });
-  });
-}
-
-/**
- * ============================================================
- * ACCORDION FILTERS & AIRTABLE
- * ============================================================
- */
-function initFilterAccordions() {
-  document.querySelectorAll('.filter-header').forEach(header => {
-    header.addEventListener('click', function() {
-      const content = this.nextElementSibling;
-      const isOpen = content.classList.contains('open');
-      document.querySelectorAll('.filter-list').forEach(l => { l.style.maxHeight = '0px'; l.classList.remove('open'); });
-      if (!isOpen) {
-        content.style.maxHeight = content.scrollHeight + 'px';
-        content.classList.add('open');
+    wavesurfer.on('interaction', (newProgress) => {
+      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+        const shouldPlay = lastPlayState;
+        g.currentWavesurfer.pause();
+        g.currentWavesurfer.seekTo(0);
+        g.currentWavesurfer = wavesurfer;
+        syncMasterTrack(wavesurfer, songData, newProgress);
+        if (shouldPlay) setTimeout(() => wavesurfer.play(), 50);
+      } else {
+        const wasPlaying = wavesurfer.isPlaying();
+        g.currentWavesurfer = wavesurfer;
+        if (wasPlaying) setTimeout(() => { if (!wavesurfer.isPlaying()) wavesurfer.play(); }, 50);
+      }
+      if (g.currentPeaksData && g.currentWavesurfer === wavesurfer) {
+        drawMasterWaveform(g.currentPeaksData, newProgress);
+        const masterCounter = document.querySelector('.music-player-wrapper .player-duration-counter');
+        if (masterCounter) masterCounter.textContent = formatDuration(wavesurfer.getCurrentTime());
       }
     });
   });
 }
 
+/**
+ * ============================================================
+ * FILTERING & SEARCH LOGIC
+ * ============================================================
+ */
+function applyFilters() {
+  const searchVal = document.querySelector('.search-input')?.value.toLowerCase() || "";
+  const keyVal = document.querySelector('#key-filter')?.textContent.trim() || "All Keys";
+  const bpmVal = document.querySelector('#bpm-filter')?.textContent.trim() || "All BPM";
+  const catVal = document.querySelector('#category-filter')?.textContent.trim() || "All Categories";
+
+  const cards = document.querySelectorAll('.song-wrapper');
+  cards.forEach(card => {
+    const data = JSON.parse(card.dataset.songData || '{}').fields || {};
+    const matchesSearch = !searchVal || 
+                         (data['Song Title'] || "").toLowerCase().includes(searchVal) || 
+                         (data['Artist'] || "").toLowerCase().includes(searchVal);
+    const matchesKey = keyVal === "All Keys" || data['Key'] === keyVal;
+    const matchesBPM = bpmVal === "All BPM" || (data['BPM'] && data['BPM'].toString() === bpmVal.replace(' BPM', ''));
+    const matchesCat = catVal === "All Categories" || (data['Category'] && data['Category'].includes(catVal));
+
+    card.style.display = (matchesSearch && matchesKey && matchesBPM && matchesCat) ? 'flex' : 'none';
+  });
+}
+
+function setupFilters() {
+  const searchInput = document.querySelector('.search-input');
+  const clearBtn = document.querySelector('.search-clear-button');
+  const searchForm = document.querySelector('.search-wrapper');
+
+  if (searchForm) searchForm.addEventListener('submit', (e) => e.preventDefault());
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      if (clearBtn) clearBtn.style.display = searchInput.value.length > 0 ? 'flex' : 'none';
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(applyFilters, 300);
+    });
+  }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      clearBtn.style.display = 'none';
+      applyFilters();
+    });
+  }
+
+  document.querySelectorAll('.filter-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const dropdown = this.closest('.w-dropdown');
+      const toggle = dropdown.querySelector('.w-dropdown-toggle');
+      if (toggle) toggle.textContent = this.textContent;
+      
+      // Close Webflow dropdown
+      dropdown.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      applyFilters();
+    });
+  });
+}
+
+/**
+ * ============================================================
+ * AIRTABLE & BARBA INITIALIZATION
+ * ============================================================
+ */
 async function fetchSongs() {
   try {
     const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?view=${VIEW_ID}`, {
@@ -506,104 +576,67 @@ function displaySongs(songs) {
   if (!container) return;
   const templateCard = container.querySelector('.song-wrapper');
   if (!templateCard) return;
+  
+  const templateClone = templateCard.cloneNode(true);
   container.innerHTML = '';
   songs.forEach(song => {
-    const newCard = templateCard.cloneNode(true);
-    newCard.style.opacity = '1';
+    const newCard = templateClone.cloneNode(true);
+    newCard.style.display = 'flex';
     populateSongCard(newCard, song);
     container.appendChild(newCard);
   });
-  setTimeout(() => initializeWaveforms(), 100);
+  setTimeout(initializeWaveforms, 100);
 }
 
-/**
- * ============================================================
- * MAIN INITIALIZATION & BARBA
- * ============================================================
- */
 async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const playerWrapper = document.querySelector('.music-player-wrapper');
 
-  // Logic from Code 7
-  const searchForm = document.querySelector('.search-input-wrapper form');
-  if (searchForm) searchForm.onsubmit = (e) => e.preventDefault();
-
-  if (isMusicPage) {
-    initFilterAccordions();
-    const songs = await fetchSongs();
-    displaySongs(songs);
-  }
-
-  // FORCE PLAYER VISIBILITY SITE-WIDE IF SONG IS ACTIVE
-  const player = document.querySelector('.music-player-wrapper');
-  if (player && g.hasActiveSong) {
-    player.style.display = 'flex';
-    player.style.alignItems = 'center';
+  if (playerWrapper && g.currentSongData) {
+    playerWrapper.style.display = 'flex';
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
     updateMasterControllerIcons(g.isPlaying);
-    setupMasterPlayerControls();
-    
     if (g.currentPeaksData) {
-      const duration = g.currentWavesurfer.getDuration();
-      const progress = duration > 0 ? g.currentWavesurfer.getCurrentTime() / duration : 0;
+      const progress = g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration();
       drawMasterWaveform(g.currentPeaksData, progress);
     }
   }
+
+  if (isMusicPage) {
+    setupFilters();
+    const songs = g.MASTER_DATA.length > 0 ? g.MASTER_DATA : await fetchSongs();
+    displaySongs(songs);
+  }
+  setupMasterPlayerControls();
 }
 
-window.addEventListener('load', initMusicPage);
+// Keyboard Controls
+document.addEventListener('keydown', (e) => {
+  const g = window.musicPlayerPersistent;
+  if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    if (g.currentWavesurfer) g.currentWavesurfer.playPause();
+  }
+});
 
+// Barba Initialization
 if (typeof barba !== 'undefined') {
   barba.init({
     transitions: [{
       name: 'fade',
-      
-      // RESTORING CODE 7 OVERFLOW HANDLING
-      beforeEnter(data) {
-        const nextContainer = data.next.container;
-        const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-        
-        if (!isMusicPage) {
-          document.body.style.overflow = 'visible';
-          document.documentElement.style.overflow = 'visible';
-          document.body.style.height = 'auto';
-          nextContainer.style.overflow = 'visible';
-        } else {
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.height = '100vh';
-          nextContainer.style.overflow = 'hidden';
-          
-          const musicArea = nextContainer.querySelector('.music-area-wrapper');
-          if (musicArea) musicArea.style.overflow = 'hidden';
-        }
-      },
-
-      enter() {
+      leave: () => gsap.to('.main-wrapper', { opacity: 0, duration: 0.3 }),
+      enter: () => {
+        gsap.from('.main-wrapper', { opacity: 0, duration: 0.3 });
         return initMusicPage();
       },
-
-      after() {
+      after: () => {
         window.scrollTo(0, 0);
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
-        }
-        setTimeout(() => {
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition', {
-            detail: {
-              url: window.location.pathname,
-              isMusicPage: !!document.querySelector('.music-list-wrapper')
-            }
-          }));
-        }, 100);
+        if (window.Webflow) { window.Webflow.destroy(); window.Webflow.ready(); window.Webflow.require('ix2').init(); }
       }
     }]
   });
 }
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', initMusicPage);
