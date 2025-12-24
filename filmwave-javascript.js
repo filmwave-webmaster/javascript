@@ -53,7 +53,7 @@ window.addEventListener('message', (event) => {
 
 /**
  * ============================================================
- * UTILITY FUNCTIONS
+ * UTILITY FUNCTIONS [cite: 163-174]
  * ============================================================
  */
 function formatDuration(seconds) {
@@ -102,7 +102,7 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * MASTER PLAYER FUNCTIONS
+ * MASTER PLAYER FUNCTIONS [cite: 175-236]
  * ============================================================
  */
 function populateMasterStems(fields, playerScope) {
@@ -320,7 +320,7 @@ function setupMasterPlayerControls() {
 
 /**
  * ============================================================
- * SONG CARD FUNCTIONS (RESTORING ORIGINAL HOVER/PLAY LOGIC)
+ * SONG CARD FUNCTIONS [cite: 238-261]
  * ============================================================
  */
 function populateSongCard(cardElement, song) {
@@ -397,7 +397,7 @@ function updatePlayButtonVisibility(cardElement, wavesurfer) {
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS & HOVERS
+ * INITIALIZE WAVEFORMS & HOVERS [cite: 262-280]
  * ============================================================
  */
 function initializeWaveforms() {
@@ -418,7 +418,7 @@ function initializeWaveforms() {
     if (!waveformContainer) return;
     waveformContainer.id = `waveform-${songId}`;
     
-    // RESTORE HOVER LOGIC [cite: 87]
+    // RESTORE HOVER LOGIC 
     if (playButton) {
       playButton.style.opacity = '0';
       cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
@@ -471,7 +471,6 @@ function initializeWaveforms() {
       updatePlayButtonVisibility(cardElement, wavesurfer);
     });
 
-    // CLICK TO PLAY LOGIC [cite: 95]
     const playPauseElements = [coverArtWrapper, songName];
     playPauseElements.forEach(element => {
       if (element) {
@@ -498,7 +497,7 @@ function initializeWaveforms() {
 
 /**
  * ============================================================
- * ACCORDION FILTERS & AIRTABLE (RESTORING CODE 7)
+ * ACCORDION FILTERS & AIRTABLE 
  * ============================================================
  */
 function initFilterAccordions() {
@@ -553,26 +552,33 @@ async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
 
-  // Launch the site-wide engine
+  // Site-wide components
   initBackgroundEngine();
-
-  // Search Prevention logic 
   const searchForm = document.querySelector('.search-input-wrapper form');
   if (searchForm) searchForm.onsubmit = (e) => e.preventDefault();
 
+  // Music Page Specific
   if (isMusicPage || g.isEngine) {
     initFilterAccordions();
     const songs = await fetchSongs();
     if (isMusicPage && !g.isEngine) displaySongs(songs);
   }
 
-  // Persist Master Player UI
+  // Persist Player Visibility Site-Wide [cite: 216, 185-192]
   const player = document.querySelector('.music-player-wrapper');
   if (player && g.currentSongData) {
     player.style.display = 'flex';
+    player.style.alignItems = 'center';
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
     updateMasterControllerIcons(g.isPlaying);
     setupMasterPlayerControls();
+    
+    // Draw current progress in master waveform if it exists
+    if (g.currentPeaksData) {
+      const duration = g.currentWavesurfer.getDuration();
+      const progress = duration > 0 ? g.currentWavesurfer.getCurrentTime() / duration : 0;
+      drawMasterWaveform(g.currentPeaksData, progress);
+    }
   }
 }
 
