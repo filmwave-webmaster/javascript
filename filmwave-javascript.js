@@ -106,11 +106,24 @@ function navigateStandaloneTrack(direction) {
   
   if (!audioUrl) return;
   
-  // Stop and remove old audio
+  // CRITICAL FIX: Properly stop and destroy old audio
   if (g.standaloneAudio) {
+    console.log('🛑 Stopping old standalone audio');
     g.standaloneAudio.pause();
+    g.standaloneAudio.currentTime = 0;
+    g.standaloneAudio.src = '';  // ← Clear the source
+    
+    // Remove all event listeners by cloning and replacing
+    const oldAudio = g.standaloneAudio;
+    const newAudio = oldAudio.cloneNode();
+    if (oldAudio.parentNode) {
+      oldAudio.parentNode.removeChild(oldAudio);
+    }
+    
     g.standaloneAudio = null;
   }
+  
+  console.log('🎵 Loading new song:', nextSong.fields['Song Title']);
   
   // Create new audio element
   const audio = new Audio(audioUrl);
@@ -147,11 +160,13 @@ function navigateStandaloneTrack(direction) {
   audio.addEventListener('play', () => {
     g.isPlaying = true;
     updateMasterControllerIcons(true);
+    console.log('▶️ New standalone audio playing');
   });
   
   audio.addEventListener('pause', () => {
     g.isPlaying = false;
     updateMasterControllerIcons(false);
+    console.log('⏸️ Standalone audio paused');
   });
   
   audio.addEventListener('ended', () => {
