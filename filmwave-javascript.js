@@ -106,22 +106,10 @@ function navigateStandaloneTrack(direction) {
   
   if (!audioUrl) return;
   
-  console.log('🛑 Stopping old standalone audio');
+  console.log('🛑 Stopping current track');
   console.log('🎵 Loading new song:', nextSong.fields['Song Title']);
   
-  // CRITICAL: Completely destroy old audio element
-  if (g.standaloneAudio) {
-    try {
-      g.standaloneAudio.pause();
-      g.standaloneAudio.removeAttribute('src');
-      g.standaloneAudio.load();
-      delete g.standaloneAudio;
-    } catch (e) {}
-  }
-  
-  // Create new audio element
-  const audio = new Audio(audioUrl);
-  g.standaloneAudio = audio;
+  // Update song data FIRST
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
@@ -129,63 +117,68 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, null);
   updateMasterPlayerVisibility();
   
-  // Setup event listeners - use arrow functions that capture current audio reference
-  const handleLoadedMetadata = () => {
-    if (g.standaloneAudio !== audio) return;
-    g.currentDuration = audio.duration;
-    const masterDuration = document.querySelector('.player-duration');
-    if (masterDuration) {
-      masterDuration.textContent = formatDuration(audio.duration);
-    }
-    console.log('📊 Audio loaded, duration:', g.currentDuration);
-  };
-  
-  const handleTimeUpdate = () => {
-    if (g.standaloneAudio !== audio) return;
-    g.currentTime = audio.currentTime;
-    const masterCounter = document.querySelector('.player-duration-counter');
-    if (masterCounter) {
-      masterCounter.textContent = formatDuration(audio.currentTime);
-    }
-    if (g.currentPeaksData && g.currentDuration > 0) {
-      const progress = audio.currentTime / audio.duration;
-      drawMasterWaveform(g.currentPeaksData, progress);
-    }
-  };
-  
-  const handlePlay = () => {
-    if (g.standaloneAudio !== audio) return;
-    g.isPlaying = true;
-    updateMasterControllerIcons(true);
-    console.log('▶️ New standalone audio playing');
-  };
-  
-  const handlePause = () => {
-    if (g.standaloneAudio !== audio) return;
-    g.isPlaying = false;
-    updateMasterControllerIcons(false);
-    console.log('⏸️ Standalone audio paused');
-  };
-  
-  const handleEnded = () => {
-    if (g.standaloneAudio !== audio) return;
-    navigateStandaloneTrack('next');
-  };
-  
-  const handleError = (e) => {
-    if (g.standaloneAudio !== audio) return;
-    console.error('❌ Audio error:', e);
-  };
-  
-  audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-  audio.addEventListener('timeupdate', handleTimeUpdate);
-  audio.addEventListener('play', handlePlay);
-  audio.addEventListener('pause', handlePause);
-  audio.addEventListener('ended', handleEnded);
-  audio.addEventListener('error', handleError);
-  
-  // Play the audio
-  audio.play().catch(err => console.error('Playback error:', err));
+  // REUSE the same audio element - just change the source
+  if (g.standaloneAudio) {
+    // Pause current playback
+    g.standaloneAudio.pause();
+    
+    // Change the source
+    g.standaloneAudio.src = audioUrl;
+    
+    // Load and play
+    g.standaloneAudio.load();
+    g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    
+  } else {
+    // First time - create the audio element
+    const audio = new Audio(audioUrl);
+    g.standaloneAudio = audio;
+    
+    // Setup event listeners ONCE
+    audio.addEventListener('loadedmetadata', () => {
+      g.currentDuration = audio.duration;
+      const masterDuration = document.querySelector('.player-duration');
+      if (masterDuration) {
+        masterDuration.textContent = formatDuration(audio.duration);
+      }
+      console.log('📊 Audio loaded, duration:', g.currentDuration);
+    });
+    
+    audio.addEventListener('timeupdate', () => {
+      g.currentTime = audio.currentTime;
+      const masterCounter = document.querySelector('.player-duration-counter');
+      if (masterCounter) {
+        masterCounter.textContent = formatDuration(audio.currentTime);
+      }
+      if (g.currentPeaksData && g.currentDuration > 0) {
+        const progress = audio.currentTime / audio.duration;
+        drawMasterWaveform(g.currentPeaksData, progress);
+      }
+    });
+    
+    audio.addEventListener('play', () => {
+      g.isPlaying = true;
+      updateMasterControllerIcons(true);
+      console.log('▶️ Standalone audio playing');
+    });
+    
+    audio.addEventListener('pause', () => {
+      g.isPlaying = false;
+      updateMasterControllerIcons(false);
+      console.log('⏸️ Standalone audio paused');
+    });
+    
+    audio.addEventListener('ended', () => {
+      navigateStandaloneTrack('next');
+    });
+    
+    audio.addEventListener('error', (e) => {
+      console.error('❌ Audio error:', e);
+    });
+    
+    // Play the audio
+    audio.play().catch(err => console.error('Playback error:', err));
+  }
   
   g.isPlaying = true;
   updateMasterControllerIcons(true);
