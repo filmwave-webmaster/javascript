@@ -1182,7 +1182,7 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-   after(data) {
+  after(data) {
   const g = window.musicPlayerPersistent;
   
   window.scrollTo(0, 0);
@@ -1221,19 +1221,24 @@ if (typeof barba !== 'undefined') {
       
       // Use 'canplay' event - fires when audio is ready to play
       audio.addEventListener('canplay', () => {
-        // Only seek once
-        if (!audio._hasSeeked && g.currentTime > 0) {
+        console.log('🎵 canplay event - currentTime before seek:', audio.currentTime, 'target:', g.currentTime);
+        
+        // Seek to saved position
+        if (g.currentTime > 0) {
           audio.currentTime = g.currentTime;
-          audio._hasSeeked = true;
-          console.log('⏩ Seeked to:', g.currentTime);
+          console.log('⏩ Seeked to:', audio.currentTime);
         }
         
-        // Resume if was playing
+        // Resume if was playing - WAIT for seek to complete
         if (g.shouldAutoPlay) {
-          console.log('▶️ Auto-playing from:', audio.currentTime);
-          audio.play().then(() => {
-            g.shouldAutoPlay = false; // Clear the flag
-          }).catch(err => console.error('Auto-play error:', err));
+          // Small delay to ensure seek completes
+          setTimeout(() => {
+            console.log('▶️ Auto-playing from:', audio.currentTime);
+            audio.play().then(() => {
+              g.shouldAutoPlay = false; // Clear the flag
+              console.log('✅ Playback started successfully');
+            }).catch(err => console.error('Auto-play error:', err));
+          }, 100);
         }
       }, { once: true });
       
