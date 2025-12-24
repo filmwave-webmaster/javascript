@@ -233,8 +233,11 @@ function updateMasterControllerIcons(isPlaying) {
 
 function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   const g = window.musicPlayerPersistent;
+  
+  // Store globally
   g.currentWavesurfer = wavesurfer;
   g.currentSongData = songData;
+  
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
@@ -249,8 +252,7 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
       const decodedData = wavesurfer.getDecodedData();
       if (decodedData) {
         g.currentPeaksData = decodedData.getChannelData(0);
-        const progress = forcedProgress !== null ?
-          forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
+        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
         drawMasterWaveform(g.currentPeaksData, progress);
       }
     } catch (e) {
@@ -266,6 +268,7 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
 
 function setupMasterPlayerControls() {
   const g = window.musicPlayerPersistent;
+  
   const masterPlayButton = document.querySelector('.player-play-pause-button');
   const controllerPlay = document.querySelector('.controller-play');
   const controllerPause = document.querySelector('.controller-pause');
@@ -429,9 +432,12 @@ function updatePlayButtonVisibility(cardElement, wavesurfer) {
  */
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
-  console.log(' Init card waveforms...');
+  
+  console.log('🎵 Init card waveforms...');
+  
   const songCards = document.querySelectorAll('.song-wrapper');
   console.log(`Found ${songCards.length} cards`);
+  
   songCards.forEach(cardElement => {
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
@@ -598,7 +604,8 @@ function initializeWaveforms() {
       }
     });
   });
-  console.log(` Initialized ${allWavesurfers.length} card waveforms`);
+  
+  console.log(`✅ Initialized ${allWavesurfers.length} card waveforms`);
 }
 
 /**
@@ -626,8 +633,7 @@ function displaySongs(songs) {
   const container = document.querySelector('.music-list-wrapper');
   if (!container) return;
   const templateWrapper = container.querySelector('.template-wrapper');
-  const templateCard = templateWrapper ?
-    templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
+  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
   if (!templateCard) return;
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
@@ -639,6 +645,7 @@ function displaySongs(songs) {
     populateSongCard(newCard, song);
     container.appendChild(newCard);
   });
+  
   setTimeout(() => initializeWaveforms(), 100);
 }
 
@@ -716,16 +723,21 @@ document.addEventListener('keydown', function (e) {
  * ============================================================
  */
 async function initMusicPage() {
-  console.log(' Init Music Page...');
+  console.log('🎵 Init Music Page...');
+  
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  
+  // Show/hide player based on state
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     if (g.currentSongData) {
       playerWrapper.style.display = 'flex';
+      // Re-sync UI
       if (g.currentWavesurfer) {
         updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
         updateMasterControllerIcons(g.isPlaying);
+        // Redraw waveform
         if (g.currentPeaksData) {
           const progress = g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration();
           drawMasterWaveform(g.currentPeaksData, progress);
@@ -735,8 +747,12 @@ async function initMusicPage() {
       playerWrapper.style.display = 'none';
     }
   }
+  
+  // Only init music page features if on music page
   if (isMusicPage) {
-    console.log(' On music page - full init');
+    console.log('📄 On music page - full init');
+    
+    // Prevent form submit
     const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
     if (searchForm) {
       searchForm.addEventListener('submit', function (e) {
@@ -751,17 +767,21 @@ async function initMusicPage() {
       const formBlock = searchForm.querySelector('.w-form');
       if (formBlock) formBlock.style.display = 'block';
     }
+    
+    // Initialize filter features
     initFilterAccordions();
     initCheckboxTextColor();
     initFilterItemBackground();
     initDynamicTagging();
     initMutualExclusion();
     initSearchAndFilters();
+    
+    // Fetch and display
     const songs = await fetchSongs();
     displaySongs(songs);
     initMasterPlayer();
   } else {
-    console.log(' Not on music page');
+    console.log('📄 Not on music page');
   }
 }
 
@@ -772,19 +792,24 @@ async function initMusicPage() {
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
+    // Remove old listeners by cloning
     const newHeader = header.cloneNode(true);
     header.parentNode.replaceChild(newHeader, header);
+    
     newHeader.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
+      
       document.querySelectorAll('.filter-list').forEach(list => {
         list.style.maxHeight = '0px';
         list.classList.remove('open');
       });
+      
       document.querySelectorAll('.arrow-icon').forEach(arr => {
         arr.style.transform = 'rotate(0deg)';
       });
+      
       if (!isOpen) {
         const actualHeight = Math.min(content.scrollHeight, 300);
         content.style.maxHeight = actualHeight + 'px';
@@ -824,209 +849,333 @@ function initFilterItemBackground() {
   setTimeout(function() {
     let checkboxes = document.querySelectorAll('.checkbox-wrapper input[type="checkbox"]');
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
-    if (checkboxes.length === 0) return;
-    checkboxes.forEach(cb => {
-      const wrap = cb.closest('.checkbox-include-wrapper') || cb.parentElement;
-      if (cb.checked) wrap.style.backgroundColor = '#f3f3f3';
-      else wrap.style.backgroundColor = '';
-      cb.addEventListener('change', () => {
-        if (cb.checked) wrap.style.backgroundColor = '#f3f3f3';
-        else wrap.style.backgroundColor = '';
+    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    function updateBackgroundColor(checkbox) {
+      const filterItem = checkbox.closest('.filter-item');
+      if (checkbox.checked) {
+        if (filterItem) filterItem.classList.add('is-selected');
+      } else {
+        if (filterItem) filterItem.classList.remove('is-selected');
+      }
+    }
+    
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        updateBackgroundColor(this);
       });
     });
-  }, 500);
+  }, 100);
 }
 
 /**
  * ============================================================
- * MUTUAL EXCLUSION (Exclude/Include)
- * ============================================================
- */
-function initMutualExclusion() {
-  const includeSection = document.querySelector('.filter-list-include');
-  const excludeSection = document.querySelector('.filter-list-exclude');
-  if (!includeSection || !excludeSection) return;
-  const includeCheckboxes = includeSection.querySelectorAll('input[type="checkbox"]');
-  const excludeCheckboxes = excludeSection.querySelectorAll('input[type="checkbox"]');
-  includeCheckboxes.forEach(incCb => {
-    incCb.addEventListener('change', () => {
-      if (incCb.checked) {
-        const val = incCb.value;
-        excludeCheckboxes.forEach(exCb => {
-          if (exCb.value === val && exCb.checked) {
-            exCb.checked = false;
-            exCb.dispatchEvent(new Event('change'));
-          }
-        });
-      }
-    });
-  });
-  excludeCheckboxes.forEach(exCb => {
-    exCb.addEventListener('change', () => {
-      if (exCb.checked) {
-        const val = exCb.value;
-        includeCheckboxes.forEach(incCb => {
-          if (incCb.value === val && incCb.checked) {
-            incCb.checked = false;
-            incCb.dispatchEvent(new Event('change'));
-          }
-        });
-      }
-    });
-  });
-}
-
-/**
- * ============================================================
- * DYNAMIC TAGGING
+ * DYNAMIC TAGGING WITH DESELECTABLE RADIOS
  * ============================================================
  */
 function initDynamicTagging() {
-  const container = document.querySelector('.selected-filters-wrapper');
-  if (!container) return;
-  const tagTemplate = container.querySelector('.filter-tag');
-  if (!tagTemplate) return;
-  tagTemplate.style.display = 'none';
-  const updateTags = () => {
-    container.querySelectorAll('.filter-tag:not([style*="display: none"])').forEach(t => t.remove());
-    const checked = document.querySelectorAll('.filter-area-wrapper input[type="checkbox"]:checked');
-    checked.forEach(cb => {
-      const newTag = tagTemplate.cloneNode(true);
-      newTag.style.display = 'flex';
-      const labelText = cb.parentElement.querySelector('.w-form-label')?.textContent || cb.value;
-      const tagText = newTag.querySelector('.filter-tag-text');
-      if (tagText) tagText.textContent = labelText;
-      newTag.addEventListener('click', () => {
-        cb.checked = false;
-        cb.dispatchEvent(new Event('change'));
-        applyFilters();
+  setTimeout(function() {
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (!tagsContainer) return;
+    
+    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
+    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
+    
+    function createTag(input, labelText) {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      tag.innerHTML = `
+        <span class="filter-tag-text">${labelText}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
+      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+        input.checked = false;
+        const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
+        if (wrapper) wrapper.classList.remove('is-active');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        tag.remove();
       });
-      container.appendChild(newTag);
+      return tag;
+    }
+
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        let label;
+        const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
+        if (this.closest('.checkbox-single-select-wrapper')) {
+          label = this.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
+        } else {
+          label = wrapper ? wrapper.querySelector('.w-form-label, .filter-text') : null;
+        }
+        const labelText = label ? label.textContent.trim() : 'Filter';
+        if (this.checked) {
+          if (wrapper) wrapper.classList.add('is-active');
+          const tag = createTag(this, labelText);
+          tagsContainer.appendChild(tag);
+        } else {
+          if (wrapper) wrapper.classList.remove('is-active');
+          const tags = tagsContainer.querySelectorAll('.filter-tag');
+          tags.forEach(tag => {
+            if (tag.querySelector('.filter-tag-text').textContent === labelText) tag.remove();
+          });
+        }
+      });
     });
-  };
-  document.querySelectorAll('.filter-area-wrapper input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', updateTags);
-  });
-  updateTags();
+
+    radioWrappers.forEach(wrapper => {
+      wrapper.addEventListener('mousedown', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) this.dataset.wasChecked = radio.checked;
+      });
+
+      wrapper.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        const label = this.querySelector('.radio-button-label');
+        if (!radio || !label) return;
+        const labelText = label.innerText.trim();
+        const radioName = radio.name;
+
+        setTimeout(() => {
+          if (this.dataset.wasChecked === "true") {
+            radio.checked = false;
+            this.classList.remove('is-active');
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => { if (tag.dataset.radioName === radioName) tag.remove(); });
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+              const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+              if (otherWrapper) otherWrapper.classList.remove('is-active');
+            });
+            this.classList.add('is-active');
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => { if (tag.dataset.radioName === radioName) tag.remove(); });
+            const tag = createTag(radio, labelText);
+            tag.dataset.radioName = radioName;
+            tagsContainer.appendChild(tag);
+          }
+        }, 50);
+      });
+    });
+  }, 100);
 }
 
 /**
  * ============================================================
- * SEARCH & FILTERS
+ * MUTUAL EXCLUSION
+ * ============================================================
+ */
+function initMutualExclusion() {
+  const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
+  const acapWrapper = document.querySelector('[data-exclusive="acapella"]');
+  const instInput = instWrapper ? instWrapper.querySelector('input[type="checkbox"]') : null;
+  const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
+
+  if (instInput && acapInput) {
+    function clearOther(otherInput, otherWrapper) {
+      if (otherInput.checked) {
+        otherInput.checked = false;
+        if (otherWrapper) otherWrapper.classList.remove('is-active');
+        otherInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+    instInput.addEventListener('change', function() {
+      if (this.checked) clearOther(acapInput, acapWrapper);
+    });
+    acapInput.addEventListener('change', function() {
+      if (this.checked) clearOther(instInput, instWrapper);
+    });
+  }
+}
+
+/**
+ * ============================================================
+ * SEARCH AND FILTERS
  * ============================================================
  */
 function initSearchAndFilters() {
-  const searchInput = document.querySelector('.search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => applyFilters(), 300);
-    });
-  }
-  document.querySelectorAll('.filter-area-wrapper input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', () => applyFilters());
-  });
-  const clearAll = document.querySelector('.clear-all-filters');
-  if (clearAll) {
-    clearAll.addEventListener('click', () => {
-      document.querySelectorAll('.filter-area-wrapper input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-        cb.dispatchEvent(new Event('change'));
-      });
-      if (searchInput) searchInput.value = '';
-      applyFilters();
-    });
-  }
-}
-
-function applyFilters() {
   const g = window.musicPlayerPersistent;
-  const searchInput = document.querySelector('.search-input');
-  const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const includeCheckboxes = document.querySelectorAll('.filter-list-include input[type="checkbox"]:checked');
-  const excludeCheckboxes = document.querySelectorAll('.filter-list-exclude input[type="checkbox"]:checked');
-  const includeTags = Array.from(includeCheckboxes).map(cb => cb.value.toLowerCase());
-  const excludeTags = Array.from(excludeCheckboxes).map(cb => cb.value.toLowerCase());
-  const filtered = g.MASTER_DATA.filter(song => {
-    const f = song.fields;
-    const title = (f['Song Title'] || '').toLowerCase();
-    const artist = (f['Artist'] || '').toLowerCase();
-    const tagsStr = (f['Tags'] || '').toLowerCase();
-    const songTags = tagsStr.split(',').map(t => t.trim()).filter(t => t !== '');
-    if (term && !title.includes(term) && !artist.includes(term)) return false;
-    if (includeTags.length > 0) {
-      const hasAll = includeTags.every(t => songTags.includes(t));
-      if (!hasAll) return false;
-    }
-    if (excludeTags.length > 0) {
-      const hasAnyExcluded = excludeTags.some(t => songTags.includes(t));
-      if (hasAnyExcluded) return false;
-    }
-    return true;
-  });
-  displaySongs(filtered);
-}
+  
+  function toggleClearButton() {
+    const clearBtn = document.querySelector('.circle-x');
+    const searchBar = document.querySelector('[data-filter-search="true"]');
+    const filterInputs = document.querySelectorAll('[data-filter-group]');
+    
+    if (!clearBtn) return;
 
-function updateMasterPlayerVisibility() {
-  const g = window.musicPlayerPersistent;
-  const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (playerWrapper) {
-    if (g.currentSongData) {
-      playerWrapper.style.display = 'flex';
-      playerWrapper.style.alignItems = 'center';
-      if (g.currentWavesurfer) {
-        updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-        updateMasterControllerIcons(g.currentWavesurfer.isPlaying());
-        if (g.currentPeaksData) {
-          const progress = g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration();
-          drawMasterWaveform(g.currentPeaksData, progress);
-        }
-      }
+    const hasSearch = searchBar && searchBar.value.trim().length > 0;
+    const hasFilters = Array.from(filterInputs).some(input => input.checked);
+
+    clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+  }
+
+  function clearAllFilters() {
+    const searchBar = document.querySelector('[data-filter-search="true"]');
+    const filterInputs = document.querySelectorAll('[data-filter-group]');
+    
+    if (searchBar) searchBar.value = '';
+
+    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+    if (tagRemoveButtons.length > 0) {
+      tagRemoveButtons.forEach(btn => btn.click());
     } else {
-      playerWrapper.style.display = 'none';
+      filterInputs.forEach(input => {
+        input.checked = false;
+        const parent = input.closest('.w-checkbox') || input.parentElement;
+        if (parent) {
+          const visualCheckbox = parent.querySelector('.w-checkbox-input');
+          if (visualCheckbox) visualCheckbox.classList.remove('w--redirected-checked');
+        }
+      });
     }
+    
+    toggleClearButton();
+    applyFilters();
   }
+
+  function applyFilters() {
+    const searchBar = document.querySelector('[data-filter-search="true"]');
+    const filterInputs = document.querySelectorAll('[data-filter-group]');
+    const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+    const keywords = query.split(/\s+/).filter(k => k.length > 0);
+    const selectedFilters = [];
+    
+    filterInputs.forEach(input => {
+      if (input.checked) {
+        selectedFilters.push({
+          group: input.getAttribute('data-filter-group'),
+          value: input.getAttribute('data-filter-value').toLowerCase()
+        });
+      }
+    });
+
+    const visibleIds = g.MASTER_DATA.filter(record => {
+      const fields = record.fields;
+      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+      const matchesSearch = keywords.every(k => allText.includes(k));
+      const matchesAttributes = selectedFilters.every(filter => {
+        let recVal = fields[filter.group];
+        if (recVal === undefined || recVal === null) return false;
+        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+        return String(recVal).toLowerCase() === filter.value;
+      });
+      return matchesSearch && matchesAttributes;
+    }).map(r => r.id);
+
+    document.querySelectorAll('.song-wrapper').forEach(card => {
+      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+    });
+    
+    toggleClearButton();
+  }
+
+  // Setup listeners
+  const clearBtn = document.querySelector('.circle-x');
+  if (clearBtn) {
+    clearBtn.style.display = 'none';
+    clearBtn.addEventListener('click', clearAllFilters);
+  }
+
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (searchBar) {
+    searchBar.addEventListener('keydown', (e) => {
+      if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.code)) {
+        e.stopPropagation();
+      }
+    });
+    searchBar.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      toggleClearButton();
+      searchTimeout = setTimeout(applyFilters, 400);
+    });
+  }
+  
+  document.querySelectorAll('[data-filter-group]').forEach(input => {
+    input.addEventListener('change', () => {
+      applyFilters();
+      toggleClearButton();
+    });
+  });
 }
 
 /**
  * ============================================================
- * BARBA NAVIGATION
+ * LOAD & BARBA
  * ============================================================
  */
+window.addEventListener('load', () => {
+  initMusicPage();
+});
+
 if (typeof barba !== 'undefined') {
   barba.init({
+    prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
     transitions: [{
-      name: 'opacity-transition',
-      sync: true,
-      leave(data) {
-        return gsap.to(data.current.container, { opacity: 0, duration: 0.3 });
+      name: 'default',
+      
+      beforeLeave(data) {
+        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+        if (isMusicPage && window.musicPlayerPersistent.currentWavesurfer) {
+          window.musicPlayerPersistent.currentTime = window.musicPlayerPersistent.currentWavesurfer.getCurrentTime();
+          window.musicPlayerPersistent.currentDuration = window.musicPlayerPersistent.currentWavesurfer.getDuration();
+          window.musicPlayerPersistent.isPlaying = window.musicPlayerPersistent.currentWavesurfer.isPlaying();
+          const currentD = waveformData.find(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
+          if (currentD) {
+            const persistentDiv = document.createElement('div');
+            persistentDiv.style.display = 'none';
+            document.body.appendChild(persistentDiv);
+            persistentDiv.appendChild(currentD.waveformContainer);
+            window.musicPlayerPersistent.persistedWaveformContainer = currentD.waveformContainer;
+          }
+        }
+        if (isMusicPage) {
+          allWavesurfers.forEach(ws => {
+            if (ws !== window.musicPlayerPersistent.currentWavesurfer) ws.destroy();
+          });
+          allWavesurfers = allWavesurfers.filter(ws => ws === window.musicPlayerPersistent.currentWavesurfer);
+          waveformData = waveformData.filter(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
+        }
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.height = '';
+        return Promise.resolve();
       },
+
       beforeEnter(data) {
-        const g = window.musicPlayerPersistent;
         const nextContainer = data.next.container;
-        const isNextMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-        if (!isNextMusicPage) {
+        const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
+        const g = window.musicPlayerPersistent;
+
+        if (!isMusicPage) {
           document.body.style.overflow = 'visible';
           document.documentElement.style.overflow = 'visible';
           document.body.style.height = 'auto';
           nextContainer.style.overflow = 'visible';
+          
+          const mainContent = nextContainer.querySelector('.main-content');
+          if (mainContent) mainContent.style.overflow = 'visible';
         } else {
           document.body.style.overflow = 'hidden';
           document.documentElement.style.overflow = 'hidden';
           document.body.style.height = '100vh';
           nextContainer.style.overflow = 'hidden';
+          
           const musicArea = nextContainer.querySelector('.music-area-wrapper');
           if (musicArea) musicArea.style.overflow = 'hidden';
         }
+
+        // Force player visibility
         const playerWrapper = nextContainer.querySelector('.music-player-wrapper');
-        if (playerWrapper && g.currentSongData) {
+        if (playerWrapper && g.hasActiveSong) {
           playerWrapper.style.display = 'flex';
           playerWrapper.style.alignItems = 'center';
         }
       },
+
       enter(data) {
         return initMusicPage();
       },
+
       after(data) {
         window.scrollTo(0, 0);
         if (window.Webflow) {
