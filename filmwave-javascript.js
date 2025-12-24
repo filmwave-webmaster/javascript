@@ -109,15 +109,26 @@ function navigateStandaloneTrack(direction) {
   // CRITICAL FIX: Properly stop and destroy old audio
   if (g.standaloneAudio) {
     console.log('🛑 Stopping old standalone audio');
-    g.standaloneAudio.pause();
-    g.standaloneAudio.currentTime = 0;
-    g.standaloneAudio.src = '';  // ← Clear the source
     
-    // Remove all event listeners by cloning and replacing
-    const oldAudio = g.standaloneAudio;
-    const newAudio = oldAudio.cloneNode();
-    if (oldAudio.parentNode) {
-      oldAudio.parentNode.removeChild(oldAudio);
+    try {
+      // Pause and reset
+      g.standaloneAudio.pause();
+      g.standaloneAudio.currentTime = 0;
+      
+      // Remove all event listeners by setting to null
+      g.standaloneAudio.onloadedmetadata = null;
+      g.standaloneAudio.ontimeupdate = null;
+      g.standaloneAudio.onplay = null;
+      g.standaloneAudio.onpause = null;
+      g.standaloneAudio.onended = null;
+      g.standaloneAudio.onerror = null;
+      
+      // Clear the source to stop network activity
+      g.standaloneAudio.removeAttribute('src');
+      g.standaloneAudio.load(); // This aborts the network request
+      
+    } catch (e) {
+      console.warn('Error stopping audio:', e);
     }
     
     g.standaloneAudio = null;
@@ -126,7 +137,7 @@ function navigateStandaloneTrack(direction) {
   console.log('🎵 Loading new song:', nextSong.fields['Song Title']);
   
   // Create new audio element
-  const audio = new Audio(audioUrl);
+  const audio = new Audio();
   g.standaloneAudio = audio;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
@@ -135,13 +146,14 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, null);
   updateMasterPlayerVisibility();
   
-  // Setup event listeners
+  // Setup event listeners BEFORE loading
   audio.addEventListener('loadedmetadata', () => {
     g.currentDuration = audio.duration;
     const masterDuration = document.querySelector('.player-duration');
     if (masterDuration) {
       masterDuration.textContent = formatDuration(audio.duration);
     }
+    console.log('📊 Audio loaded, duration:', g.currentDuration);
   });
   
   audio.addEventListener('timeupdate', () => {
@@ -173,8 +185,15 @@ function navigateStandaloneTrack(direction) {
     navigateStandaloneTrack('next');
   });
   
-  // Play the audio
+  audio.addEventListener('error', (e) => {
+    console.error('❌ Audio error:', e);
+  });
+  
+  // NOW load and play the audio
+  audio.src = audioUrl;
+  audio.load();
   audio.play().catch(err => console.error('Playback error:', err));
+  
   g.isPlaying = true;
   updateMasterControllerIcons(true);
   
