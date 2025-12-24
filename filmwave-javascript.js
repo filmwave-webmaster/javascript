@@ -1110,92 +1110,24 @@ if (typeof barba !== 'undefined') {
   console.log('🚪 beforeLeave - isMusicPage:', isMusicPage);
   
   if (isMusicPage && g.currentWavesurfer) {
-    console.log('💾 Leaving music page - converting to standalone audio');
+    console.log('💾 Saving playback state');
     
-    // CRITICAL: Pause the wavesurfer FIRST before saving state
+    // Just save the state - don't create audio yet
     const wasPlaying = g.currentWavesurfer.isPlaying();
     g.currentTime = g.currentWavesurfer.getCurrentTime();
     g.currentDuration = g.currentWavesurfer.getDuration();
+    g.isPlaying = wasPlaying;
     
-    // Stop the wavesurfer immediately
-    if (wasPlaying) {
-      g.currentWavesurfer.pause();
-    }
+    // Pause the wavesurfer
+    g.currentWavesurfer.pause();
     
-    console.log('💾 Saved state - time:', g.currentTime, 'duration:', g.currentDuration, 'playing:', wasPlaying);
-    console.log('🚪 standaloneAudio exists:', !!g.standaloneAudio);
-    
-    // Only create standalone audio if it doesn't exist
-    if (!g.standaloneAudio && g.currentSongData) {
-      const audioUrl = g.currentSongData.fields['R2 Audio URL'];
-      console.log('💾 Creating NEW standalone audio from:', audioUrl);
-      
-      const audio = new Audio();
-      g.standaloneAudio = audio;
-      
-      // Setup event listeners
-      audio.addEventListener('loadedmetadata', () => {
-        g.currentDuration = audio.duration;
-        const masterDuration = document.querySelector('.player-duration');
-        if (masterDuration) {
-          masterDuration.textContent = formatDuration(audio.duration);
-        }
-        console.log('💾 Audio loaded, duration:', g.currentDuration);
-      });
-      
-      audio.addEventListener('timeupdate', () => {
-        g.currentTime = audio.currentTime;
-        const masterCounter = document.querySelector('.player-duration-counter');
-        if (masterCounter) {
-          masterCounter.textContent = formatDuration(audio.currentTime);
-        }
-        
-        if (g.currentPeaksData && g.currentDuration > 0) {
-          const progress = audio.currentTime / g.currentDuration;
-          drawMasterWaveform(g.currentPeaksData, progress);
-        }
-      });
-      
-      audio.addEventListener('play', () => {
-        g.isPlaying = true;
-        updateMasterControllerIcons(true);
-        console.log('▶️ Standalone audio playing');
-      });
-      
-      audio.addEventListener('pause', () => {
-        g.isPlaying = false;
-        updateMasterControllerIcons(false);
-        console.log('⏸️ Standalone audio paused');
-      });
-      
-      audio.addEventListener('ended', () => {
-        navigateStandaloneTrack('next');
-      });
-      
-      // Load the audio
-      audio.src = audioUrl;
-      audio.load();
-      
-      // Seek to saved position AFTER load starts
-      audio.addEventListener('loadedmetadata', () => {
-        audio.currentTime = g.currentTime;
-      }, { once: true });
-      
-      // Resume playback if it was playing
-      if (wasPlaying) {
-        audio.play().catch(err => console.error('Resume playback error:', err));
-      }
-      
-      console.log('✓ Created standalone audio');
-    } else {
-      console.log('✓ Standalone audio already exists, not creating new one');
-    }
+    console.log('💾 Saved - time:', g.currentTime, 'duration:', g.currentDuration, 'wasPlaying:', wasPlaying);
   }
   
   if (isMusicPage) {
     // Destroy ALL wavesurfers
     g.allWavesurfers.forEach(ws => {
-      ws.pause(); // Pause before destroying
+      ws.pause();
       ws.destroy();
     });
     
