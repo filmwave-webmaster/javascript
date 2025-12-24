@@ -10,9 +10,7 @@ if (!window.musicPlayerPersistent) {
     currentSongData: null,
     currentPeaksData: null,
     isPlaying: false,
-    MASTER_DATA: [],
-    // Bridge logic: Detect if this is the background "engine" instance
-    isEngine: window.location.search.includes('engine=true')
+    MASTER_DATA: []
   };
 }
 
@@ -29,31 +27,7 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
 /**
  * ============================================================
- * INVISIBLE ENGINE BRIDGE
- * ============================================================
- */
-function initBackgroundEngine() {
-  if (!window.musicPlayerPersistent.isEngine && !document.getElementById('music-engine')) {
-    const engine = document.createElement('iframe');
-    engine.id = 'music-engine';
-    engine.src = window.location.origin + '/music?engine=true';
-    engine.style.display = 'none';
-    engine.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(engine);
-  }
-}
-
-// Keep data synced between the hidden engine and the active page
-window.addEventListener('message', (event) => {
-  if (event.origin !== window.location.origin) return;
-  if (event.data.type === 'SYNC_DATA') {
-    window.musicPlayerPersistent.MASTER_DATA = event.data.payload;
-  }
-});
-
-/**
- * ============================================================
- * UTILITY FUNCTIONS [cite: 163-174]
+ * UTILITY FUNCTIONS
  * ============================================================
  */
 function formatDuration(seconds) {
@@ -102,7 +76,7 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * MASTER PLAYER FUNCTIONS [cite: 175-236]
+ * MASTER PLAYER FUNCTIONS
  * ============================================================
  */
 function populateMasterStems(fields, playerScope) {
@@ -296,7 +270,7 @@ function setupMasterPlayerControls() {
       }
     } else {
       for (let i = currentIndex - 1; i >= 0; i--) {
-        const data = waveformData.find(d => d.wavesurfer === allWavesurfers[i]);
+        const data = waveformData.find(data => data.wavesurfer === allWavesurfers[i]);
         if (data && data.cardElement.offsetParent !== null) { targetWS = allWavesurfers[i]; break; }
       }
     }
@@ -320,7 +294,7 @@ function setupMasterPlayerControls() {
 
 /**
  * ============================================================
- * SONG CARD FUNCTIONS [cite: 238-261]
+ * SONG CARD FUNCTIONS
  * ============================================================
  */
 function populateSongCard(cardElement, song) {
@@ -397,7 +371,7 @@ function updatePlayButtonVisibility(cardElement, wavesurfer) {
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS & HOVERS [cite: 262-280]
+ * INITIALIZE WAVEFORMS & HOVERS
  * ============================================================
  */
 function initializeWaveforms() {
@@ -418,7 +392,7 @@ function initializeWaveforms() {
     if (!waveformContainer) return;
     waveformContainer.id = `waveform-${songId}`;
     
-    // RESTORE HOVER LOGIC 
+    // RESTORE HOVER LOGIC
     if (playButton) {
       playButton.style.opacity = '0';
       cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
@@ -497,7 +471,7 @@ function initializeWaveforms() {
 
 /**
  * ============================================================
- * ACCORDION FILTERS & AIRTABLE 
+ * ACCORDION FILTERS & AIRTABLE
  * ============================================================
  */
 function initFilterAccordions() {
@@ -521,9 +495,6 @@ async function fetchSongs() {
     });
     const data = await response.json();
     window.musicPlayerPersistent.MASTER_DATA = data.records;
-    if (window.musicPlayerPersistent.isEngine) {
-      window.parent.postMessage({ type: 'SYNC_DATA', payload: data.records }, window.location.origin);
-    }
     return data.records;
   } catch (error) { return []; }
 }
@@ -552,19 +523,18 @@ async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
 
-  // Site-wide components
-  initBackgroundEngine();
+  // Prevent Search Form Submission
   const searchForm = document.querySelector('.search-input-wrapper form');
   if (searchForm) searchForm.onsubmit = (e) => e.preventDefault();
 
-  // Music Page Specific
-  if (isMusicPage || g.isEngine) {
+  // Music Page Specific Logic
+  if (isMusicPage) {
     initFilterAccordions();
     const songs = await fetchSongs();
-    if (isMusicPage && !g.isEngine) displaySongs(songs);
+    displaySongs(songs);
   }
 
-  // Persist Player Visibility Site-Wide [cite: 216, 185-192]
+  // FORCE PLAYER VISIBILITY SITE-WIDE IF SONG SELECTED
   const player = document.querySelector('.music-player-wrapper');
   if (player && g.currentSongData) {
     player.style.display = 'flex';
@@ -573,7 +543,7 @@ async function initMusicPage() {
     updateMasterControllerIcons(g.isPlaying);
     setupMasterPlayerControls();
     
-    // Draw current progress in master waveform if it exists
+    // Draw current progress in master waveform if peaks exist
     if (g.currentPeaksData) {
       const duration = g.currentWavesurfer.getDuration();
       const progress = duration > 0 ? g.currentWavesurfer.getCurrentTime() / duration : 0;
