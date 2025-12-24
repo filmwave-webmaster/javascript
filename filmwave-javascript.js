@@ -14,6 +14,7 @@ if (!window.musicPlayerPersistent) {
     hasActiveSong: false,
     persistedWaveformContainer: null,
     standaloneAudio: null,
+    shouldAutoPlay: false,  // NEW: Track if we should resume playback
     MASTER_DATA: [],
     allWavesurfers: [],
     waveformData: []
@@ -1112,16 +1113,17 @@ if (typeof barba !== 'undefined') {
   if (isMusicPage && g.currentWavesurfer) {
     console.log('💾 Saving playback state');
     
-    // Just save the state - don't create audio yet
+    // Save the state BEFORE pausing
     const wasPlaying = g.currentWavesurfer.isPlaying();
     g.currentTime = g.currentWavesurfer.getCurrentTime();
     g.currentDuration = g.currentWavesurfer.getDuration();
-    g.isPlaying = wasPlaying;
+    g.shouldAutoPlay = wasPlaying; // NEW: Save this separately
     
     // Pause the wavesurfer
     g.currentWavesurfer.pause();
+    g.isPlaying = false; // Update the flag
     
-    console.log('💾 Saved - time:', g.currentTime, 'duration:', g.currentDuration, 'wasPlaying:', wasPlaying);
+    console.log('💾 Saved - time:', g.currentTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
   }
   
   if (isMusicPage) {
@@ -1180,40 +1182,115 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
-        const g = window.musicPlayerPersistent;
+    after(data) {
+  const g = window.musicPlayerPersistent;
+  
+  window.scrollTo(0, 0);
+  
+  if (window.Webflow) {
+    try {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    } catch (e) {}
+  }
+  
+  setTimeout(() => {
+    console.log('🎮 Setting up master player controls');
+    setupMasterPlayerControls();
+    
+    // If we have saved song data but no audio element, create standalone audio
+    if (g.currentSongData && !g.standaloneAudio && !g.currentWavesurfer) {
+      console.log('🎵 Creating standalone audio for saved song');
+      console.log('🎵 Should auto-play:', g.shouldAutoPlay);
+      
+      const audioUrl = g.currentSongData.fields['R2 Audio URL'];
+      
+      const audio = new Audio(audioUrl);
+      g.standaloneAudio = audio;
+      
+      // Setup event listeners ONCE
+      audio.addEventListener('loadedmetadata', () => {
+        g.currentDuration = audio.duration;
+        const masterDuration = document.querySelector('.player-duration');
+        if (masterDuration) {
+          masterDuration.textContent = formatDuration(audio.duration);
+        }
+        console.log('📊 Audio loaded, duration:', g.currentDuration);
         
-        window.scrollTo(0, 0);
-        
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
+        // Seek to saved position
+        if (g.currentTime > 0) {
+          audio.currentTime = g.currentTime;
+          console.log('⏩ Seeked to:', g.currentTime);
         }
         
-        setTimeout(() => {
-          // CRITICAL: Re-setup master player controls on EVERY page
-          console.log('🎮 Setting up master player controls');
-          setupMasterPlayerControls();
-          
-          // Update player visibility and UI
-          updateMasterPlayerVisibility();
-          
-          // If we have active song data, update the player info
-          if (g.currentSongData) {
-            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-            updateMasterControllerIcons(g.isPlaying);
-          }
-          
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          
-          console.log('✅ Transition complete - Controls ready');
-        }, 200);
-      }
+        // Resume if was playing
+        if (g.shouldAutoPlay) {
+          console.log('▶️ Auto-playing...');
+          audio.play().then(() => {
+            g.shouldAutoPlay = false; // Clear the flag
+          }).catch(err => console.error('Auto-play error:', err));
+        }
+      });
+      
+      audio.addEventListener('timeupdate', () => {
+        g.currentTime = audio.currentTime;
+        const masterCounter = document.querySelector('.player-duration-counter');
+        if (masterCounter) {
+          masterCounter.textContent = formatDuration(audio.currentTime);
+        }
+        if (g.currentPeaksData && g.currentDuration > 0) {
+          const progress = audio.currentTime / audio.duration;
+          drawMasterWaveform(g.currentPeaksData, progress);
+        }
+      });
+      
+      audio.addEventListener('play', () => {
+        g.isPlaying = true;
+        updateMasterControllerIcons(true);
+        console.log('▶️ Standalone audio playing');
+      });
+      
+      audio.addEventListener('pause', () => {
+        g.isPlaying = false;
+        updateMasterControllerIcons(false);
+        console.log('⏸️ Standalone audio paused');
+      });
+      
+      audio.addEventListener('ended', () => {
+        navigateStandaloneTrack('next');
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('❌ Audio error:', e);
+      });
+      
+      // Load the audio
+      audio.src = audioUrl;
+      audio.load();
+    }
+    
+    // FORCE player visibility if there's active audio
+    const playerWrapper = document.querySelector('.music-player-wrapper');
+    if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
+      playerWrapper.style.display = 'flex';
+      playerWrapper.style.alignItems = 'center';
+      console.log('👁️ Forced player visible');
+    }
+    
+    // Update player info
+    if (g.currentSongData) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+    }
+    
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+    
+    console.log('✅ Transition complete - Controls ready');
+  }, 200);
+}
     }]
   });
 }
