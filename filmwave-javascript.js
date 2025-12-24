@@ -1182,7 +1182,7 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-    after(data) {
+   after(data) {
   const g = window.musicPlayerPersistent;
   
   window.scrollTo(0, 0);
@@ -1209,7 +1209,7 @@ if (typeof barba !== 'undefined') {
       const audio = new Audio(audioUrl);
       g.standaloneAudio = audio;
       
-      // Setup event listeners ONCE
+      // Setup event listeners
       audio.addEventListener('loadedmetadata', () => {
         g.currentDuration = audio.duration;
         const masterDuration = document.querySelector('.player-duration');
@@ -1217,21 +1217,25 @@ if (typeof barba !== 'undefined') {
           masterDuration.textContent = formatDuration(audio.duration);
         }
         console.log('📊 Audio loaded, duration:', g.currentDuration);
-        
-        // Seek to saved position
-        if (g.currentTime > 0) {
+      });
+      
+      // Use 'canplay' event - fires when audio is ready to play
+      audio.addEventListener('canplay', () => {
+        // Only seek once
+        if (!audio._hasSeeked && g.currentTime > 0) {
           audio.currentTime = g.currentTime;
+          audio._hasSeeked = true;
           console.log('⏩ Seeked to:', g.currentTime);
         }
         
         // Resume if was playing
         if (g.shouldAutoPlay) {
-          console.log('▶️ Auto-playing...');
+          console.log('▶️ Auto-playing from:', audio.currentTime);
           audio.play().then(() => {
             g.shouldAutoPlay = false; // Clear the flag
           }).catch(err => console.error('Auto-play error:', err));
         }
-      });
+      }, { once: true });
       
       audio.addEventListener('timeupdate', () => {
         g.currentTime = audio.currentTime;
