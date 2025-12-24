@@ -825,7 +825,27 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
       beforeLeave(data) {
-        // Reset body and html overflow before transition starts
+        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+        if (isMusicPage && window.musicPlayerPersistent.currentWavesurfer) {
+          window.musicPlayerPersistent.currentTime = window.musicPlayerPersistent.currentWavesurfer.getCurrentTime();
+          window.musicPlayerPersistent.currentDuration = window.musicPlayerPersistent.currentWavesurfer.getDuration();
+          window.musicPlayerPersistent.isPlaying = window.musicPlayerPersistent.currentWavesurfer.isPlaying();
+          const currentD = waveformData.find(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
+          if (currentD) {
+            const persistentDiv = document.createElement('div');
+            persistentDiv.style.display = 'none';
+            document.body.appendChild(persistentDiv);
+            persistentDiv.appendChild(currentD.waveformContainer);
+            window.musicPlayerPersistent.persistedWaveformContainer = currentD.waveformContainer;
+          }
+        }
+        if (isMusicPage) {
+          allWavesurfers.forEach(ws => {
+            if (ws !== window.musicPlayerPersistent.currentWavesurfer) ws.destroy();
+          });
+          allWavesurfers = allWavesurfers.filter(ws => ws === window.musicPlayerPersistent.currentWavesurfer);
+          waveformData = waveformData.filter(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
+        }
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
         document.body.style.height = '';
@@ -835,9 +855,8 @@ if (typeof barba !== 'undefined') {
       beforeEnter(data) {
         const nextContainer = data.next.container;
         const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
+        const g = window.musicPlayerPersistent;
 
-        // FORCE RESET OF GLOBAL STYLES
-        // This stops the Home page from inheriting the Music page's hidden overflow
         if (!isMusicPage) {
           document.body.style.overflow = 'visible';
           document.documentElement.style.overflow = 'visible';
@@ -847,7 +866,6 @@ if (typeof barba !== 'undefined') {
           const mainContent = nextContainer.querySelector('.main-content');
           if (mainContent) mainContent.style.overflow = 'visible';
         } else {
-          // It is the music page, force the hidden state
           document.body.style.overflow = 'hidden';
           document.documentElement.style.overflow = 'hidden';
           document.body.style.height = '100vh';
@@ -855,6 +873,13 @@ if (typeof barba !== 'undefined') {
           
           const musicArea = nextContainer.querySelector('.music-area-wrapper');
           if (musicArea) musicArea.style.overflow = 'hidden';
+        }
+
+        // Force player visibility
+        const playerWrapper = nextContainer.querySelector('.music-player-wrapper');
+        if (playerWrapper && g.hasActiveSong) {
+          playerWrapper.style.display = 'flex';
+          playerWrapper.style.alignItems = 'center';
         }
       },
 
@@ -872,6 +897,7 @@ if (typeof barba !== 'undefined') {
           } catch (e) {}
         }
         setTimeout(() => {
+          updateMasterPlayerVisibility();
           window.dispatchEvent(new Event('scroll'));
           window.dispatchEvent(new Event('resize'));
           window.dispatchEvent(new CustomEvent('barbaAfterTransition', {
