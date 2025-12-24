@@ -10,7 +10,14 @@ if (!window.musicPlayerPersistent) {
     currentSongData: null,
     currentPeaksData: null,
     isPlaying: false,
-    MASTER_DATA: []
+    currentTime: 0,
+    currentDuration: 0,
+    hasActiveSong: false,
+    persistedWaveformContainer: null,
+    standaloneAudio: null,  // ← Make sure this is here!
+    MASTER_DATA: [],
+    allWavesurfers: [],
+    waveformData: []
   };
 }
 
@@ -824,101 +831,117 @@ if (typeof barba !== 'undefined') {
     transitions: [{
       name: 'default',
       
-      beforeLeave(data) {
-        const g = window.musicPlayerPersistent;
-        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+     beforeLeave(data) {
+  const g = window.musicPlayerPersistent;
+  const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+  
+  console.log('🚪 beforeLeave - isMusicPage:', isMusicPage);
+  console.log('🚪 currentWavesurfer:', g.currentWavesurfer);
+  console.log('🚪 currentSongData:', g.currentSongData);
+  console.log('🚪 isPlaying:', g.isPlaying);
+  
+  if (isMusicPage && g.currentWavesurfer) {
+    console.log('💾 Leaving music page - converting to standalone audio');
+    
+    // Save current state
+    g.currentTime = g.currentWavesurfer.getCurrentTime();
+    g.currentDuration = g.currentWavesurfer.getDuration();
+    const wasPlaying = g.currentWavesurfer.isPlaying();
+    
+    console.log('💾 Saved state - time:', g.currentTime, 'duration:', g.currentDuration, 'playing:', wasPlaying);
+    
+    // Extract and preserve the audio element
+    try {
+      const mediaElement = g.currentWavesurfer.getMediaElement();
+      console.log('💾 Media element:', mediaElement);
+      
+      if (mediaElement && g.currentSongData) {
+        // Create standalone audio from the media element
+        const audioUrl = g.currentSongData.fields['R2 Audio URL'];
+        console.log('💾 Creating standalone audio from:', audioUrl);
         
-        if (isMusicPage && g.currentWavesurfer) {
-          console.log('💾 Leaving music page - converting to standalone audio');
-          
-          // Save current state
-          g.currentTime = g.currentWavesurfer.getCurrentTime();
-          g.currentDuration = g.currentWavesurfer.getDuration();
-          const wasPlaying = g.currentWavesurfer.isPlaying();
-          
-          // Extract and preserve the audio element
-          try {
-            const mediaElement = g.currentWavesurfer.getMediaElement();
-            if (mediaElement && g.currentSongData) {
-              // Create standalone audio from the media element
-              const audioUrl = g.currentSongData.fields['R2 Audio URL'];
-              const audio = new Audio(audioUrl);
-              audio.currentTime = g.currentTime;
-              
-              // Stop old standalone if exists
-              if (g.standaloneAudio) {
-                g.standaloneAudio.pause();
-                g.standaloneAudio = null;
-              }
-              
-              g.standaloneAudio = audio;
-              
-              // Setup event listeners
-              audio.addEventListener('timeupdate', () => {
-                g.currentTime = audio.currentTime;
-                const masterCounter = document.querySelector('.player-duration-counter');
-                if (masterCounter) {
-                  masterCounter.textContent = formatDuration(audio.currentTime);
-                }
-                
-                // Update waveform if we have peaks
-                if (g.currentPeaksData && g.currentDuration > 0) {
-                  const progress = audio.currentTime / g.currentDuration;
-                  drawMasterWaveform(g.currentPeaksData, progress);
-                }
-              });
-              
-              audio.addEventListener('loadedmetadata', () => {
-                g.currentDuration = audio.duration;
-              });
-              
-              audio.addEventListener('play', () => {
-                g.isPlaying = true;
-                updateMasterControllerIcons(true);
-              });
-              
-              audio.addEventListener('pause', () => {
-                g.isPlaying = false;
-                updateMasterControllerIcons(false);
-              });
-              
-              audio.addEventListener('ended', () => {
-                navigateStandaloneTrack('next');
-              });
-              
-              // Resume playback if it was playing
-              if (wasPlaying) {
-                audio.play().catch(err => console.error('Resume playback error:', err));
-              }
-              
-              console.log('✓ Converted to standalone audio');
-            }
-          } catch (e) {
-            console.error('Error creating standalone audio:', e);
+        const audio = new Audio(audioUrl);
+        audio.currentTime = g.currentTime;
+        
+        // Stop old standalone if exists
+        if (g.standaloneAudio) {
+          g.standaloneAudio.pause();
+          g.standaloneAudio = null;
+        }
+        
+        g.standaloneAudio = audio;
+        
+        // Setup event listeners
+        audio.addEventListener('timeupdate', () => {
+          g.currentTime = audio.currentTime;
+          const masterCounter = document.querySelector('.player-duration-counter');
+          if (masterCounter) {
+            masterCounter.textContent = formatDuration(audio.currentTime);
           }
+          
+          // Update waveform if we have peaks
+          if (g.currentPeaksData && g.currentDuration > 0) {
+            const progress = audio.currentTime / g.currentDuration;
+            drawMasterWaveform(g.currentPeaksData, progress);
+          }
+        });
+        
+        audio.addEventListener('loadedmetadata', () => {
+          g.currentDuration = audio.duration;
+          console.log('💾 Audio loaded, duration:', g.currentDuration);
+        });
+        
+        audio.addEventListener('play', () => {
+          g.isPlaying = true;
+          updateMasterControllerIcons(true);
+          console.log('▶️ Standalone audio playing');
+        });
+        
+        audio.addEventListener('pause', () => {
+          g.isPlaying = false;
+          updateMasterControllerIcons(false);
+          console.log('⏸️ Standalone audio paused');
+        });
+        
+        audio.addEventListener('ended', () => {
+          navigateStandaloneTrack('next');
+        });
+        
+        // Resume playback if it was playing
+        if (wasPlaying) {
+          audio.play().catch(err => console.error('Resume playback error:', err));
         }
         
-        if (isMusicPage) {
-          // Destroy ALL wavesurfers
-          g.allWavesurfers.forEach(ws => ws.destroy());
-          
-          // Clear ALL waveform containers
-          document.querySelectorAll('.waveform').forEach(container => {
-            container.innerHTML = '';
-          });
-          
-          // Clear the arrays
-          g.allWavesurfers = [];
-          g.waveformData = [];
-          g.persistedWaveformContainer = null;
-          g.currentWavesurfer = null;
-        }
-        
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.body.style.height = '';
-        return Promise.resolve();
-      },
+        console.log('✓ Converted to standalone audio');
+      } else {
+        console.warn('⚠️ Cannot create standalone audio - missing mediaElement or currentSongData');
+      }
+    } catch (e) {
+      console.error('❌ Error creating standalone audio:', e);
+    }
+  }
+  
+  if (isMusicPage) {
+    // Destroy ALL wavesurfers
+    g.allWavesurfers.forEach(ws => ws.destroy());
+    
+    // Clear ALL waveform containers
+    document.querySelectorAll('.waveform').forEach(container => {
+      container.innerHTML = '';
+    });
+    
+    // Clear the arrays
+    g.allWavesurfers = [];
+    g.waveformData = [];
+    g.persistedWaveformContainer = null;
+    g.currentWavesurfer = null;
+  }
+  
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+  document.body.style.height = '';
+  return Promise.resolve();
+},
 
       beforeEnter(data) {
         const nextContainer = data.next.container;
