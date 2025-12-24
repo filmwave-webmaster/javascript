@@ -825,27 +825,95 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
       beforeLeave(data) {
+        const g = window.musicPlayerPersistent;
         const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-        if (isMusicPage && window.musicPlayerPersistent.currentWavesurfer) {
-          window.musicPlayerPersistent.currentTime = window.musicPlayerPersistent.currentWavesurfer.getCurrentTime();
-          window.musicPlayerPersistent.currentDuration = window.musicPlayerPersistent.currentWavesurfer.getDuration();
-          window.musicPlayerPersistent.isPlaying = window.musicPlayerPersistent.currentWavesurfer.isPlaying();
-          const currentD = waveformData.find(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
-          if (currentD) {
-            const persistentDiv = document.createElement('div');
-            persistentDiv.style.display = 'none';
-            document.body.appendChild(persistentDiv);
-            persistentDiv.appendChild(currentD.waveformContainer);
-            window.musicPlayerPersistent.persistedWaveformContainer = currentD.waveformContainer;
+        
+        if (isMusicPage && g.currentWavesurfer) {
+          console.log('💾 Leaving music page - converting to standalone audio');
+          
+          // Save current state
+          g.currentTime = g.currentWavesurfer.getCurrentTime();
+          g.currentDuration = g.currentWavesurfer.getDuration();
+          const wasPlaying = g.currentWavesurfer.isPlaying();
+          
+          // Extract and preserve the audio element
+          try {
+            const mediaElement = g.currentWavesurfer.getMediaElement();
+            if (mediaElement && g.currentSongData) {
+              // Create standalone audio from the media element
+              const audioUrl = g.currentSongData.fields['R2 Audio URL'];
+              const audio = new Audio(audioUrl);
+              audio.currentTime = g.currentTime;
+              
+              // Stop old standalone if exists
+              if (g.standaloneAudio) {
+                g.standaloneAudio.pause();
+                g.standaloneAudio = null;
+              }
+              
+              g.standaloneAudio = audio;
+              
+              // Setup event listeners
+              audio.addEventListener('timeupdate', () => {
+                g.currentTime = audio.currentTime;
+                const masterCounter = document.querySelector('.player-duration-counter');
+                if (masterCounter) {
+                  masterCounter.textContent = formatDuration(audio.currentTime);
+                }
+                
+                // Update waveform if we have peaks
+                if (g.currentPeaksData && g.currentDuration > 0) {
+                  const progress = audio.currentTime / g.currentDuration;
+                  drawMasterWaveform(g.currentPeaksData, progress);
+                }
+              });
+              
+              audio.addEventListener('loadedmetadata', () => {
+                g.currentDuration = audio.duration;
+              });
+              
+              audio.addEventListener('play', () => {
+                g.isPlaying = true;
+                updateMasterControllerIcons(true);
+              });
+              
+              audio.addEventListener('pause', () => {
+                g.isPlaying = false;
+                updateMasterControllerIcons(false);
+              });
+              
+              audio.addEventListener('ended', () => {
+                navigateStandaloneTrack('next');
+              });
+              
+              // Resume playback if it was playing
+              if (wasPlaying) {
+                audio.play().catch(err => console.error('Resume playback error:', err));
+              }
+              
+              console.log('✓ Converted to standalone audio');
+            }
+          } catch (e) {
+            console.error('Error creating standalone audio:', e);
           }
         }
+        
         if (isMusicPage) {
-          allWavesurfers.forEach(ws => {
-            if (ws !== window.musicPlayerPersistent.currentWavesurfer) ws.destroy();
+          // Destroy ALL wavesurfers
+          g.allWavesurfers.forEach(ws => ws.destroy());
+          
+          // Clear ALL waveform containers
+          document.querySelectorAll('.waveform').forEach(container => {
+            container.innerHTML = '';
           });
-          allWavesurfers = allWavesurfers.filter(ws => ws === window.musicPlayerPersistent.currentWavesurfer);
-          waveformData = waveformData.filter(d => d.wavesurfer === window.musicPlayerPersistent.currentWavesurfer);
+          
+          // Clear the arrays
+          g.allWavesurfers = [];
+          g.waveformData = [];
+          g.persistedWaveformContainer = null;
+          g.currentWavesurfer = null;
         }
+        
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
         document.body.style.height = '';
@@ -875,12 +943,8 @@ if (typeof barba !== 'undefined') {
           if (musicArea) musicArea.style.overflow = 'hidden';
         }
 
-        // Force player visibility
-        const playerWrapper = nextContainer.querySelector('.music-player-wrapper');
-        if (playerWrapper && g.hasActiveSong) {
-          playerWrapper.style.display = 'flex';
-          playerWrapper.style.alignItems = 'center';
-        }
+        // Keep player visible if there's active audio
+        updateMasterPlayerVisibility();
       },
 
       enter(data) {
@@ -888,7 +952,10 @@ if (typeof barba !== 'undefined') {
       },
 
       after(data) {
+        const g = window.musicPlayerPersistent;
+        
         window.scrollTo(0, 0);
+        
         if (window.Webflow) {
           try {
             window.Webflow.destroy();
@@ -896,17 +963,27 @@ if (typeof barba !== 'undefined') {
             window.Webflow.require('ix2').init();
           } catch (e) {}
         }
+        
         setTimeout(() => {
+          // CRITICAL: Re-setup master player controls on EVERY page
+          console.log('🎮 Setting up master player controls');
+          setupMasterPlayerControls();
+          
+          // Update player visibility and UI
           updateMasterPlayerVisibility();
+          
+          // If we have active song data, update the player info
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+          }
+          
           window.dispatchEvent(new Event('scroll'));
           window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition', {
-            detail: {
-              url: window.location.pathname,
-              isMusicPage: !!document.querySelector('.music-list-wrapper')
-            }
-          }));
-        }, 100);
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+          
+          console.log('✅ Transition complete - Controls ready');
+        }, 200);
       }
     }]
   });
