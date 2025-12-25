@@ -82,6 +82,73 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
+ * MASTER PLAYER POSITIONING - DO NOT MODIFY
+ * ============================================================
+ * This function handles ALL player positioning logic.
+ * Call this whenever the player needs to be positioned correctly.
+ * DO NOT add positioning logic anywhere else in the code.
+ */
+function positionMasterPlayer() {
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (!playerWrapper) return;
+  
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  
+  console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  
+  if (isMusicPage) {
+    // MUSIC PAGE: Player at bottom (relative positioning)
+    playerWrapper.style.position = 'relative';
+    playerWrapper.style.bottom = 'auto';
+    playerWrapper.style.left = 'auto';
+    playerWrapper.style.right = 'auto';
+    playerWrapper.style.top = 'auto';
+  } else {
+    // OTHER PAGES: Player fixed at bottom
+    playerWrapper.style.position = 'fixed';
+    playerWrapper.style.bottom = '0px';
+    playerWrapper.style.left = '0px';
+    playerWrapper.style.right = '0px';
+    playerWrapper.style.top = 'auto';
+  }
+  
+  playerWrapper.style.width = '100%';
+  playerWrapper.style.zIndex = '9999';
+}
+
+/**
+ * ============================================================
+ * MASTER PLAYER VISIBILITY CONTROL
+ * ============================================================
+ */
+function updateMasterPlayerVisibility() {
+  const g = window.musicPlayerPersistent;
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (!playerWrapper) return;
+  
+  const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
+  
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow);
+  
+  // ALWAYS position correctly first
+  positionMasterPlayer();
+  
+  // Then handle visibility
+  if (shouldShow) {
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
+  } else {
+    playerWrapper.style.display = 'none';
+    playerWrapper.style.visibility = 'hidden';
+    playerWrapper.style.opacity = '0';
+  }
+}
+
+/**
+ * ============================================================
  * MAIN INITIALIZATION
  * ============================================================
  */
