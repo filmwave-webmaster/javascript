@@ -157,7 +157,7 @@ async function initMusicPage() {
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
   if (g.MASTER_DATA.length === 0) {
-    await Songs();
+    await fetchSongs();
   }
   
   if (g.hasActiveSong && g.currentSongData) {
@@ -180,7 +180,7 @@ async function initMusicPage() {
     initDynamicTagging();
     initMutualExclusion();
     initSearchAndFilters();
-    const songs = await Songs();
+    const songs = await fetchSongs();
     displaySongs(songs);
     initMasterPlayer();
     
@@ -1210,18 +1210,27 @@ wavesurfer.on('interaction', function (newProgress) {
 
 /**
  * ============================================================
- * DATA FETCHING & DISPLAY
+ * FETCH & DISPLAY SONGS
  * ============================================================
  */
 async function fetchSongs() {
   const g = window.musicPlayerPersistent;
+  
+  if (g.MASTER_DATA.length > 0) {
+    console.log('Using cached MASTER_DATA');
+    return g.MASTER_DATA;
+  }
+  
   try {
     const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?view=${VIEW_ID}`, {
-      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
+      headers: {
+        'Authorization': `Bearer ${AIRTABLE_API_KEY}`
+      }
     });
     const data = await response.json();
-    g.MASTER_DATA = data.records || [];
-    return g.MASTER_DATA;
+    g.MASTER_DATA = data.records;
+    console.log(`Fetched ${g.MASTER_DATA.length} songs from Airtable`);
+    return data.records;
   } catch (error) {
     console.error('Error fetching songs:', error);
     return [];
@@ -1229,36 +1238,27 @@ async function fetchSongs() {
 }
 
 function displaySongs(songs) {
-  const g = window.musicPlayerPersistent;
   const container = document.querySelector('.music-list-wrapper');
-  const template = document.querySelector('.song-wrapper');
-  const activeTagsContainer = document.querySelector('.active-tags-container');
-
-  if (!container || !template) return;
-
-  // Clear existing items but keep the template
-  const templates = container.querySelectorAll('.template-wrapper');
+  if (!container) return;
+  const templateWrapper = container.querySelector('.template-wrapper');
+  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
+  if (!templateCard) return;
   container.innerHTML = '';
-  templates.forEach(t => container.appendChild(t));
-
-  // CLEAR TAGS BEFORE RE-POPULATING (Prevents doubling)
-  if (activeTagsContainer) {
-    activeTagsContainer.innerHTML = '';
-  }
-
-  // Clear global references for this page render
-  g.allWavesurfers = [];
-  g.waveformData = [];
-
+  if (templateWrapper) container.appendChild(templateWrapper);
   songs.forEach(song => {
-    const card = template.cloneNode(true);
-    card.style.display = 'grid';
-    populateSongCard(card, song);
-    container.appendChild(card);
+    const newCard = templateCard.cloneNode(true);
+    newCard.style.opacity = '1';
+    newCard.style.position = 'relative';
+    newCard.style.pointerEvents = 'auto';
+    populateSongCard(newCard, song);
+    container.appendChild(newCard);
   });
-
-  // Re-initialize waveforms for the new set of cards
-  initializeWaveforms();
+  if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+    window.Webflow.require('ix2').init();
+  }
+  setTimeout(() => initializeWaveforms(), 100);
 }
 
 /**
