@@ -74,7 +74,10 @@ function positionMasterPlayer() {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) return;
+  if (!playerWrapper) {
+    console.log('❌ playerWrapper not found');
+    return;
+  }
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   const musicListWrapper = document.querySelector('.music-list-wrapper');
@@ -84,37 +87,18 @@ function positionMasterPlayer() {
   const isPlayerVisible = playerWrapper.classList.contains('active') || 
                           (window.getComputedStyle(playerWrapper).display !== 'none');
   
+  console.log('🔍 DEBUG:');
+  console.log('isMusicPage:', isMusicPage);
+  console.log('isPlayerVisible:', isPlayerVisible);
+  console.log('musicListWrapper found:', !!musicListWrapper);
+  console.log('searchAreaContainer found:', !!searchAreaContainer);
+  console.log('playerWrapper has active class:', playerWrapper.classList.contains('active'));
+  
   // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
   playerWrapper.style.setProperty('left', '0px', 'important');
-  playerWrapper.style.setProperty('right', '0px', 'important');
-  playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
-  
-  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
-  if (isMusicPage && isPlayerVisible) {
-    const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1; // Amount to overlap (in pixels)
-    
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
-    }
-    
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
-    }
-  } else {
-    // REMOVE PADDING when player not visible or not on music page
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '0px';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '0px';
-    }
-  }
-}
+  player
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
