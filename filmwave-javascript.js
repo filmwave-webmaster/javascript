@@ -964,15 +964,14 @@ wavesurfer.on('interaction', function (newProgress) {
   console.log('  - Current songId:', g.currentSongData?.id);
   console.log('  - Current songTitle:', g.currentSongData?.fields['Song Title']);
   console.log('  - Are they equal?', g.currentSongData?.id === songData.id);
-  console.log('  - Click position:', newProgress);
+  console.log('  - Click position (seconds):', newProgress);
   
   // ALWAYS check song ID first, not wavesurfer reference
   if (g.currentSongData?.id === songData.id) {
     // This is the current song - just seek
     if (g.standaloneAudio) {
-      console.log('⏩ Seeking current song to:', newProgress, 'seconds:', newProgress * g.standaloneAudio.duration);
-      const newTime = newProgress * g.standaloneAudio.duration;
-      g.standaloneAudio.currentTime = newTime;
+      console.log('⏩ Seeking current song to:', newProgress, 'seconds');
+      g.standaloneAudio.currentTime = newProgress; // ← FIXED: newProgress is already in seconds
     } else {
       console.log('⚠️ No standalone audio to seek!');
     }
@@ -986,7 +985,7 @@ wavesurfer.on('interaction', function (newProgress) {
   // Stop current audio
   if (g.standaloneAudio) {
     g.standaloneAudio.pause();
-    g.standaloneAudio = null; // Clear it completely
+    g.standaloneAudio = null;
   }
   
   // Reset previous waveform
@@ -1004,14 +1003,16 @@ wavesurfer.on('interaction', function (newProgress) {
     // Seek to clicked position after audio loads
     setTimeout(() => {
       if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-        console.log('⏭️ Seeking to clicked position:', newProgress * g.standaloneAudio.duration);
-        g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
+        console.log('⏭️ Seeking to clicked position:', newProgress, 'seconds');
+        g.standaloneAudio.currentTime = newProgress; // ← FIXED: newProgress is already in seconds
       }
     }, 100);
   } else {
     // Not playing - just update UI
     g.currentSongData = songData;
-    syncMasterTrack(wavesurfer, songData, newProgress);
+    // Convert seconds to progress (0-1) for syncMasterTrack
+    const progressRatio = g.standaloneAudio ? newProgress / g.standaloneAudio.duration : 0;
+    syncMasterTrack(wavesurfer, songData, progressRatio);
   }
 });
 }
