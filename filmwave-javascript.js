@@ -86,6 +86,11 @@ function adjustDropdownPosition(toggle, list) {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
+/**
+ * ============================================================
+ * MASTER PLAYER POSITIONING - DO NOT MODIFY
+ * ============================================================
+ */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
@@ -95,23 +100,33 @@ function positionMasterPlayer() {
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
   if (isMusicPage) {
-    // MUSIC PAGE: Player at bottom (relative positioning)
+    // MUSIC PAGE: Ensure player is last element in body, use relative positioning
+    // Move to end of body to ensure it's at bottom of page flow
+    if (playerWrapper.parentElement === document.body && playerWrapper !== document.body.lastElementChild) {
+      document.body.appendChild(playerWrapper);
+    }
+    
+    playerWrapper.style.removeProperty('top');
     playerWrapper.style.position = 'relative';
     playerWrapper.style.bottom = 'auto';
     playerWrapper.style.left = 'auto';
     playerWrapper.style.right = 'auto';
-    playerWrapper.style.top = 'auto';
+    playerWrapper.style.width = '100%';
+    playerWrapper.style.zIndex = '9999';
+    
+    console.log('   ✅ Set to RELATIVE positioning');
   } else {
-    // OTHER PAGES: Player fixed at bottom
-    playerWrapper.style.position = 'fixed';
-    playerWrapper.style.bottom = '0px';
-    playerWrapper.style.left = '0px';
-    playerWrapper.style.right = '0px';
-    playerWrapper.style.top = 'auto';
+    // OTHER PAGES: Fixed positioning at bottom
+    playerWrapper.style.setProperty('position', 'fixed', 'important');
+    playerWrapper.style.setProperty('bottom', '0px', 'important');
+    playerWrapper.style.setProperty('left', '0px', 'important');
+    playerWrapper.style.setProperty('right', '0px', 'important');
+    playerWrapper.style.setProperty('top', 'auto', 'important');
+    playerWrapper.style.width = '100%';
+    playerWrapper.style.zIndex = '9999';
+    
+    console.log('   ✅ Set to FIXED positioning');
   }
-  
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
 }
 
 /**
