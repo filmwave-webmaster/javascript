@@ -124,7 +124,7 @@ function navigateStandaloneTrack(direction) {
   // REUSE the same audio element
   if (g.standaloneAudio) {
     g.standaloneAudio.pause();
-    g.standaloneAudio.currentTime = 0; // ← CRITICAL FIX: Reset to beginning!
+    g.standaloneAudio.currentTime = 0;
     g.standaloneAudio.src = audioUrl;
     g.standaloneAudio.load();
     
@@ -191,8 +191,42 @@ function navigateStandaloneTrack(direction) {
     }
   }
   
-  g.currentPeaksData = null;
-  drawMasterWaveform(null, 0);
+  // FIX: Load waveform for the new song
+  console.log('📊 Loading waveform for standalone track');
+  
+  // Create a temporary WaveSurfer just to get the peaks
+  const tempContainer = document.createElement('div');
+  tempContainer.style.display = 'none';
+  document.body.appendChild(tempContainer);
+  
+  const tempWavesurfer = WaveSurfer.create({
+    container: tempContainer,
+    waveColor: '#e2e2e2',
+    progressColor: '#191919',
+    height: 40,
+    barWidth: 2,
+    barGap: 1,
+    normalize: true
+  });
+  
+  tempWavesurfer.load(audioUrl);
+  
+  tempWavesurfer.on('decode', () => {
+    try {
+      const decodedData = tempWavesurfer.getDecodedData();
+      if (decodedData) {
+        g.currentPeaksData = decodedData.getChannelData(0);
+        drawMasterWaveform(g.currentPeaksData, 0);
+        console.log('✅ Waveform loaded for standalone track');
+      }
+    } catch (e) {
+      console.error('Error getting peaks:', e);
+    }
+    
+    // Clean up temp waveform
+    tempWavesurfer.destroy();
+    document.body.removeChild(tempContainer);
+  });
 }
 
 /**
