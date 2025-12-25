@@ -519,7 +519,7 @@ function initMasterPlayer() {
   if (!container) return;
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
-  updateMasterPlayerVisibility();
+  // REMOVED: updateMasterPlayerVisibility(); - handled in after hook now
 }
 
 /**
