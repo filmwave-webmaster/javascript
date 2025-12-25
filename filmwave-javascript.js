@@ -93,8 +93,8 @@ function positionMasterPlayer() {
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
-  // Add smooth transition for position changes
-  playerWrapper.style.transition = 'all 0.3s ease';
+  // NO TRANSITIONS - instant positioning to prevent flicker
+  playerWrapper.style.transition = 'none';
   
   if (isMusicPage) {
     // MUSIC PAGE: Player at bottom using relative positioning
@@ -184,11 +184,9 @@ async function initMusicPage() {
     displaySongs(songs);
     initMasterPlayer();
     
-    // Position player correctly after everything loads
-    setTimeout(() => {
-      positionMasterPlayer(); // Use dedicated positioning function
-      updateMasterPlayerVisibility();
-    }, 200);
+    // Position player IMMEDIATELY (no delay)
+    positionMasterPlayer();
+    updateMasterPlayerVisibility();
   } else {
     // For non-music pages
     initMasterPlayer();
@@ -1756,32 +1754,35 @@ if (typeof barba !== 'undefined') {
   return Promise.resolve();
 },
 
-      beforeEnter(data) {
-        const nextContainer = data.next.container;
-        const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
+    beforeEnter(data) {
+  const nextContainer = data.next.container;
+  const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
-        if (!isMusicPage) {
-          document.body.style.overflow = 'visible';
-          document.documentElement.style.overflow = 'visible';
-          document.body.style.height = 'auto';
-          nextContainer.style.overflow = 'visible';
-          
-          const mainContent = nextContainer.querySelector('.main-content');
-          if (mainContent) mainContent.style.overflow = 'visible';
-        } else {
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.height = '100vh';
-          nextContainer.style.overflow = 'hidden';
-          
-          const musicArea = nextContainer.querySelector('.music-area-wrapper');
-          if (musicArea) musicArea.style.overflow = 'hidden';
-        }
-      },
+  if (!isMusicPage) {
+    document.body.style.overflow = 'visible';
+    document.documentElement.style.overflow = 'visible';
+    document.body.style.height = 'auto';
+    nextContainer.style.overflow = 'visible';
+    
+    const mainContent = nextContainer.querySelector('.main-content');
+    if (mainContent) mainContent.style.overflow = 'visible';
+  } else {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    nextContainer.style.overflow = 'hidden';
+    
+    const musicArea = nextContainer.querySelector('.music-area-wrapper');
+    if (musicArea) musicArea.style.overflow = 'hidden';
+  }
 
-      enter(data) {
-        return initMusicPage();
-      },
+  // Position player IMMEDIATELY before content loads
+  positionMasterPlayer();
+},
+
+enter(data) {
+  return initMusicPage();
+},
 
       after(data) {
         const g = window.musicPlayerPersistent;
