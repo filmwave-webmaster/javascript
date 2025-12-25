@@ -1268,10 +1268,11 @@ async function initMusicPage() {
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    const newHeader = header.cloneNode(true);
-    header.parentNode.replaceChild(newHeader, header);
+    // Skip if already initialized
+    if (header.dataset.accordionListener === 'true') return;
+    header.dataset.accordionListener = 'true';
     
-    newHeader.addEventListener('click', function() {
+    header.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
@@ -1297,6 +1298,10 @@ function initFilterAccordions() {
 
 function initCheckboxTextColor() {
   document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
+    // Skip if already initialized
+    if (checkbox.dataset.textColorListener === 'true') return;
+    checkbox.dataset.textColorListener = 'true';
+    
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
@@ -1313,6 +1318,10 @@ function initFilterItemBackground() {
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
     
     checkboxes.forEach(checkbox => {
+      // Skip if already initialized
+      if (checkbox.dataset.backgroundListener === 'true') return;
+      checkbox.dataset.backgroundListener = 'true';
+      
       checkbox.addEventListener('change', function() {
         const filterItem = this.closest('.filter-item');
         if (filterItem) {
@@ -1332,7 +1341,11 @@ function initDynamicTagging() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
-    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
+    // EXCLUDE checkboxes with data-exclusive attribute
+    const checkboxes = Array.from(
+      document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]')
+    ).filter(cb => !cb.closest('[data-exclusive]'));
+    
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
     
     function createTag(input, labelText, radioName = null) {
@@ -1356,7 +1369,6 @@ function initDynamicTagging() {
       return tag;
     }
 
-    // DON'T clone - just add listeners if not already added
     checkboxes.forEach(checkbox => {
       // Skip if already has listener
       if (checkbox.dataset.taggingListener === 'true') return;
@@ -1390,7 +1402,6 @@ function initDynamicTagging() {
       });
     });
 
-    // DON'T clone - just add listeners if not already added
     radioWrappers.forEach(wrapper => {
       // Skip if already has listener
       if (wrapper.dataset.taggingListener === 'true') return;
@@ -1447,6 +1458,11 @@ function initMutualExclusion() {
   const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
   if (instInput && acapInput) {
+    // Skip if already initialized
+    if (instInput.dataset.exclusiveListener === 'true') return;
+    instInput.dataset.exclusiveListener = 'true';
+    acapInput.dataset.exclusiveListener = 'true';
+    
     function clearOther(otherInput, otherWrapper) {
       if (otherInput.checked) {
         otherInput.checked = false;
@@ -1527,7 +1543,8 @@ function initSearchAndFilters() {
     toggleClearButton();
   }
   
-  if (searchBar) {
+  if (searchBar && !searchBar.dataset.searchListener) {
+    searchBar.dataset.searchListener = 'true';
     searchBar.addEventListener('input', () => { 
       clearTimeout(searchTimeout); 
       searchTimeout = setTimeout(applyFilters, 400); 
@@ -1535,10 +1552,13 @@ function initSearchAndFilters() {
   }
   
   document.querySelectorAll('[data-filter-group]').forEach(i => {
+    if (i.dataset.filterListener === 'true') return;
+    i.dataset.filterListener = 'true';
     i.addEventListener('change', applyFilters);
   });
   
-  if (clearBtn) {
+  if (clearBtn && !clearBtn.dataset.clearListener) {
+    clearBtn.dataset.clearListener = 'true';
     clearBtn.style.display = 'none';
     clearBtn.addEventListener('click', clearAllFilters);
   }
