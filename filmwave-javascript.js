@@ -114,84 +114,75 @@ function navigateStandaloneTrack(direction) {
   // Remember if it was playing or paused
   const wasPlaying = g.isPlaying;
   
-  // Update song data FIRST
+  // DESTROY old audio element completely
+  if (g.standaloneAudio) {
+    g.standaloneAudio.pause();
+    g.standaloneAudio.src = '';
+    g.standaloneAudio = null;
+  }
+  
+  // Update song data
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
   // Update player UI
   updateMasterPlayerInfo(nextSong, null);
   
-  // REUSE the same audio element
-  if (g.standaloneAudio) {
-    g.standaloneAudio.pause();
-    g.standaloneAudio.currentTime = 0;
-    g.standaloneAudio.src = audioUrl;
-    g.standaloneAudio.load();
-    
-    // Only auto-play if it was already playing
-    if (wasPlaying) {
-      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
-    } else {
-      console.log('⏸️ Song loaded but paused - ready for spacebar play');
-      g.isPlaying = false;
-      updateMasterControllerIcons(false);
+  // Create NEW audio element (guaranteed to start at 0:00)
+  const audio = new Audio(audioUrl);
+  g.standaloneAudio = audio;
+  
+  audio.addEventListener('loadedmetadata', () => {
+    g.currentDuration = audio.duration;
+    const masterDuration = document.querySelector('.player-duration');
+    if (masterDuration) {
+      masterDuration.textContent = formatDuration(audio.duration);
     }
+    console.log('📊 Audio loaded, duration:', g.currentDuration);
+  });
+  
+  audio.addEventListener('timeupdate', () => {
+    g.currentTime = audio.currentTime;
+    const masterCounter = document.querySelector('.player-duration-counter');
+    if (masterCounter) {
+      masterCounter.textContent = formatDuration(audio.currentTime);
+    }
+    if (g.currentPeaksData && g.currentDuration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      drawMasterWaveform(g.currentPeaksData, progress);
+    }
+  });
+  
+  audio.addEventListener('play', () => {
+    g.isPlaying = true;
+    updateMasterControllerIcons(true);
+    console.log('▶️ Standalone audio playing');
+  });
+  
+  audio.addEventListener('pause', () => {
+    g.isPlaying = false;
+    updateMasterControllerIcons(false);
+    console.log('⏸️ Standalone audio paused');
+  });
+  
+  audio.addEventListener('ended', () => {
+    navigateStandaloneTrack('next');
+  });
+  
+  audio.addEventListener('error', (e) => {
+    console.error('❌ Audio error:', e);
+  });
+  
+  // Only auto-play if it was already playing
+  if (wasPlaying) {
+    audio.play().catch(err => console.error('Playback error:', err));
   } else {
-    const audio = new Audio(audioUrl);
-    g.standaloneAudio = audio;
-    
-    audio.addEventListener('loadedmetadata', () => {
-      g.currentDuration = audio.duration;
-      const masterDuration = document.querySelector('.player-duration');
-      if (masterDuration) {
-        masterDuration.textContent = formatDuration(audio.duration);
-      }
-      console.log('📊 Audio loaded, duration:', g.currentDuration);
-    });
-    
-    audio.addEventListener('timeupdate', () => {
-      g.currentTime = audio.currentTime;
-      const masterCounter = document.querySelector('.player-duration-counter');
-      if (masterCounter) {
-        masterCounter.textContent = formatDuration(audio.currentTime);
-      }
-      if (g.currentPeaksData && g.currentDuration > 0) {
-        const progress = audio.currentTime / audio.duration;
-        drawMasterWaveform(g.currentPeaksData, progress);
-      }
-    });
-    
-    audio.addEventListener('play', () => {
-      g.isPlaying = true;
-      updateMasterControllerIcons(true);
-      console.log('▶️ Standalone audio playing');
-    });
-    
-    audio.addEventListener('pause', () => {
-      g.isPlaying = false;
-      updateMasterControllerIcons(false);
-      console.log('⏸️ Standalone audio paused');
-    });
-    
-    audio.addEventListener('ended', () => {
-      navigateStandaloneTrack('next');
-    });
-    
-    audio.addEventListener('error', (e) => {
-      console.error('❌ Audio error:', e);
-    });
-    
-    // Only auto-play if it was already playing
-    if (wasPlaying) {
-      audio.play().catch(err => console.error('Playback error:', err));
-    } else {
-      console.log('⏸️ Song loaded but paused - ready for spacebar play');
-      g.isPlaying = false;
-      updateMasterControllerIcons(false);
-    }
+    console.log('⏸️ Song loaded but paused - ready for spacebar play');
+    g.isPlaying = false;
+    updateMasterControllerIcons(false);
   }
   
-  // FIX: Load waveform for the new song
+  // Load waveform for the new song
   console.log('📊 Loading waveform for standalone track');
   
   // Create a temporary WaveSurfer just to get the peaks
