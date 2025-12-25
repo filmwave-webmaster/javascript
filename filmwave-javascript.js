@@ -1332,11 +1332,7 @@ function initDynamicTagging() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
-    // EXCLUDE checkboxes inside [data-exclusive] wrappers from cloning
-    const checkboxes = Array.from(
-      document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]')
-    ).filter(cb => !cb.closest('[data-exclusive]'));
-    
+    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
     
     function createTag(input, labelText, radioName = null) {
@@ -1360,7 +1356,7 @@ function initDynamicTagging() {
       return tag;
     }
 
-    // Clone and replace checkboxes to remove old listeners (but not exclusive ones)
+    // Clone and replace checkboxes to remove old listeners
     checkboxes.forEach(checkbox => {
       const newCheckbox = checkbox.cloneNode(true);
       checkbox.parentNode.replaceChild(newCheckbox, checkbox);
@@ -1393,7 +1389,7 @@ function initDynamicTagging() {
       });
     });
 
-    // Rest of the function stays the same...
+    // Clone and replace radio wrappers to remove old listeners
     radioWrappers.forEach(wrapper => {
       const newWrapper = wrapper.cloneNode(true);
       wrapper.parentNode.replaceChild(newWrapper, wrapper);
