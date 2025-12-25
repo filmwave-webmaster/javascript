@@ -200,13 +200,41 @@ function updateMasterPlayerVisibility() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
   
+  // Check if we're on the music page
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  
   // Show player if ANY of these conditions are true
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
-  playerWrapper.style.display = shouldShow ? 'flex' : 'none';
-  playerWrapper.style.alignItems = 'center';
+  if (shouldShow) {
+    // Set positioning based on page type
+    if (isMusicPage) {
+      playerWrapper.style.position = 'relative';
+      playerWrapper.style.bottom = 'auto';
+      playerWrapper.style.left = 'auto';
+      playerWrapper.style.right = 'auto';
+    } else {
+      playerWrapper.style.position = 'fixed';
+      playerWrapper.style.bottom = '0px';
+      playerWrapper.style.left = '0px';
+      playerWrapper.style.right = '0px';
+    }
+    
+    // Make visible
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
+    playerWrapper.style.width = '100%';
+    playerWrapper.style.zIndex = '9999';
+  } else {
+    playerWrapper.style.display = 'none';
+    playerWrapper.style.visibility = 'hidden';
+    playerWrapper.style.opacity = '0';
+  }
   
-  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'hasActiveSong:', g.hasActiveSong, 'currentSongData:', !!g.currentSongData);
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'isMusicPage:', isMusicPage, 'hasActiveSong:', g.hasActiveSong);
 }
 
 /**
@@ -1504,31 +1532,38 @@ if (typeof barba !== 'undefined') {
       audio.load();
     }
     
-    // FORCE player visibility if there's active audio
-    const ensurePlayerVisible = () => {
-      const playerWrapper = document.querySelector('.music-player-wrapper');
-      
-      if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
-        console.log('🎯 Setting styles on:', playerWrapper);
-        
-        // Set each property individually
-        playerWrapper.style.setProperty('position', 'fixed', 'important');
-        playerWrapper.style.setProperty('bottom', '0', 'important');
-        playerWrapper.style.setProperty('left', '0', 'important');
-        playerWrapper.style.setProperty('right', '0', 'important');
-        
-        // Verify it was set
-        console.log('✅ Position after setting:', playerWrapper.style.getPropertyValue('position'));
-        console.log('✅ Position priority:', playerWrapper.style.getPropertyPriority('position'));
-        
-        playerWrapper.style.setProperty('display', 'flex', 'important');
-        playerWrapper.style.setProperty('visibility', 'visible', 'important');
-        playerWrapper.style.setProperty('opacity', '1', 'important');
-        playerWrapper.style.setProperty('align-items', 'center', 'important');
-        playerWrapper.style.setProperty('pointer-events', 'auto', 'important');
-        playerWrapper.style.setProperty('transform', 'none', 'important');
-        playerWrapper.style.setProperty('width', '100%', 'important');
-        playerWrapper.style.setProperty('z-index', '9999', 'important');
+  // FORCE player visibility if there's active audio
+const ensurePlayerVisible = () => {
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  
+  if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
+    console.log('🎯 Setting styles on:', playerWrapper);
+    
+    // Check if we're on music page
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+    
+    // Set positioning based on page type
+    if (isMusicPage) {
+      playerWrapper.style.setProperty('position', 'relative', 'important');
+      playerWrapper.style.setProperty('bottom', 'auto', 'important');
+      playerWrapper.style.setProperty('left', 'auto', 'important');
+      playerWrapper.style.setProperty('right', 'auto', 'important');
+    } else {
+      playerWrapper.style.setProperty('position', 'fixed', 'important');
+      playerWrapper.style.setProperty('bottom', '0px', 'important');
+      playerWrapper.style.setProperty('left', '0px', 'important');
+      playerWrapper.style.setProperty('right', '0px', 'important');
+    }
+    
+    playerWrapper.style.setProperty('display', 'flex', 'important');
+    playerWrapper.style.setProperty('visibility', 'visible', 'important');
+    playerWrapper.style.setProperty('opacity', '1', 'important');
+    playerWrapper.style.setProperty('align-items', 'center', 'important');
+    playerWrapper.style.setProperty('pointer-events', 'auto', 'important');
+    playerWrapper.style.setProperty('width', '100%', 'important');
+    playerWrapper.style.setProperty('z-index', '9999', 'important');
+    
+    // Rest of the code...
         
         console.log('👁️ All styles set - checking element.style:', playerWrapper.style.cssText);
         
