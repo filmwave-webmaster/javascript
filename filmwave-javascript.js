@@ -124,7 +124,7 @@ function navigateStandaloneTrack(direction) {
   // REUSE the same audio element
   if (g.standaloneAudio) {
     g.standaloneAudio.pause();
-    g.standaloneAudio.currentTime = 0; // ← CRITICAL FIX: Reset to beginning!
+    g.standaloneAudio.currentTime = 0;
     g.standaloneAudio.src = audioUrl;
     g.standaloneAudio.load();
     
@@ -818,7 +818,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (nextWavesurfer) {
       const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
       if (nextData) {
-        playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
+        playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement, null, true);
       }
     }
   });
@@ -971,7 +971,7 @@ function initializeWaveforms() {
       cardElement,
       waveformContainer,
       audioUrl,
-      songData  // Store the song data here
+      songData
     });
     
     // WRAP IN IIFE TO CREATE PROPER CLOSURE
@@ -980,10 +980,10 @@ function initializeWaveforms() {
   
   console.log('📊 Total waveforms created:', g.allWavesurfers.length);
   
-  // Link existing standalone audio to waveforms
+  // Link existing standalone audio to waveforms with retry mechanism
   setTimeout(() => {
-    linkStandaloneToWaveform();
-  }, 100);
+    linkStandaloneToWaveform(0);
+  }, 300);
 }
 
 /**
@@ -1040,60 +1040,52 @@ function setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, cove
     songName.addEventListener('click', handlePlayPause);
   }
   
-// Waveform interaction (seeking)
-wavesurfer.on('interaction', function (newProgress) {
-  console.log('🎯 Waveform interaction');
-  console.log('  - Clicked songId:', songData.id);
-  console.log('  - Clicked songTitle:', songData.fields['Song Title']);
-  console.log('  - Current songId:', g.currentSongData?.id);
-  console.log('  - Current songTitle:', g.currentSongData?.fields['Song Title']);
-  console.log('  - Are they equal?', g.currentSongData?.id === songData.id);
-  console.log('  - Click position (seconds):', newProgress);
-  
-  // ALWAYS check song ID first, not wavesurfer reference
-  if (g.currentSongData?.id === songData.id) {
-    // This is the current song - just seek
-    if (g.standaloneAudio) {
-      console.log('⏩ Seeking current song to:', newProgress, 'seconds');
-      g.standaloneAudio.currentTime = newProgress;
-    } else {
-      console.log('⚠️ No standalone audio to seek!');
+  // Waveform interaction (seeking)
+  wavesurfer.on('interaction', function (newProgress) {
+    console.log('🎯 Waveform interaction');
+    console.log('  - Clicked songId:', songData.id);
+    console.log('  - Clicked songTitle:', songData.fields['Song Title']);
+    console.log('  - Current songId:', g.currentSongData?.id);
+    console.log('  - Current songTitle:', g.currentSongData?.fields['Song Title']);
+    console.log('  - Are they equal?', g.currentSongData?.id === songData.id);
+    console.log('  - Click position (seconds):', newProgress);
+    
+    // ALWAYS check song ID first, not wavesurfer reference
+    if (g.currentSongData?.id === songData.id) {
+      // This is the current song - just seek
+      if (g.standaloneAudio) {
+        console.log('⏩ Seeking current song to:', newProgress, 'seconds');
+        g.standaloneAudio.currentTime = newProgress;
+      } else {
+        console.log('⚠️ No standalone audio to seek!');
+      }
+      return; // Don't do anything else
     }
-    return; // Don't do anything else
-  }
-  
-  // Different song - switch to it
-  console.log('🔄 Switching songs');
-  const wasPlaying = g.isPlaying;
-  
-  // Stop current audio
-  if (g.standaloneAudio) {
-    g.standaloneAudio.pause();
-    g.standaloneAudio = null;
-  }
-  
-  // Reset previous waveform
-  if (g.currentWavesurfer) {
-    g.currentWavesurfer.seekTo(0);
-  }
-  
-  // Update wavesurfer reference (but NOT song data yet)
-  g.currentWavesurfer = wavesurfer;
-  g.hasActiveSong = true;
-  
-  // ALWAYS delegate to playStandaloneSong
-  // It will handle creating audio, seeking, and auto-play based on wasPlaying
-  playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
-});
+    
+    // Different song - switch to it
+    console.log('🔄 Switching songs');
+    const wasPlaying = g.isPlaying;
+    
+    // Stop current audio
+    if (g.standaloneAudio) {
+      g.standaloneAudio.pause();
+      g.standaloneAudio = null;
+    }
+    
+    // Reset previous waveform
+    if (g.currentWavesurfer) {
+      g.currentWavesurfer.seekTo(0);
+    }
+    
+    // Update wavesurfer reference (but NOT song data yet)
+    g.currentWavesurfer = wavesurfer;
+    g.hasActiveSong = true;
+    
+    // ALWAYS delegate to playStandaloneSong
+    // It will handle creating audio, seeking, and auto-play based on wasPlaying
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
+  });
 }
-
-// At the end of initializeWaveforms()
-console.log('📊 Total waveforms created:', g.allWavesurfers.length);
-
-// Link existing standalone audio to waveforms with retry mechanism
-setTimeout(() => {
-  linkStandaloneToWaveform(0);
-}, 300); // Increased delay to ensure waveforms are fully loaded
 
 /**
  * ============================================================
@@ -1261,7 +1253,7 @@ async function initMusicPage() {
     
     // NOW call updateMasterPlayerVisibility and position player AFTER songs are displayed
     setTimeout(() => {
-      updateMasterPlayerVisibility(); // This will handle the position correctly
+      updateMasterPlayerVisibility();
       
       if (g.hasActiveSong || g.currentSongData) {
         const playerWrapper = document.querySelector('.music-player-wrapper');
@@ -1278,7 +1270,7 @@ async function initMusicPage() {
           updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
         }
       }
-    }, 200); // Increased delay to ensure songs are fully rendered
+    }, 200);
   } else {
     // For non-music pages, call it normally
     initMasterPlayer();
@@ -1558,13 +1550,6 @@ function initSearchAndFilters() {
     clearBtn.addEventListener('click', clearAllFilters);
   }
 }
-
-/**
- * ============================================================
- * BARBA.JS & PAGE TRANSITIONS
- * ============================================================
- */
-window.addEventListener('load', () => initMusicPage());
 
 /**
  * ============================================================
