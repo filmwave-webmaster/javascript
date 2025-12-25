@@ -88,17 +88,23 @@ function adjustDropdownPosition(toggle, list) {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) return;
+  if (!playerWrapper) {
+    console.log('❌ Player wrapper not found!');
+    return;
+  }
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  console.log('   Current parent:', playerWrapper.parentElement?.tagName);
+  console.log('   Current display:', playerWrapper.style.display);
+  console.log('   Current position:', playerWrapper.style.position);
   
   if (isMusicPage) {
     // MUSIC PAGE: Ensure player is last element in body, use relative positioning
-    // Move to end of body to ensure it's at bottom of page flow
     if (playerWrapper.parentElement === document.body && playerWrapper !== document.body.lastElementChild) {
       document.body.appendChild(playerWrapper);
+      console.log('   Moved player to end of body');
     }
     
     playerWrapper.style.removeProperty('top');
@@ -110,6 +116,7 @@ function positionMasterPlayer() {
     playerWrapper.style.zIndex = '9999';
     
     console.log('   ✅ Set to RELATIVE positioning');
+    console.log('   Final display:', playerWrapper.style.display);
   } else {
     // OTHER PAGES: Fixed positioning at bottom
     playerWrapper.style.setProperty('position', 'fixed', 'important');
