@@ -501,6 +501,7 @@ function setupMasterPlayerControls() {
         
         if (g.standaloneAudio) {
           g.standaloneAudio.pause();
+          g.standaloneAudio = null;
         }
         
         g.currentWavesurfer.seekTo(0);
@@ -511,13 +512,8 @@ function setupMasterPlayerControls() {
         }
         scrollToSelected(nextData.cardElement);
         
-        if (wasPlaying) {
-          playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement);
-        } else {
-          g.currentWavesurfer = targetWS;
-          g.currentSongData = nextData.songData;
-          syncMasterTrack(targetWS, nextData.songData, 0);
-        }
+        // Pass null to start from beginning, wasPlaying to control auto-play
+        playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
       }
     } else {
       navigateStandaloneTrack(direction);
