@@ -924,50 +924,47 @@ function initializeWaveforms() {
       songName.addEventListener('click', handlePlayPause);
     }
     
- // Waveform interaction (seeking)
+// Waveform interaction (seeking)
     wavesurfer.on('interaction', function (newProgress) {
-      console.log('🎯 Waveform interaction - progress:', newProgress);
+      console.log('🎯 Waveform interaction - songId:', songData.id, 'current:', g.currentSongData?.id);
       
-      // If this is the current song, just seek
-      if (g.currentSongData?.id === songData.id && g.standaloneAudio) {
-        console.log('⏩ Seeking current song to:', newProgress);
-        const newTime = newProgress * g.standaloneAudio.duration;
-        g.standaloneAudio.currentTime = newTime;
+      // ALWAYS check song ID first, not wavesurfer reference
+      if (g.currentSongData?.id === songData.id) {
+        // This is the current song - just seek
+        if (g.standaloneAudio) {
+          console.log('⏩ Seeking current song to:', newProgress);
+          const newTime = newProgress * g.standaloneAudio.duration;
+          g.standaloneAudio.currentTime = newTime;
+        }
         return; // Don't do anything else
       }
       
-      // If different song, switch to it
-      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-        console.log('🔄 Switching to different song');
-        const wasPlaying = g.isPlaying;
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-        }
-        
+      // Different song - switch to it
+      console.log('🔄 Switching from', g.currentSongData?.fields['Song Title'], 'to', songData.fields['Song Title']);
+      const wasPlaying = g.isPlaying;
+      
+      if (g.standaloneAudio) {
+        g.standaloneAudio.pause();
+      }
+      
+      if (g.currentWavesurfer) {
         g.currentWavesurfer.seekTo(0);
-        g.currentWavesurfer = wavesurfer;
-        g.currentSongData = songData;
-        g.hasActiveSong = true;
-        
-        syncMasterTrack(wavesurfer, songData, newProgress);
-        
-        if (wasPlaying) {
-          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-          // Seek to clicked position after a brief delay
-          setTimeout(() => {
-            if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-              g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
-            }
-          }, 100);
-        }
-      } else if (!g.standaloneAudio) {
-        // No audio playing yet, set up for this song
-        console.log('🎵 Setting up new song at position:', newProgress);
-        g.currentWavesurfer = wavesurfer;
-        g.currentSongData = songData;
-        g.hasActiveSong = true;
-        syncMasterTrack(wavesurfer, songData, newProgress);
+      }
+      
+      g.currentWavesurfer = wavesurfer;
+      g.currentSongData = songData;
+      g.hasActiveSong = true;
+      
+      syncMasterTrack(wavesurfer, songData, newProgress);
+      
+      if (wasPlaying) {
+        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+        // Seek to clicked position after a brief delay
+        setTimeout(() => {
+          if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+            g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
+          }
+        }, 100);
       }
     });
   });
