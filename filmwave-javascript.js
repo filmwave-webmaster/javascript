@@ -82,41 +82,33 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * MASTER PLAYER POSITIONING - DO NOT MODIFY
+ * MASTER PLAYER VISIBILITY CONTROL
  * ============================================================
  */
-function positionMasterPlayer(isMusicPage = null) {
+function updateMasterPlayerVisibility(isMusicPage = null) {
+  const g = window.musicPlayerPersistent;
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
   
-  // If not provided, detect from current DOM
-  if (isMusicPage === null) {
-    isMusicPage = !!document.querySelector('.music-list-wrapper');
-  }
+  const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
-  console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow);
   
-  // NO TRANSITIONS - instant positioning to prevent flicker
-  playerWrapper.style.transition = 'none';
+  // ALWAYS position correctly first - pass through isMusicPage parameter
+  positionMasterPlayer(isMusicPage);
   
-  if (isMusicPage) {
-    // MUSIC PAGE: Player at bottom using relative positioning
-    playerWrapper.style.position = 'relative';
-    playerWrapper.style.bottom = 'auto';
-    playerWrapper.style.left = 'auto';
-    playerWrapper.style.right = 'auto';
-    playerWrapper.style.top = 'auto';
+  // Then handle visibility
+  if (shouldShow) {
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
   } else {
-    // OTHER PAGES: Player fixed at bottom
-    playerWrapper.style.position = 'fixed';
-    playerWrapper.style.bottom = '0px';
-    playerWrapper.style.left = '0px';
-    playerWrapper.style.right = '0px';
-    playerWrapper.style.top = 'auto';
+    playerWrapper.style.display = 'none';
+    playerWrapper.style.visibility = 'hidden';
+    playerWrapper.style.opacity = '0';
   }
-  
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
 }
 
 /**
@@ -187,13 +179,13 @@ async function initMusicPage() {
     displaySongs(songs);
     initMasterPlayer();
     
-    // Position player IMMEDIATELY (no delay)
-    positionMasterPlayer();
-    updateMasterPlayerVisibility();
+    // Position player IMMEDIATELY - pass isMusicPage parameter
+    positionMasterPlayer(true);
+    updateMasterPlayerVisibility(true);
   } else {
     // For non-music pages
     initMasterPlayer();
-    updateMasterPlayerVisibility();
+    updateMasterPlayerVisibility(false);
   }
 }
 
@@ -1787,39 +1779,40 @@ enter(data) {
   return initMusicPage();
 },
 
-      after(data) {
-        const g = window.musicPlayerPersistent;
-        
-        window.scrollTo(0, 0);
-        
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
-        }
-        
-        setTimeout(() => {
-          console.log('🎮 Setting up master player controls');
-          setupMasterPlayerControls();
-          
-          // Use updateMasterPlayerVisibility to handle positioning
-          updateMasterPlayerVisibility();
-          
-          // Update player info if there's an active song
-          if (g.currentSongData) {
-            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-            updateMasterControllerIcons(g.isPlaying);
-          }
-          
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          
-          console.log('✅ Transition complete - Controls ready');
-        }, 200);
-      }
+    after(data) {
+  const g = window.musicPlayerPersistent;
+  
+  window.scrollTo(0, 0);
+  
+  if (window.Webflow) {
+    try {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    } catch (e) {}
+  }
+  
+  setTimeout(() => {
+    console.log('🎮 Setting up master player controls');
+    setupMasterPlayerControls();
+    
+    // Detect page type and pass to updateMasterPlayerVisibility
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+    updateMasterPlayerVisibility(isMusicPage);
+    
+    // Update player info if there's an active song
+    if (g.currentSongData) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+    }
+    
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+    
+    console.log('✅ Transition complete - Controls ready');
+  }, 200);
+}
     }]
   });
 }
