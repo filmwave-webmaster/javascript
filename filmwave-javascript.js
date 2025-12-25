@@ -179,15 +179,12 @@ async function initMusicPage() {
     displaySongs(songs);
     initMasterPlayer();
     
-    // Position player correctly after everything loads
-    setTimeout(() => {
-      positionMasterPlayer(); // Use dedicated positioning function
-      updateMasterPlayerVisibility();
-    }, 200);
+    // Just position - DON'T call updateMasterPlayerVisibility here
+    // Let the Barba after hook handle visibility
+    positionMasterPlayer(true);
   } else {
-    // For non-music pages
+    // For non-music pages - just init, don't show/hide yet
     initMasterPlayer();
-    updateMasterPlayerVisibility();
   }
 }
 
