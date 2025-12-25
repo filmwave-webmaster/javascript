@@ -924,7 +924,7 @@ function initializeWaveforms() {
       songName.addEventListener('click', handlePlayPause);
     }
     
-// Waveform interaction (seeking)
+    // Waveform interaction (seeking)
     wavesurfer.on('interaction', function (newProgress) {
       console.log('🎯 Waveform interaction - songId:', songData.id, 'current:', g.currentSongData?.id);
       
@@ -970,6 +970,7 @@ function initializeWaveforms() {
         g.currentSongData = songData;
       }
     });
+  });
   
   // Link existing standalone audio to waveforms
   setTimeout(() => {
