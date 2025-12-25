@@ -107,33 +107,20 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  // ADD MARGIN TO LAST ITEM INSTEAD OF PADDING TO WRAPPER
+  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
   if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1;
+    const overlapAmount = 1; // Amount to overlap (in pixels)
     
-    // Find last song card in the list
-    const lastSongCard = document.querySelector('.music-list-wrapper .w-dyn-items > .w-dyn-item:last-child');
-    
-    if (lastSongCard) {
-      lastSongCard.style.marginBottom = (playerHeight - overlapAmount) + 'px';
-    }
-    
-    // Remove padding from wrappers
     if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '0px';
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
     }
+    
     if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '0px';
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
     }
   } else {
-    // REMOVE MARGIN when player not visible
-    const lastSongCard = document.querySelector('.music-list-wrapper .w-dyn-items > .w-dyn-item:last-child');
-    
-    if (lastSongCard) {
-      lastSongCard.style.marginBottom = '0px';
-    }
-    
+    // REMOVE PADDING when player not visible or not on music page
     if (musicListWrapper) {
       musicListWrapper.style.paddingBottom = '0px';
     }
