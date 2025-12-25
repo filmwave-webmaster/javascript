@@ -1699,40 +1699,62 @@ if (typeof barba !== 'undefined') {
     transitions: [{
       name: 'default',
       
-      beforeLeave(data) {
-        const g = window.musicPlayerPersistent;
-        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-        
-        console.log('🚪 beforeLeave - isMusicPage:', isMusicPage);
-        
-        if (isMusicPage) {
-          // Just destroy the visual waveforms - standalone audio keeps playing!
-          console.log('🗑️ Destroying waveforms (audio continues playing)');
-          
-          g.allWavesurfers.forEach(ws => {
-            try {
-              ws.unAll();
-              ws.destroy();
-            } catch (error) {
-              console.warn('Error destroying wavesurfer:', error);
-            }
-          });
-          
-          document.querySelectorAll('.waveform').forEach(container => {
-            container.innerHTML = '';
-          });
-          
-          g.allWavesurfers = [];
-          g.waveformData = [];
-          g.persistedWaveformContainer = null;
-          g.currentWavesurfer = null;
-        }
-        
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.body.style.height = '';
-        return Promise.resolve();
-      },
+     beforeLeave(data) {
+  const g = window.musicPlayerPersistent;
+  const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+  
+  console.log('🚪 beforeLeave - isMusicPage:', isMusicPage);
+  
+  if (isMusicPage) {
+    const playerWrapper = document.querySelector('.music-player-wrapper');
+    
+    // Lock player position BEFORE transition to prevent flicker
+    if (playerWrapper && g.hasActiveSong) {
+      // Get current position
+      const rect = playerWrapper.getBoundingClientRect();
+      
+      // Switch to fixed positioning at the EXACT same visual spot
+      playerWrapper.style.transition = 'none'; // Disable transitions temporarily
+      playerWrapper.style.position = 'fixed';
+      playerWrapper.style.bottom = '0px';
+      playerWrapper.style.left = '0px';
+      playerWrapper.style.right = '0px';
+      playerWrapper.style.top = 'auto';
+      
+      // Force reflow
+      playerWrapper.offsetHeight;
+      
+      // Re-enable transitions
+      playerWrapper.style.transition = 'opacity 0.2s ease';
+    }
+    
+    // Destroy the visual waveforms - standalone audio keeps playing!
+    console.log('🗑️ Destroying waveforms (audio continues playing)');
+    
+    g.allWavesurfers.forEach(ws => {
+      try {
+        ws.unAll();
+        ws.destroy();
+      } catch (error) {
+        console.warn('Error destroying wavesurfer:', error);
+      }
+    });
+    
+    document.querySelectorAll('.waveform').forEach(container => {
+      container.innerHTML = '';
+    });
+    
+    g.allWavesurfers = [];
+    g.waveformData = [];
+    g.persistedWaveformContainer = null;
+    g.currentWavesurfer = null;
+  }
+  
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+  document.body.style.height = '';
+  return Promise.resolve();
+},
 
       beforeEnter(data) {
         const nextContainer = data.next.container;
