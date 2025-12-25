@@ -88,17 +88,17 @@ function adjustDropdownPosition(toggle, list) {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) {
-    console.log('❌ Player wrapper not found');
-    return;
-  }
+  if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   const musicListWrapper = document.querySelector('.music-list-wrapper');
+  const searchAreaContainer = document.querySelector('.search-area-container');
   
-  console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  // Check if player is visible/active
+  const isPlayerVisible = playerWrapper.classList.contains('active') || 
+                          (window.getComputedStyle(playerWrapper).display !== 'none');
   
-  // ALWAYS use fixed positioning at bottom
+  // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
   playerWrapper.style.setProperty('left', '0px', 'important');
@@ -107,17 +107,27 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  if (isMusicPage && musicListWrapper) {
-    // Add padding to music list so content sits ABOVE the fixed player
+  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
+  if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    musicListWrapper.style.paddingBottom = playerHeight + 'px';
-    console.log('   ✅ Added padding-bottom to music list:', playerHeight + 'px');
-  } else if (musicListWrapper) {
-    // Remove padding on other pages
-    musicListWrapper.style.paddingBottom = '0px';
+    const overlapAmount = 1; // Amount to overlap (in pixels)
+    
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+    }
+    
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+    }
+  } else {
+    // REMOVE PADDING when player not visible or not on music page
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '0px';
+    }
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = '0px';
+    }
   }
-  
-  console.log('   ✅ Player fixed at bottom');
 }
 
 /**
@@ -504,12 +514,11 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   g.currentSongData = songData;
   g.hasActiveSong = true;
   
-  // ALWAYS reposition player before showing it
-  positionMasterPlayer();
-  
   // Then show player
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
+    playerWrapper.classList.add('active'); // ADD ACTIVE CLASS
+    positionMasterPlayer(); // REPOSITION AFTER ADDING ACTIVE CLASS
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
