@@ -37,47 +37,48 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
  * UTILITY FUNCTIONS
  * ============================================================
  */
-function formatDuration(seconds) {
-  if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function scrollToSelected(cardElement) {
-  const container = document.querySelector('.music-list-wrapper');
-  if (!container || !cardElement) return;
-  const containerRect = container.getBoundingClientRect();
-  const cardRect = cardElement.getBoundingClientRect();
-  const isOffBottom = cardRect.bottom > containerRect.bottom;
-  const isOffTop = cardRect.top < containerRect.top;
-  if (isOffBottom || isOffTop) {
-    const cardHeight = cardElement.offsetHeight;
-    const scrollAmount = cardHeight * 6;
-    if (isOffBottom) container.scrollTop += scrollAmount;
-    else if (isOffTop) container.scrollTop -= scrollAmount;
-  }
-}
-
-function adjustDropdownPosition(toggle, list) {
-  const container = document.querySelector('.music-list-wrapper');
-  if (!container || !list || !toggle) return;
-  const containerRect = container.getBoundingClientRect();
-  const toggleRect = toggle.getBoundingClientRect();
-  const originalDisplay = list.style.display;
-  list.style.display = 'block';
-  list.style.visibility = 'hidden';
-  const listHeight = list.offsetHeight;
-  list.style.display = originalDisplay;
-  list.style.visibility = '';
-  const spaceBelow = containerRect.bottom - toggleRect.bottom;
-  const spaceAbove = toggleRect.top - containerRect.top;
-  if (spaceBelow < listHeight && spaceAbove > spaceBelow) {
-    list.style.top = 'auto';
-    list.style.bottom = '100%';
+function positionMasterPlayer() {
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (!playerWrapper) return;
+  
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const musicListWrapper = document.querySelector('.music-list-wrapper');
+  const searchAreaContainer = document.querySelector('.search-area-container');
+  
+  // Check if player is visible/active
+  const isPlayerVisible = playerWrapper.classList.contains('active') || 
+                          (window.getComputedStyle(playerWrapper).display !== 'none');
+  
+  // ALWAYS fixed at bottom
+  playerWrapper.style.setProperty('position', 'fixed', 'important');
+  playerWrapper.style.setProperty('bottom', '0px', 'important');
+  playerWrapper.style.setProperty('left', '0px', 'important');
+  playerWrapper.style.setProperty('right', '0px', 'important');
+  playerWrapper.style.setProperty('top', 'auto', 'important');
+  playerWrapper.style.width = '100%';
+  playerWrapper.style.zIndex = '9999';
+  
+  if (isMusicPage && isPlayerVisible) {
+    const playerHeight = playerWrapper.offsetHeight || 80;
+    const overlapAmount = 1;
+    const existingPadding = 12; // Your Webflow padding
+    
+    // ADD to existing padding, don't replace it
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = (existingPadding + playerHeight - overlapAmount) + 'px';
+    }
+    
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = (existingPadding + playerHeight - overlapAmount) + 'px';
+    }
   } else {
-    list.style.top = '100%';
-    list.style.bottom = 'auto';
+    // Reset to original 12px padding
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '12px';
+    }
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = '12px';
+    }
   }
 }
 
