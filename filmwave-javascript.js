@@ -74,15 +74,9 @@ function positionMasterPlayer() {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
+  const musicAreaContainer = document.querySelector('.music-area-container');
+  
   if (!playerWrapper) return;
-  
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicListWrapper = document.querySelector('.music-list-wrapper');
-  const searchAreaContainer = document.querySelector('.search-area-container');
-  
-  // Check if player is visible/active
-  const isPlayerVisible = playerWrapper.classList.contains('active') || 
-                          (window.getComputedStyle(playerWrapper).display !== 'none');
   
   // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
@@ -93,31 +87,12 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  // ADD MARGIN TO CONTENT INSTEAD OF PADDING TO WRAPPER
-  if (isMusicPage && isPlayerVisible) {
+  // Check if player is active/visible
+  if (playerWrapper.classList.contains('active') && musicAreaContainer) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1;
-    const wrapperPadding = 12; // The 12px Webflow padding
-    
-    // Add margin to the list content (keeps wrapper padding at 12px)
-    const listContent = document.querySelector('.music-list-wrapper > *');
-    if (listContent) {
-      listContent.style.marginBottom = (playerHeight - overlapAmount - wrapperPadding) + 'px';
-    }
-    
-    // Don't add padding to wrappers
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '';
-    }
-  } else {
-    // REMOVE MARGIN when player not visible
-    const listContent = document.querySelector('.music-list-wrapper > *');
-    if (listContent) {
-      listContent.style.marginBottom = '';
-    }
+    musicAreaContainer.style.paddingBottom = (playerHeight - 1) + 'px';
+  } else if (musicAreaContainer) {
+    musicAreaContainer.style.paddingBottom = '0px';
   }
 }
 
