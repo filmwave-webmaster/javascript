@@ -1261,15 +1261,19 @@ async function initMusicPage() {
     // HARD FIX: Position player at bottom of music page AFTER everything loads
     setTimeout(() => {
       const playerWrapper = document.querySelector('.music-player-wrapper');
+      const musicListWrapper = document.querySelector('.music-list-wrapper');
       
-      if (playerWrapper) {
+      if (playerWrapper && musicListWrapper) {
         console.log('🔧 HARD FIX: Positioning player at bottom of music page');
         
-        // Force player to bottom of music list
-        playerWrapper.style.position = 'relative';
-        playerWrapper.style.bottom = 'auto';
-        playerWrapper.style.left = 'auto';
-        playerWrapper.style.right = 'auto';
+        // Get the position of the music list wrapper
+        const musicListRect = musicListWrapper.getBoundingClientRect();
+        
+        // Position player at bottom of music list using absolute positioning WITHIN the music list
+        playerWrapper.style.position = 'absolute';
+        playerWrapper.style.bottom = '0';
+        playerWrapper.style.left = '0';
+        playerWrapper.style.right = '0';
         playerWrapper.style.top = 'auto';
         playerWrapper.style.display = 'flex';
         playerWrapper.style.visibility = 'visible';
@@ -1278,11 +1282,11 @@ async function initMusicPage() {
         playerWrapper.style.width = '100%';
         playerWrapper.style.zIndex = '9999';
         
-        // Append to music list wrapper to ensure it's at the bottom
-        const musicListWrapper = document.querySelector('.music-list-wrapper');
-        if (musicListWrapper && playerWrapper.parentElement !== musicListWrapper) {
-          musicListWrapper.appendChild(playerWrapper);
-        }
+        // Make sure music list wrapper has position relative
+        musicListWrapper.style.position = 'relative';
+        
+        // DO NOT MOVE THE ELEMENT - just position it
+        // This ensures it stays in the DOM when navigating away
         
         if (g.currentSongData) {
           updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
