@@ -1334,21 +1334,96 @@ if (typeof barba !== 'undefined') {
           
           try {
             const wasPlaying = g.currentWavesurfer.isPlaying();
-            g.savedTime = g.currentWavesurfer.getCurrentTime();
-            g.currentTime = g.savedTime;
-            g.currentDuration = g.currentWavesurfer.getDuration();
+            const currentTime = g.currentWavesurfer.getCurrentTime();
+            const duration = g.currentWavesurfer.getDuration();
+            
+            // Save state
+            g.savedTime = currentTime;
+            g.currentTime = currentTime;
+            g.currentDuration = duration;
             g.shouldAutoPlay = wasPlaying;
             
+            console.log('💾 Saved - time:', g.savedTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
+            
+            // CREATE STANDALONE AUDIO IMMEDIATELY to prevent gap/stutter
+            if (g.currentSongData && wasPlaying) {
+              console.log('🎵 Creating standalone audio for seamless transition');
+              
+              const audioUrl = g.currentSongData.fields['R2 Audio URL'];
+              const audio = new Audio(audioUrl);
+              g.standaloneAudio = audio;
+              
+              // Setup event listeners
+              audio.addEventListener('loadedmetadata', () => {
+                g.currentDuration = audio.duration;
+                console.log('📊 Standalone audio loaded, duration:', g.currentDuration);
+              });
+              
+              audio.addEventListener('canplay', () => {
+                // Seek to saved position
+                if (g.savedTime > 0) {
+                  audio.currentTime = g.savedTime;
+                  console.log('⏩ Seeked standalone to:', g.savedTime);
+                }
+                
+                // Auto-play if was playing
+                if (g.shouldAutoPlay) {
+                  audio.play().then(() => {
+                    g.shouldAutoPlay = false;
+                    g.isPlaying = true;
+                    console.log('✅ Standalone playback started seamlessly');
+                  }).catch(err => console.error('Auto-play error:', err));
+                }
+              }, { once: true });
+              
+              audio.addEventListener('timeupdate', () => {
+                g.currentTime = audio.currentTime;
+                const masterCounter = document.querySelector('.player-duration-counter');
+                if (masterCounter) {
+                  masterCounter.textContent = formatDuration(audio.currentTime);
+                }
+                if (g.currentPeaksData && g.currentDuration > 0) {
+                  const progress = audio.currentTime / audio.duration;
+                  drawMasterWaveform(g.currentPeaksData, progress);
+                }
+              });
+              
+              audio.addEventListener('play', () => {
+                g.isPlaying = true;
+                updateMasterControllerIcons(true);
+                console.log('▶️ Standalone audio playing');
+              });
+              
+              audio.addEventListener('pause', () => {
+                g.isPlaying = false;
+                updateMasterControllerIcons(false);
+                console.log('⏸️ Standalone audio paused');
+              });
+              
+              audio.addEventListener('ended', () => {
+                navigateStandaloneTrack('next');
+              });
+              
+              audio.addEventListener('error', (e) => {
+                console.error('❌ Audio error:', e);
+              });
+              
+              // Start loading immediately
+              audio.src = audioUrl;
+              audio.load();
+            }
+            
+            // Now pause the wavesurfer (after standalone is loading)
             g.currentWavesurfer.pause();
             g.isPlaying = false;
             
-            console.log('💾 Saved - time:', g.savedTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
           } catch (error) {
             console.error('Error saving playback state:', error);
           }
         }
         
         if (isMusicPage) {
+          // Destroy ALL wavesurfers properly
           g.allWavesurfers.forEach(ws => {
             try {
               ws.pause();
@@ -1359,10 +1434,12 @@ if (typeof barba !== 'undefined') {
             }
           });
           
+          // Clear ALL waveform containers
           document.querySelectorAll('.waveform').forEach(container => {
             container.innerHTML = '';
           });
           
+          // Clear the arrays
           g.allWavesurfers = [];
           g.waveformData = [];
           g.persistedWaveformContainer = null;
@@ -1421,9 +1498,9 @@ if (typeof barba !== 'undefined') {
           console.log('🎮 Setting up master player controls');
           setupMasterPlayerControls();
           
+          // ONLY create standalone audio if it doesn't already exist
           if (g.currentSongData && !g.standaloneAudio && !g.currentWavesurfer) {
             console.log('🎵 Creating standalone audio for saved song');
-            console.log('🎵 Should auto-play:', g.shouldAutoPlay);
             
             const audioUrl = g.currentSongData.fields['R2 Audio URL'];
             const audio = new Audio(audioUrl);
@@ -1492,9 +1569,11 @@ if (typeof barba !== 'undefined') {
             
             audio.src = audioUrl;
             audio.load();
+          } else if (g.standaloneAudio) {
+            console.log('🎵 Standalone audio already exists from transition');
           }
           
-          // FIXED: Ensure player visible
+          // Ensure player visible
           const ensurePlayerVisible = () => {
             const playerWrapper = document.querySelector('.music-player-wrapper');
             
