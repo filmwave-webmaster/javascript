@@ -95,32 +95,37 @@ function positionMasterPlayer() {
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
-  // CRITICAL: Remove any existing top positioning first
-  playerWrapper.style.removeProperty('top');
-  
-  // Player is ALWAYS fixed at bottom
-  playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '0px', 'important');
-  playerWrapper.style.setProperty('left', '0px', 'important');
-  playerWrapper.style.setProperty('right', '0px', 'important');
-  playerWrapper.style.setProperty('top', 'auto', 'important'); // Force override
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
-  
   if (isMusicPage && musicListWrapper) {
-    const playerHeight = playerWrapper.offsetHeight || 80;
-    musicListWrapper.style.paddingBottom = playerHeight + 'px';
-    console.log('   ✅ Added padding-bottom to music list:', playerHeight + 'px');
-  } else if (musicListWrapper) {
-    musicListWrapper.style.paddingBottom = '0px';
+    // MUSIC PAGE: Append player to music-list-wrapper so it flows naturally
+    if (playerWrapper.parentElement !== musicListWrapper) {
+      musicListWrapper.appendChild(playerWrapper);
+    }
+    
+    playerWrapper.style.removeProperty('top');
+    playerWrapper.style.position = 'relative';
+    playerWrapper.style.bottom = 'auto';
+    playerWrapper.style.left = 'auto';
+    playerWrapper.style.right = 'auto';
+    playerWrapper.style.width = '100%';
+    playerWrapper.style.zIndex = '9999';
+    
+    console.log('   ✅ Set to RELATIVE - appended to music list');
+  } else {
+    // OTHER PAGES: Move back to body and use fixed positioning
+    if (playerWrapper.parentElement !== document.body) {
+      document.body.appendChild(playerWrapper);
+    }
+    
+    playerWrapper.style.setProperty('position', 'fixed', 'important');
+    playerWrapper.style.setProperty('bottom', '0px', 'important');
+    playerWrapper.style.setProperty('left', '0px', 'important');
+    playerWrapper.style.setProperty('right', '0px', 'important');
+    playerWrapper.style.setProperty('top', 'auto', 'important');
+    playerWrapper.style.width = '100%';
+    playerWrapper.style.zIndex = '9999';
+    
+    console.log('   ✅ Set to FIXED - appended to body');
   }
-  
-  console.log('   ✅ Player fixed at bottom with !important');
-  
-  // Debug
-  const computed = window.getComputedStyle(playerWrapper);
-  console.log('   Final computed top:', computed.top);
-  console.log('   Final computed bottom:', computed.bottom);
 }
 
 /**
