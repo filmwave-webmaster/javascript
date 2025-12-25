@@ -91,41 +91,27 @@ function positionMasterPlayer() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicListWrapper = document.querySelector('.music-list-wrapper');
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
-  if (isMusicPage && musicListWrapper) {
-    // MUSIC PAGE: Append player to music-list-wrapper so it flows naturally
-    if (playerWrapper.parentElement !== musicListWrapper) {
-      musicListWrapper.appendChild(playerWrapper);
-    }
-    
-    playerWrapper.style.removeProperty('top');
+  if (isMusicPage) {
+    // MUSIC PAGE: Player at bottom (relative positioning)
     playerWrapper.style.position = 'relative';
     playerWrapper.style.bottom = 'auto';
     playerWrapper.style.left = 'auto';
     playerWrapper.style.right = 'auto';
-    playerWrapper.style.width = '100%';
-    playerWrapper.style.zIndex = '9999';
-    
-    console.log('   ✅ Set to RELATIVE - appended to music list');
+    playerWrapper.style.top = 'auto';
   } else {
-    // OTHER PAGES: Move back to body and use fixed positioning
-    if (playerWrapper.parentElement !== document.body) {
-      document.body.appendChild(playerWrapper);
-    }
-    
-    playerWrapper.style.setProperty('position', 'fixed', 'important');
-    playerWrapper.style.setProperty('bottom', '0px', 'important');
-    playerWrapper.style.setProperty('left', '0px', 'important');
-    playerWrapper.style.setProperty('right', '0px', 'important');
-    playerWrapper.style.setProperty('top', 'auto', 'important');
-    playerWrapper.style.width = '100%';
-    playerWrapper.style.zIndex = '9999';
-    
-    console.log('   ✅ Set to FIXED - appended to body');
+    // OTHER PAGES: Player fixed at bottom
+    playerWrapper.style.position = 'fixed';
+    playerWrapper.style.bottom = '0px';
+    playerWrapper.style.left = '0px';
+    playerWrapper.style.right = '0px';
+    playerWrapper.style.top = 'auto';
   }
+  
+  playerWrapper.style.width = '100%';
+  playerWrapper.style.zIndex = '9999';
 }
 
 /**
