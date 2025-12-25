@@ -100,11 +100,11 @@ function positionMasterPlayer() {
   
   // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '0px', 'important'); // BACK TO 0px
+  playerWrapper.style.setProperty('bottom', '0px', 'important');
   playerWrapper.style.setProperty('left', '0px', 'important');
   playerWrapper.style.setProperty('right', '0px', 'important');
   playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.setProperty('margin-top', '-1px', 'important'); // ADD NEGATIVE TOP MARGIN
+  playerWrapper.style.setProperty('margin-top', '-2px', 'important'); // CHANGED TO -2px
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
