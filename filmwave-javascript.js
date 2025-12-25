@@ -814,6 +814,9 @@ function initializeWaveforms() {
   const songCards = document.querySelectorAll('.song-wrapper');
   
   songCards.forEach(cardElement => {
+    // Skip if this is the template card
+    if (cardElement.closest('.template-wrapper')) return;
+    
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
     const songData = JSON.parse(cardElement.dataset.songData || '{}');
@@ -924,7 +927,7 @@ function initializeWaveforms() {
       songName.addEventListener('click', handlePlayPause);
     }
     
- // Waveform interaction (seeking)
+    // Waveform interaction (seeking)
     wavesurfer.on('interaction', function (newProgress) {
       console.log('🎯 Waveform interaction - songId:', songData.id, 'current:', g.currentSongData?.id);
       
