@@ -1501,8 +1501,12 @@ function initDynamicTagging() {
       return tag;
     }
 
+    // CLONE AND REPLACE CHECKBOXES to remove old listeners
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      
+      newCheckbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1530,13 +1534,17 @@ function initDynamicTagging() {
       });
     });
 
+    // CLONE AND REPLACE RADIO WRAPPERS to remove old listeners
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      
+      newWrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      wrapper.addEventListener('click', function() {
+      newWrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
@@ -1572,6 +1580,12 @@ function initDynamicTagging() {
         }, 50);
       });
     });
+    
+    // CRITICAL: Re-initialize these AFTER cloning is complete
+    // so they get references to the NEW checkboxes
+    initMutualExclusion();
+    initSearchAndFilters();
+    
   }, 1000);
 }
 
