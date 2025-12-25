@@ -1126,25 +1126,34 @@ if (typeof barba !== 'undefined') {
   if (isMusicPage && g.currentWavesurfer) {
     console.log('💾 Saving playback state');
     
-    // Save to a SEPARATE variable that won't be overwritten
-    const wasPlaying = g.currentWavesurfer.isPlaying();
-    g.savedTime = g.currentWavesurfer.getCurrentTime();  // NEW: Different variable
-    g.currentTime = g.savedTime;
-    g.currentDuration = g.currentWavesurfer.getDuration();
-    g.shouldAutoPlay = wasPlaying;
-    
-    // Pause the wavesurfer
-    g.currentWavesurfer.pause();
-    g.isPlaying = false;
-    
-    console.log('💾 Saved - time:', g.savedTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
+    try {
+      // Save to a SEPARATE variable that won't be overwritten
+      const wasPlaying = g.currentWavesurfer.isPlaying();
+      g.savedTime = g.currentWavesurfer.getCurrentTime();
+      g.currentTime = g.savedTime;
+      g.currentDuration = g.currentWavesurfer.getDuration();
+      g.shouldAutoPlay = wasPlaying;
+      
+      // Pause the wavesurfer
+      g.currentWavesurfer.pause();
+      g.isPlaying = false;
+      
+      console.log('💾 Saved - time:', g.savedTime, 'duration:', g.currentDuration, 'shouldAutoPlay:', wasPlaying);
+    } catch (error) {
+      console.error('Error saving playback state:', error);
+    }
   }
   
   if (isMusicPage) {
-    // Destroy ALL wavesurfers
+    // Destroy ALL wavesurfers properly
     g.allWavesurfers.forEach(ws => {
-      ws.pause();
-      ws.destroy();
+      try {
+        ws.pause();
+        ws.unAll(); // Remove all event listeners BEFORE destroying
+        ws.destroy();
+      } catch (error) {
+        console.warn('Error destroying wavesurfer:', error);
+      }
     });
     
     // Clear ALL waveform containers
