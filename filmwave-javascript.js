@@ -94,41 +94,30 @@ function positionMasterPlayer() {
   }
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const musicListWrapper = document.querySelector('.music-list-wrapper');
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
-  console.log('   Current parent:', playerWrapper.parentElement?.tagName);
-  console.log('   Current display:', playerWrapper.style.display);
-  console.log('   Current position:', playerWrapper.style.position);
   
-  if (isMusicPage) {
-    // MUSIC PAGE: Ensure player is last element in body, use relative positioning
-    if (playerWrapper.parentElement === document.body && playerWrapper !== document.body.lastElementChild) {
-      document.body.appendChild(playerWrapper);
-      console.log('   Moved player to end of body');
-    }
-    
-    playerWrapper.style.removeProperty('top');
-    playerWrapper.style.position = 'relative';
-    playerWrapper.style.bottom = 'auto';
-    playerWrapper.style.left = 'auto';
-    playerWrapper.style.right = 'auto';
-    playerWrapper.style.width = '100%';
-    playerWrapper.style.zIndex = '9999';
-    
-    console.log('   ✅ Set to RELATIVE positioning');
-    console.log('   Final display:', playerWrapper.style.display);
-  } else {
-    // OTHER PAGES: Fixed positioning at bottom
-    playerWrapper.style.setProperty('position', 'fixed', 'important');
-    playerWrapper.style.setProperty('bottom', '0px', 'important');
-    playerWrapper.style.setProperty('left', '0px', 'important');
-    playerWrapper.style.setProperty('right', '0px', 'important');
-    playerWrapper.style.setProperty('top', 'auto', 'important');
-    playerWrapper.style.width = '100%';
-    playerWrapper.style.zIndex = '9999';
-    
-    console.log('   ✅ Set to FIXED positioning');
+  // ALWAYS use fixed positioning at bottom
+  playerWrapper.style.setProperty('position', 'fixed', 'important');
+  playerWrapper.style.setProperty('bottom', '0px', 'important');
+  playerWrapper.style.setProperty('left', '0px', 'important');
+  playerWrapper.style.setProperty('right', '0px', 'important');
+  playerWrapper.style.setProperty('top', 'auto', 'important');
+  playerWrapper.style.width = '100%';
+  playerWrapper.style.zIndex = '9999';
+  
+  if (isMusicPage && musicListWrapper) {
+    // Add padding to music list so content sits ABOVE the fixed player
+    const playerHeight = playerWrapper.offsetHeight || 80; // fallback to 80px
+    musicListWrapper.style.paddingBottom = playerHeight + 'px';
+    console.log('   ✅ Added padding-bottom to music list:', playerHeight + 'px');
+  } else if (musicListWrapper) {
+    // Remove padding on other pages
+    musicListWrapper.style.paddingBottom = '0px';
   }
+  
+  console.log('   ✅ Player fixed at bottom');
 }
 
 /**
