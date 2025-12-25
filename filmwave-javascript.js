@@ -924,7 +924,7 @@ function initializeWaveforms() {
       songName.addEventListener('click', handlePlayPause);
     }
     
-    // Waveform interaction (seeking)
+ // Waveform interaction (seeking)
     wavesurfer.on('interaction', function (newProgress) {
       console.log('🎯 Waveform interaction - songId:', songData.id, 'current:', g.currentSongData?.id);
       
@@ -943,31 +943,34 @@ function initializeWaveforms() {
       console.log('🔄 Switching from', g.currentSongData?.fields['Song Title'], 'to', songData.fields['Song Title']);
       const wasPlaying = g.isPlaying;
       
+      // Stop current audio
       if (g.standaloneAudio) {
         g.standaloneAudio.pause();
+        g.standaloneAudio = null; // Clear it completely
       }
       
+      // Reset previous waveform
       if (g.currentWavesurfer) {
         g.currentWavesurfer.seekTo(0);
       }
       
-      // DON'T update g.currentSongData here - let createStandaloneAudio do it
+      // Update wavesurfer reference (but NOT song data yet)
       g.currentWavesurfer = wavesurfer;
       g.hasActiveSong = true;
       
-      syncMasterTrack(wavesurfer, songData, newProgress);
-      
       if (wasPlaying) {
+        // Play new song - this will update g.currentSongData
         playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-        // Seek to clicked position after a brief delay
+        // Seek to clicked position after audio loads
         setTimeout(() => {
           if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
             g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
           }
         }, 100);
       } else {
-        // Not playing, just update the current song data for UI sync
+        // Not playing - just update UI
         g.currentSongData = songData;
+        syncMasterTrack(wavesurfer, songData, newProgress);
       }
     });
   });
