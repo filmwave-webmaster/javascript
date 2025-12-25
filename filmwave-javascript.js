@@ -107,25 +107,30 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
+  // ADD MARGIN TO CONTENT INSTEAD OF PADDING TO WRAPPER
   if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1; // Amount to overlap (in pixels)
+    const overlapAmount = 1;
+    const wrapperPadding = 12; // The 12px Webflow padding
     
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+    // Add margin to the list content (keeps wrapper padding at 12px)
+    const listContent = document.querySelector('.music-list-wrapper > *');
+    if (listContent) {
+      listContent.style.marginBottom = (playerHeight - overlapAmount - wrapperPadding) + 'px';
     }
     
+    // Don't add padding to wrappers
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '';
+    }
     if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+      searchAreaContainer.style.paddingBottom = '';
     }
   } else {
-    // REMOVE PADDING when player not visible or not on music page
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '0px';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '0px';
+    // REMOVE MARGIN when player not visible
+    const listContent = document.querySelector('.music-list-wrapper > *');
+    if (listContent) {
+      listContent.style.marginBottom = '';
     }
   }
 }
