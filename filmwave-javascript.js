@@ -956,55 +956,64 @@ function setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, cove
     songName.addEventListener('click', handlePlayPause);
   }
   
-  // Waveform interaction (seeking)
-  wavesurfer.on('interaction', function (newProgress) {
-    console.log('🎯 Waveform interaction - songId:', songData.id, 'songTitle:', songData.fields['Song Title'], 'current:', g.currentSongData?.id);
-    
-    // ALWAYS check song ID first, not wavesurfer reference
-    if (g.currentSongData?.id === songData.id) {
-      // This is the current song - just seek
-      if (g.standaloneAudio) {
-        console.log('⏩ Seeking current song to:', newProgress);
-        const newTime = newProgress * g.standaloneAudio.duration;
-        g.standaloneAudio.currentTime = newTime;
-      }
-      return; // Don't do anything else
-    }
-    
-    // Different song - switch to it
-    console.log('🔄 Switching from', g.currentSongData?.fields['Song Title'], 'to', songData.fields['Song Title']);
-    const wasPlaying = g.isPlaying;
-    
-    // Stop current audio
+// Waveform interaction (seeking)
+wavesurfer.on('interaction', function (newProgress) {
+  console.log('🎯 Waveform interaction');
+  console.log('  - Clicked songId:', songData.id);
+  console.log('  - Clicked songTitle:', songData.fields['Song Title']);
+  console.log('  - Current songId:', g.currentSongData?.id);
+  console.log('  - Current songTitle:', g.currentSongData?.fields['Song Title']);
+  console.log('  - Are they equal?', g.currentSongData?.id === songData.id);
+  console.log('  - Click position:', newProgress);
+  
+  // ALWAYS check song ID first, not wavesurfer reference
+  if (g.currentSongData?.id === songData.id) {
+    // This is the current song - just seek
     if (g.standaloneAudio) {
-      g.standaloneAudio.pause();
-      g.standaloneAudio = null; // Clear it completely
-    }
-    
-    // Reset previous waveform
-    if (g.currentWavesurfer) {
-      g.currentWavesurfer.seekTo(0);
-    }
-    
-    // Update wavesurfer reference (but NOT song data yet)
-    g.currentWavesurfer = wavesurfer;
-    g.hasActiveSong = true;
-    
-    if (wasPlaying) {
-      // Play new song - this will update g.currentSongData
-      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-      // Seek to clicked position after audio loads
-      setTimeout(() => {
-        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
-        }
-      }, 100);
+      console.log('⏩ Seeking current song to:', newProgress, 'seconds:', newProgress * g.standaloneAudio.duration);
+      const newTime = newProgress * g.standaloneAudio.duration;
+      g.standaloneAudio.currentTime = newTime;
     } else {
-      // Not playing - just update UI
-      g.currentSongData = songData;
-      syncMasterTrack(wavesurfer, songData, newProgress);
+      console.log('⚠️ No standalone audio to seek!');
     }
-  });
+    return; // Don't do anything else
+  }
+  
+  // Different song - switch to it
+  console.log('🔄 Switching songs');
+  const wasPlaying = g.isPlaying;
+  
+  // Stop current audio
+  if (g.standaloneAudio) {
+    g.standaloneAudio.pause();
+    g.standaloneAudio = null; // Clear it completely
+  }
+  
+  // Reset previous waveform
+  if (g.currentWavesurfer) {
+    g.currentWavesurfer.seekTo(0);
+  }
+  
+  // Update wavesurfer reference (but NOT song data yet)
+  g.currentWavesurfer = wavesurfer;
+  g.hasActiveSong = true;
+  
+  if (wasPlaying) {
+    // Play new song - this will update g.currentSongData
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+    // Seek to clicked position after audio loads
+    setTimeout(() => {
+      if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+        console.log('⏭️ Seeking to clicked position:', newProgress * g.standaloneAudio.duration);
+        g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
+      }
+    }, 100);
+  } else {
+    // Not playing - just update UI
+    g.currentSongData = songData;
+    syncMasterTrack(wavesurfer, songData, newProgress);
+  }
+});
 }
 
 /**
