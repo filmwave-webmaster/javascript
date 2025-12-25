@@ -1356,12 +1356,13 @@ function initDynamicTagging() {
       return tag;
     }
 
-    // Clone and replace checkboxes to remove old listeners
+    // DON'T clone - just add listeners if not already added
     checkboxes.forEach(checkbox => {
-      const newCheckbox = checkbox.cloneNode(true);
-      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      // Skip if already has listener
+      if (checkbox.dataset.taggingListener === 'true') return;
+      checkbox.dataset.taggingListener = 'true';
       
-      newCheckbox.addEventListener('change', function() {
+      checkbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1389,17 +1390,18 @@ function initDynamicTagging() {
       });
     });
 
-    // Clone and replace radio wrappers to remove old listeners
+    // DON'T clone - just add listeners if not already added
     radioWrappers.forEach(wrapper => {
-      const newWrapper = wrapper.cloneNode(true);
-      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      // Skip if already has listener
+      if (wrapper.dataset.taggingListener === 'true') return;
+      wrapper.dataset.taggingListener = 'true';
       
-      newWrapper.addEventListener('mousedown', function() {
+      wrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      newWrapper.addEventListener('click', function() {
+      wrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
