@@ -1624,15 +1624,19 @@ function initSearchAndFilters() {
   function clearAllFilters() {
     if (searchBar) searchBar.value = '';
     
-    document.querySelectorAll('[data-filter-group]').forEach(input => {
-      input.checked = false;
-      const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-      if (wrapper) wrapper.classList.remove('is-active');
-    });
-    
-    // Remove all tags
-    const tags = document.querySelectorAll('.filter-tag');
-    tags.forEach(tag => tag.remove());
+    // CRITICAL: Click the tag remove buttons instead of just removing tags
+    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+    if (tagRemoveButtons.length > 0) {
+      tagRemoveButtons.forEach(btn => btn.click());
+    } else {
+      // Fallback if no tags exist
+      document.querySelectorAll('[data-filter-group]').forEach(input => {
+        input.checked = false;
+        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+        if (wrapper) wrapper.classList.remove('is-active');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
     
     toggleClearButton();
     applyFilters();
