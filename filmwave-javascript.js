@@ -1268,11 +1268,10 @@ async function initMusicPage() {
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    // Skip if already initialized
-    if (header.dataset.accordionListener === 'true') return;
-    header.dataset.accordionListener = 'true';
+    const newHeader = header.cloneNode(true);
+    header.parentNode.replaceChild(newHeader, header);
     
-    header.addEventListener('click', function() {
+    newHeader.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
@@ -1298,10 +1297,6 @@ function initFilterAccordions() {
 
 function initCheckboxTextColor() {
   document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
-    // Skip if already initialized
-    if (checkbox.dataset.textColorListener === 'true') return;
-    checkbox.dataset.textColorListener = 'true';
-    
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
@@ -1317,12 +1312,15 @@ function initFilterItemBackground() {
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
     
+    // Clone all checkboxes EXCEPT exclusive ones
     checkboxes.forEach(checkbox => {
-      // Skip if already initialized
-      if (checkbox.dataset.backgroundListener === 'true') return;
-      checkbox.dataset.backgroundListener = 'true';
+      // Skip exclusive checkboxes
+      if (checkbox.closest('[data-exclusive]')) return;
       
-      checkbox.addEventListener('change', function() {
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      
+      newCheckbox.addEventListener('change', function() {
         const filterItem = this.closest('.filter-item');
         if (filterItem) {
           if (this.checked) {
@@ -1341,7 +1339,7 @@ function initDynamicTagging() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
-    // EXCLUDE checkboxes with data-exclusive attribute
+    // Get all checkboxes but exclude exclusive ones
     const checkboxes = Array.from(
       document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]')
     ).filter(cb => !cb.closest('[data-exclusive]'));
@@ -1369,12 +1367,12 @@ function initDynamicTagging() {
       return tag;
     }
 
+    // Clone and replace checkboxes (excluding exclusive ones already filtered above)
     checkboxes.forEach(checkbox => {
-      // Skip if already has listener
-      if (checkbox.dataset.taggingListener === 'true') return;
-      checkbox.dataset.taggingListener = 'true';
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
       
-      checkbox.addEventListener('change', function() {
+      newCheckbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1402,17 +1400,17 @@ function initDynamicTagging() {
       });
     });
 
+    // Clone and replace radio wrappers
     radioWrappers.forEach(wrapper => {
-      // Skip if already has listener
-      if (wrapper.dataset.taggingListener === 'true') return;
-      wrapper.dataset.taggingListener = 'true';
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
       
-      wrapper.addEventListener('mousedown', function() {
+      newWrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      wrapper.addEventListener('click', function() {
+      newWrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
@@ -1458,11 +1456,6 @@ function initMutualExclusion() {
   const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
   if (instInput && acapInput) {
-    // Skip if already initialized
-    if (instInput.dataset.exclusiveListener === 'true') return;
-    instInput.dataset.exclusiveListener = 'true';
-    acapInput.dataset.exclusiveListener = 'true';
-    
     function clearOther(otherInput, otherWrapper) {
       if (otherInput.checked) {
         otherInput.checked = false;
@@ -1543,8 +1536,7 @@ function initSearchAndFilters() {
     toggleClearButton();
   }
   
-  if (searchBar && !searchBar.dataset.searchListener) {
-    searchBar.dataset.searchListener = 'true';
+  if (searchBar) {
     searchBar.addEventListener('input', () => { 
       clearTimeout(searchTimeout); 
       searchTimeout = setTimeout(applyFilters, 400); 
@@ -1552,13 +1544,10 @@ function initSearchAndFilters() {
   }
   
   document.querySelectorAll('[data-filter-group]').forEach(i => {
-    if (i.dataset.filterListener === 'true') return;
-    i.dataset.filterListener = 'true';
     i.addEventListener('change', applyFilters);
   });
   
-  if (clearBtn && !clearBtn.dataset.clearListener) {
-    clearBtn.dataset.clearListener = 'true';
+  if (clearBtn) {
     clearBtn.style.display = 'none';
     clearBtn.addEventListener('click', clearAllFilters);
   }
