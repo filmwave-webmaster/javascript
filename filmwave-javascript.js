@@ -1196,7 +1196,7 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-  after(data) {
+ after(data) {
   const g = window.musicPlayerPersistent;
   
   window.scrollTo(0, 0);
@@ -1233,28 +1233,28 @@ if (typeof barba !== 'undefined') {
         console.log('📊 Audio loaded, duration:', g.currentDuration);
       });
       
-    // Use 'canplay' event - fires when audio is ready to play
-audio.addEventListener('canplay', () => {
-  console.log('🎵 canplay event - currentTime:', audio.currentTime, 'savedTime:', g.savedTime);
-  
-  // Seek to saved position using savedTime (not currentTime)
-  if (g.savedTime > 0) {
-    audio.currentTime = g.savedTime;
-    console.log('⏩ Seeked to:', g.savedTime);
-    g.savedTime = 0; // Clear it after using
-  }
-  
-  // Resume if was playing
-  if (g.shouldAutoPlay) {
-    setTimeout(() => {
-      console.log('▶️ Auto-playing from:', audio.currentTime);
-      audio.play().then(() => {
-        g.shouldAutoPlay = false;
-        console.log('✅ Playback started successfully');
-      }).catch(err => console.error('Auto-play error:', err));
-    }, 100);
-  }
-}, { once: true });
+      // Use 'canplay' event - fires when audio is ready to play
+      audio.addEventListener('canplay', () => {
+        console.log('🎵 canplay event - currentTime:', audio.currentTime, 'savedTime:', g.savedTime);
+        
+        // Seek to saved position using savedTime (not currentTime)
+        if (g.savedTime > 0) {
+          audio.currentTime = g.savedTime;
+          console.log('⏩ Seeked to:', g.savedTime);
+          g.savedTime = 0; // Clear it after using
+        }
+        
+        // Resume if was playing
+        if (g.shouldAutoPlay) {
+          setTimeout(() => {
+            console.log('▶️ Auto-playing from:', audio.currentTime);
+            audio.play().then(() => {
+              g.shouldAutoPlay = false;
+              console.log('✅ Playback started successfully');
+            }).catch(err => console.error('Auto-play error:', err));
+          }, 100);
+        }
+      }, { once: true });
       
       audio.addEventListener('timeupdate', () => {
         g.currentTime = audio.currentTime;
@@ -1293,60 +1293,46 @@ audio.addEventListener('canplay', () => {
       audio.load();
     }
     
-  // FORCE player visibility if there's active audio - check multiple times
-const ensurePlayerVisible = () => {
-  console.log('🔎 Looking for player wrapper...');
-  const allPlayers = document.querySelectorAll('.music-player-wrapper');
-  console.log('🔎 Found', allPlayers.length, 'player wrappers');
-  
-  const playerWrapper = document.querySelector('.music-player-wrapper');
-  
-  if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
-    // Check parent visibility
-    const parent = playerWrapper.parentElement;
-    if (parent) {
-      const parentStyle = window.getComputedStyle(parent);
-      console.log('🔍 Parent element:', {
-        className: parent.className,
-        display: parentStyle.display,
-        visibility: parentStyle.visibility,
-        opacity: parentStyle.opacity,
-        height: parentStyle.height
-      });
+    // FORCE player visibility if there's active audio
+    const ensurePlayerVisible = () => {
+      const playerWrapper = document.querySelector('.music-player-wrapper');
       
-      // Force parent visible too
-      parent.style.display = 'block';
-      parent.style.visibility = 'visible';
-      parent.style.opacity = '1';
-    }
+      if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
+        console.log('🎯 Setting styles on:', playerWrapper);
+        
+        // Set each property individually
+        playerWrapper.style.setProperty('position', 'fixed', 'important');
+        playerWrapper.style.setProperty('bottom', '0', 'important');
+        playerWrapper.style.setProperty('left', '0', 'important');
+        playerWrapper.style.setProperty('right', '0', 'important');
+        
+        // Verify it was set
+        console.log('✅ Position after setting:', playerWrapper.style.getPropertyValue('position'));
+        console.log('✅ Position priority:', playerWrapper.style.getPropertyPriority('position'));
+        
+        playerWrapper.style.setProperty('display', 'flex', 'important');
+        playerWrapper.style.setProperty('visibility', 'visible', 'important');
+        playerWrapper.style.setProperty('opacity', '1', 'important');
+        playerWrapper.style.setProperty('align-items', 'center', 'important');
+        playerWrapper.style.setProperty('pointer-events', 'auto', 'important');
+        playerWrapper.style.setProperty('transform', 'none', 'important');
+        playerWrapper.style.setProperty('width', '100%', 'important');
+        playerWrapper.style.setProperty('z-index', '9999', 'important');
+        
+        console.log('👁️ All styles set - checking element.style:', playerWrapper.style.cssText);
+        
+        if (g.currentSongData) {
+          updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+          updateMasterControllerIcons(g.isPlaying);
+        }
+      } else if (g.currentSongData) {
+        console.log('⏳ Player wrapper not found, retrying...');
+        setTimeout(ensurePlayerVisible, 100);
+      }
+    };
     
-    // Force with !important using cssText
-    playerWrapper.style.cssText = `
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      align-items: center !important;
-      pointer-events: auto !important;
-      transform: none !important;
-    `;
-    
-    console.log('👁️ Forced player visible with !important');
-    
-    // Update player info
-    if (g.currentSongData) {
-      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-      updateMasterControllerIcons(g.isPlaying);
-    }
-  } else if (g.currentSongData) {
-    console.log('⏳ Player wrapper not found, retrying...');
-    setTimeout(ensurePlayerVisible, 100);
-  }
-};
-
-ensurePlayerVisible();
-
-// Call it immediately
-ensurePlayerVisible();
+    // Call it once
+    ensurePlayerVisible();
     
     window.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
