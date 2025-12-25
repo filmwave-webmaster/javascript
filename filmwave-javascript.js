@@ -1171,11 +1171,8 @@ async function initMusicPage() {
     await fetchSongs();
   }
   
-  if (!isMusicPage && g.currentSongData) {
-    console.log('🎵 Skipping updateMasterPlayerVisibility - have song data, will handle in after hook');
-  } else {
-    updateMasterPlayerVisibility();
-  }
+  // DON'T call updateMasterPlayerVisibility() here on music page
+  // Wait until after songs are displayed
   
   if (g.hasActiveSong && g.currentSongData) {
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
@@ -1201,11 +1198,13 @@ async function initMusicPage() {
     displaySongs(songs);
     initMasterPlayer();
     
-    // Ensure player is visible if there's active audio
-    if (g.hasActiveSong || g.currentSongData) {
-      setTimeout(() => {
+    // NOW call updateMasterPlayerVisibility and position player AFTER songs are displayed
+    setTimeout(() => {
+      updateMasterPlayerVisibility(); // This will handle the position correctly
+      
+      if (g.hasActiveSong || g.currentSongData) {
         const playerWrapper = document.querySelector('.music-player-wrapper');
-        if (playerWrapper && (g.hasActiveSong || g.currentSongData)) {
+        if (playerWrapper) {
           playerWrapper.style.position = 'relative';
           playerWrapper.style.bottom = 'auto';
           playerWrapper.style.left = 'auto';
@@ -1217,10 +1216,12 @@ async function initMusicPage() {
           playerWrapper.style.width = '100%';
           updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
         }
-      }, 100);
-    }
+      }
+    }, 200); // Increased delay to ensure songs are fully rendered
   } else {
+    // For non-music pages, call it normally
     initMasterPlayer();
+    updateMasterPlayerVisibility();
   }
 }
 
