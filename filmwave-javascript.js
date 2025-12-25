@@ -88,17 +88,13 @@ function adjustDropdownPosition(toggle, list) {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) {
-    console.log('❌ Player wrapper not found!');
-    return;
-  }
+  if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   const musicListWrapper = document.querySelector('.music-list-wrapper');
+  const searchAreaContainer = document.querySelector('.search-area-container'); // ADD THIS
   
-  console.log('📍 Positioning player - isMusicPage:', isMusicPage);
-  
-  // ALWAYS use fixed positioning at bottom
+  // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
   playerWrapper.style.setProperty('left', '0px', 'important');
@@ -107,17 +103,27 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  if (isMusicPage && musicListWrapper) {
-    // Add padding to music list so content sits ABOVE the fixed player
-    const playerHeight = playerWrapper.offsetHeight || 80; // fallback to 80px
-    musicListWrapper.style.paddingBottom = playerHeight + 'px';
-    console.log('   ✅ Added padding-bottom to music list:', playerHeight + 'px');
-  } else if (musicListWrapper) {
-    // Remove padding on other pages
-    musicListWrapper.style.paddingBottom = '0px';
+  // ADD PADDING TO BOTH ELEMENTS ON MUSIC PAGE
+  if (isMusicPage) {
+    const playerHeight = playerWrapper.offsetHeight || 80;
+    
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = playerHeight + 'px';
+    }
+    
+    // ADD THIS - padding to search area
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = playerHeight + 'px';
+    }
+  } else {
+    // REMOVE PADDING ON OTHER PAGES
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '0px';
+    }
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = '0px';
+    }
   }
-  
-  console.log('   ✅ Player fixed at bottom');
 }
 
 /**
