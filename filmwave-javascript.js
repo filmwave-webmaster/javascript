@@ -1519,10 +1519,30 @@ function initSearchAndFilters() {
 
 /**
  * ============================================================
+ * REMOVE DUPLICATE IDs
+ * ============================================================
+ */
+function removeDuplicateIds() {
+  document.querySelectorAll('input[type="checkbox"][id="checkbox"]').forEach((cb, index) => {
+    cb.removeAttribute('id');
+  });
+  
+  document.querySelectorAll('[id="favourite-button"]').forEach((btn, index) => {
+    btn.removeAttribute('id');
+  });
+  
+  console.log('✅ Removed duplicate IDs');
+}
+
+/**
+ * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
-window.addEventListener('load', () => initMusicPage());
+window.addEventListener('load', () => {
+  removeDuplicateIds(); // Remove IDs on first load
+  initMusicPage();
+});
 
 if (typeof barba !== 'undefined') {
   barba.init({
@@ -1592,36 +1612,39 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
-        const g = window.musicPlayerPersistent;
-        
-        window.scrollTo(0, 0);
-        
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
-        }
-        
-        setTimeout(() => {
-          console.log('🎮 Setting up master player controls');
-          setupMasterPlayerControls();
-          updateMasterPlayerVisibility();
-          
-          if (g.currentSongData) {
-            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-            updateMasterControllerIcons(g.isPlaying);
-          }
-          
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          
-          console.log('✅ Transition complete - Controls ready');
-        }, 200);
-      }
+     after(data) {
+  const g = window.musicPlayerPersistent;
+  
+  window.scrollTo(0, 0);
+  
+  // Remove duplicate IDs after page transition
+  removeDuplicateIds();
+  
+  if (window.Webflow) {
+    try {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    } catch (e) {}
+  }
+  
+  setTimeout(() => {
+    console.log('🎮 Setting up master player controls');
+    setupMasterPlayerControls();
+    updateMasterPlayerVisibility();
+    
+    if (g.currentSongData) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+    }
+    
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+    
+    console.log('✅ Transition complete - Controls ready');
+  }, 200);
+}
     }]
   });
 }
