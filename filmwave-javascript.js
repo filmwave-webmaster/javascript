@@ -1295,6 +1295,20 @@ audio.addEventListener('canplay', () => {
     
   // FORCE player visibility if there's active audio - check multiple times
 const ensurePlayerVisible = () => {
+  console.log('🔎 Looking for player wrapper...');
+  const allPlayers = document.querySelectorAll('.music-player-wrapper');
+  console.log('🔎 Found', allPlayers.length, 'player wrappers');
+  
+  allPlayers.forEach((player, index) => {
+    console.log(`🔎 Player ${index}:`, {
+      isInBarbaContainer: !!player.closest('[data-barba="container"]'),
+      parentClasses: player.parentElement?.className,
+      display: window.getComputedStyle(player).display,
+      visibility: window.getComputedStyle(player).visibility,
+      opacity: window.getComputedStyle(player).opacity
+    });
+  });
+  
   const playerWrapper = document.querySelector('.music-player-wrapper');
   
   if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
@@ -1313,8 +1327,6 @@ const ensurePlayerVisible = () => {
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
-    
-    // Also ensure it's not being transformed off-screen
     playerWrapper.style.transform = 'none';
     
     console.log('👁️ Forced player visible with all properties');
