@@ -86,11 +86,6 @@ function adjustDropdownPosition(toggle, list) {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
-/**
- * ============================================================
- * MASTER PLAYER POSITIONING - DO NOT MODIFY
- * ============================================================
- */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
@@ -513,7 +508,10 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   g.currentSongData = songData;
   g.hasActiveSong = true;
   
-  // Show player without repositioning - it's already positioned correctly
+  // ALWAYS reposition player before showing it
+  positionMasterPlayer();
+  
+  // Then show player
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
