@@ -84,9 +84,6 @@ function adjustDropdownPosition(toggle, list) {
  * ============================================================
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
- * This function handles ALL player positioning logic.
- * Call this whenever the player needs to be positioned correctly.
- * DO NOT add positioning logic anywhere else in the code.
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
@@ -96,8 +93,11 @@ function positionMasterPlayer() {
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
+  // Add smooth transition for position changes
+  playerWrapper.style.transition = 'all 0.3s ease';
+  
   if (isMusicPage) {
-    // MUSIC PAGE: Player at bottom (relative positioning)
+    // MUSIC PAGE: Player at bottom using relative positioning
     playerWrapper.style.position = 'relative';
     playerWrapper.style.bottom = 'auto';
     playerWrapper.style.left = 'auto';
