@@ -1413,10 +1413,11 @@ async function initMusicPage() {
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    const newHeader = header.cloneNode(true);
-    header.parentNode.replaceChild(newHeader, header);
+    // Skip if already initialized
+    if (header.dataset.accordionInit) return;
+    header.dataset.accordionInit = 'true';
     
-    newHeader.addEventListener('click', function() {
+    header.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
@@ -1442,6 +1443,10 @@ function initFilterAccordions() {
 
 function initCheckboxTextColor() {
   document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
+    // Skip if already initialized
+    if (checkbox.dataset.colorInit) return;
+    checkbox.dataset.colorInit = 'true';
+    
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
@@ -1458,6 +1463,10 @@ function initFilterItemBackground() {
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
     
     checkboxes.forEach(checkbox => {
+      // Skip if already initialized
+      if (checkbox.dataset.bgInit) return;
+      checkbox.dataset.bgInit = 'true';
+      
       checkbox.addEventListener('change', function() {
         const filterItem = this.closest('.filter-item');
         if (filterItem) {
@@ -1501,12 +1510,12 @@ function initDynamicTagging() {
       return tag;
     }
 
-    // CLONE AND REPLACE CHECKBOXES to remove old listeners
     checkboxes.forEach(checkbox => {
-      const newCheckbox = checkbox.cloneNode(true);
-      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      // Skip if already initialized
+      if (checkbox.dataset.tagInit) return;
+      checkbox.dataset.tagInit = 'true';
       
-      newCheckbox.addEventListener('change', function() {
+      checkbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1534,17 +1543,17 @@ function initDynamicTagging() {
       });
     });
 
-    // CLONE AND REPLACE RADIO WRAPPERS to remove old listeners
     radioWrappers.forEach(wrapper => {
-      const newWrapper = wrapper.cloneNode(true);
-      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      // Skip if already initialized
+      if (wrapper.dataset.tagInit) return;
+      wrapper.dataset.tagInit = 'true';
       
-      newWrapper.addEventListener('mousedown', function() {
+      wrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      newWrapper.addEventListener('click', function() {
+      wrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
@@ -1580,12 +1589,6 @@ function initDynamicTagging() {
         }, 50);
       });
     });
-    
-    // CRITICAL: Re-initialize these AFTER cloning is complete
-    // so they get references to the NEW checkboxes
-    initMutualExclusion();
-    initSearchAndFilters();
-    
   }, 1000);
 }
 
@@ -1596,6 +1599,11 @@ function initMutualExclusion() {
   const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
   if (instInput && acapInput) {
+    // Skip if already initialized
+    if (instInput.dataset.exclusionInit && acapInput.dataset.exclusionInit) return;
+    instInput.dataset.exclusionInit = 'true';
+    acapInput.dataset.exclusionInit = 'true';
+    
     function clearOther(otherInput, otherWrapper) {
       if (otherInput.checked) {
         otherInput.checked = false;
@@ -1618,6 +1626,10 @@ function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const clearBtn = document.querySelector('.circle-x');
+  
+  // Skip if already initialized
+  if (searchBar && searchBar.dataset.filterInit) return;
+  if (searchBar) searchBar.dataset.filterInit = 'true';
   
   function toggleClearButton() {
     if (!clearBtn) return;
@@ -1692,13 +1704,6 @@ function initSearchAndFilters() {
     clearBtn.addEventListener('click', clearAllFilters);
   }
 }
-
-/**
- * ============================================================
- * BARBA.JS & PAGE TRANSITIONS
- * ============================================================
- */
-window.addEventListener('load', () => initMusicPage());
 
 /**
  * ============================================================
