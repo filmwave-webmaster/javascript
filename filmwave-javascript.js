@@ -96,7 +96,7 @@ function positionMasterPlayer() {
   // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
   if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1;
+    const overlapAmount = 1; // Amount to overlap (in pixels)
     
     if (musicListWrapper) {
       musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
