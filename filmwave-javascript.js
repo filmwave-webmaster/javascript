@@ -1216,32 +1216,38 @@ async function initMusicPage() {
     }
   }
   
-  if (isMusicPage) {
-    const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
-    if (searchForm) {
-      searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
-    }
-    
-    // Only initialize filters once
-    if (!g.filtersInitialized) {
-      initFilterAccordions();
-      initCheckboxTextColor();
-      initFilterItemBackground();
-      initDynamicTagging();
-      initMutualExclusion();
-      initSearchAndFilters();
-      g.filtersInitialized = true;
-    }
-    
-    const songs = await fetchSongs();
-    displaySongs(songs);
-    initMasterPlayer();
-    
-    setTimeout(() => {
-      positionMasterPlayer();
-      updateMasterPlayerVisibility();
-    }, 200);
+if (isMusicPage) {
+  const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
+  }
+  
+  // Check if filter elements actually exist before skipping initialization
+  const filterHeaders = document.querySelectorAll('.filter-header');
+  const shouldInitFilters = !g.filtersInitialized || filterHeaders.length === 0 || !filterHeaders[0].onclick;
+  
+  if (shouldInitFilters) {
+    console.log('🔧 Initializing filters');
+    initFilterAccordions();
+    initCheckboxTextColor();
+    initFilterItemBackground();
+    initDynamicTagging();
+    initMutualExclusion();
+    initSearchAndFilters();
+    g.filtersInitialized = true;
   } else {
+    console.log('⏭️ Filters already initialized');
+  }
+  
+  const songs = await fetchSongs();
+  displaySongs(songs);
+  initMasterPlayer();
+  
+  setTimeout(() => {
+    positionMasterPlayer();
+    updateMasterPlayerVisibility();
+  }, 200);
+} else {
     initMasterPlayer();
     updateMasterPlayerVisibility();
   }
