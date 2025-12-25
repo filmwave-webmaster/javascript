@@ -104,20 +104,20 @@ function positionMasterPlayer() {
   playerWrapper.style.setProperty('left', '0px', 'important');
   playerWrapper.style.setProperty('right', '0px', 'important');
   playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.setProperty('margin-top', '-2px', 'important'); // CHANGED TO -2px
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
   // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
   if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
+    const overlapAmount = 1; // Amount to overlap (in pixels)
     
     if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = playerHeight + 'px';
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
     }
     
     if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = playerHeight + 'px';
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
     }
   } else {
     // REMOVE PADDING when player not visible or not on music page
