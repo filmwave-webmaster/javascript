@@ -199,8 +199,14 @@ function updateMasterPlayerVisibility() {
   const g = window.musicPlayerPersistent;
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
-  playerWrapper.style.display = g.hasActiveSong ? 'flex' : 'none';
+  
+  // Show player if ANY of these conditions are true
+  const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
+  
+  playerWrapper.style.display = shouldShow ? 'flex' : 'none';
   playerWrapper.style.alignItems = 'center';
+  
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'hasActiveSong:', g.hasActiveSong, 'currentSongData:', !!g.currentSongData);
 }
 
 /**
