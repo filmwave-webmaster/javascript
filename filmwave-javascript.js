@@ -640,16 +640,33 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
 function linkStandaloneToWaveform() {
   const g = window.musicPlayerPersistent;
   
-  if (!g.standaloneAudio || !g.currentSongData) return;
+  if (!g.standaloneAudio || !g.currentSongData) {
+    console.log('⚠️ No standalone audio or song data to link');
+    return;
+  }
   
   console.log('🔗 Linking existing standalone audio to waveform');
+  console.log('  - Looking for song:', g.currentSongData.fields['Song Title']);
+  console.log('  - Song ID:', g.currentSongData.id);
   
   const matchingData = g.waveformData.find(data => data.songData.id === g.currentSongData.id);
   
   if (matchingData) {
     const { wavesurfer, cardElement } = matchingData;
     
+    console.log('✅ Found matching waveform!');
+    
+    // Update global references
     g.currentWavesurfer = wavesurfer;
+    
+    // Reset ALL other cards first
+    g.waveformData.forEach(data => {
+      if (data.wavesurfer !== wavesurfer) {
+        updatePlayPauseIcons(data.cardElement, false);
+        const pb = data.cardElement.querySelector('.play-button');
+        if (pb) pb.style.opacity = '0';
+      }
+    });
     
     // Update UI to show this song is playing
     updatePlayPauseIcons(cardElement, g.isPlaying);
@@ -660,6 +677,7 @@ function linkStandaloneToWaveform() {
     if (g.standaloneAudio.duration > 0) {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
       wavesurfer.seekTo(progress);
+      console.log('  - Synced waveform to position:', g.standaloneAudio.currentTime, 'seconds');
     }
     
     // Set up continuous syncing from standalone audio to waveform
@@ -678,7 +696,15 @@ function linkStandaloneToWaveform() {
     g.standaloneAudio._waveformSyncListener = syncListener;
     g.standaloneAudio.addEventListener('timeupdate', syncListener);
     
+    // Update master player to show correct info
+    syncMasterTrack(wavesurfer, g.currentSongData);
+    
+    // Scroll to the currently playing song
+    scrollToSelected(cardElement);
+    
     console.log('✅ Linked standalone audio to waveform with continuous sync');
+  } else {
+    console.log('⚠️ No matching waveform found for song:', g.currentSongData.fields['Song Title']);
   }
 }
 
