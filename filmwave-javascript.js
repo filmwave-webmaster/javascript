@@ -1011,7 +1011,7 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS
+ * INITIALIZE WAVEFORMS (with lazy loading)
  * ============================================================
  */
 function initializeWaveforms() {
@@ -1020,91 +1020,129 @@ function initializeWaveforms() {
   
   console.log('🎨 Total song cards found:', songCards.length);
   
-  songCards.forEach((cardElement, index) => {
-    // Skip if this is the template card (multiple checks)
+  // Create Intersection Observer for lazy loading waveforms
+  const waveformObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cardElement = entry.target;
+        
+        // Check if already initialized
+        if (cardElement.dataset.waveformInitialized === 'true') return;
+        
+        // Mark as initialized
+        cardElement.dataset.waveformInitialized = 'true';
+        
+        // Initialize this waveform
+        initializeSingleWaveform(cardElement);
+        
+        // Stop observing this card
+        waveformObserver.unobserve(cardElement);
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '200px', // Load waveforms 200px before they enter viewport
+    threshold: 0
+  });
+  
+  // Observe all song cards
+  songCards.forEach((cardElement) => {
+    // Skip template cards
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
     
     if (isInTemplate || hasNoData) {
-      console.log(`⏭️ Skipping card ${index} - isInTemplate:`, !!isInTemplate, 'hasNoData:', hasNoData);
       return;
     }
     
-    const audioUrl = cardElement.dataset.audioUrl;
-    const songId = cardElement.dataset.songId;
-    const songData = JSON.parse(cardElement.dataset.songData || '{}');
-    
-    console.log(`✅ Initializing waveform ${index} for:`, songData.fields['Song Title'], 'songId:', songId);
-    
-    if (!audioUrl) return;
-    const waveformContainer = cardElement.querySelector('.waveform');
-    if (waveformContainer && waveformContainer.hasChildNodes()) return;
-    const durationElement = cardElement.querySelector('.duration');
-    const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
-    const playButton = cardElement.querySelector('.play-button');
-    const songName = cardElement.querySelector('.song-name');
-    if (!waveformContainer) return;
-    waveformContainer.id = `waveform-${songId}`;
-    
-    if (playButton) {
-      playButton.style.opacity = '0';
-      cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
-      cardElement.addEventListener('mouseleave', () => {
-        if (g.currentSongData?.id === songId && (g.isPlaying || g.standaloneAudio)) {
-          playButton.style.opacity = '1';
-        } else {
-          playButton.style.opacity = '0';
-        }
-      });
-    }
-    
-    const wavesurfer = WaveSurfer.create({
-      container: waveformContainer,
-      waveColor: '#e2e2e2',
-      progressColor: '#191919',
-      cursorColor: 'transparent',
-      cursorWidth: 0,
-      height: 40,
-      barWidth: 2,
-      barGap: 1,
-      normalize: true,
-      backend: 'WebAudio',
-      fillParent: true,
-      scrollParent: false,
-      responsive: 300,
-      interact: true,
-      hideScrollbar: true,
-      minPxPerSec: 1
-    });
-    
-    wavesurfer.load(audioUrl);
-    
-    wavesurfer.on('ready', function () {
-      const duration = wavesurfer.getDuration();
-      const containerWidth = waveformContainer.offsetWidth || 300;
-      wavesurfer.zoom(containerWidth / duration);
-      if (durationElement) durationElement.textContent = formatDuration(duration);
-    });
-    
-    g.allWavesurfers.push(wavesurfer);
-    g.waveformData.push({
-      wavesurfer,
-      cardElement,
-      waveformContainer,
-      audioUrl,
-      songData  // Store the song data here
-    });
-    
-    // WRAP IN IIFE TO CREATE PROPER CLOSURE
-    setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
+    // Observe this card for lazy loading
+    waveformObserver.observe(cardElement);
   });
   
-  console.log('📊 Total waveforms created:', g.allWavesurfers.length);
+  console.log('📊 Waveform lazy loading initialized');
   
-  // Link existing standalone audio to waveforms
+  // Link existing standalone audio to waveforms after a delay
   setTimeout(() => {
     linkStandaloneToWaveform();
   }, 100);
+}
+
+/**
+ * Initialize a single waveform for a card
+ */
+function initializeSingleWaveform(cardElement) {
+  const g = window.musicPlayerPersistent;
+  
+  const audioUrl = cardElement.dataset.audioUrl;
+  const songId = cardElement.dataset.songId;
+  const songData = JSON.parse(cardElement.dataset.songData || '{}');
+  
+  console.log(`✅ Initializing waveform for:`, songData.fields['Song Title']);
+  
+  if (!audioUrl) return;
+  
+  const waveformContainer = cardElement.querySelector('.waveform');
+  if (!waveformContainer) return;
+  if (waveformContainer.hasChildNodes()) return;
+  
+  const durationElement = cardElement.querySelector('.duration');
+  const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
+  const playButton = cardElement.querySelector('.play-button');
+  const songName = cardElement.querySelector('.song-name');
+  
+  waveformContainer.id = `waveform-${songId}`;
+  
+  if (playButton) {
+    playButton.style.opacity = '0';
+    cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
+    cardElement.addEventListener('mouseleave', () => {
+      if (g.currentSongData?.id === songId && (g.isPlaying || g.standaloneAudio)) {
+        playButton.style.opacity = '1';
+      } else {
+        playButton.style.opacity = '0';
+      }
+    });
+  }
+  
+  const wavesurfer = WaveSurfer.create({
+    container: waveformContainer,
+    waveColor: '#e2e2e2',
+    progressColor: '#191919',
+    cursorColor: 'transparent',
+    cursorWidth: 0,
+    height: 40,
+    barWidth: 2,
+    barGap: 1,
+    normalize: true,
+    backend: 'WebAudio',
+    fillParent: true,
+    scrollParent: false,
+    responsive: 300,
+    interact: true,
+    hideScrollbar: true,
+    minPxPerSec: 1
+  });
+  
+  wavesurfer.load(audioUrl);
+  
+  wavesurfer.on('ready', function () {
+    const duration = wavesurfer.getDuration();
+    const containerWidth = waveformContainer.offsetWidth || 300;
+    wavesurfer.zoom(containerWidth / duration);
+    if (durationElement) durationElement.textContent = formatDuration(duration);
+  });
+  
+  g.allWavesurfers.push(wavesurfer);
+  g.waveformData.push({
+    wavesurfer,
+    cardElement,
+    waveformContainer,
+    audioUrl,
+    songData
+  });
+  
+  // Setup event handlers
+  setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
 }
 
 /**
