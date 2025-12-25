@@ -111,13 +111,13 @@ function navigateStandaloneTrack(direction) {
   console.log('🛑 Stopping current track');
   console.log('🎵 Loading new song:', nextSong.fields['Song Title']);
   
-  // Update song data FIRST
+  // Update song data FIRST - BEFORE doing anything else
   g.currentSongData = nextSong;
-  g.hasActiveSong = true;
+  g.hasActiveSong = true; // Keep this true throughout
   
-  // Update player UI
+  // Update player UI immediately
   updateMasterPlayerInfo(nextSong, null);
-  updateMasterPlayerVisibility();
+  // DON'T call updateMasterPlayerVisibility here - it stays visible
   
   // REUSE the same audio element - just change the source
   if (g.standaloneAudio) {
@@ -188,6 +188,8 @@ function navigateStandaloneTrack(direction) {
   // Clear peaks data
   g.currentPeaksData = null;
   drawMasterWaveform(null, 0);
+  
+  // Player is already visible, no need to update visibility
 }
 
 /**
@@ -731,7 +733,29 @@ function initializeWaveforms() {
       updateMasterControllerIcons(true);
       updatePlayButtonVisibility(cardElement, wavesurfer);
       syncMasterTrack(wavesurfer, songData);
-      updateMasterPlayerVisibility();
+      
+      // MAKE SURE PLAYER IS VISIBLE WITH CORRECT POSITIONING
+      const playerWrapper = document.querySelector('.music-player-wrapper');
+      if (playerWrapper) {
+        const isMusicPage = !!document.querySelector('.music-list-wrapper');
+        if (isMusicPage) {
+          playerWrapper.style.position = 'relative';
+          playerWrapper.style.bottom = 'auto';
+          playerWrapper.style.left = 'auto';
+          playerWrapper.style.right = 'auto';
+        } else {
+          playerWrapper.style.position = 'fixed';
+          playerWrapper.style.bottom = '0px';
+          playerWrapper.style.left = '0px';
+          playerWrapper.style.right = '0px';
+        }
+        playerWrapper.style.display = 'flex';
+        playerWrapper.style.visibility = 'visible';
+        playerWrapper.style.opacity = '1';
+        playerWrapper.style.alignItems = 'center';
+        playerWrapper.style.width = '100%';
+        playerWrapper.style.zIndex = '9999';
+      }
     });
     
     wavesurfer.on('timeupdate', () => {
@@ -805,7 +829,6 @@ function initializeWaveforms() {
             g.currentWavesurfer.seekTo(0);
             g.currentWavesurfer = wavesurfer;
             g.hasActiveSong = true;
-            updateMasterPlayerVisibility();
             if (previousPlayState) wavesurfer.play();
             else syncMasterTrack(wavesurfer, songData, 0);
           } else {
@@ -822,7 +845,6 @@ function initializeWaveforms() {
         g.currentWavesurfer.seekTo(0);
         g.currentWavesurfer = wavesurfer;
         g.hasActiveSong = true;
-        updateMasterPlayerVisibility();
         syncMasterTrack(wavesurfer, songData, newProgress);
         if (shouldPlay) {
           setTimeout(() => wavesurfer.play(), 50);
@@ -1005,7 +1027,7 @@ async function initMusicPage() {
       drawMasterWaveform(g.currentPeaksData, prog);
     }
   }
-
+  
   if (isMusicPage) {
     const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
     if (searchForm) {
@@ -1020,6 +1042,25 @@ async function initMusicPage() {
     const songs = await fetchSongs();
     displaySongs(songs);
     initMasterPlayer();
+    
+    // IMPORTANT: Ensure player is visible with correct positioning if there's active audio
+    if (g.hasActiveSong || g.currentSongData) {
+      setTimeout(() => {
+        const playerWrapper = document.querySelector('.music-player-wrapper');
+        if (playerWrapper && (g.hasActiveSong || g.currentSongData)) {
+          playerWrapper.style.position = 'relative';
+          playerWrapper.style.bottom = 'auto';
+          playerWrapper.style.left = 'auto';
+          playerWrapper.style.right = 'auto';
+          playerWrapper.style.display = 'flex';
+          playerWrapper.style.visibility = 'visible';
+          playerWrapper.style.opacity = '1';
+          playerWrapper.style.alignItems = 'center';
+          playerWrapper.style.width = '100%';
+          updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+        }
+      }, 100);
+    }
   } else {
     // Still init master player controls for navigation
     initMasterPlayer();
