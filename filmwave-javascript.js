@@ -93,6 +93,8 @@ function positionMasterPlayer() {
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  console.log('   Player current position:', playerWrapper.style.position);
+  console.log('   Player parent:', playerWrapper.parentElement?.className);
   
   if (isMusicPage) {
     // MUSIC PAGE: Player at bottom (relative positioning)
@@ -101,6 +103,8 @@ function positionMasterPlayer() {
     playerWrapper.style.left = 'auto';
     playerWrapper.style.right = 'auto';
     playerWrapper.style.top = 'auto';
+    
+    console.log('   ✅ Set to RELATIVE positioning');
   } else {
     // OTHER PAGES: Player fixed at bottom
     playerWrapper.style.position = 'fixed';
@@ -108,12 +112,19 @@ function positionMasterPlayer() {
     playerWrapper.style.left = '0px';
     playerWrapper.style.right = '0px';
     playerWrapper.style.top = 'auto';
+    
+    console.log('   ✅ Set to FIXED positioning');
   }
   
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
+  
+  // Debug: Check final computed position
+  const computed = window.getComputedStyle(playerWrapper);
+  console.log('   Final computed position:', computed.position);
+  console.log('   Final computed top:', computed.top);
+  console.log('   Final computed bottom:', computed.bottom);
 }
-
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
