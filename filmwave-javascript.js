@@ -1588,23 +1588,161 @@ function initMutualExclusion() {
   const instInput = instWrapper ? instWrapper.querySelector('input[type="checkbox"]') : null;
   const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
+  console.log('🔧 initMutualExclusion called');
+  console.log('  - Instrumental input:', instInput);
+  console.log('  - Acapella input:', acapInput);
+
   if (instInput && acapInput) {
-    function clearOther(otherInput, otherWrapper) {
+    function clearOther(otherInput, otherWrapper, sourceName) {
+      console.log(`🚫 clearOther called by ${sourceName}`);
+      console.log('  - Other input checked before:', otherInput.checked);
       if (otherInput.checked) {
         otherInput.checked = false;
         if (otherWrapper) otherWrapper.classList.remove('is-active');
+        console.log('  - Dispatching change event on other input');
         otherInput.dispatchEvent(new Event('change', { bubbles: true }));
+        console.log('  - Other input checked after:', otherInput.checked);
       }
     }
     
-    instInput.addEventListener('change', function() { 
-      if (this.checked) clearOther(acapInput, acapWrapper); 
+    instInput.addEventListener('change', function() {
+      console.log('🎹 Instrumental changed, checked:', this.checked);
+      if (this.checked) clearOther(acapInput, acapWrapper, 'instrumental'); 
     });
     
-    acapInput.addEventListener('change', function() { 
-      if (this.checked) clearOther(instInput, instWrapper); 
+    acapInput.addEventListener('change', function() {
+      console.log('🎤 Acapella changed, checked:', this.checked);
+      if (this.checked) clearOther(instInput, instWrapper, 'acapella'); 
     });
   }
+}
+
+function initDynamicTagging() {
+  setTimeout(function() {
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (!tagsContainer) return;
+    
+    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
+    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
+    
+    console.log('🏷️ initDynamicTagging - found checkboxes:', checkboxes.length);
+    
+    function createTag(input, labelText, radioName = null) {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      if (radioName) tag.dataset.radioName = radioName;
+      
+      tag.innerHTML = `
+        <span class="filter-tag-text">${labelText}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
+      
+      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+        console.log('❌ Tag remove clicked for:', labelText);
+        console.log('  - Input checked before:', input.checked);
+        input.checked = false;
+        console.log('  - Input checked after setting false:', input.checked);
+        const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
+        if (wrapper) wrapper.classList.remove('is-active');
+        console.log('  - Dispatching change event');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        tag.remove();
+        console.log('  - Tag removed');
+      });
+      
+      return tag;
+    }
+
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const labelText = getLabelText(this);
+        console.log(`📋 Checkbox change: "${labelText}" - checked:`, this.checked);
+        
+        let label;
+        const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
+        
+        if (this.closest('.checkbox-single-select-wrapper')) {
+          label = this.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
+        } else {
+          label = wrapper?.querySelector('.w-form-label, .filter-text');
+        }
+        
+        const labelText2 = label ? label.textContent.trim() : 'Filter';
+        
+        if (this.checked) {
+          if (wrapper) wrapper.classList.add('is-active');
+          const tag = createTag(this, labelText2);
+          tagsContainer.appendChild(tag);
+          console.log('  ✅ Tag created for:', labelText2);
+        } else {
+          if (wrapper) wrapper.classList.remove('is-active');
+          const tags = tagsContainer.querySelectorAll('.filter-tag');
+          tags.forEach(tag => {
+            if (tag.querySelector('.filter-tag-text').textContent === labelText2) {
+              tag.remove();
+              console.log('  🗑️ Tag removed for:', labelText2);
+            }
+          });
+        }
+      });
+    });
+
+    // Helper to get label text
+    function getLabelText(checkbox) {
+      const wrapper = checkbox.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
+      if (checkbox.closest('.checkbox-single-select-wrapper')) {
+        const label = checkbox.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
+        return label ? label.textContent.trim() : 'Unknown';
+      } else {
+        const label = wrapper?.querySelector('.w-form-label, .filter-text');
+        return label ? label.textContent.trim() : 'Unknown';
+      }
+    }
+
+    radioWrappers.forEach(wrapper => {
+      wrapper.addEventListener('mousedown', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) this.dataset.wasChecked = radio.checked;
+      });
+
+      wrapper.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        const label = this.querySelector('.radio-button-label');
+        if (!radio || !label) return;
+        
+        const labelText = label.innerText.trim();
+        const radioName = radio.name;
+
+        setTimeout(() => {
+          if (this.dataset.wasChecked === "true") {
+            radio.checked = false;
+            this.classList.remove('is-active');
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => { 
+              if (tag.dataset.radioName === radioName) tag.remove(); 
+            });
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+              const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+              if (otherWrapper) otherWrapper.classList.remove('is-active');
+            });
+            
+            this.classList.add('is-active');
+            
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => { 
+              if (tag.dataset.radioName === radioName) tag.remove(); 
+            });
+            
+            const tag = createTag(radio, labelText);
+            tag.dataset.radioName = radioName;
+            tagsContainer.appendChild(tag);
+          }
+        }, 50);
+      });
+    });
+  }, 1000);
 }
 
 function initSearchAndFilters() {
@@ -1622,15 +1760,27 @@ function initSearchAndFilters() {
   }
   
   function clearAllFilters() {
-    if (searchBar) searchBar.value = '';
+    console.log('🧹 CLEAR ALL CLICKED');
     
-    // CRITICAL: Click the tag remove buttons instead of just removing tags
+    if (searchBar) {
+      console.log('  - Clearing search bar');
+      searchBar.value = '';
+    }
+    
     const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+    console.log('  - Found tag remove buttons:', tagRemoveButtons.length);
+    
     if (tagRemoveButtons.length > 0) {
-      tagRemoveButtons.forEach(btn => btn.click());
+      console.log('  - Clicking each tag remove button...');
+      tagRemoveButtons.forEach((btn, index) => {
+        const tagText = btn.parentElement.querySelector('.filter-tag-text').textContent;
+        console.log(`    ${index + 1}. Clicking tag: "${tagText}"`);
+        btn.click();
+      });
     } else {
-      // Fallback if no tags exist
+      console.log('  - No tags found, using fallback method');
       document.querySelectorAll('[data-filter-group]').forEach(input => {
+        console.log(`    - Unchecking: ${input.getAttribute('data-filter-value')}`);
         input.checked = false;
         const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
         if (wrapper) wrapper.classList.remove('is-active');
@@ -1638,6 +1788,7 @@ function initSearchAndFilters() {
       });
     }
     
+    console.log('  - Clear all complete');
     toggleClearButton();
     applyFilters();
   }
@@ -1679,6 +1830,7 @@ function initSearchAndFilters() {
   
   if (clearBtn) {
     clearBtn.style.display = 'none';
+    console.log('🧹 Clear button listener attached');
     clearBtn.addEventListener('click', clearAllFilters);
   }
   
