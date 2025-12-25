@@ -95,27 +95,34 @@ function positionMasterPlayer() {
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
-  // Player is ALWAYS fixed at bottom (since it's a child of body)
-  playerWrapper.style.position = 'fixed';
-  playerWrapper.style.bottom = '0px';
-  playerWrapper.style.left = '0px';
-  playerWrapper.style.right = '0px';
-  playerWrapper.style.top = 'auto';
+  // CRITICAL: Remove any existing top positioning first
+  playerWrapper.style.removeProperty('top');
+  
+  // Player is ALWAYS fixed at bottom
+  playerWrapper.style.setProperty('position', 'fixed', 'important');
+  playerWrapper.style.setProperty('bottom', '0px', 'important');
+  playerWrapper.style.setProperty('left', '0px', 'important');
+  playerWrapper.style.setProperty('right', '0px', 'important');
+  playerWrapper.style.setProperty('top', 'auto', 'important'); // Force override
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
   if (isMusicPage && musicListWrapper) {
-    // Add padding to music list so content sits ABOVE the fixed player
-    const playerHeight = playerWrapper.offsetHeight || 80; // fallback to 80px
+    const playerHeight = playerWrapper.offsetHeight || 80;
     musicListWrapper.style.paddingBottom = playerHeight + 'px';
     console.log('   ✅ Added padding-bottom to music list:', playerHeight + 'px');
   } else if (musicListWrapper) {
-    // Remove padding on other pages
     musicListWrapper.style.paddingBottom = '0px';
   }
   
-  console.log('   ✅ Player fixed at bottom');
+  console.log('   ✅ Player fixed at bottom with !important');
+  
+  // Debug
+  const computed = window.getComputedStyle(playerWrapper);
+  console.log('   Final computed top:', computed.top);
+  console.log('   Final computed bottom:', computed.bottom);
 }
+
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
