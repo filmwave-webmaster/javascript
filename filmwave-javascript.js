@@ -93,29 +93,44 @@ function positionMasterPlayer() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const musicListWrapper = document.querySelector('.music-list-wrapper');
+  const searchAreaContainer = document.querySelector('.search-area-container');
   
-  console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  // Check if player is visible/active
+  const isPlayerVisible = playerWrapper.classList.contains('active') || 
+                          (window.getComputedStyle(playerWrapper).display !== 'none');
   
-  if (isMusicPage) {
-    // MUSIC PAGE: Player at bottom (relative positioning)
-    playerWrapper.style.position = 'relative';
-    playerWrapper.style.bottom = 'auto';
-    playerWrapper.style.left = 'auto';
-    playerWrapper.style.right = 'auto';
-    playerWrapper.style.top = 'auto';
-  } else {
-    // OTHER PAGES: Player fixed at bottom
-    playerWrapper.style.position = 'fixed';
-    playerWrapper.style.bottom = '0px';
-    playerWrapper.style.left = '0px';
-    playerWrapper.style.right = '0px';
-    playerWrapper.style.top = 'auto';
-  }
-  
+  // ALWAYS fixed at bottom
+  playerWrapper.style.setProperty('position', 'fixed', 'important');
+  playerWrapper.style.setProperty('bottom', '0px', 'important');
+  playerWrapper.style.setProperty('left', '0px', 'important');
+  playerWrapper.style.setProperty('right', '0px', 'important');
+  playerWrapper.style.setProperty('top', 'auto', 'important');
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
+  
+  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
+  if (isMusicPage && isPlayerVisible) {
+    const playerHeight = playerWrapper.offsetHeight || 80;
+    const overlapAmount = 1; // Amount to overlap (in pixels)
+    
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+    }
+    
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+    }
+  } else {
+    // REMOVE PADDING when player not visible or not on music page
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '0px';
+    }
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = '0px';
+    }
+  }
 }
-
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
