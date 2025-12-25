@@ -98,9 +98,9 @@ function positionMasterPlayer() {
   const isPlayerVisible = playerWrapper.classList.contains('active') || 
                           (window.getComputedStyle(playerWrapper).display !== 'none');
   
-  // ALWAYS fixed at bottom
+  // ALWAYS fixed at bottom (with -1px to overlap)
   playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '0px', 'important');
+  playerWrapper.style.setProperty('bottom', '-1px', 'important'); // CHANGED FROM 0px to -1px
   playerWrapper.style.setProperty('left', '0px', 'important');
   playerWrapper.style.setProperty('right', '0px', 'important');
   playerWrapper.style.setProperty('top', 'auto', 'important');
