@@ -99,11 +99,11 @@ function positionMasterPlayer() {
     const overlapAmount = 1; // Amount to overlap (in pixels)
     
     if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
     }
     
     if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
     }
   } else {
     // REMOVE PADDING when player not visible or not on music page
@@ -115,7 +115,6 @@ function positionMasterPlayer() {
     }
   }
 }
-
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
