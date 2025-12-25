@@ -82,58 +82,7 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * MASTER PLAYER POSITIONING - DO NOT MODIFY
- * ============================================================
- * This function handles ALL player positioning logic.
- * Call this whenever the player needs to be positioned correctly.
- * DO NOT add positioning logic anywhere else in the code.
- */
-function positionMasterPlayer() {
-  const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) return;
-  
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicListWrapper = document.querySelector('.music-list-wrapper');
-  const searchAreaContainer = document.querySelector('.search-area-container');
-  
-  // Check if player is visible/active
-  const isPlayerVisible = playerWrapper.classList.contains('active') || 
-                          (window.getComputedStyle(playerWrapper).display !== 'none');
-  
-  // ALWAYS fixed at bottom
-  playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '0px', 'important');
-  playerWrapper.style.setProperty('left', '0px', 'important');
-  playerWrapper.style.setProperty('right', '0px', 'important');
-  playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
-  
-  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
-  if (isMusicPage && isPlayerVisible) {
-    const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1; // Amount to overlap (in pixels)
-    
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
-    }
-    
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
-    }
-  } else {
-    // REMOVE PADDING when player not visible or not on music page
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '0px';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '0px';
-    }
-  }
-}
-/**
- * ============================================================
- * MASTER PLAYER VISIBILITY CONTROL
+ * MASTER PLAYER VISIBILITY & POSITIONING
  * ============================================================
  */
 function updateMasterPlayerVisibility() {
@@ -141,24 +90,41 @@ function updateMasterPlayerVisibility() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
   
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const musicAreaContainer = document.querySelector('.music-area-container');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
-  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow);
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'isMusicPage:', isMusicPage);
   
-  // ALWAYS position correctly first
-  positionMasterPlayer();
+  // ALWAYS fixed at bottom
+  playerWrapper.style.position = 'fixed';
+  playerWrapper.style.bottom = '0px';
+  playerWrapper.style.left = '0px';
+  playerWrapper.style.right = '0px';
+  playerWrapper.style.top = 'auto';
+  playerWrapper.style.width = '100%';
+  playerWrapper.style.zIndex = '9999';
   
-  // Then handle visibility
   if (shouldShow) {
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
+    
+    // Add padding to music-area-container when player visible on music page
+    if (isMusicPage && musicAreaContainer) {
+      musicAreaContainer.style.paddingBottom = '79px';
+    }
   } else {
     playerWrapper.style.display = 'none';
     playerWrapper.style.visibility = 'hidden';
     playerWrapper.style.opacity = '0';
+    
+    // Remove padding when player hidden
+    if (musicAreaContainer) {
+      musicAreaContainer.style.paddingBottom = '0px';
+    }
   }
 }
 
@@ -184,31 +150,27 @@ async function initMusicPage() {
     }
   }
   
-  if (isMusicPage) {
-    const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
-    if (searchForm) {
-      searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
-    }
-    initFilterAccordions();
-    initCheckboxTextColor();
-    initFilterItemBackground();
-    initDynamicTagging();
-    initMutualExclusion();
-    initSearchAndFilters();
-    const songs = await fetchSongs();
-    displaySongs(songs);
-    initMasterPlayer();
-    
-    // Position player correctly after everything loads
-    setTimeout(() => {
-      positionMasterPlayer(); // Use dedicated positioning function
-      updateMasterPlayerVisibility();
-    }, 200);
-  } else {
-    // For non-music pages
-    initMasterPlayer();
-    updateMasterPlayerVisibility();
+if (isMusicPage) {
+  const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
   }
+  initFilterAccordions();
+  initCheckboxTextColor();
+  initFilterItemBackground();
+  initDynamicTagging();
+  initMutualExclusion();
+  initSearchAndFilters();
+  const songs = await fetchSongs();
+  displaySongs(songs);
+  initMasterPlayer();
+  
+  // Just call updateMasterPlayerVisibility - no setTimeout needed
+  updateMasterPlayerVisibility();
+} else {
+  // For non-music pages
+  initMasterPlayer();
+  updateMasterPlayerVisibility();
 }
 
 /**
@@ -1516,8 +1478,12 @@ function initDynamicTagging() {
       return tag;
     }
 
+    // CLONE checkboxes to remove old listeners
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      
+      newCheckbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1545,13 +1511,17 @@ function initDynamicTagging() {
       });
     });
 
+    // CLONE radio wrappers to remove old listeners
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      
+      newWrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      wrapper.addEventListener('click', function() {
+      newWrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
@@ -1693,13 +1663,6 @@ function initSearchAndFilters() {
     clearBtn.addEventListener('click', clearAllFilters);
   }
 }
-
-/**
- * ============================================================
- * BARBA.JS & PAGE TRANSITIONS
- * ============================================================
- */
-window.addEventListener('load', () => initMusicPage());
 
 /**
  * ============================================================
