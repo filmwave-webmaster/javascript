@@ -91,39 +91,30 @@ function positionMasterPlayer() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const musicListWrapper = document.querySelector('.music-list-wrapper');
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
-  console.log('   Player current position:', playerWrapper.style.position);
-  console.log('   Player parent:', playerWrapper.parentElement?.className);
   
-  if (isMusicPage) {
-    // MUSIC PAGE: Player at bottom (relative positioning)
-    playerWrapper.style.position = 'relative';
-    playerWrapper.style.bottom = 'auto';
-    playerWrapper.style.left = 'auto';
-    playerWrapper.style.right = 'auto';
-    playerWrapper.style.top = 'auto';
-    
-    console.log('   ✅ Set to RELATIVE positioning');
-  } else {
-    // OTHER PAGES: Player fixed at bottom
-    playerWrapper.style.position = 'fixed';
-    playerWrapper.style.bottom = '0px';
-    playerWrapper.style.left = '0px';
-    playerWrapper.style.right = '0px';
-    playerWrapper.style.top = 'auto';
-    
-    console.log('   ✅ Set to FIXED positioning');
-  }
-  
+  // Player is ALWAYS fixed at bottom (since it's a child of body)
+  playerWrapper.style.position = 'fixed';
+  playerWrapper.style.bottom = '0px';
+  playerWrapper.style.left = '0px';
+  playerWrapper.style.right = '0px';
+  playerWrapper.style.top = 'auto';
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  // Debug: Check final computed position
-  const computed = window.getComputedStyle(playerWrapper);
-  console.log('   Final computed position:', computed.position);
-  console.log('   Final computed top:', computed.top);
-  console.log('   Final computed bottom:', computed.bottom);
+  if (isMusicPage && musicListWrapper) {
+    // Add padding to music list so content sits ABOVE the fixed player
+    const playerHeight = playerWrapper.offsetHeight || 80; // fallback to 80px
+    musicListWrapper.style.paddingBottom = playerHeight + 'px';
+    console.log('   ✅ Added padding-bottom to music list:', playerHeight + 'px');
+  } else if (musicListWrapper) {
+    // Remove padding on other pages
+    musicListWrapper.style.paddingBottom = '0px';
+  }
+  
+  console.log('   ✅ Player fixed at bottom');
 }
 /**
  * ============================================================
