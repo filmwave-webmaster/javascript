@@ -74,9 +74,15 @@ function positionMasterPlayer() {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  const musicAreaContainer = document.querySelector('.music-area-container');
-  
   if (!playerWrapper) return;
+  
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const musicListWrapper = document.querySelector('.music-list-wrapper');
+  const searchAreaContainer = document.querySelector('.search-area-container');
+  
+  // Check if player is visible/active
+  const isPlayerVisible = playerWrapper.classList.contains('active') || 
+                          (window.getComputedStyle(playerWrapper).display !== 'none');
   
   // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
@@ -87,12 +93,26 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  // Check if player is active/visible
-  if (playerWrapper.classList.contains('active') && musicAreaContainer) {
+  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
+  if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    musicAreaContainer.style.paddingBottom = (playerHeight - 1) + 'px';
-  } else if (musicAreaContainer) {
-    musicAreaContainer.style.paddingBottom = '0px';
+    const overlapAmount = 1;
+    
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+    }
+    
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+    }
+  } else {
+    // REMOVE PADDING when player not visible or not on music page
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '0px';
+    }
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = '0px';
+    }
   }
 }
 
