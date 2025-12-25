@@ -42,8 +42,7 @@ function positionMasterPlayer() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicListWrapper = document.querySelector('.music-list-wrapper');
-  const searchAreaContainer = document.querySelector('.search-area-container');
+  const musicAreaContainer = document.querySelector('.music-area-container');
   
   // Check if player is visible/active
   const isPlayerVisible = playerWrapper.classList.contains('active') || 
@@ -58,27 +57,13 @@ function positionMasterPlayer() {
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
-  if (isMusicPage && isPlayerVisible) {
+  // ADD PADDING ONLY TO music-area-container WHEN PLAYER IS VISIBLE
+  if (isMusicPage && isPlayerVisible && musicAreaContainer) {
     const playerHeight = playerWrapper.offsetHeight || 80;
     const overlapAmount = 1;
-    const existingPadding = 12; // Your Webflow padding
-    
-    // ADD to existing padding, don't replace it
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (existingPadding + playerHeight - overlapAmount) + 'px';
-    }
-    
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (existingPadding + playerHeight - overlapAmount) + 'px';
-    }
-  } else {
-    // Reset to original 12px padding
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '12px';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '12px';
-    }
+    musicAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+  } else if (musicAreaContainer) {
+    musicAreaContainer.style.paddingBottom = '0px';
   }
 }
 
