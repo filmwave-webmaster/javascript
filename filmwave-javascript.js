@@ -111,6 +111,9 @@ function navigateStandaloneTrack(direction) {
   console.log('🛑 Stopping current track');
   console.log('🎵 Loading new song:', nextSong.fields['Song Title']);
   
+  // Remember if it was playing or paused
+  const wasPlaying = g.isPlaying;
+  
   // Update song data FIRST
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
@@ -121,9 +124,18 @@ function navigateStandaloneTrack(direction) {
   // REUSE the same audio element
   if (g.standaloneAudio) {
     g.standaloneAudio.pause();
+    g.standaloneAudio.currentTime = 0; // ← CRITICAL FIX: Reset to beginning!
     g.standaloneAudio.src = audioUrl;
     g.standaloneAudio.load();
-    g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    
+    // Only auto-play if it was already playing
+    if (wasPlaying) {
+      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    } else {
+      console.log('⏸️ Song loaded but paused - ready for spacebar play');
+      g.isPlaying = false;
+      updateMasterControllerIcons(false);
+    }
   } else {
     const audio = new Audio(audioUrl);
     g.standaloneAudio = audio;
@@ -169,11 +181,16 @@ function navigateStandaloneTrack(direction) {
       console.error('❌ Audio error:', e);
     });
     
-    audio.play().catch(err => console.error('Playback error:', err));
+    // Only auto-play if it was already playing
+    if (wasPlaying) {
+      audio.play().catch(err => console.error('Playback error:', err));
+    } else {
+      console.log('⏸️ Song loaded but paused - ready for spacebar play');
+      g.isPlaying = false;
+      updateMasterControllerIcons(false);
+    }
   }
   
-  g.isPlaying = true;
-  updateMasterControllerIcons(true);
   g.currentPeaksData = null;
   drawMasterWaveform(null, 0);
 }
