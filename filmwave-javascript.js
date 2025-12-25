@@ -18,7 +18,8 @@ if (!window.musicPlayerPersistent) {
     savedTime: 0,
     MASTER_DATA: [],
     allWavesurfers: [],
-    waveformData: []
+    waveformData: [],
+    filtersInitialized: false  // ADD THIS LINE
   };
 }
 
@@ -174,19 +175,28 @@ async function initMusicPage() {
     if (searchForm) {
       searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
     }
-    initFilterAccordions();
-    initCheckboxTextColor();
-    initFilterItemBackground();
-    initDynamicTagging();
-    initMutualExclusion();
-    initSearchAndFilters();
+    
+    // ONLY initialize filters ONCE - use a global flag
+    if (!g.filtersInitialized) {
+      console.log('🎯 Initializing filters for the first time');
+      initFilterAccordions();
+      initCheckboxTextColor();
+      initFilterItemBackground();
+      initDynamicTagging();
+      initMutualExclusion();
+      initSearchAndFilters();
+      g.filtersInitialized = true; // Mark as initialized
+    } else {
+      console.log('⏭️ Filters already initialized, skipping');
+    }
+    
     const songs = await fetchSongs();
     displaySongs(songs);
     initMasterPlayer();
     
     // Position player correctly after everything loads
     setTimeout(() => {
-      positionMasterPlayer(); // Use dedicated positioning function
+      positionMasterPlayer();
       updateMasterPlayerVisibility();
     }, 200);
   } else {
@@ -195,7 +205,6 @@ async function initMusicPage() {
     updateMasterPlayerVisibility();
   }
 }
-
 /**
  * ============================================================
  * STANDALONE AUDIO PLAYER (for non-music pages)
