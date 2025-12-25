@@ -643,6 +643,18 @@ function linkStandaloneToWaveform(retryCount = 0) {
     return;
   }
   
+  // Check if waveforms are actually ready
+  if (g.waveformData.length === 0) {
+    if (retryCount < 10) {
+      console.log(`⏳ Waveforms not ready yet, retrying... (${retryCount + 1}/10)`);
+      setTimeout(() => linkStandaloneToWaveform(retryCount + 1), 300);
+      return;
+    } else {
+      console.log('❌ Waveforms never loaded - giving up');
+      return;
+    }
+  }
+  
   console.log('🔗 Linking existing standalone audio to waveform');
   console.log('  - Looking for song:', g.currentSongData.fields['Song Title']);
   console.log('  - Song ID:', g.currentSongData.id);
@@ -716,10 +728,10 @@ function linkStandaloneToWaveform(retryCount = 0) {
     
     console.log('✅ Linked standalone audio to waveform with continuous sync');
   } else {
-    // Retry if waveforms aren't ready yet (max 5 retries)
-    if (retryCount < 5) {
-      console.log(`⏳ No matching waveform found yet, retrying... (${retryCount + 1}/5)`);
-      setTimeout(() => linkStandaloneToWaveform(retryCount + 1), 200);
+    // Retry if song's waveform isn't ready yet (max 10 retries)
+    if (retryCount < 10) {
+      console.log(`⏳ No matching waveform found yet, retrying... (${retryCount + 1}/10)`);
+      setTimeout(() => linkStandaloneToWaveform(retryCount + 1), 300);
     } else {
       console.log('⚠️ No matching waveform found for song:', g.currentSongData.fields['Song Title']);
     }
@@ -972,10 +984,10 @@ function initializeWaveforms() {
   console.log('📊 Total waveforms created:', g.allWavesurfers.length);
   
   // CRITICAL: Link existing standalone audio to waveforms AFTER all waveforms are created
-  // This must be OUTSIDE the forEach loop!
+  // Delay to ensure waveforms have time to initialize
   setTimeout(() => {
     linkStandaloneToWaveform(0);
-  }, 500); // Increased delay to ensure waveforms are fully loaded
+  }, 800); // Increased delay for better reliability
 }
 
 /**
@@ -1129,7 +1141,8 @@ function displaySongs(songs) {
     window.Webflow.ready();
     window.Webflow.require('ix2').init();
   }
-  setTimeout(() => initializeWaveforms(), 100);
+  // Call initializeWaveforms directly instead of setTimeout
+  initializeWaveforms();
 }
 
 /**
