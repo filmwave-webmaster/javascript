@@ -19,7 +19,7 @@ if (!window.musicPlayerPersistent) {
     MASTER_DATA: [],
     allWavesurfers: [],
     waveformData: [],
-    filtersInitialized: false  // NEW: Track if filters are initialized
+    filtersInitialized: false
   };
 }
 
@@ -37,39 +37,35 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
  * UTILITY FUNCTIONS
  * ============================================================
  */
-function positionMasterPlayer() {
-  const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) return;
+function formatDuration(seconds) {
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function scrollToSelected(cardElement) {
+  if (!cardElement) return;
+  cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function adjustDropdownPosition(toggle, list) {
+  const rect = toggle.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top;
   
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicAreaContainer = document.querySelector('.music-area-container');
-  
-  // Check if player is visible/active
-  const isPlayerVisible = playerWrapper.classList.contains('active') || 
-                          (window.getComputedStyle(playerWrapper).display !== 'none');
-  
-  // ALWAYS fixed at bottom
-  playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '0px', 'important');
-  playerWrapper.style.setProperty('left', '0px', 'important');
-  playerWrapper.style.setProperty('right', '0px', 'important');
-  playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
-  
-  // ADD PADDING ONLY TO music-area-container WHEN PLAYER IS VISIBLE
-  if (isMusicPage && isPlayerVisible && musicAreaContainer) {
-    const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1;
-    musicAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
-  } else if (musicAreaContainer) {
-    musicAreaContainer.style.paddingBottom = '0px';
+  if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+    list.style.bottom = '100%';
+    list.style.top = 'auto';
+  } else {
+    list.style.top = '100%';
+    list.style.bottom = 'auto';
   }
 }
 
 /**
  * ============================================================
- * MASTER PLAYER POSITIONING - DO NOT MODIFY
+ * MASTER PLAYER POSITIONING
  * ============================================================
  */
 function positionMasterPlayer() {
@@ -96,14 +92,14 @@ function positionMasterPlayer() {
   // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
   if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1; // Amount to overlap (in pixels)
+    const overlapAmount = 1;
     
     if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
     }
     
     if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
     }
   } else {
     // REMOVE PADDING when player not visible or not on music page
@@ -115,6 +111,7 @@ function positionMasterPlayer() {
     }
   }
 }
+
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
@@ -129,20 +126,21 @@ function updateMasterPlayerVisibility() {
   
   console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow);
   
-  // ALWAYS position correctly first
-  positionMasterPlayer();
-  
   // Then handle visibility
   if (shouldShow) {
+    playerWrapper.classList.add('active');
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
+    positionMasterPlayer(); // Call AFTER adding active class
   } else {
+    playerWrapper.classList.remove('active');
     playerWrapper.style.display = 'none';
     playerWrapper.style.visibility = 'hidden';
     playerWrapper.style.opacity = '0';
+    positionMasterPlayer(); // Call to remove padding
   }
 }
 
@@ -492,7 +490,47 @@ function updateMasterControllerIcons(isPlaying) {
   }
 }
 
-function syncMasterTrack(wavesurfer, songData, forcedProgress = null)
+function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
+  const g = window.musicPlayerPersistent;
+  
+  g.currentWavesurfer = wavesurfer;
+  g.currentSongData = songData;
+  g.hasActiveSong = true;
+  
+  // Show and activate player
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (playerWrapper) {
+    playerWrapper.classList.add('active'); // ADD ACTIVE CLASS
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
+    positionMasterPlayer(); // Call AFTER adding active class
+  }
+  
+  g.currentPeaksData = null;
+  drawMasterWaveform(null, 0);
+  updateMasterPlayerInfo(songData, wavesurfer);
+  
+  const getAndDrawPeaks = () => {
+    if (g.currentWavesurfer !== wavesurfer) return;
+    try {
+      const decodedData = wavesurfer.getDecodedData();
+      if (decodedData) {
+        g.currentPeaksData = decodedData.getChannelData(0);
+        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
+        drawMasterWaveform(g.currentPeaksData, progress);
+      }
+    } catch (e) {}
+  };
+  
+  if (wavesurfer.getDecodedData()) {
+    getAndDrawPeaks();
+  } else {
+    wavesurfer.once('decode', getAndDrawPeaks);
+  }
+}
 
 function setupMasterPlayerControls() {
   const g = window.musicPlayerPersistent;
@@ -1170,38 +1208,37 @@ async function initMusicPage() {
     }
   }
   
-if (isMusicPage) {
-  const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
-  if (searchForm) {
-    searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
-  }
-  
-  // Check if filter elements actually exist before skipping initialization
-  const filterHeaders = document.querySelectorAll('.filter-header');
-  const shouldInitFilters = !g.filtersInitialized || filterHeaders.length === 0 || !filterHeaders[0].onclick;
-  
-  if (shouldInitFilters) {
-    console.log('🔧 Initializing filters');
-    initFilterAccordions();
-    initCheckboxTextColor();
-    initFilterItemBackground();
-    initDynamicTagging();
-    initMutualExclusion();
-    initSearchAndFilters();
-    g.filtersInitialized = true;
+  if (isMusicPage) {
+    const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
+    }
+    
+    const filterHeaders = document.querySelectorAll('.filter-header');
+    const shouldInitFilters = !g.filtersInitialized || filterHeaders.length === 0 || !filterHeaders[0].onclick;
+    
+    if (shouldInitFilters) {
+      console.log('🔧 Initializing filters');
+      initFilterAccordions();
+      initCheckboxTextColor();
+      initFilterItemBackground();
+      initDynamicTagging();
+      initMutualExclusion();
+      initSearchAndFilters();
+      g.filtersInitialized = true;
+    } else {
+      console.log('⏭️ Filters already initialized');
+    }
+    
+    const songs = await fetchSongs();
+    displaySongs(songs);
+    initMasterPlayer();
+    
+    setTimeout(() => {
+      positionMasterPlayer();
+      updateMasterPlayerVisibility();
+    }, 200);
   } else {
-    console.log('⏭️ Filters already initialized');
-  }
-  
-  const songs = await fetchSongs();
-  displaySongs(songs);
-  initMasterPlayer();
-  
-  setTimeout(() => {
-    positionMasterPlayer();
-    updateMasterPlayerVisibility();
-  }, 200);
-} else {
     initMasterPlayer();
     updateMasterPlayerVisibility();
   }
@@ -1503,7 +1540,7 @@ function removeDuplicateIds() {
  * ============================================================
  */
 window.addEventListener('load', () => {
-  removeDuplicateIds(); // Remove IDs on first load
+  removeDuplicateIds();
   initMusicPage();
 });
 
@@ -1539,7 +1576,7 @@ if (typeof barba !== 'undefined') {
           g.waveformData = [];
           g.persistedWaveformContainer = null;
           g.currentWavesurfer = null;
-          g.filtersInitialized = false; // Reset filter flag
+          g.filtersInitialized = false;
         }
         
         document.body.style.overflow = '';
@@ -1575,39 +1612,37 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-     after(data) {
-  const g = window.musicPlayerPersistent;
-  
-  window.scrollTo(0, 0);
-  
-  // Remove duplicate IDs after page transition
-  removeDuplicateIds();
-  
-  if (window.Webflow) {
-    try {
-      window.Webflow.destroy();
-      window.Webflow.ready();
-      window.Webflow.require('ix2').init();
-    } catch (e) {}
-  }
-  
-  setTimeout(() => {
-    console.log('🎮 Setting up master player controls');
-    setupMasterPlayerControls();
-    updateMasterPlayerVisibility();
-    
-    if (g.currentSongData) {
-      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-      updateMasterControllerIcons(g.isPlaying);
-    }
-    
-    window.dispatchEvent(new Event('scroll'));
-    window.dispatchEvent(new Event('resize'));
-    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-    
-    console.log('✅ Transition complete - Controls ready');
-  }, 200);
-}
+      after(data) {
+        const g = window.musicPlayerPersistent;
+        
+        window.scrollTo(0, 0);
+        removeDuplicateIds();
+        
+        if (window.Webflow) {
+          try {
+            window.Webflow.destroy();
+            window.Webflow.ready();
+            window.Webflow.require('ix2').init();
+          } catch (e) {}
+        }
+        
+        setTimeout(() => {
+          console.log('🎮 Setting up master player controls');
+          setupMasterPlayerControls();
+          updateMasterPlayerVisibility();
+          
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+          }
+          
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+          
+          console.log('✅ Transition complete - Controls ready');
+        }, 200);
+      }
     }]
   });
 }
