@@ -19,7 +19,7 @@ if (!window.musicPlayerPersistent) {
     MASTER_DATA: [],
     allWavesurfers: [],
     waveformData: [],
-    filtersInitialized: false
+    filtersInitialized: false  // Track if filters are initialized
   };
 }
 
@@ -110,14 +110,14 @@ function positionMasterPlayer() {
   // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
   if (isMusicPage && isPlayerVisible) {
     const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1; // Amount to overlap (in pixels)
+    const overlapAmount = 1;
     
     if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
     }
     
     if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
     }
   } else {
     // REMOVE PADDING when player not visible or not on music page
@@ -1312,15 +1312,8 @@ function initFilterItemBackground() {
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
     
-    // Clone all checkboxes EXCEPT exclusive ones
     checkboxes.forEach(checkbox => {
-      // Skip exclusive checkboxes
-      if (checkbox.closest('[data-exclusive]')) return;
-      
-      const newCheckbox = checkbox.cloneNode(true);
-      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
-      
-      newCheckbox.addEventListener('change', function() {
+      checkbox.addEventListener('change', function() {
         const filterItem = this.closest('.filter-item');
         if (filterItem) {
           if (this.checked) {
@@ -1339,11 +1332,7 @@ function initDynamicTagging() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
-    // Get all checkboxes but exclude exclusive ones
-    const checkboxes = Array.from(
-      document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]')
-    ).filter(cb => !cb.closest('[data-exclusive]'));
-    
+    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
     
     function createTag(input, labelText, radioName = null) {
@@ -1367,12 +1356,12 @@ function initDynamicTagging() {
       return tag;
     }
 
-    // Clone and replace checkboxes (excluding exclusive ones already filtered above)
+    // DON'T clone - just add listeners if not already added
     checkboxes.forEach(checkbox => {
-      const newCheckbox = checkbox.cloneNode(true);
-      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      if (checkbox.dataset.taggingListener === 'true') return;
+      checkbox.dataset.taggingListener = 'true';
       
-      newCheckbox.addEventListener('change', function() {
+      checkbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1400,17 +1389,17 @@ function initDynamicTagging() {
       });
     });
 
-    // Clone and replace radio wrappers
+    // DON'T clone - just add listeners if not already added
     radioWrappers.forEach(wrapper => {
-      const newWrapper = wrapper.cloneNode(true);
-      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      if (wrapper.dataset.taggingListener === 'true') return;
+      wrapper.dataset.taggingListener = 'true';
       
-      newWrapper.addEventListener('mousedown', function() {
+      wrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      newWrapper.addEventListener('click', function() {
+      wrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
@@ -1456,6 +1445,11 @@ function initMutualExclusion() {
   const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
   if (instInput && acapInput) {
+    // Skip if already initialized
+    if (instInput.dataset.mutexListener === 'true') return;
+    instInput.dataset.mutexListener = 'true';
+    acapInput.dataset.mutexListener = 'true';
+    
     function clearOther(otherInput, otherWrapper) {
       if (otherInput.checked) {
         otherInput.checked = false;
@@ -1559,11 +1553,11 @@ function initSearchAndFilters() {
  * ============================================================
  */
 function removeDuplicateIds() {
-  document.querySelectorAll('input[type="checkbox"][id="checkbox"]').forEach((cb, index) => {
+  document.querySelectorAll('input[type="checkbox"][id="checkbox"]').forEach((cb) => {
     cb.removeAttribute('id');
   });
   
-  document.querySelectorAll('[id="favourite-button"]').forEach((btn, index) => {
+  document.querySelectorAll('[id="favourite-button"]').forEach((btn) => {
     btn.removeAttribute('id');
   });
   
