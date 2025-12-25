@@ -674,7 +674,7 @@ function linkStandaloneToWaveform() {
  * CREATE STANDALONE AUDIO FOR SONG
  * ============================================================
  */
-function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null) {
+function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
   console.log('🎵 Creating standalone audio for:', songData.fields['Song Title']);
@@ -763,7 +763,13 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   
   audio.src = audioUrl;
   audio.load();
-  audio.play().catch(err => console.error('Playback error:', err));
+  
+  // Only auto-play if shouldAutoPlay is true
+  if (shouldAutoPlay) {
+    audio.play().catch(err => console.error('Playback error:', err));
+  } else {
+    console.log('⏸️ Song loaded but paused - ready for spacebar play');
+  }
   
   syncMasterTrack(wavesurfer, songData);
   updateMasterPlayerVisibility();
@@ -776,7 +782,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
  * PLAY STANDALONE SONG
  * ============================================================
  */
-function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null) {
+function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
   console.log('🎵 Play standalone song:', songData.fields['Song Title']);
@@ -784,7 +790,9 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   // If already playing this exact song, just resume
   if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
     console.log('▶️ Resuming same song');
-    g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    if (shouldAutoPlay) {
+      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    }
     return;
   }
   
@@ -810,8 +818,8 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
     }
   });
   
-  // Create new audio for different song (with optional seek position)
-  createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime);
+  // Create new audio for different song (with optional seek position and auto-play control)
+  createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime, shouldAutoPlay);
 }
 
 /**
@@ -1217,32 +1225,30 @@ document.addEventListener('keydown', function (e) {
           if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
         }
       }
-      if (nextWS) {
-        const wasPlaying = g.isPlaying;
-        const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-        if (prevData?.cardElement.querySelector('.play-button')) {
-          prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-        }
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-        }
-        
-        g.currentWavesurfer.seekTo(0);
-        g.currentWavesurfer = nextWS;
-        const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
-        if (nextD?.cardElement.querySelector('.play-button')) {
-          nextD.cardElement.querySelector('.play-button').style.opacity = '1';
-        }
-        scrollToSelected(nextD.cardElement);
-        
-        if (wasPlaying) {
-          playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement);
-        } else {
-          g.currentSongData = nextD.songData;
-          syncMasterTrack(nextWS, nextD.songData, 0);
-        }
-      }
+    if (nextWS) {
+  const wasPlaying = g.isPlaying;
+  const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
+  if (prevData?.cardElement.querySelector('.play-button')) {
+    prevData.cardElement.querySelector('.play-button').style.opacity = '0';
+  }
+  
+  if (g.standaloneAudio) {
+    g.standaloneAudio.pause();
+    g.standaloneAudio = null; // Clear it
+  }
+  
+  g.currentWavesurfer.seekTo(0);
+  g.currentWavesurfer = nextWS;
+  const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
+  if (nextD?.cardElement.querySelector('.play-button')) {
+    nextD.cardElement.querySelector('.play-button').style.opacity = '1';
+  }
+  scrollToSelected(nextD.cardElement);
+  
+  // ALWAYS create standalone audio (whether playing or paused)
+  // Pass seekToTime as null (start from beginning) and wasPlaying flag
+  playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
+}
     } else {
       navigateStandaloneTrack(e.code === 'ArrowDown' ? 'next' : 'prev');
     }
