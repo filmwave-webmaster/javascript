@@ -82,6 +82,55 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
+ * MAIN INITIALIZATION
+ * ============================================================
+ */
+async function initMusicPage() {
+  const g = window.musicPlayerPersistent;
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  
+  if (g.MASTER_DATA.length === 0) {
+    await fetchSongs();
+  }
+  
+  if (g.hasActiveSong && g.currentSongData) {
+    updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+    updateMasterControllerIcons(g.isPlaying);
+    if (g.currentPeaksData && g.standaloneAudio) {
+      const prog = g.currentTime / g.currentDuration || 0;
+      drawMasterWaveform(g.currentPeaksData, prog);
+    }
+  }
+  
+  if (isMusicPage) {
+    const searchForm = document.querySelector('.search-input-wrapper form, form.search-input-wrapper');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
+    }
+    initFilterAccordions();
+    initCheckboxTextColor();
+    initFilterItemBackground();
+    initDynamicTagging();
+    initMutualExclusion();
+    initSearchAndFilters();
+    const songs = await fetchSongs();
+    displaySongs(songs);
+    initMasterPlayer();
+    
+    // Position player correctly after everything loads
+    setTimeout(() => {
+      positionMasterPlayer(); // Use dedicated positioning function
+      updateMasterPlayerVisibility();
+    }, 200);
+  } else {
+    // For non-music pages
+    initMasterPlayer();
+    updateMasterPlayerVisibility();
+  }
+}
+
+/**
+ * ============================================================
  * STANDALONE AUDIO PLAYER (for non-music pages)
  * ============================================================
  */
