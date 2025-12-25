@@ -498,12 +498,14 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   g.currentSongData = songData;
   g.hasActiveSong = true;
   
-  updateMasterPlayerVisibility();
-  
+  // Show player without repositioning - it's already positioned correctly
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
   }
   
   g.currentPeaksData = null;
