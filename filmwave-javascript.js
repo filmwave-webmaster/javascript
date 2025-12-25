@@ -958,7 +958,13 @@ async function initMusicPage() {
     await fetchSongs();
   }
   
-  updateMasterPlayerVisibility();
+  // DON'T hide the player if we have song data and we're leaving the music page
+  // The after hook will handle visibility for standalone audio
+  if (!isMusicPage && g.currentSongData) {
+    console.log('🎵 Skipping updateMasterPlayerVisibility - have song data, will handle in after hook');
+  } else {
+    updateMasterPlayerVisibility();
+  }
   
   if (g.hasActiveSong && g.currentSongData) {
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
