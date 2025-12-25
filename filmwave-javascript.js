@@ -1299,37 +1299,38 @@ const ensurePlayerVisible = () => {
   const allPlayers = document.querySelectorAll('.music-player-wrapper');
   console.log('🔎 Found', allPlayers.length, 'player wrappers');
   
-  allPlayers.forEach((player, index) => {
-    console.log(`🔎 Player ${index}:`, {
-      isInBarbaContainer: !!player.closest('[data-barba="container"]'),
-      parentClasses: player.parentElement?.className,
-      display: window.getComputedStyle(player).display,
-      visibility: window.getComputedStyle(player).visibility,
-      opacity: window.getComputedStyle(player).opacity
-    });
-  });
-  
   const playerWrapper = document.querySelector('.music-player-wrapper');
   
   if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
-    // Log current styles
-    const computedStyle = window.getComputedStyle(playerWrapper);
-    console.log('🔍 Player wrapper found:');
-    console.log('  - display:', computedStyle.display);
-    console.log('  - visibility:', computedStyle.visibility);
-    console.log('  - opacity:', computedStyle.opacity);
-    console.log('  - position:', computedStyle.position);
-    console.log('  - height:', computedStyle.height);
+    // Check parent visibility
+    const parent = playerWrapper.parentElement;
+    if (parent) {
+      const parentStyle = window.getComputedStyle(parent);
+      console.log('🔍 Parent element:', {
+        className: parent.className,
+        display: parentStyle.display,
+        visibility: parentStyle.visibility,
+        opacity: parentStyle.opacity,
+        height: parentStyle.height
+      });
+      
+      // Force parent visible too
+      parent.style.display = 'block';
+      parent.style.visibility = 'visible';
+      parent.style.opacity = '1';
+    }
     
-    // Force ALL visibility properties
-    playerWrapper.style.display = 'flex';
-    playerWrapper.style.visibility = 'visible';
-    playerWrapper.style.opacity = '1';
-    playerWrapper.style.alignItems = 'center';
-    playerWrapper.style.pointerEvents = 'auto';
-    playerWrapper.style.transform = 'none';
+    // Force with !important using cssText
+    playerWrapper.style.cssText = `
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      align-items: center !important;
+      pointer-events: auto !important;
+      transform: none !important;
+    `;
     
-    console.log('👁️ Forced player visible with all properties');
+    console.log('👁️ Forced player visible with !important');
     
     // Update player info
     if (g.currentSongData) {
@@ -1337,11 +1338,12 @@ const ensurePlayerVisible = () => {
       updateMasterControllerIcons(g.isPlaying);
     }
   } else if (g.currentSongData) {
-    // Player wrapper not ready yet, try again
     console.log('⏳ Player wrapper not found, retrying...');
     setTimeout(ensurePlayerVisible, 100);
   }
 };
+
+ensurePlayerVisible();
 
 // Call it immediately
 ensurePlayerVisible();
