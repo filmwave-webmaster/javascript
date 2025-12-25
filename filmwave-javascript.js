@@ -668,15 +668,19 @@ function linkStandaloneToWaveform() {
     console.log('✅ Linked standalone audio to waveform with continuous sync');
   }
 }
+
 /**
  * ============================================================
  * CREATE STANDALONE AUDIO FOR SONG
  * ============================================================
  */
-function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement) {
+function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null) {
   const g = window.musicPlayerPersistent;
   
   console.log('🎵 Creating standalone audio for:', songData.fields['Song Title']);
+  if (seekToTime !== null) {
+    console.log('📍 Will seek to:', seekToTime, 'seconds after load');
+  }
   
   const audio = new Audio(audioUrl);
   g.standaloneAudio = audio;
@@ -687,27 +691,33 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement) {
   audio.addEventListener('loadedmetadata', () => {
     g.currentDuration = audio.duration;
     console.log('📊 Audio loaded, duration:', g.currentDuration);
+    
+    // Seek to the desired position if specified
+    if (seekToTime !== null && seekToTime < audio.duration) {
+      console.log('⏩ Seeking to requested position:', seekToTime);
+      audio.currentTime = seekToTime;
+    }
   });
   
- audio.addEventListener('timeupdate', () => {
-  g.currentTime = audio.currentTime;
-  
-  // Sync WaveSurfer to standalone audio
-  if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    wavesurfer.seekTo(progress);
-  }
-  
-  const masterCounter = document.querySelector('.player-duration-counter');
-  if (masterCounter) {
-    masterCounter.textContent = formatDuration(audio.currentTime);
-  }
-  
-  if (g.currentPeaksData && g.currentDuration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    drawMasterWaveform(g.currentPeaksData, progress);
-  }
-});
+  audio.addEventListener('timeupdate', () => {
+    g.currentTime = audio.currentTime;
+    
+    // Sync WaveSurfer to standalone audio
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      wavesurfer.seekTo(progress);
+    }
+    
+    const masterCounter = document.querySelector('.player-duration-counter');
+    if (masterCounter) {
+      masterCounter.textContent = formatDuration(audio.currentTime);
+    }
+    
+    if (g.currentPeaksData && g.currentDuration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      drawMasterWaveform(g.currentPeaksData, progress);
+    }
+  });
   
   audio.addEventListener('play', () => {
     g.isPlaying = true;
@@ -766,7 +776,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement) {
  * PLAY STANDALONE SONG
  * ============================================================
  */
-function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement) {
+function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null) {
   const g = window.musicPlayerPersistent;
   
   console.log('🎵 Play standalone song:', songData.fields['Song Title']);
@@ -800,8 +810,8 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement) {
     }
   });
   
-  // Create new audio for different song
-  createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement);
+  // Create new audio for different song (with optional seek position)
+  createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime);
 }
 
 /**
@@ -971,7 +981,7 @@ wavesurfer.on('interaction', function (newProgress) {
     // This is the current song - just seek
     if (g.standaloneAudio) {
       console.log('⏩ Seeking current song to:', newProgress, 'seconds');
-      g.standaloneAudio.currentTime = newProgress; // ← FIXED: newProgress is already in seconds
+      g.standaloneAudio.currentTime = newProgress;
     } else {
       console.log('⚠️ No standalone audio to seek!');
     }
@@ -998,21 +1008,14 @@ wavesurfer.on('interaction', function (newProgress) {
   g.hasActiveSong = true;
   
   if (wasPlaying) {
-    // Play new song - this will update g.currentSongData
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-    // Seek to clicked position after audio loads
-    setTimeout(() => {
-      if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-        console.log('⏭️ Seeking to clicked position:', newProgress, 'seconds');
-        g.standaloneAudio.currentTime = newProgress; // ← FIXED: newProgress is already in seconds
-      }
-    }, 100);
+    // Play new song with seek position - this will update g.currentSongData
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress);
   } else {
     // Not playing - just update UI
     g.currentSongData = songData;
-    // Convert seconds to progress (0-1) for syncMasterTrack
-    const progressRatio = g.standaloneAudio ? newProgress / g.standaloneAudio.duration : 0;
-    syncMasterTrack(wavesurfer, songData, progressRatio);
+    // For syncMasterTrack, we need to estimate a progress ratio
+    // Since we don't have duration yet, we'll sync at 0 and let it update naturally
+    syncMasterTrack(wavesurfer, songData, 0);
   }
 });
 }
