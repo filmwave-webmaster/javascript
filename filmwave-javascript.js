@@ -74,7 +74,10 @@ function positionMasterPlayer() {
  */
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) return;
+  if (!playerWrapper) {
+    console.log('❌ playerWrapper not found');
+    return;
+  }
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   const musicListWrapper = document.querySelector('.music-list-wrapper');
@@ -84,37 +87,18 @@ function positionMasterPlayer() {
   const isPlayerVisible = playerWrapper.classList.contains('active') || 
                           (window.getComputedStyle(playerWrapper).display !== 'none');
   
+  console.log('🔍 DEBUG:');
+  console.log('isMusicPage:', isMusicPage);
+  console.log('isPlayerVisible:', isPlayerVisible);
+  console.log('musicListWrapper found:', !!musicListWrapper);
+  console.log('searchAreaContainer found:', !!searchAreaContainer);
+  console.log('playerWrapper has active class:', playerWrapper.classList.contains('active'));
+  
   // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
   playerWrapper.style.setProperty('left', '0px', 'important');
-  playerWrapper.style.setProperty('right', '0px', 'important');
-  playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
-  
-  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
-  if (isMusicPage && isPlayerVisible) {
-    const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1; // Amount to overlap (in pixels)
-    
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
-    }
-    
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px'; // SUBTRACT overlap
-    }
-  } else {
-    // REMOVE PADDING when player not visible or not on music page
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '0px';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '0px';
-    }
-  }
-}
+  player
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
@@ -492,7 +476,48 @@ function updateMasterControllerIcons(isPlaying) {
   }
 }
 
-function syncMasterTrack(wavesurfer, songData, forcedProgress = null)
+function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
+  const g = window.musicPlayerPersistent;
+  
+  g.currentWavesurfer = wavesurfer;
+  g.currentSongData = songData;
+  g.hasActiveSong = true;
+  
+  // ALWAYS reposition player before showing it
+  positionMasterPlayer();
+  
+  // Then show player
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (playerWrapper) {
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
+  }
+  
+  g.currentPeaksData = null;
+  drawMasterWaveform(null, 0);
+  updateMasterPlayerInfo(songData, wavesurfer);
+  
+  const getAndDrawPeaks = () => {
+    if (g.currentWavesurfer !== wavesurfer) return;
+    try {
+      const decodedData = wavesurfer.getDecodedData();
+      if (decodedData) {
+        g.currentPeaksData = decodedData.getChannelData(0);
+        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
+        drawMasterWaveform(g.currentPeaksData, progress);
+      }
+    } catch (e) {}
+  };
+  
+  if (wavesurfer.getDecodedData()) {
+    getAndDrawPeaks();
+  } else {
+    wavesurfer.once('decode', getAndDrawPeaks);
+  }
+}
 
 function setupMasterPlayerControls() {
   const g = window.musicPlayerPersistent;
