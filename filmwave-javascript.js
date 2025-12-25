@@ -85,11 +85,14 @@ function adjustDropdownPosition(toggle, list) {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
-function positionMasterPlayer() {
+function positionMasterPlayer(isMusicPage = null) {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
   
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  // If not provided, detect from current DOM
+  if (isMusicPage === null) {
+    isMusicPage = !!document.querySelector('.music-list-wrapper');
+  }
   
   console.log('📍 Positioning player - isMusicPage:', isMusicPage);
   
@@ -1754,7 +1757,7 @@ if (typeof barba !== 'undefined') {
   return Promise.resolve();
 },
 
-    beforeEnter(data) {
+   beforeEnter(data) {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
@@ -1776,8 +1779,8 @@ if (typeof barba !== 'undefined') {
     if (musicArea) musicArea.style.overflow = 'hidden';
   }
 
-  // Position player IMMEDIATELY before content loads
-  positionMasterPlayer();
+  // Position player IMMEDIATELY - pass isMusicPage parameter
+  positionMasterPlayer(isMusicPage);
 },
 
 enter(data) {
