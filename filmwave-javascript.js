@@ -1224,9 +1224,6 @@ async function initMusicPage() {
     await fetchSongs();
   }
   
-  // DON'T call updateMasterPlayerVisibility() here on music page
-  // Wait until after songs are displayed
-  
   if (g.hasActiveSong && g.currentSongData) {
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
     updateMasterControllerIcons(g.isPlaying);
@@ -1251,33 +1248,43 @@ async function initMusicPage() {
     displaySongs(songs);
     initMasterPlayer();
     
-    // NOW call updateMasterPlayerVisibility and position player AFTER songs are displayed
+    // ALWAYS position player at bottom of music page (even if no active song)
     setTimeout(() => {
-      updateMasterPlayerVisibility(); // This will handle the position correctly
+      const playerWrapper = document.querySelector('.music-player-wrapper');
       
-      if (g.hasActiveSong || g.currentSongData) {
-        const playerWrapper = document.querySelector('.music-player-wrapper');
-        if (playerWrapper) {
-          playerWrapper.style.position = 'relative';
-          playerWrapper.style.bottom = 'auto';
-          playerWrapper.style.left = 'auto';
-          playerWrapper.style.right = 'auto';
+      if (playerWrapper) {
+        console.log('🔧 Positioning player at bottom of music page');
+        
+        // Force relative positioning on music page
+        playerWrapper.style.position = 'relative';
+        playerWrapper.style.bottom = 'auto';
+        playerWrapper.style.left = 'auto';
+        playerWrapper.style.right = 'auto';
+        playerWrapper.style.top = 'auto';
+        playerWrapper.style.width = '100%';
+        
+        // Update visibility based on whether there's an active song
+        if (g.hasActiveSong || g.currentSongData) {
           playerWrapper.style.display = 'flex';
           playerWrapper.style.visibility = 'visible';
           playerWrapper.style.opacity = '1';
           playerWrapper.style.alignItems = 'center';
-          playerWrapper.style.width = '100%';
           updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+          updateMasterControllerIcons(g.isPlaying);
+        } else {
+          // Hide player if no active song
+          playerWrapper.style.display = 'none';
+          playerWrapper.style.visibility = 'hidden';
+          playerWrapper.style.opacity = '0';
         }
       }
-    }, 200); // Increased delay to ensure songs are fully rendered
+    }, 200);
   } else {
-    // For non-music pages, call it normally
+    // For non-music pages
     initMasterPlayer();
     updateMasterPlayerVisibility();
   }
 }
-
 /**
  * ============================================================
  * FILTER HELPERS
