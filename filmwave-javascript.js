@@ -98,7 +98,36 @@ function positionMasterPlayer() {
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
   playerWrapper.style.setProperty('left', '0px', 'important');
-  player
+  playerWrapper.style.setProperty('right', '0px', 'important');
+  playerWrapper.style.setProperty('top', 'auto', 'important');
+  playerWrapper.style.width = '100%';
+  playerWrapper.style.zIndex = '9999';
+  
+  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
+  if (isMusicPage && isPlayerVisible) {
+    const playerHeight = playerWrapper.offsetHeight || 80;
+    const overlapAmount = 1;
+    
+    console.log('✅ ADDING PADDING:', (playerHeight - overlapAmount) + 'px');
+    
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+    }
+    
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
+    }
+  } else {
+    console.log('❌ NOT ADDING PADDING - condition not met');
+    
+    if (musicListWrapper) {
+      musicListWrapper.style.paddingBottom = '0px';
+    }
+    if (searchAreaContainer) {
+      searchAreaContainer.style.paddingBottom = '0px';
+    }
+  }
+}
 /**
  * ============================================================
  * MASTER PLAYER VISIBILITY CONTROL
