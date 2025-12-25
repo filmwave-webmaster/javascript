@@ -98,12 +98,13 @@ function positionMasterPlayer() {
   const isPlayerVisible = playerWrapper.classList.contains('active') || 
                           (window.getComputedStyle(playerWrapper).display !== 'none');
   
-  // ALWAYS fixed at bottom (with -1px to overlap)
+  // ALWAYS fixed at bottom
   playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '-1px', 'important'); // CHANGED FROM 0px to -1px
+  playerWrapper.style.setProperty('bottom', '0px', 'important'); // BACK TO 0px
   playerWrapper.style.setProperty('left', '0px', 'important');
   playerWrapper.style.setProperty('right', '0px', 'important');
   playerWrapper.style.setProperty('top', 'auto', 'important');
+  playerWrapper.style.setProperty('margin-top', '-1px', 'important'); // ADD NEGATIVE TOP MARGIN
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
   
