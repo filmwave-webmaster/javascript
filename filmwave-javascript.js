@@ -114,11 +114,18 @@ function navigateStandaloneTrack(direction) {
   // Remember if it was playing or paused
   const wasPlaying = g.isPlaying;
   
-  // DESTROY old audio element completely
+  // CRITICAL: Properly destroy old audio element
   if (g.standaloneAudio) {
-    g.standaloneAudio.pause();
-    g.standaloneAudio.src = '';
-    g.standaloneAudio = null;
+    try {
+      g.standaloneAudio.pause();
+      // Remove all event listeners to prevent callbacks on destroyed audio
+      g.standaloneAudio.src = '';
+      g.standaloneAudio.load(); // Force abort of any pending loads
+      g.standaloneAudio = null;
+    } catch (e) {
+      console.warn('Error cleaning up audio:', e);
+      g.standaloneAudio = null;
+    }
   }
   
   // Update song data
@@ -133,6 +140,9 @@ function navigateStandaloneTrack(direction) {
   g.standaloneAudio = audio;
   
   audio.addEventListener('loadedmetadata', () => {
+    // Guard: Make sure this is still the current audio
+    if (g.standaloneAudio !== audio) return;
+    
     g.currentDuration = audio.duration;
     const masterDuration = document.querySelector('.player-duration');
     if (masterDuration) {
@@ -142,6 +152,9 @@ function navigateStandaloneTrack(direction) {
   });
   
   audio.addEventListener('timeupdate', () => {
+    // Guard: Make sure this is still the current audio
+    if (g.standaloneAudio !== audio) return;
+    
     g.currentTime = audio.currentTime;
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
@@ -154,28 +167,45 @@ function navigateStandaloneTrack(direction) {
   });
   
   audio.addEventListener('play', () => {
+    // Guard: Make sure this is still the current audio
+    if (g.standaloneAudio !== audio) return;
+    
     g.isPlaying = true;
     updateMasterControllerIcons(true);
     console.log('▶️ Standalone audio playing');
   });
   
   audio.addEventListener('pause', () => {
+    // Guard: Make sure this is still the current audio
+    if (g.standaloneAudio !== audio) return;
+    
     g.isPlaying = false;
     updateMasterControllerIcons(false);
     console.log('⏸️ Standalone audio paused');
   });
   
   audio.addEventListener('ended', () => {
+    // Guard: Make sure this is still the current audio
+    if (g.standaloneAudio !== audio) return;
+    
     navigateStandaloneTrack('next');
   });
   
   audio.addEventListener('error', (e) => {
-    console.error('❌ Audio error:', e);
+    // Only log if this is still the current audio
+    if (g.standaloneAudio === audio) {
+      console.error('❌ Audio error:', e);
+    }
   });
   
   // Only auto-play if it was already playing
   if (wasPlaying) {
-    audio.play().catch(err => console.error('Playback error:', err));
+    audio.play().catch(err => {
+      // Ignore abort errors from rapid navigation
+      if (err.name !== 'AbortError') {
+        console.error('Playback error:', err);
+      }
+    });
   } else {
     console.log('⏸️ Song loaded but paused - ready for spacebar play');
     g.isPlaying = false;
@@ -215,8 +245,14 @@ function navigateStandaloneTrack(direction) {
     }
     
     // Clean up temp waveform
-    tempWavesurfer.destroy();
-    document.body.removeChild(tempContainer);
+    try {
+      tempWavesurfer.destroy();
+      if (document.body.contains(tempContainer)) {
+        document.body.removeChild(tempContainer);
+      }
+    } catch (e) {
+      console.warn('Error cleaning up temp waveform:', e);
+    }
   });
 }
 
