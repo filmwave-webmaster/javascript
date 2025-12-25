@@ -1281,19 +1281,28 @@ audio.addEventListener('canplay', () => {
       audio.load();
     }
     
-    // FORCE player visibility if there's active audio
-    const playerWrapper = document.querySelector('.music-player-wrapper');
-    if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
-      playerWrapper.style.display = 'flex';
-      playerWrapper.style.alignItems = 'center';
-      console.log('👁️ Forced player visible');
-    }
+   // FORCE player visibility if there's active audio - check multiple times
+const ensurePlayerVisible = () => {
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.alignItems = 'center';
+    console.log('👁️ Forced player visible');
     
     // Update player info
     if (g.currentSongData) {
       updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
       updateMasterControllerIcons(g.isPlaying);
     }
+  } else if (g.currentSongData) {
+    // Player wrapper not ready yet, try again
+    console.log('⏳ Player wrapper not found, retrying...');
+    setTimeout(ensurePlayerVisible, 100);
+  }
+};
+
+// Call it immediately
+ensurePlayerVisible();
     
     window.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
