@@ -1115,30 +1115,30 @@ document.addEventListener('keydown', function (e) {
           if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
         }
       }
-    if (nextWS) {
-  const wasPlaying = g.isPlaying;
-  const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-  if (prevData?.cardElement.querySelector('.play-button')) {
-    prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-  }
-  
-  if (g.standaloneAudio) {
-    g.standaloneAudio.pause();
-    g.standaloneAudio = null; // Clear it
-  }
-  
-  g.currentWavesurfer.seekTo(0);
-  g.currentWavesurfer = nextWS;
-  const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
-  if (nextD?.cardElement.querySelector('.play-button')) {
-    nextD.cardElement.querySelector('.play-button').style.opacity = '1';
-  }
-  scrollToSelected(nextD.cardElement);
-  
-  // ALWAYS create standalone audio (whether playing or paused)
-  // Pass seekToTime as null (start from beginning) and wasPlaying flag
-  playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
-}
+      
+      if (nextWS) {
+        const wasPlaying = g.isPlaying;
+        const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
+        if (prevData?.cardElement.querySelector('.play-button')) {
+          prevData.cardElement.querySelector('.play-button').style.opacity = '0';
+        }
+        
+        if (g.standaloneAudio) {
+          g.standaloneAudio.pause();
+          g.standaloneAudio = null;
+        }
+        
+        g.currentWavesurfer.seekTo(0);
+        g.currentWavesurfer = nextWS;
+        const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
+        if (nextD?.cardElement.querySelector('.play-button')) {
+          nextD.cardElement.querySelector('.play-button').style.opacity = '1';
+        }
+        scrollToSelected(nextD.cardElement);
+        
+        // Pass null to start from beginning, wasPlaying to control auto-play
+        playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
+      }
     } else {
       navigateStandaloneTrack(e.code === 'ArrowDown' ? 'next' : 'prev');
     }
