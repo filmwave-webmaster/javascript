@@ -951,8 +951,8 @@ function initializeWaveforms() {
         g.currentWavesurfer.seekTo(0);
       }
       
+      // DON'T update g.currentSongData here - let createStandaloneAudio do it
       g.currentWavesurfer = wavesurfer;
-      g.currentSongData = songData;
       g.hasActiveSong = true;
       
       syncMasterTrack(wavesurfer, songData, newProgress);
@@ -965,9 +965,11 @@ function initializeWaveforms() {
             g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
           }
         }, 100);
+      } else {
+        // Not playing, just update the current song data for UI sync
+        g.currentSongData = songData;
       }
     });
-  });
   
   // Link existing standalone audio to waveforms
   setTimeout(() => {
