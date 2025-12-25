@@ -1281,13 +1281,31 @@ audio.addEventListener('canplay', () => {
       audio.load();
     }
     
-   // FORCE player visibility if there's active audio - check multiple times
+  // FORCE player visibility if there's active audio - check multiple times
 const ensurePlayerVisible = () => {
   const playerWrapper = document.querySelector('.music-player-wrapper');
+  
   if (playerWrapper && (g.hasActiveSong || g.standaloneAudio || g.currentSongData)) {
+    // Log current styles
+    const computedStyle = window.getComputedStyle(playerWrapper);
+    console.log('🔍 Player wrapper found:');
+    console.log('  - display:', computedStyle.display);
+    console.log('  - visibility:', computedStyle.visibility);
+    console.log('  - opacity:', computedStyle.opacity);
+    console.log('  - position:', computedStyle.position);
+    console.log('  - height:', computedStyle.height);
+    
+    // Force ALL visibility properties
     playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
-    console.log('👁️ Forced player visible');
+    playerWrapper.style.pointerEvents = 'auto';
+    
+    // Also ensure it's not being transformed off-screen
+    playerWrapper.style.transform = 'none';
+    
+    console.log('👁️ Forced player visible with all properties');
     
     // Update player info
     if (g.currentSongData) {
