@@ -82,38 +82,33 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * MASTER PLAYER POSITIONING - DO NOT MODIFY
+ * MASTER PLAYER VISIBILITY CONTROL
  * ============================================================
- * This function handles ALL player positioning logic.
- * Call this whenever the player needs to be positioned correctly.
- * DO NOT add positioning logic anywhere else in the code.
  */
-function positionMasterPlayer() {
+function updateMasterPlayerVisibility(isMusicPage = null) {
+  const g = window.musicPlayerPersistent;
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
   
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
-  console.log('📍 Positioning player - isMusicPage:', isMusicPage);
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow);
   
-  if (isMusicPage) {
-    // MUSIC PAGE: Player at bottom (relative positioning)
-    playerWrapper.style.position = 'relative';
-    playerWrapper.style.bottom = 'auto';
-    playerWrapper.style.left = 'auto';
-    playerWrapper.style.right = 'auto';
-    playerWrapper.style.top = 'auto';
+  // ALWAYS position correctly first - pass through isMusicPage parameter
+  positionMasterPlayer(isMusicPage);
+  
+  // Then handle visibility
+  if (shouldShow) {
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
   } else {
-    // OTHER PAGES: Player fixed at bottom
-    playerWrapper.style.position = 'fixed';
-    playerWrapper.style.bottom = '0px';
-    playerWrapper.style.left = '0px';
-    playerWrapper.style.right = '0px';
-    playerWrapper.style.top = 'auto';
+    playerWrapper.style.display = 'none';
+    playerWrapper.style.visibility = 'hidden';
+    playerWrapper.style.opacity = '0';
   }
-  
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
 }
 
 /**
@@ -1369,43 +1364,16 @@ async function initMusicPage() {
     displaySongs(songs);
     initMasterPlayer();
     
-    // ALWAYS position player at bottom of music page (even if no active song)
-    setTimeout(() => {
-      const playerWrapper = document.querySelector('.music-player-wrapper');
-      
-      if (playerWrapper) {
-        console.log('🔧 Positioning player at bottom of music page');
-        
-        // Force relative positioning on music page
-        playerWrapper.style.position = 'relative';
-        playerWrapper.style.bottom = 'auto';
-        playerWrapper.style.left = 'auto';
-        playerWrapper.style.right = 'auto';
-        playerWrapper.style.top = 'auto';
-        playerWrapper.style.width = '100%';
-        
-        // Update visibility based on whether there's an active song
-        if (g.hasActiveSong || g.currentSongData) {
-          playerWrapper.style.display = 'flex';
-          playerWrapper.style.visibility = 'visible';
-          playerWrapper.style.opacity = '1';
-          playerWrapper.style.alignItems = 'center';
-          updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-          updateMasterControllerIcons(g.isPlaying);
-        } else {
-          // Hide player if no active song
-          playerWrapper.style.display = 'none';
-          playerWrapper.style.visibility = 'hidden';
-          playerWrapper.style.opacity = '0';
-        }
-      }
-    }, 200);
+    // Position player IMMEDIATELY - pass isMusicPage parameter
+    positionMasterPlayer(true);
+    updateMasterPlayerVisibility(true);
   } else {
     // For non-music pages
     initMasterPlayer();
-    updateMasterPlayerVisibility();
+    updateMasterPlayerVisibility(false);
   }
 }
+
 /**
  * ============================================================
  * FILTER HELPERS
@@ -1761,39 +1729,40 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
-        const g = window.musicPlayerPersistent;
-        
-        window.scrollTo(0, 0);
-        
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
-        }
-        
-        setTimeout(() => {
-          console.log('🎮 Setting up master player controls');
-          setupMasterPlayerControls();
-          
-          // Use updateMasterPlayerVisibility to handle positioning
-          updateMasterPlayerVisibility();
-          
-          // Update player info if there's an active song
-          if (g.currentSongData) {
-            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-            updateMasterControllerIcons(g.isPlaying);
-          }
-          
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          
-          console.log('✅ Transition complete - Controls ready');
-        }, 200);
-      }
+     after(data) {
+  const g = window.musicPlayerPersistent;
+  
+  window.scrollTo(0, 0);
+  
+  if (window.Webflow) {
+    try {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    } catch (e) {}
+  }
+  
+  setTimeout(() => {
+    console.log('🎮 Setting up master player controls');
+    setupMasterPlayerControls();
+    
+    // Detect page type and pass to updateMasterPlayerVisibility
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+    updateMasterPlayerVisibility(isMusicPage);
+    
+    // Update player info if there's an active song
+    if (g.currentSongData) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+    }
+    
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+    
+    console.log('✅ Transition complete - Controls ready');
+  }, 200);
+}
     }]
   });
 }
