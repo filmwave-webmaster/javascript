@@ -813,13 +813,24 @@ function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
   
-  songCards.forEach(cardElement => {
-    // Skip if this is the template card
-    if (cardElement.closest('.template-wrapper')) return;
+  console.log('🎨 Total song cards found:', songCards.length);
+  
+  songCards.forEach((cardElement, index) => {
+    // Skip if this is the template card (multiple checks)
+    const isInTemplate = cardElement.closest('.template-wrapper');
+    const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
+    
+    if (isInTemplate || hasNoData) {
+      console.log(`⏭️ Skipping card ${index} - isInTemplate:`, !!isInTemplate, 'hasNoData:', hasNoData);
+      return;
+    }
     
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
     const songData = JSON.parse(cardElement.dataset.songData || '{}');
+    
+    console.log(`✅ Initializing waveform ${index} for:`, songData.fields['Song Title'], 'songId:', songId);
+    
     if (!audioUrl) return;
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer && waveformContainer.hasChildNodes()) return;
@@ -929,7 +940,7 @@ function initializeWaveforms() {
     
     // Waveform interaction (seeking)
     wavesurfer.on('interaction', function (newProgress) {
-      console.log('🎯 Waveform interaction - songId:', songData.id, 'current:', g.currentSongData?.id);
+      console.log('🎯 Waveform interaction - songId:', songData.id, 'songTitle:', songData.fields['Song Title'], 'current:', g.currentSongData?.id);
       
       // ALWAYS check song ID first, not wavesurfer reference
       if (g.currentSongData?.id === songData.id) {
@@ -977,6 +988,8 @@ function initializeWaveforms() {
       }
     });
   });
+  
+  console.log('📊 Total waveforms created:', g.allWavesurfers.length);
   
   // Link existing standalone audio to waveforms
   setTimeout(() => {
