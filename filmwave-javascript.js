@@ -1332,7 +1332,11 @@ function initDynamicTagging() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
-    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
+    // EXCLUDE checkboxes inside [data-exclusive] wrappers from cloning
+    const checkboxes = Array.from(
+      document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]')
+    ).filter(cb => !cb.closest('[data-exclusive]'));
+    
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
     
     function createTag(input, labelText, radioName = null) {
@@ -1356,8 +1360,12 @@ function initDynamicTagging() {
       return tag;
     }
 
+    // Clone and replace checkboxes to remove old listeners (but not exclusive ones)
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      
+      newCheckbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1385,13 +1393,17 @@ function initDynamicTagging() {
       });
     });
 
+    // Rest of the function stays the same...
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      
+      newWrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      wrapper.addEventListener('click', function() {
+      newWrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
