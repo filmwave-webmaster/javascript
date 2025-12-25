@@ -1214,8 +1214,8 @@ async function initMusicPage() {
       searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
     }
     
-    const filterHeaders = document.querySelectorAll('.filter-header');
-    const shouldInitFilters = !g.filtersInitialized || filterHeaders.length === 0 || !filterHeaders[0].onclick;
+    const Headers = document.querySelectorAll('.-header');
+    const shouldInits = !g.sInitialized || Headers.length === 0 || !Headers[0].onclick;
     
     if (shouldInitFilters) {
       console.log('🔧 Initializing filters');
@@ -1339,8 +1339,12 @@ function initDynamicTagging() {
       return tag;
     }
 
+    // Clone and replace checkboxes to remove old listeners
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      
+      newCheckbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
@@ -1368,13 +1372,17 @@ function initDynamicTagging() {
       });
     });
 
+    // Clone and replace radio wrappers to remove old listeners
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
+      const newWrapper = wrapper.cloneNode(true);
+      wrapper.parentNode.replaceChild(newWrapper, wrapper);
+      
+      newWrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
 
-      wrapper.addEventListener('click', function() {
+      newWrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
