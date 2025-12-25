@@ -1408,15 +1408,11 @@ async function initMusicPage() {
 }
 /**
  * ============================================================
- * FILTER HELPERS
+ * FILTER HELPERS - FROM OLD WORKING CODE
  * ============================================================
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    // Skip if already initialized
-    if (header.dataset.accordionInit) return;
-    header.dataset.accordionInit = 'true';
-    
     header.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
@@ -1443,10 +1439,6 @@ function initFilterAccordions() {
 
 function initCheckboxTextColor() {
   document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
-    // Skip if already initialized
-    if (checkbox.dataset.colorInit) return;
-    checkbox.dataset.colorInit = 'true';
-    
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
@@ -1457,16 +1449,12 @@ function initCheckboxTextColor() {
 }
 
 function initFilterItemBackground() {
-  setTimeout(() => {
+  setTimeout(function() {
     let checkboxes = document.querySelectorAll('.checkbox-wrapper input[type="checkbox"]');
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
     if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
     
     checkboxes.forEach(checkbox => {
-      // Skip if already initialized
-      if (checkbox.dataset.bgInit) return;
-      checkbox.dataset.bgInit = 'true';
-      
       checkbox.addEventListener('change', function() {
         const filterItem = this.closest('.filter-item');
         if (filterItem) {
@@ -1482,7 +1470,7 @@ function initFilterItemBackground() {
 }
 
 function initDynamicTagging() {
-  setTimeout(() => {
+  setTimeout(function() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
@@ -1511,10 +1499,6 @@ function initDynamicTagging() {
     }
 
     checkboxes.forEach(checkbox => {
-      // Skip if already initialized
-      if (checkbox.dataset.tagInit) return;
-      checkbox.dataset.tagInit = 'true';
-      
       checkbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
@@ -1544,10 +1528,6 @@ function initDynamicTagging() {
     });
 
     radioWrappers.forEach(wrapper => {
-      // Skip if already initialized
-      if (wrapper.dataset.tagInit) return;
-      wrapper.dataset.tagInit = 'true';
-      
       wrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
@@ -1583,7 +1563,8 @@ function initDynamicTagging() {
               if (tag.dataset.radioName === radioName) tag.remove(); 
             });
             
-            const tag = createTag(radio, labelText, radioName);
+            const tag = createTag(radio, labelText);
+            tag.dataset.radioName = radioName;
             tagsContainer.appendChild(tag);
           }
         }, 50);
@@ -1599,11 +1580,6 @@ function initMutualExclusion() {
   const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
   if (instInput && acapInput) {
-    // Skip if already initialized
-    if (instInput.dataset.exclusionInit && acapInput.dataset.exclusionInit) return;
-    instInput.dataset.exclusionInit = 'true';
-    acapInput.dataset.exclusionInit = 'true';
-    
     function clearOther(otherInput, otherWrapper) {
       if (otherInput.checked) {
         otherInput.checked = false;
@@ -1627,10 +1603,6 @@ function initSearchAndFilters() {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const clearBtn = document.querySelector('.circle-x');
   
-  // Skip if already initialized
-  if (searchBar && searchBar.dataset.filterInit) return;
-  if (searchBar) searchBar.dataset.filterInit = 'true';
-  
   function toggleClearButton() {
     if (!clearBtn) return;
     
@@ -1643,17 +1615,15 @@ function initSearchAndFilters() {
   function clearAllFilters() {
     if (searchBar) searchBar.value = '';
     
-    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-    if (tagRemoveButtons.length > 0) {
-      tagRemoveButtons.forEach(btn => btn.click());
-    } else {
-      document.querySelectorAll('[data-filter-group]').forEach(input => {
-        input.checked = false;
-        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    }
+    document.querySelectorAll('[data-filter-group]').forEach(input => {
+      input.checked = false;
+      const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+      if (wrapper) wrapper.classList.remove('is-active');
+    });
+    
+    // Remove all tags
+    const tags = document.querySelectorAll('.filter-tag');
+    tags.forEach(tag => tag.remove());
     
     toggleClearButton();
     applyFilters();
@@ -1662,47 +1632,57 @@ function initSearchAndFilters() {
   function applyFilters() {
     const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
     const keywords = query.split(/\s+/).filter(k => k.length > 0);
-    const filters = Array.from(document.querySelectorAll('[data-filter-group]'))
-      .filter(i => i.checked)
-      .map(i => ({ 
-        group: i.getAttribute('data-filter-group'), 
-        value: i.getAttribute('data-filter-value').toLowerCase() 
-      }));
+    const filterInputs = document.querySelectorAll('[data-filter-group]');
+    const selectedFilters = [];
     
-    const ids = g.MASTER_DATA.filter(record => {
-      const text = Object.values(record.fields).join(' ').toLowerCase();
-      const matchesSearch = keywords.every(k => text.includes(k));
-      const matchesFilters = filters.every(f => {
-        let v = record.fields[f.group];
-        return Array.isArray(v) 
-          ? v.some(val => String(val).toLowerCase() === f.value) 
-          : String(v).toLowerCase() === f.value;
+    filterInputs.forEach(input => {
+      if (input.checked) {
+        selectedFilters.push({
+          group: input.getAttribute('data-filter-group'),
+          value: input.getAttribute('data-filter-value').toLowerCase()
+        });
+      }
+    });
+    
+    const visibleIds = g.MASTER_DATA.filter(record => {
+      const fields = record.fields;
+      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+      const matchesSearch = keywords.every(k => allText.includes(k));
+      const matchesAttributes = selectedFilters.every(filter => {
+        let recVal = fields[filter.group];
+        if (recVal === undefined || recVal === null) return false;
+        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+        return String(recVal).toLowerCase() === filter.value;
       });
-      return matchesSearch && matchesFilters;
+      return matchesSearch && matchesAttributes;
     }).map(r => r.id);
     
     document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = ids.includes(card.dataset.songId) ? 'flex' : 'none';
+      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
     });
     
     toggleClearButton();
   }
   
-  if (searchBar) {
-    searchBar.addEventListener('input', () => { 
-      clearTimeout(searchTimeout); 
-      searchTimeout = setTimeout(applyFilters, 400); 
-    });
-  }
-  
-  document.querySelectorAll('[data-filter-group]').forEach(i => {
-    i.addEventListener('change', applyFilters);
-  });
-  
   if (clearBtn) {
     clearBtn.style.display = 'none';
     clearBtn.addEventListener('click', clearAllFilters);
   }
+  
+  if (searchBar) {
+    searchBar.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      toggleClearButton();
+      searchTimeout = setTimeout(applyFilters, 400);
+    });
+  }
+  
+  document.querySelectorAll('[data-filter-group]').forEach(input => {
+    input.addEventListener('change', () => {
+      applyFilters();
+      toggleClearButton();
+    });
+  });
 }
 
 /**
