@@ -72,60 +72,45 @@ function positionMasterPlayer() {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
-function positionMasterPlayer() {
+function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
+  const g = window.musicPlayerPersistent;
+  
+  g.currentWavesurfer = wavesurfer;
+  g.currentSongData = songData;
+  g.hasActiveSong = true;
+  
+  // Then show player
   const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (!playerWrapper) {
-    console.log('❌ playerWrapper not found');
-    return;
+  if (playerWrapper) {
+    playerWrapper.classList.add('active'); // ADD ACTIVE CLASS
+    positionMasterPlayer(); // REPOSITION AFTER ADDING ACTIVE CLASS
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
   }
   
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicListWrapper = document.querySelector('.music-list-wrapper');
-  const searchAreaContainer = document.querySelector('.search-area-container');
+  g.currentPeaksData = null;
+  drawMasterWaveform(null, 0);
+  updateMasterPlayerInfo(songData, wavesurfer);
   
-  // Check if player is visible/active
-  const isPlayerVisible = playerWrapper.classList.contains('active') || 
-                          (window.getComputedStyle(playerWrapper).display !== 'none');
+  const getAndDrawPeaks = () => {
+    if (g.currentWavesurfer !== wavesurfer) return;
+    try {
+      const decodedData = wavesurfer.getDecodedData();
+      if (decodedData) {
+        g.currentPeaksData = decodedData.getChannelData(0);
+        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
+        drawMasterWaveform(g.currentPeaksData, progress);
+      }
+    } catch (e) {}
+  };
   
-  console.log('🔍 DEBUG:');
-  console.log('isMusicPage:', isMusicPage);
-  console.log('isPlayerVisible:', isPlayerVisible);
-  console.log('musicListWrapper found:', !!musicListWrapper);
-  console.log('searchAreaContainer found:', !!searchAreaContainer);
-  console.log('playerWrapper has active class:', playerWrapper.classList.contains('active'));
-  
-  // ALWAYS fixed at bottom
-  playerWrapper.style.setProperty('position', 'fixed', 'important');
-  playerWrapper.style.setProperty('bottom', '0px', 'important');
-  playerWrapper.style.setProperty('left', '0px', 'important');
-  playerWrapper.style.setProperty('right', '0px', 'important');
-  playerWrapper.style.setProperty('top', 'auto', 'important');
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
-  
-  // ADD PADDING ONLY IF ON MUSIC PAGE AND PLAYER IS VISIBLE
-  if (isMusicPage && isPlayerVisible) {
-    const playerHeight = playerWrapper.offsetHeight || 80;
-    const overlapAmount = 1;
-    
-    console.log('✅ ADDING PADDING:', (playerHeight - overlapAmount) + 'px');
-    
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
-    }
-    
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = (playerHeight - overlapAmount) + 'px';
-    }
+  if (wavesurfer.getDecodedData()) {
+    getAndDrawPeaks();
   } else {
-    console.log('❌ NOT ADDING PADDING - condition not met');
-    
-    if (musicListWrapper) {
-      musicListWrapper.style.paddingBottom = '0px';
-    }
-    if (searchAreaContainer) {
-      searchAreaContainer.style.paddingBottom = '0px';
-    }
+    wavesurfer.once('decode', getAndDrawPeaks);
   }
 }
 /**
