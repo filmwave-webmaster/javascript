@@ -1040,7 +1040,19 @@ function loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveform
     minPxPerSec: 1
   });
   
-  wavesurfer.load(audioUrl);
+ // Check if we have pre-computed peaks
+const peaksData = songData.fields['Waveform Peaks'];
+if (peaksData && peaksData.trim().length > 0) {
+  try {
+    const peaks = JSON.parse(peaksData);
+    wavesurfer.load(audioUrl, [peaks]);  // Load with peaks - FAST!
+  } catch (e) {
+    console.error('Error loading peaks, using normal method:', e);
+    wavesurfer.load(audioUrl);  // Fallback to normal loading
+  }
+} else {
+  wavesurfer.load(audioUrl);  // No peaks available, use normal method
+}
   
   wavesurfer.on('ready', function () {
     const duration = wavesurfer.getDuration();
