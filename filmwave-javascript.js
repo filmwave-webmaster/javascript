@@ -916,7 +916,7 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS WITH PEAK OPTIMIZATION
+ * INITIALIZE WAVEFORMS
  * ============================================================
  */
 function initializeWaveforms() {
@@ -957,122 +957,130 @@ function initializeWaveforms() {
       });
     }
     
-    // Check if we have pre-computed peaks
-    const peaksData = songData.fields['Waveform Peaks'];
+    const wavesurfer = WaveSurfer.create({
+      container: waveformContainer,
+      waveColor: '#e2e2e2',
+      progressColor: '#191919',
+      cursorColor: 'transparent',
+      cursorWidth: 0,
+      height: 40,
+      barWidth: 2,
+      barGap: 1,
+      normalize: true,
+      backend: 'WebAudio',
+      fillParent: true,
+      scrollParent: false,
+      responsive: 300,
+      interact: true,
+      hideScrollbar: true,
+      minPxPerSec: 1
+    });
     
+    // CRITICAL: Check if we have pre-computed peaks
+    const peaksData = songData.fields['Waveform Peaks'];
     if (peaksData && peaksData.trim().length > 0) {
-      // FAST PATH: Use pre-computed peaks
       try {
         const peaks = JSON.parse(peaksData);
-        
-        const wavesurfer = WaveSurfer.create({
-          container: waveformContainer,
-          waveColor: '#e2e2e2',
-          progressColor: '#191919',
-          cursorColor: 'transparent',
-          cursorWidth: 0,
-          height: 40,
-          barWidth: 2,
-          barGap: 1,
-          normalize: true
-        });
-        
-        // Load audio with pre-computed peaks
-        wavesurfer.load(audioUrl, [peaks]);
-        
-        wavesurfer.on('ready', function () {
-          const duration = wavesurfer.getDuration();
-          const containerWidth = waveformContainer.offsetWidth || 300;
-          wavesurfer.zoom(containerWidth / duration);
-          if (durationElement) durationElement.textContent = formatDuration(duration);
-        });
-        
-        g.allWavesurfers.push(wavesurfer);
-        g.waveformData.push({
-          wavesurfer,
-          cardElement,
-          waveformContainer,
-          audioUrl,
-          songData
-        });
-        
-        setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
-        
+        wavesurfer.load(audioUrl, [peaks]);  // Load with peaks - FAST!
       } catch (e) {
-        console.error('Error loading peaks, falling back:', e);
-        loadWaveformFromAudio(waveformContainer, audioUrl, songData, durationElement, coverArtWrapper, playButton, songName, cardElement, songId);
+        console.error('Error loading peaks, using normal method:', e);
+        wavesurfer.load(audioUrl);  // Fallback
       }
     } else {
-      // SLOW PATH: No peaks available
-      loadWaveformFromAudio(waveformContainer, audioUrl, songData, durationElement, coverArtWrapper, playButton, songName, cardElement, songId);
+      wavesurfer.load(audioUrl);  // No peaks available
     }
+    
+    wavesurfer.on('ready', function () {
+      const duration = wavesurfer.getDuration();
+      const containerWidth = waveformContainer.offsetWidth || 300;
+      wavesurfer.zoom(containerWidth / duration);
+      if (durationElement) durationElement.textContent = formatDuration(duration);
+    });
+    
+    g.allWavesurfers.push(wavesurfer);
+    g.waveformData.push({
+      wavesurfer,
+      cardElement,
+      waveformContainer,
+      audioUrl,
+      songData
+    });
+    
+    // INLINE EVENT HANDLERS (no separate function needed)
+    const handlePlayPause = (e) => {
+      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
+      if (e) e.stopPropagation();
+      
+      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+        const wasPlaying = g.isPlaying;
+        
+        if (g.standaloneAudio) {
+          g.standaloneAudio.pause();
+        }
+        
+        g.currentWavesurfer.seekTo(0);
+        
+        if (wasPlaying) {
+          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+        } else {
+          g.currentWavesurfer = wavesurfer;
+          g.currentSongData = songData;
+          g.hasActiveSong = true;
+          syncMasterTrack(wavesurfer, songData, 0);
+        }
+      } else {
+        if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+          if (g.standaloneAudio.paused) {
+            g.standaloneAudio.play();
+          } else {
+            g.standaloneAudio.pause();
+          }
+        } else {
+          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+        }
+      }
+    };
+    
+    if (coverArtWrapper) {
+      coverArtWrapper.style.cursor = 'pointer';
+      coverArtWrapper.addEventListener('click', handlePlayPause);
+    }
+    
+    if (songName) {
+      songName.style.cursor = 'pointer';
+      songName.addEventListener('click', handlePlayPause);
+    }
+    
+    wavesurfer.on('interaction', function (newProgress) {
+      if (g.currentSongData?.id === songData.id) {
+        if (g.standaloneAudio) {
+          g.standaloneAudio.currentTime = newProgress;
+        }
+        return;
+      }
+      
+      const wasPlaying = g.isPlaying;
+      
+      if (g.standaloneAudio) {
+        g.standaloneAudio.pause();
+        g.standaloneAudio = null;
+      }
+      
+      if (g.currentWavesurfer) {
+        g.currentWavesurfer.seekTo(0);
+      }
+      
+      g.currentWavesurfer = wavesurfer;
+      g.hasActiveSong = true;
+      
+      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
+    });
   });
   
   setTimeout(() => {
     linkStandaloneToWaveform();
   }, 100);
 }
-
-/**
- * ============================================================
- * FALLBACK: Load waveform from audio file (slower method)
- * ============================================================
- */
-function loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveformContainer, durationElement, coverArtWrapper, playButton, songName) {
-  const g = window.musicPlayerPersistent;
-  
-  const wavesurfer = WaveSurfer.create({
-    container: waveformContainer,
-    waveColor: '#e2e2e2',
-    progressColor: '#191919',
-    cursorColor: 'transparent',
-    cursorWidth: 0,
-    height: 40,
-    barWidth: 2,
-    barGap: 1,
-    normalize: true,
-    backend: 'WebAudio',
-    fillParent: true,
-    scrollParent: false,
-    responsive: 300,
-    interact: true,
-    hideScrollbar: true,
-    minPxPerSec: 1
-  });
-  
- // Check if we have pre-computed peaks
-const peaksData = songData.fields['Waveform Peaks'];
-if (peaksData && peaksData.trim().length > 0) {
-  try {
-    const peaks = JSON.parse(peaksData);
-    wavesurfer.load(audioUrl, [peaks]);  // Load with peaks - FAST!
-  } catch (e) {
-    console.error('Error loading peaks, using normal method:', e);
-    wavesurfer.load(audioUrl);  // Fallback to normal loading
-  }
-} else {
-  wavesurfer.load(audioUrl);  // No peaks available, use normal method
-}
-  
-  wavesurfer.on('ready', function () {
-    const duration = wavesurfer.getDuration();
-    const containerWidth = waveformContainer.offsetWidth || 300;
-    wavesurfer.zoom(containerWidth / duration);
-    if (durationElement) durationElement.textContent = formatDuration(duration);
-  });
-  
-  g.allWavesurfers.push(wavesurfer);
-  g.waveformData.push({
-    wavesurfer,
-    cardElement,
-    waveformContainer,
-    audioUrl,
-    songData
-  });
-  
-  setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
-}
-
 /**
  * ============================================================
  * FETCH & DISPLAY SONGS
