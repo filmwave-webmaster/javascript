@@ -1907,6 +1907,14 @@ if (typeof barba !== 'undefined') {
           g.currentWavesurfer = null;
         }
         
+        // CRITICAL: Keep player visible and in place during transition
+        const playerWrapper = document.querySelector('.music-player-wrapper');
+        if (playerWrapper && g.hasActiveSong) {
+          playerWrapper.style.transition = 'none'; // Prevent transition flash
+          playerWrapper.style.opacity = '1';
+          playerWrapper.style.visibility = 'visible';
+        }
+        
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
         document.body.style.height = '';
@@ -1934,59 +1942,74 @@ if (typeof barba !== 'undefined') {
           const musicArea = nextContainer.querySelector('.music-area-wrapper');
           if (musicArea) musicArea.style.overflow = 'hidden';
         }
+        
+        // CRITICAL: Ensure player stays visible during transition
+        const g = window.musicPlayerPersistent;
+        const playerWrapper = document.querySelector('.music-player-wrapper');
+        if (playerWrapper && g.hasActiveSong) {
+          playerWrapper.style.transition = 'none';
+          playerWrapper.style.opacity = '1';
+          playerWrapper.style.visibility = 'visible';
+        }
       },
 
       enter(data) {
         return initMusicPage();
       },
 
-    after(data) {
-  const g = window.musicPlayerPersistent;
-  
-  window.scrollTo(0, 0);
-  
-  if (window.Webflow) {
-    try {
-      window.Webflow.destroy();
-      window.Webflow.ready();
-      window.Webflow.require('ix2').init();
-    } catch (e) {}
-  }
-  
-  setTimeout(() => {
-    console.log('🎮 Setting up master player controls');
-    setupMasterPlayerControls();
-    
-    // Use updateMasterPlayerVisibility to handle positioning
-    updateMasterPlayerVisibility();
-    
-    // Update player info if there's an active song
-    if (g.currentSongData) {
-      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-      updateMasterControllerIcons(g.isPlaying);
-      
-      // CRITICAL FIX: Redraw waveform for paused songs on new pages
-      if (g.currentPeaksData) {
-        let progress = 0;
+      after(data) {
+        const g = window.musicPlayerPersistent;
         
-        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        } else if (g.currentDuration > 0) {
-          progress = g.currentTime / g.currentDuration;
+        window.scrollTo(0, 0);
+        
+        if (window.Webflow) {
+          try {
+            window.Webflow.destroy();
+            window.Webflow.ready();
+            window.Webflow.require('ix2').init();
+          } catch (e) {}
         }
         
-        console.log('🎨 Redrawing waveform with progress:', progress);
-        drawMasterWaveform(g.currentPeaksData, progress);
+        setTimeout(() => {
+          console.log('🎮 Setting up master player controls');
+          setupMasterPlayerControls();
+          
+          // Use updateMasterPlayerVisibility to handle positioning
+          updateMasterPlayerVisibility();
+          
+          // Update player info if there's an active song
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+            
+            // Redraw waveform for paused songs on new pages
+            if (g.currentPeaksData) {
+              let progress = 0;
+              
+              if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+                progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+              } else if (g.currentDuration > 0) {
+                progress = g.currentTime / g.currentDuration;
+              }
+              
+              console.log('🎨 Redrawing waveform with progress:', progress);
+              drawMasterWaveform(g.currentPeaksData, progress);
+            }
+          }
+          
+          // Re-enable transitions after everything is positioned
+          const playerWrapper = document.querySelector('.music-player-wrapper');
+          if (playerWrapper) {
+            playerWrapper.style.transition = '';
+          }
+          
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+          
+          console.log('✅ Transition complete - Controls ready');
+        }, 200);
       }
-    }
-    
-    window.dispatchEvent(new Event('scroll'));
-    window.dispatchEvent(new Event('resize'));
-    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-    
-    console.log('✅ Transition complete - Controls ready');
-  }, 200);
-}
     }]
   });
 }
