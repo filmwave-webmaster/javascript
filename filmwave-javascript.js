@@ -916,7 +916,7 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS
+ * INITIALIZE WAVEFORMS WITH PEAK OPTIMIZATION
  * ============================================================
  */
 function initializeWaveforms() {
@@ -957,44 +957,61 @@ function initializeWaveforms() {
       });
     }
     
-    const wavesurfer = WaveSurfer.create({
-      container: waveformContainer,
-      waveColor: '#e2e2e2',
-      progressColor: '#191919',
-      cursorColor: 'transparent',
-      cursorWidth: 0,
-      height: 40,
-      barWidth: 2,
-      barGap: 1,
-      normalize: true,
-      backend: 'WebAudio',
-      fillParent: true,
-      scrollParent: false,
-      responsive: 300,
-      interact: true,
-      hideScrollbar: true,
-      minPxPerSec: 1
-    });
+    // CRITICAL: Check if we have pre-computed peaks
+    const peaksData = songData.fields['Waveform Peaks'];
     
-    wavesurfer.load(audioUrl);
-    
-    wavesurfer.on('ready', function () {
-      const duration = wavesurfer.getDuration();
-      const containerWidth = waveformContainer.offsetWidth || 300;
-      wavesurfer.zoom(containerWidth / duration);
-      if (durationElement) durationElement.textContent = formatDuration(duration);
-    });
-    
-    g.allWavesurfers.push(wavesurfer);
-    g.waveformData.push({
-      wavesurfer,
-      cardElement,
-      waveformContainer,
-      audioUrl,
-      songData
-    });
-    
-    setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
+    if (peaksData && peaksData.trim().length > 0) {
+      // FAST PATH: Use pre-computed peaks (instant loading!)
+      try {
+        const peaks = JSON.parse(peaksData);
+        
+        // Calculate duration from peaks (assuming 44100 sample rate)
+        const sampleRate = 44100;
+        const duration = peaks.length / sampleRate;
+        
+        const wavesurfer = WaveSurfer.create({
+          container: waveformContainer,
+          waveColor: '#e2e2e2',
+          progressColor: '#191919',
+          cursorColor: 'transparent',
+          cursorWidth: 0,
+          height: 40,
+          barWidth: 2,
+          barGap: 1,
+          normalize: true
+        });
+        
+        // Load with peaks - MUCH faster!
+        wavesurfer.load(audioUrl, [peaks], duration);
+        
+        wavesurfer.on('ready', function () {
+          const dur = wavesurfer.getDuration();
+          const containerWidth = waveformContainer.offsetWidth || 300;
+          wavesurfer.zoom(containerWidth / dur);
+          if (durationElement) durationElement.textContent = formatDuration(dur);
+        });
+        
+        g.allWavesurfers.push(wavesurfer);
+        g.waveformData.push({
+          wavesurfer,
+          cardElement,
+          waveformContainer,
+          audioUrl,
+          songData
+        });
+        
+        setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
+        
+      } catch (e) {
+        console.error('Error loading peaks for', songData.fields['Song Title'], '- falling back to audio decode:', e);
+        // Fall back to normal loading if peaks are invalid
+        loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveformContainer, durationElement, coverArtWrapper, playButton, songName);
+      }
+    } else {
+      // SLOW PATH: No peaks available, decode audio file (fallback)
+      console.warn('No peaks available for', songData.fields['Song Title'], '- using slower audio decode');
+      loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveformContainer, durationElement, coverArtWrapper, playButton, songName);
+    }
   });
   
   setTimeout(() => {
@@ -1003,79 +1020,51 @@ function initializeWaveforms() {
 }
 
 /**
- * Setup event handlers with proper closure
+ * ============================================================
+ * FALLBACK: Load waveform from audio file (slower method)
+ * ============================================================
  */
-function setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName) {
+function loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveformContainer, durationElement, coverArtWrapper, playButton, songName) {
   const g = window.musicPlayerPersistent;
   
-  const handlePlayPause = (e) => {
-    if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-    if (e) e.stopPropagation();
-    
-    if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-      const wasPlaying = g.isPlaying;
-      
-      if (g.standaloneAudio) {
-        g.standaloneAudio.pause();
-      }
-      
-      g.currentWavesurfer.seekTo(0);
-      
-      if (wasPlaying) {
-        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-      } else {
-        g.currentWavesurfer = wavesurfer;
-        g.currentSongData = songData;
-        g.hasActiveSong = true;
-        syncMasterTrack(wavesurfer, songData, 0);
-      }
-    } else {
-      if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-        if (g.standaloneAudio.paused) {
-          g.standaloneAudio.play();
-        } else {
-          g.standaloneAudio.pause();
-        }
-      } else {
-        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-      }
-    }
-  };
-  
-  if (coverArtWrapper) {
-    coverArtWrapper.style.cursor = 'pointer';
-    coverArtWrapper.addEventListener('click', handlePlayPause);
-  }
-  
-  if (songName) {
-    songName.style.cursor = 'pointer';
-    songName.addEventListener('click', handlePlayPause);
-  }
-  
-  wavesurfer.on('interaction', function (newProgress) {
-    if (g.currentSongData?.id === songData.id) {
-      if (g.standaloneAudio) {
-        g.standaloneAudio.currentTime = newProgress;
-      }
-      return;
-    }
-    
-    const wasPlaying = g.isPlaying;
-    
-    if (g.standaloneAudio) {
-      g.standaloneAudio.pause();
-      g.standaloneAudio = null;
-    }
-    
-    if (g.currentWavesurfer) {
-      g.currentWavesurfer.seekTo(0);
-    }
-    
-    g.currentWavesurfer = wavesurfer;
-    g.hasActiveSong = true;
-    
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
+  const wavesurfer = WaveSurfer.create({
+    container: waveformContainer,
+    waveColor: '#e2e2e2',
+    progressColor: '#191919',
+    cursorColor: 'transparent',
+    cursorWidth: 0,
+    height: 40,
+    barWidth: 2,
+    barGap: 1,
+    normalize: true,
+    backend: 'WebAudio',
+    fillParent: true,
+    scrollParent: false,
+    responsive: 300,
+    interact: true,
+    hideScrollbar: true,
+    minPxPerSec: 1
   });
+  
+  wavesurfer.load(audioUrl);
+  
+  wavesurfer.on('ready', function () {
+    const duration = wavesurfer.getDuration();
+    const containerWidth = waveformContainer.offsetWidth || 300;
+    wavesurfer.zoom(containerWidth / duration);
+    if (durationElement) durationElement.textContent = formatDuration(duration);
+  });
+  
+  g.allWavesurfers.push(wavesurfer);
+  g.waveformData.push({
+    wavesurfer,
+    cardElement,
+    waveformContainer,
+    audioUrl,
+    songData
+  });
+  
+  setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
 }
 
 /**
