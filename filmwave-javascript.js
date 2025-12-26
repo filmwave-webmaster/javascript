@@ -131,12 +131,14 @@ function updateMasterPlayerVisibility() {
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
     
-    // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
+    // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE (1px less than player height)
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
-        musicAreaContainer.style.paddingBottom = '78px';
+        musicAreaContainer.style.setProperty('padding-bottom', '79px', 'important');
         console.log('✅ Added 79px bottom padding to music-area-container');
+      } else {
+        console.warn('⚠️ .music-area-container not found!');
       }
     }
   } else {
@@ -148,7 +150,7 @@ function updateMasterPlayerVisibility() {
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
-        musicAreaContainer.style.paddingBottom = '0px';
+        musicAreaContainer.style.setProperty('padding-bottom', '0px', 'important');
         console.log('🗑️ Removed bottom padding from music-area-container');
       }
     }
