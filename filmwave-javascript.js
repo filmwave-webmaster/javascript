@@ -1807,4 +1807,20 @@ if (typeof barba !== 'undefined') {
               window.Webflow.redraw.up();
             }
             
-            // Trigger one more IX2 init for stubborn int
+            // Trigger one more IX2 init for stubborn interactions
+            if (window.Webflow && window.Webflow.require) {
+              try {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              } catch (e) {}
+            }
+            
+          }, 300);
+          
+        }, 200);
+      }
+    }]
+  });
+}
