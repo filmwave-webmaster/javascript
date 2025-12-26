@@ -916,43 +916,44 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS WITH LAZY LOADING (MEMORY OPTIMIZED)
+ * INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)
  * ============================================================
  */
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
   
-  // Intersection Observer for lazy loading
+  // Track which cards are already visible
+  const visibleCards = [];
+  const notVisibleCards = [];
+  
+  // Intersection Observer for lazy loading as user scrolls
   const observer = new IntersectionObserver((entries) => {
-    // Collect all cards that came into view
     const cardsToLoad = [];
     
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const cardElement = entry.target;
         
-        // Skip if already initialized
         if (cardElement.dataset.waveformInitialized === 'true') {
           return;
         }
         
         cardsToLoad.push(cardElement);
-        observer.unobserve(cardElement); // Stop observing once loaded
+        observer.unobserve(cardElement);
       }
     });
     
-    // Load this batch of waveforms
     if (cardsToLoad.length > 0) {
       loadWaveformBatch(cardsToLoad);
     }
   }, {
     root: document.querySelector('.music-list-wrapper'),
-    rootMargin: '200px', // Start loading 200px before they're visible
+    rootMargin: '200px',
     threshold: 0
   });
   
-  // Observe all song cards
+  // Categorize cards as visible or not visible
   songCards.forEach((cardElement) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
@@ -968,9 +969,27 @@ function initializeWaveforms() {
       waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
     }
     
-    // Observe this card
-    observer.observe(cardElement);
+    // Check if card is currently visible in viewport
+    const rect = cardElement.getBoundingClientRect();
+    const container = document.querySelector('.music-list-wrapper');
+    const containerRect = container ? container.getBoundingClientRect() : null;
+    
+    const isVisible = containerRect && 
+                     rect.top < containerRect.bottom + 200 && 
+                     rect.bottom > containerRect.top - 200;
+    
+    if (isVisible) {
+      visibleCards.push(cardElement);
+    } else {
+      notVisibleCards.push(cardElement);
+      observer.observe(cardElement);
+    }
   });
+  
+  // CRITICAL: Load visible cards immediately (for page load and Barba transitions)
+  if (visibleCards.length > 0) {
+    loadWaveformBatch(visibleCards);
+  }
   
   setTimeout(() => {
     linkStandaloneToWaveform();
@@ -1049,7 +1068,6 @@ function loadWaveformBatch(cardElements) {
       wavesurfer.load(audioUrl);
     }
     
-    // Create promise with timeout
     const waveformReadyPromise = new Promise((resolve) => {
       let resolved = false;
       
@@ -1065,7 +1083,6 @@ function loadWaveformBatch(cardElements) {
         resolve();
       });
       
-      // Timeout after 5 seconds
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
@@ -1085,7 +1102,6 @@ function loadWaveformBatch(cardElements) {
       songData
     });
     
-    // Event handlers
     const handlePlayPause = (e) => {
       if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
       if (e) e.stopPropagation();
@@ -1155,18 +1171,15 @@ function loadWaveformBatch(cardElements) {
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
     });
     
-    // Mark as initialized
     cardElement.dataset.waveformInitialized = 'true';
   });
   
-  // Wait for this BATCH to finish, then fade them all in together
   Promise.all(waveformPromises).then(() => {
     waveformContainers.forEach((container) => {
       container.style.opacity = '1';
     });
   });
   
-  // Safety timeout for this batch
   setTimeout(() => {
     waveformContainers.forEach((container) => {
       if (container.style.opacity === '0') {
@@ -1175,6 +1188,7 @@ function loadWaveformBatch(cardElements) {
     });
   }, 6000);
 }
+
 /**
  * ============================================================
  * FETCH & DISPLAY SONGS
