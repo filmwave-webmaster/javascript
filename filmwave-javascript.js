@@ -135,8 +135,8 @@ function updateMasterPlayerVisibility() {
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
-        musicAreaContainer.style.setProperty('padding-bottom', '79px', 'important');
-        console.log('✅ Added 79px bottom padding to music-area-container');
+        musicAreaContainer.style.setProperty('padding-bottom', '77px', 'important');
+        console.log('✅ Added 77px bottom padding to music-area-container');
       } else {
         console.warn('⚠️ .music-area-container not found!');
       }
