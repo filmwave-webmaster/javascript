@@ -1633,48 +1633,95 @@ window.addEventListener('load', () => initMusicPage());
 
 /**
  * ============================================================
- * FORCE WEBFLOW TABS TO RE-INITIALIZE
+ * FORCE WEBFLOW TABS TO RE-INITIALIZE (NUCLEAR OPTION)
  * ============================================================
  */
 function reinitializeWebflowTabs() {
-  console.log('🔄 Re-initializing Webflow tabs...');
+  console.log('🔄 Re-initializing Webflow tabs (nuclear option)...');
   
-  // Method 1: Trigger click on first tab to activate Webflow's tab system
-  const tabLinks = document.querySelectorAll('.w-tab-link');
-  if (tabLinks.length > 0) {
-    console.log(`Found ${tabLinks.length} tab links`);
-    
-    // Find the active tab or use the first one
-    let activeTab = document.querySelector('.w-tab-link.w--current');
-    if (!activeTab) {
-      activeTab = tabLinks[0];
-    }
-    
-    // Force a click to re-initialize the tab system
-    setTimeout(() => {
-      if (activeTab) {
-        activeTab.click();
-        console.log('✅ Tabs re-initialized via click');
-      }
-    }, 100);
+  const tabMenus = document.querySelectorAll('.w-tabs');
+  
+  if (tabMenus.length === 0) {
+    console.log('⏭️ No tabs found on this page');
+    return;
   }
   
-  // Method 2: Force Webflow to re-scan tabs
-  if (window.Webflow && window.Webflow.require) {
-    try {
-      const tabs = window.Webflow.require('tabs');
-      if (tabs && tabs.ready) {
-        tabs.ready();
-        console.log('✅ Webflow tabs.ready() called');
-      }
-      if (tabs && tabs.redraw) {
-        tabs.redraw();
-        console.log('✅ Webflow tabs.redraw() called');
-      }
-    } catch (e) {
-      console.warn('Could not access Webflow tabs module:', e);
+  tabMenus.forEach((tabMenu, menuIndex) => {
+    const tabLinks = tabMenu.querySelectorAll('.w-tab-link');
+    const tabPanes = tabMenu.querySelectorAll('.w-tab-pane');
+    
+    if (tabLinks.length === 0 || tabPanes.length === 0) {
+      console.warn(`Tab menu ${menuIndex + 1} has no links or panes`);
+      return;
     }
-  }
+    
+    console.log(`Processing tab menu ${menuIndex + 1} with ${tabLinks.length} tabs`);
+    
+    // Reset all tabs to default state
+    tabLinks.forEach((link, i) => {
+      link.classList.remove('w--current');
+      if (i === 0) {
+        link.classList.add('w--current');
+        link.setAttribute('aria-selected', 'true');
+        link.setAttribute('tabindex', '0');
+      } else {
+        link.setAttribute('aria-selected', 'false');
+        link.setAttribute('tabindex', '-1');
+      }
+    });
+    
+    tabPanes.forEach((pane, i) => {
+      pane.classList.remove('w--tab-active');
+      pane.style.opacity = '';
+      pane.style.display = '';
+      if (i === 0) {
+        pane.classList.add('w--tab-active');
+      }
+    });
+    
+    // Manually add click handlers (clone to remove old listeners)
+    tabLinks.forEach((link, clickedIndex) => {
+      const newLink = link.cloneNode(true);
+      link.parentNode.replaceChild(newLink, link);
+      
+      newLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log(`🖱️ Tab ${clickedIndex + 1} clicked`);
+        
+        // Update all tabs in this menu
+        const allLinks = tabMenu.querySelectorAll('.w-tab-link');
+        const allPanes = tabMenu.querySelectorAll('.w-tab-pane');
+        
+        allLinks.forEach((l, i) => {
+          if (i === clickedIndex) {
+            l.classList.add('w--current');
+            l.setAttribute('aria-selected', 'true');
+            l.setAttribute('tabindex', '0');
+          } else {
+            l.classList.remove('w--current');
+            l.setAttribute('aria-selected', 'false');
+            l.setAttribute('tabindex', '-1');
+          }
+        });
+        
+        allPanes.forEach((p, i) => {
+          if (i === clickedIndex) {
+            p.classList.add('w--tab-active');
+            p.style.display = '';
+            p.style.opacity = '1';
+          } else {
+            p.classList.remove('w--tab-active');
+            p.style.display = 'none';
+            p.style.opacity = '0';
+          }
+        });
+        
+        console.log(`✅ Switched to tab ${clickedIndex + 1}`);
+      });
+    });
+  });
+  
+  console.log('✅ Tabs manually re-initialized');
 }
 
 if (typeof barba !== 'undefined') {
