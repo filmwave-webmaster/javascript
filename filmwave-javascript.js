@@ -1762,30 +1762,45 @@ function initSearchAndFilters() {
   function clearAllFilters() {
     console.log('🧹 CLEAR ALL CLICKED');
     
-    if (searchBar) {
+    // CRITICAL FIX: Check if there's anything to clear first
+    const hasSearch = searchBar && searchBar.value.trim().length > 0;
+    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+    
+    if (!hasSearch && !hasFilters) {
+      console.log('  ⚠️ Nothing to clear, aborting');
+      return;
+    }
+    
+    if (searchBar && hasSearch) {
       console.log('  - Clearing search bar');
       searchBar.value = '';
     }
     
-    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-    console.log('  - Found tag remove buttons:', tagRemoveButtons.length);
-    
-    if (tagRemoveButtons.length > 0) {
-      console.log('  - Clicking each tag remove button...');
-      tagRemoveButtons.forEach((btn, index) => {
-        const tagText = btn.parentElement.querySelector('.filter-tag-text').textContent;
-        console.log(`    ${index + 1}. Clicking tag: "${tagText}"`);
-        btn.click();
-      });
-    } else {
-      console.log('  - No tags found, using fallback method');
-      document.querySelectorAll('[data-filter-group]').forEach(input => {
-        console.log(`    - Unchecking: ${input.getAttribute('data-filter-value')}`);
-        input.checked = false;
-        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      });
+    // Only proceed with filter clearing if there are active filters
+    if (hasFilters) {
+      const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+      console.log('  - Found tag remove buttons:', tagRemoveButtons.length);
+      
+      if (tagRemoveButtons.length > 0) {
+        console.log('  - Clicking each tag remove button...');
+        tagRemoveButtons.forEach((btn, index) => {
+          const tagText = btn.parentElement.querySelector('.filter-tag-text').textContent;
+          console.log(`    ${index + 1}. Clicking tag: "${tagText}"`);
+          btn.click();
+        });
+      } else {
+        console.log('  - No tags found, manually unchecking active filters');
+        // Only uncheck the ones that are actually checked
+        document.querySelectorAll('[data-filter-group]').forEach(input => {
+          if (input.checked) {
+            console.log(`    - Unchecking: ${input.getAttribute('data-filter-value')}`);
+            input.checked = false;
+            const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+            if (wrapper) wrapper.classList.remove('is-active');
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      }
     }
     
     console.log('  - Clear all complete');
