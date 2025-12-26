@@ -1785,8 +1785,26 @@ if (typeof barba !== 'undefined') {
           window.dispatchEvent(new Event('scroll'));
           window.dispatchEvent(new Event('resize'));
           window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-        }, 200);
-      }
-    }]
-  });
-}
+          
+          // MORE AGGRESSIVE RE-INITIALIZATION
+          setTimeout(() => {
+            // Manually trigger resize to re-calculate interactions
+            window.dispatchEvent(new Event('resize'));
+            window.dispatchEvent(new Event('scroll'));
+            
+            // Re-trigger any data-attributes Webflow uses
+            document.querySelectorAll('[data-w-id]').forEach(el => {
+              // Reset inline styles that Webflow might have set
+              if (el.style.opacity === '0' || el.style.display === 'none') {
+                el.style.opacity = '';
+                el.style.display = '';
+              }
+              el.style.transform = '';
+            });
+            
+            // Force Webflow to re-scan the page
+            if (window.Webflow && window.Webflow.redraw) {
+              window.Webflow.redraw.up();
+            }
+            
+            // Trigger one more IX2 init for stubborn int
