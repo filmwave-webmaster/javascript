@@ -1940,39 +1940,53 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
-        const g = window.musicPlayerPersistent;
+    after(data) {
+  const g = window.musicPlayerPersistent;
+  
+  window.scrollTo(0, 0);
+  
+  if (window.Webflow) {
+    try {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    } catch (e) {}
+  }
+  
+  setTimeout(() => {
+    console.log('🎮 Setting up master player controls');
+    setupMasterPlayerControls();
+    
+    // Use updateMasterPlayerVisibility to handle positioning
+    updateMasterPlayerVisibility();
+    
+    // Update player info if there's an active song
+    if (g.currentSongData) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+      
+      // CRITICAL FIX: Redraw waveform for paused songs on new pages
+      if (g.currentPeaksData) {
+        let progress = 0;
         
-        window.scrollTo(0, 0);
-        
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
+        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+          progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+        } else if (g.currentDuration > 0) {
+          progress = g.currentTime / g.currentDuration;
         }
         
-        setTimeout(() => {
-          console.log('🎮 Setting up master player controls');
-          setupMasterPlayerControls();
-          
-          // Use updateMasterPlayerVisibility to handle positioning
-          updateMasterPlayerVisibility();
-          
-          // Update player info if there's an active song
-          if (g.currentSongData) {
-            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-            updateMasterControllerIcons(g.isPlaying);
-          }
-          
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          
-          console.log('✅ Transition complete - Controls ready');
-        }, 200);
+        console.log('🎨 Redrawing waveform with progress:', progress);
+        drawMasterWaveform(g.currentPeaksData, progress);
       }
+    }
+    
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+    
+    console.log('✅ Transition complete - Controls ready');
+  }, 200);
+}
     }]
   });
 }
