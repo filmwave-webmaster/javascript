@@ -1717,6 +1717,13 @@ function reinitializeWebflowTabs() {
         });
         
         console.log(`✅ Switched to tab ${clickedIndex + 1}`);
+        
+        // CRITICAL: Sync pricing toggle state for the new tab
+        if (typeof syncPricingTabState === 'function') {
+          const $activeTabPane = $(allPanes[clickedIndex]);
+          syncPricingTabState($activeTabPane);
+          console.log('✅ Pricing state synced to new tab');
+        }
       });
     });
   });
