@@ -135,7 +135,7 @@ function updateMasterPlayerVisibility() {
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
-        musicAreaContainer.style.paddingBottom = '79px';
+        musicAreaContainer.style.paddingBottom = '78px';
         console.log('✅ Added 79px bottom padding to music-area-container');
       }
     }
