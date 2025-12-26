@@ -957,17 +957,13 @@ function initializeWaveforms() {
       });
     }
     
-    // CRITICAL: Check if we have pre-computed peaks
+    // Check if we have pre-computed peaks
     const peaksData = songData.fields['Waveform Peaks'];
     
     if (peaksData && peaksData.trim().length > 0) {
-      // FAST PATH: Use pre-computed peaks (instant loading!)
+      // FAST PATH: Use pre-computed peaks
       try {
         const peaks = JSON.parse(peaksData);
-        
-        // Calculate duration from peaks (assuming 44100 sample rate)
-        const sampleRate = 44100;
-        const duration = peaks.length / sampleRate;
         
         const wavesurfer = WaveSurfer.create({
           container: waveformContainer,
@@ -981,14 +977,14 @@ function initializeWaveforms() {
           normalize: true
         });
         
-        // Load with peaks - MUCH faster!
-        wavesurfer.load(audioUrl, [peaks], duration);
+        // Load audio with pre-computed peaks
+        wavesurfer.load(audioUrl, [peaks]);
         
         wavesurfer.on('ready', function () {
-          const dur = wavesurfer.getDuration();
+          const duration = wavesurfer.getDuration();
           const containerWidth = waveformContainer.offsetWidth || 300;
-          wavesurfer.zoom(containerWidth / dur);
-          if (durationElement) durationElement.textContent = formatDuration(dur);
+          wavesurfer.zoom(containerWidth / duration);
+          if (durationElement) durationElement.textContent = formatDuration(duration);
         });
         
         g.allWavesurfers.push(wavesurfer);
@@ -1003,14 +999,12 @@ function initializeWaveforms() {
         setupWaveformHandlers(wavesurfer, audioUrl, songData, cardElement, coverArtWrapper, songName);
         
       } catch (e) {
-        console.error('Error loading peaks for', songData.fields['Song Title'], '- falling back to audio decode:', e);
-        // Fall back to normal loading if peaks are invalid
-        loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveformContainer, durationElement, coverArtWrapper, playButton, songName);
+        console.error('Error loading peaks, falling back:', e);
+        loadWaveformFromAudio(waveformContainer, audioUrl, songData, durationElement, coverArtWrapper, playButton, songName, cardElement, songId);
       }
     } else {
-      // SLOW PATH: No peaks available, decode audio file (fallback)
-      console.warn('No peaks available for', songData.fields['Song Title'], '- using slower audio decode');
-      loadWaveformFromAudio(cardElement, audioUrl, songId, songData, waveformContainer, durationElement, coverArtWrapper, playButton, songName);
+      // SLOW PATH: No peaks available
+      loadWaveformFromAudio(waveformContainer, audioUrl, songData, durationElement, coverArtWrapper, playButton, songName, cardElement, songId);
     }
   });
   
