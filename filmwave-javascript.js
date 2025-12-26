@@ -1700,85 +1700,93 @@ if (typeof barba !== 'undefined') {
 
       enter(data) {
         removeDuplicateIds();
+        
+        // Pre-initialize Webflow early
+        if (window.Webflow) {
+          setTimeout(() => {
+            window.Webflow.ready();
+          }, 50);
+        }
+        
         return initMusicPage();
       },
 
       after(data) {
-  const g = window.musicPlayerPersistent;
-  
-  window.scrollTo(0, 0);
-  
-  // IMPROVED WEBFLOW RE-INITIALIZATION
-  if (window.Webflow) {
-    try {
-      // Force destroy IX2 completely
-      const ix2 = window.Webflow.require('ix2');
-      if (ix2 && ix2.destroy) {
-        ix2.destroy();
-      }
-      
-      // Destroy Webflow
-      window.Webflow.destroy();
-      
-      // Force a reflow to ensure DOM is settled
-      document.body.offsetHeight;
-      
-      // Re-initialize Webflow
-      window.Webflow.ready();
-      
-      // Re-initialize IX2 with a delay
-      setTimeout(() => {
-        if (window.Webflow && window.Webflow.require) {
-          const ix2 = window.Webflow.require('ix2');
-          if (ix2 && ix2.init) {
-            ix2.init();
+        const g = window.musicPlayerPersistent;
+        
+        window.scrollTo(0, 0);
+        
+        // IMPROVED WEBFLOW RE-INITIALIZATION
+        if (window.Webflow) {
+          try {
+            // Force destroy IX2 completely
+            const ix2 = window.Webflow.require('ix2');
+            if (ix2 && ix2.destroy) {
+              ix2.destroy();
+            }
+            
+            // Destroy Webflow
+            window.Webflow.destroy();
+            
+            // Force a reflow to ensure DOM is settled
+            document.body.offsetHeight;
+            
+            // Re-initialize Webflow
+            window.Webflow.ready();
+            
+            // Re-initialize IX2 with a delay
+            setTimeout(() => {
+              if (window.Webflow && window.Webflow.require) {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              }
+            }, 100);
+            
+          } catch (e) {
+            console.warn('Webflow reinit error:', e);
           }
         }
-      }, 100);
-      
-    } catch (e) {
-      console.warn('Webflow reinit error:', e);
-    }
-  }
-  
-  positionMasterPlayer();
-  
-  setTimeout(() => {
-    setupMasterPlayerControls();
-    positionMasterPlayer();
-    updateMasterPlayerVisibility();
-    
-    if (g.currentSongData) {
-      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-      updateMasterControllerIcons(g.isPlaying);
-      
-      if (g.currentPeaksData) {
-        let progress = 0;
         
-        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        } else if (g.currentDuration > 0) {
-          progress = g.currentTime / g.currentDuration;
-        }
+        positionMasterPlayer();
         
-        drawMasterWaveform(g.currentPeaksData, progress);
+        setTimeout(() => {
+          setupMasterPlayerControls();
+          positionMasterPlayer();
+          updateMasterPlayerVisibility();
+          
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+            
+            if (g.currentPeaksData) {
+              let progress = 0;
+              
+              if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+                progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+              } else if (g.currentDuration > 0) {
+                progress = g.currentTime / g.currentDuration;
+              }
+              
+              drawMasterWaveform(g.currentPeaksData, progress);
+            }
+          }
+          
+          const playerWrapper = document.querySelector('.music-player-wrapper');
+          if (playerWrapper) {
+            playerWrapper.style.transition = '';
+          }
+          
+          setTimeout(() => {
+            positionMasterPlayer();
+          }, 100);
+          
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+        }, 200);
       }
-    }
-    
-    const playerWrapper = document.querySelector('.music-player-wrapper');
-    if (playerWrapper) {
-      playerWrapper.style.transition = '';
-    }
-    
-    setTimeout(() => {
-      positionMasterPlayer();
-    }, 100);
-    
-    window.dispatchEvent(new Event('scroll'));
-    window.dispatchEvent(new Event('resize'));
-    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-  }, 200);
-}
     }]
   });
 }
