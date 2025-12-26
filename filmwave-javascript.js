@@ -95,14 +95,14 @@ function positionMasterPlayer() {
   
   console.log('📍 Positioning player - always fixed at bottom');
   
-  // ALWAYS use fixed positioning at bottom
-  playerWrapper.style.position = 'fixed';
-  playerWrapper.style.bottom = '0px';
-  playerWrapper.style.left = '0px';
-  playerWrapper.style.right = '0px';
-  playerWrapper.style.top = 'auto';
-  playerWrapper.style.width = '100%';
-  playerWrapper.style.zIndex = '9999';
+  // FORCE fixed positioning with !important via direct style manipulation
+  playerWrapper.style.setProperty('position', 'fixed', 'important');
+  playerWrapper.style.setProperty('bottom', '0px', 'important');
+  playerWrapper.style.setProperty('left', '0px', 'important');
+  playerWrapper.style.setProperty('right', '0px', 'important');
+  playerWrapper.style.setProperty('top', 'auto', 'important');
+  playerWrapper.style.setProperty('width', '100%', 'important');
+  playerWrapper.style.setProperty('z-index', '9999', 'important');
 }
 
 /**
@@ -1954,62 +1954,71 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
-        const g = window.musicPlayerPersistent;
+     after(data) {
+  const g = window.musicPlayerPersistent;
+  
+  window.scrollTo(0, 0);
+  
+  if (window.Webflow) {
+    try {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    } catch (e) {}
+  }
+  
+  // CRITICAL: Position player immediately
+  positionMasterPlayer();
+  
+  setTimeout(() => {
+    console.log('🎮 Setting up master player controls');
+    setupMasterPlayerControls();
+    
+    // CRITICAL: Position player AGAIN before updating visibility
+    positionMasterPlayer();
+    
+    // Then update visibility
+    updateMasterPlayerVisibility();
+    
+    // Update player info if there's an active song
+    if (g.currentSongData) {
+      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+      updateMasterControllerIcons(g.isPlaying);
+      
+      // Redraw waveform for paused songs on new pages
+      if (g.currentPeaksData) {
+        let progress = 0;
         
-        window.scrollTo(0, 0);
-        
-        if (window.Webflow) {
-          try {
-            window.Webflow.destroy();
-            window.Webflow.ready();
-            window.Webflow.require('ix2').init();
-          } catch (e) {}
+        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+          progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+        } else if (g.currentDuration > 0) {
+          progress = g.currentTime / g.currentDuration;
         }
         
-        setTimeout(() => {
-          console.log('🎮 Setting up master player controls');
-          setupMasterPlayerControls();
-          
-          // CRITICAL: Position player FIRST, before updating visibility
-          positionMasterPlayer();
-          
-          // Then update visibility
-          updateMasterPlayerVisibility();
-          
-          // Update player info if there's an active song
-          if (g.currentSongData) {
-            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-            updateMasterControllerIcons(g.isPlaying);
-            
-            // Redraw waveform for paused songs on new pages
-            if (g.currentPeaksData) {
-              let progress = 0;
-              
-              if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-                progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-              } else if (g.currentDuration > 0) {
-                progress = g.currentTime / g.currentDuration;
-              }
-              
-              console.log('🎨 Redrawing waveform with progress:', progress);
-              drawMasterWaveform(g.currentPeaksData, progress);
-            }
-          }
-          
-          // Re-enable transitions after everything is positioned
-          const playerWrapper = document.querySelector('.music-player-wrapper');
-          if (playerWrapper) {
-            playerWrapper.style.transition = '';
-          }
-          
-          window.dispatchEvent(new Event('scroll'));
-          window.dispatchEvent(new Event('resize'));
-          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-          
-          console.log('✅ Transition complete - Controls ready');
-        }, 200);
+        console.log('🎨 Redrawing waveform with progress:', progress);
+        drawMasterWaveform(g.currentPeaksData, progress);
       }
+    }
+    
+    // Re-enable transitions after everything is positioned
+    const playerWrapper = document.querySelector('.music-player-wrapper');
+    if (playerWrapper) {
+      playerWrapper.style.transition = '';
+    }
+    
+    // FINAL positioning check after a delay
+    setTimeout(() => {
+      positionMasterPlayer();
+      console.log('✅ Final positioning check complete');
+    }, 100);
+    
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+    
+    console.log('✅ Transition complete - Controls ready');
+  }, 200);
+}
     }]
   });
 }
