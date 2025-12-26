@@ -916,17 +916,44 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS WITH FADE-IN EFFECT (NO STAGGER)
+ * INITIALIZE WAVEFORMS WITH LAZY LOADING (MEMORY OPTIMIZED)
  * ============================================================
  */
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
   
-  const waveformPromises = [];
-  const waveformContainers = [];
+  // Intersection Observer for lazy loading
+  const observer = new IntersectionObserver((entries) => {
+    // Collect all cards that came into view
+    const cardsToLoad = [];
+    
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cardElement = entry.target;
+        
+        // Skip if already initialized
+        if (cardElement.dataset.waveformInitialized === 'true') {
+          return;
+        }
+        
+        cardsToLoad.push(cardElement);
+        observer.unobserve(cardElement); // Stop observing once loaded
+      }
+    });
+    
+    // Load this batch of waveforms
+    if (cardsToLoad.length > 0) {
+      loadWaveformBatch(cardsToLoad);
+    }
+  }, {
+    root: document.querySelector('.music-list-wrapper'),
+    rootMargin: '200px', // Start loading 200px before they're visible
+    threshold: 0
+  });
   
-  songCards.forEach((cardElement, index) => {
+  // Observe all song cards
+  songCards.forEach((cardElement) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
     
@@ -934,23 +961,48 @@ function initializeWaveforms() {
       return;
     }
     
+    // Start waveforms invisible
+    const waveformContainer = cardElement.querySelector('.waveform');
+    if (waveformContainer) {
+      waveformContainer.style.opacity = '0';
+      waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
+    }
+    
+    // Observe this card
+    observer.observe(cardElement);
+  });
+  
+  setTimeout(() => {
+    linkStandaloneToWaveform();
+  }, 100);
+}
+
+/**
+ * ============================================================
+ * LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER
+ * ============================================================
+ */
+function loadWaveformBatch(cardElements) {
+  const g = window.musicPlayerPersistent;
+  const waveformPromises = [];
+  const waveformContainers = [];
+  
+  cardElements.forEach((cardElement) => {
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
     const songData = JSON.parse(cardElement.dataset.songData || '{}');
     
     if (!audioUrl) return;
+    
     const waveformContainer = cardElement.querySelector('.waveform');
-    if (waveformContainer && waveformContainer.hasChildNodes()) return;
+    if (!waveformContainer || waveformContainer.hasChildNodes()) return;
+    
     const durationElement = cardElement.querySelector('.duration');
     const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
     const playButton = cardElement.querySelector('.play-button');
     const songName = cardElement.querySelector('.song-name');
-    if (!waveformContainer) return;
-    waveformContainer.id = `waveform-${songId}`;
     
-    // Start invisible
-    waveformContainer.style.opacity = '0';
-    waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
+    waveformContainer.id = `waveform-${songId}`;
     waveformContainers.push(waveformContainer);
     
     if (playButton) {
@@ -997,7 +1049,7 @@ function initializeWaveforms() {
       wavesurfer.load(audioUrl);
     }
     
-    // Create promise with timeout fallback
+    // Create promise with timeout
     const waveformReadyPromise = new Promise((resolve) => {
       let resolved = false;
       
@@ -1010,19 +1062,16 @@ function initializeWaveforms() {
         wavesurfer.zoom(containerWidth / duration);
         if (durationElement) durationElement.textContent = formatDuration(duration);
         
-        waveformContainer.dataset.loaded = 'true';
         resolve();
       });
       
-      // Timeout after 10 seconds for this waveform
+      // Timeout after 5 seconds
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          console.warn('Waveform timeout for:', songData.fields['Song Title']);
-          waveformContainer.dataset.loaded = 'error';
           resolve();
         }
-      }, 10000);
+      }, 5000);
     });
     
     waveformPromises.push(waveformReadyPromise);
@@ -1105,27 +1154,26 @@ function initializeWaveforms() {
       
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
     });
+    
+    // Mark as initialized
+    cardElement.dataset.waveformInitialized = 'true';
   });
   
-  // Fade in all waveforms together when ready (no stagger)
+  // Wait for this BATCH to finish, then fade them all in together
   Promise.all(waveformPromises).then(() => {
     waveformContainers.forEach((container) => {
       container.style.opacity = '1';
     });
   });
   
-  // SAFETY: If Promise.all hasn't resolved after 15 seconds, show them anyway
+  // Safety timeout for this batch
   setTimeout(() => {
     waveformContainers.forEach((container) => {
       if (container.style.opacity === '0') {
         container.style.opacity = '1';
       }
     });
-  }, 15000);
-  
-  setTimeout(() => {
-    linkStandaloneToWaveform();
-  }, 100);
+  }, 6000);
 }
 /**
  * ============================================================
