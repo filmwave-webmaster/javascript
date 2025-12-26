@@ -1782,6 +1782,11 @@ if (typeof barba !== 'undefined') {
             positionMasterPlayer();
           }, 100);
           
+          // CRITICAL: Re-initialize custom scripts after Barba transition
+          if (typeof initPricingToggle === 'function') {
+            initPricingToggle();
+          }
+          
           window.dispatchEvent(new Event('scroll'));
           window.dispatchEvent(new Event('resize'));
           window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
