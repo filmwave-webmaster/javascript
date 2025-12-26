@@ -210,7 +210,7 @@ async function initMusicPage() {
     initMasterPlayer();
     updateMasterPlayerVisibility();
   }
-}
+} 
 
 /**
  * ============================================================
