@@ -83,21 +83,19 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * MASTER PLAYER VISIBILITY & POSITIONING
+ * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
+ * This function handles ALL player positioning logic.
+ * Call this whenever the player needs to be positioned correctly.
+ * DO NOT add positioning logic anywhere else in the code.
  */
-function updateMasterPlayerVisibility() {
-  const g = window.musicPlayerPersistent;
+function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
   
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const musicAreaContainer = document.querySelector('.music-area-container');
-  const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
+  console.log('📍 Positioning player - always fixed at bottom');
   
-  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'isMusicPage:', isMusicPage);
-  
-  // ALWAYS fixed at bottom
+  // ALWAYS use fixed positioning at bottom
   playerWrapper.style.position = 'fixed';
   playerWrapper.style.bottom = '0px';
   playerWrapper.style.left = '0px';
@@ -105,28 +103,6 @@ function updateMasterPlayerVisibility() {
   playerWrapper.style.top = 'auto';
   playerWrapper.style.width = '100%';
   playerWrapper.style.zIndex = '9999';
-  
-  if (shouldShow) {
-    playerWrapper.style.display = 'flex';
-    playerWrapper.style.visibility = 'visible';
-    playerWrapper.style.opacity = '1';
-    playerWrapper.style.alignItems = 'center';
-    playerWrapper.style.pointerEvents = 'auto';
-    
-    // Add padding to music-area-container when player visible on music page
-    if (isMusicPage && musicAreaContainer) {
-      musicAreaContainer.style.paddingBottom = '79px';
-    }
-  } else {
-    playerWrapper.style.display = 'none';
-    playerWrapper.style.visibility = 'hidden';
-    playerWrapper.style.opacity = '0';
-    
-    // Remove padding when player hidden
-    if (musicAreaContainer) {
-      musicAreaContainer.style.paddingBottom = '0px';
-    }
-  }
 }
 
 /**
@@ -178,7 +154,6 @@ function updateMasterPlayerVisibility() {
     }
   }
 }
-
 /**
  * ============================================================
  * MAIN INITIALIZATION
