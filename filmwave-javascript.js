@@ -916,15 +916,15 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 
 /**
  * ============================================================
- * INITIALIZE WAVEFORMS WITH FADE-IN EFFECT
+ * INITIALIZE WAVEFORMS WITH FADE-IN EFFECT (NO STAGGER)
  * ============================================================
  */
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
   
-  // Track which waveforms are ready
   const waveformPromises = [];
+  const waveformContainers = [];
   
   songCards.forEach((cardElement, index) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
@@ -948,8 +948,10 @@ function initializeWaveforms() {
     if (!waveformContainer) return;
     waveformContainer.id = `waveform-${songId}`;
     
-    // CRITICAL: Start with waveform invisible
+    // Start invisible
     waveformContainer.style.opacity = '0';
+    waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
+    waveformContainers.push(waveformContainer);
     
     if (playButton) {
       playButton.style.opacity = '0';
@@ -982,32 +984,45 @@ function initializeWaveforms() {
       minPxPerSec: 1
     });
     
-    // Check if we have pre-computed peaks
     const peaksData = songData.fields['Waveform Peaks'];
     if (peaksData && peaksData.trim().length > 0) {
       try {
         const peaks = JSON.parse(peaksData);
         wavesurfer.load(audioUrl, [peaks]);
       } catch (e) {
-        console.error('Error loading peaks, using normal method:', e);
+        console.error('Error loading peaks:', e);
         wavesurfer.load(audioUrl);
       }
     } else {
       wavesurfer.load(audioUrl);
     }
     
-    // Create a promise for this waveform's ready state
+    // Create promise with timeout fallback
     const waveformReadyPromise = new Promise((resolve) => {
+      let resolved = false;
+      
       wavesurfer.on('ready', function () {
+        if (resolved) return;
+        resolved = true;
+        
         const duration = wavesurfer.getDuration();
         const containerWidth = waveformContainer.offsetWidth || 300;
         wavesurfer.zoom(containerWidth / duration);
         if (durationElement) durationElement.textContent = formatDuration(duration);
         
-        // Mark this waveform as ready
-        waveformContainer.classList.add('loaded');
+        waveformContainer.dataset.loaded = 'true';
         resolve();
       });
+      
+      // Timeout after 10 seconds for this waveform
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          console.warn('Waveform timeout for:', songData.fields['Song Title']);
+          waveformContainer.dataset.loaded = 'error';
+          resolve();
+        }
+      }, 10000);
     });
     
     waveformPromises.push(waveformReadyPromise);
@@ -1092,20 +1107,26 @@ function initializeWaveforms() {
     });
   });
   
-  // CRITICAL: Wait for all waveforms to load, then fade them in together
+  // Fade in all waveforms together when ready (no stagger)
   Promise.all(waveformPromises).then(() => {
-    // All waveforms are ready - fade them in!
-    document.querySelectorAll('.waveform.loaded').forEach((waveform) => {
-      // Small stagger effect (optional)
-    waveform.style.opacity = '1';
+    waveformContainers.forEach((container) => {
+      container.style.opacity = '1';
     });
   });
+  
+  // SAFETY: If Promise.all hasn't resolved after 15 seconds, show them anyway
+  setTimeout(() => {
+    waveformContainers.forEach((container) => {
+      if (container.style.opacity === '0') {
+        container.style.opacity = '1';
+      }
+    });
+  }, 15000);
   
   setTimeout(() => {
     linkStandaloneToWaveform();
   }, 100);
 }
-
 /**
  * ============================================================
  * FETCH & DISPLAY SONGS
