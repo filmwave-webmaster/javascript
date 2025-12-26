@@ -1907,12 +1907,11 @@ if (typeof barba !== 'undefined') {
           g.currentWavesurfer = null;
         }
         
-        // CRITICAL: Keep player visible and in place during transition
+        // CRITICAL: Keep player visible during transition to prevent flash
         const playerWrapper = document.querySelector('.music-player-wrapper');
         if (playerWrapper && g.hasActiveSong) {
-          playerWrapper.style.transition = 'none'; // Prevent transition flash
-          playerWrapper.style.opacity = '1';
-          playerWrapper.style.visibility = 'visible';
+          playerWrapper.style.transition = 'none';
+          // Don't force opacity/visibility here - let positioning logic handle it
         }
         
         document.body.style.overflow = '';
@@ -1942,15 +1941,6 @@ if (typeof barba !== 'undefined') {
           const musicArea = nextContainer.querySelector('.music-area-wrapper');
           if (musicArea) musicArea.style.overflow = 'hidden';
         }
-        
-        // CRITICAL: Ensure player stays visible during transition
-        const g = window.musicPlayerPersistent;
-        const playerWrapper = document.querySelector('.music-player-wrapper');
-        if (playerWrapper && g.hasActiveSong) {
-          playerWrapper.style.transition = 'none';
-          playerWrapper.style.opacity = '1';
-          playerWrapper.style.visibility = 'visible';
-        }
       },
 
       enter(data) {
@@ -1974,7 +1964,10 @@ if (typeof barba !== 'undefined') {
           console.log('🎮 Setting up master player controls');
           setupMasterPlayerControls();
           
-          // Use updateMasterPlayerVisibility to handle positioning
+          // CRITICAL: Position player FIRST, before updating visibility
+          positionMasterPlayer();
+          
+          // Then update visibility
           updateMasterPlayerVisibility();
           
           // Update player info if there's an active song
