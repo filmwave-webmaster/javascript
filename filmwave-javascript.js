@@ -1641,6 +1641,9 @@ if (typeof barba !== 'undefined') {
         const g = window.musicPlayerPersistent;
         const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
         
+        // CRITICAL: Reset filters flag so they can be re-initialized
+        g.filtersInitialized = false;
+        
         if (isMusicPage) {
           g.allWavesurfers.forEach(ws => {
             try {
