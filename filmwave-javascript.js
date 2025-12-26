@@ -1631,6 +1631,52 @@ removeDuplicateIds();
  */
 window.addEventListener('load', () => initMusicPage());
 
+/**
+ * ============================================================
+ * FORCE WEBFLOW TABS TO RE-INITIALIZE
+ * ============================================================
+ */
+function reinitializeWebflowTabs() {
+  console.log('🔄 Re-initializing Webflow tabs...');
+  
+  // Method 1: Trigger click on first tab to activate Webflow's tab system
+  const tabLinks = document.querySelectorAll('.w-tab-link');
+  if (tabLinks.length > 0) {
+    console.log(`Found ${tabLinks.length} tab links`);
+    
+    // Find the active tab or use the first one
+    let activeTab = document.querySelector('.w-tab-link.w--current');
+    if (!activeTab) {
+      activeTab = tabLinks[0];
+    }
+    
+    // Force a click to re-initialize the tab system
+    setTimeout(() => {
+      if (activeTab) {
+        activeTab.click();
+        console.log('✅ Tabs re-initialized via click');
+      }
+    }, 100);
+  }
+  
+  // Method 2: Force Webflow to re-scan tabs
+  if (window.Webflow && window.Webflow.require) {
+    try {
+      const tabs = window.Webflow.require('tabs');
+      if (tabs && tabs.ready) {
+        tabs.ready();
+        console.log('✅ Webflow tabs.ready() called');
+      }
+      if (tabs && tabs.redraw) {
+        tabs.redraw();
+        console.log('✅ Webflow tabs.redraw() called');
+      }
+    } catch (e) {
+      console.warn('Could not access Webflow tabs module:', e);
+    }
+  }
+}
+
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
@@ -1711,124 +1757,125 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-   after(data) {
-  const g = window.musicPlayerPersistent;
-  
-  window.scrollTo(0, 0);
-  
-  // IMPROVED WEBFLOW RE-INITIALIZATION
-  if (window.Webflow) {
-    try {
-      const ix2 = window.Webflow.require('ix2');
-      if (ix2 && ix2.destroy) {
-        ix2.destroy();
-      }
-      
-      window.Webflow.destroy();
-      document.body.offsetHeight;
-      window.Webflow.ready();
-      
-      setTimeout(() => {
-        if (window.Webflow && window.Webflow.require) {
-          const ix2 = window.Webflow.require('ix2');
-          if (ix2 && ix2.init) {
-            ix2.init();
+      after(data) {
+        const g = window.musicPlayerPersistent;
+        
+        window.scrollTo(0, 0);
+        
+        // IMPROVED WEBFLOW RE-INITIALIZATION
+        if (window.Webflow) {
+          try {
+            const ix2 = window.Webflow.require('ix2');
+            if (ix2 && ix2.destroy) {
+              ix2.destroy();
+            }
+            
+            window.Webflow.destroy();
+            document.body.offsetHeight;
+            window.Webflow.ready();
+            
+            setTimeout(() => {
+              if (window.Webflow && window.Webflow.require) {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              }
+            }, 100);
+            
+          } catch (e) {
+            console.warn('Webflow reinit error:', e);
           }
         }
-      }, 100);
-      
-    } catch (e) {
-      console.warn('Webflow reinit error:', e);
-    }
-  }
-  
-  positionMasterPlayer();
-  
-  setTimeout(() => {
-    setupMasterPlayerControls();
-    positionMasterPlayer();
-    updateMasterPlayerVisibility();
-    
-    if (g.currentSongData) {
-      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-      updateMasterControllerIcons(g.isPlaying);
-      
-      if (g.currentPeaksData) {
-        let progress = 0;
         
-        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        } else if (g.currentDuration > 0) {
-          progress = g.currentTime / g.currentDuration;
-        }
+        positionMasterPlayer();
         
-        drawMasterWaveform(g.currentPeaksData, progress);
-      }
-    }
-    
-    const playerWrapper = document.querySelector('.music-player-wrapper');
-    if (playerWrapper) {
-      playerWrapper.style.transition = '';
-    }
-    
-    setTimeout(() => {
-      positionMasterPlayer();
-    }, 100);
-    
-    // CRITICAL: Re-initialize pricing toggle with jQuery check
-    setTimeout(() => {
-      if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
-        console.log('🔄 Attempting to re-initialize pricing toggle...');
-        try {
-          initPricingToggle();
-          console.log('✅ Pricing toggle re-initialized successfully');
-        } catch (e) {
-          console.error('❌ Error initializing pricing toggle:', e);
-        }
-      } else {
-        if (typeof $ === 'undefined') {
-          console.warn('⚠️ jQuery not loaded');
-        }
-        if (typeof initPricingToggle === 'undefined') {
-          console.warn('⚠️ initPricingToggle function not found');
-        }
-      }
-    }, 400);
-    
-    window.dispatchEvent(new Event('scroll'));
-    window.dispatchEvent(new Event('resize'));
-    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-    
-    // MORE AGGRESSIVE RE-INITIALIZATION
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-      window.dispatchEvent(new Event('scroll'));
-      
-      document.querySelectorAll('[data-w-id]').forEach(el => {
-        if (el.style.opacity === '0' || el.style.display === 'none') {
-          el.style.opacity = '';
-          el.style.display = '';
-        }
-        el.style.transform = '';
-      });
-      
-      if (window.Webflow && window.Webflow.redraw) {
-        window.Webflow.redraw.up();
-      }
-      
-      if (window.Webflow && window.Webflow.require) {
-        try {
-          const ix2 = window.Webflow.require('ix2');
-          if (ix2 && ix2.init) {
-            ix2.init();
+        setTimeout(() => {
+          setupMasterPlayerControls();
+          positionMasterPlayer();
+          updateMasterPlayerVisibility();
+          
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+            
+            if (g.currentPeaksData) {
+              let progress = 0;
+              
+              if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+                progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+              } else if (g.currentDuration > 0) {
+                progress = g.currentTime / g.currentDuration;
+              }
+              
+              drawMasterWaveform(g.currentPeaksData, progress);
+            }
           }
-        } catch (e) {}
+          
+          const playerWrapper = document.querySelector('.music-player-wrapper');
+          if (playerWrapper) {
+            playerWrapper.style.transition = '';
+          }
+          
+          setTimeout(() => {
+            positionMasterPlayer();
+          }, 100);
+          
+          // CRITICAL: Re-initialize custom scripts
+          setTimeout(() => {
+            // Re-initialize pricing toggle
+            if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
+              console.log('🔄 Attempting to re-initialize pricing toggle...');
+              try {
+                initPricingToggle();
+                console.log('✅ Pricing toggle re-initialized successfully');
+              } catch (e) {
+                console.error('❌ Error initializing pricing toggle:', e);
+              }
+            }
+            
+            // CRITICAL: Re-initialize Webflow tabs
+            reinitializeWebflowTabs();
+            
+          }, 400);
+          
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+          
+          // MORE AGGRESSIVE RE-INITIALIZATION
+          setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+            window.dispatchEvent(new Event('scroll'));
+            
+            document.querySelectorAll('[data-w-id]').forEach(el => {
+              if (el.style.opacity === '0' || el.style.display === 'none') {
+                el.style.opacity = '';
+                el.style.display = '';
+              }
+              el.style.transform = '';
+            });
+            
+            if (window.Webflow && window.Webflow.redraw) {
+              window.Webflow.redraw.up();
+            }
+            
+            if (window.Webflow && window.Webflow.require) {
+              try {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              } catch (e) {}
+            }
+            
+            // Try tabs again after everything settles
+            reinitializeWebflowTabs();
+            
+          }, 600);
+          
+        }, 200);
       }
-      
-    }, 300);
-    
-  }, 200);
-}
     }]
   });
 }
