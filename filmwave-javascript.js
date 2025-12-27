@@ -202,7 +202,7 @@ async function initMusicPage() {
  * STANDALONE AUDIO PLAYER (for non-music pages)
  * ============================================================
  */
-function navigateStandaloneTrack(direction) {
+function navigateStandaloneTrack(direction, forceAutoplay = false) {
   const g = window.musicPlayerPersistent;
   
   if (!g.currentSongData || g.MASTER_DATA.length === 0) return;
@@ -299,16 +299,16 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-  if (wasPlaying) {
-    audio.play().catch(err => {
-      if (err.name !== 'AbortError') {
-        console.error('Playback error:', err);
-      }
-    });
-  } else {
-    g.isPlaying = false;
-    updateMasterControllerIcons(false);
-  }
+if (wasPlaying || forceAutoplay) {
+  audio.play().catch(err => {
+    if (err.name !== 'AbortError') {
+      console.error('Playback error:', err);
+    }
+  });
+} else {
+  g.isPlaying = false;
+  updateMasterControllerIcons(false);
+}
   
   const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
@@ -876,7 +876,7 @@ audio.addEventListener('ended', () => {
     }
   } else {
     // On non-music page - use standalone navigation
-    navigateStandaloneTrack('next');
+    navigateStandaloneTrack('next', true);
   }
 });
   
