@@ -85,6 +85,36 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
+ * AUDIO SMOOTH START/STOP
+ * ============================================================
+ */
+function smoothPlay(audio) {
+  if (!audio) return Promise.resolve();
+  
+  // Set a tiny delay before starting to avoid clicks
+  audio.currentTime = Math.max(0, audio.currentTime);
+  
+  return audio.play().catch(err => {
+    if (err.name !== 'AbortError') {
+      console.error('Playback error:', err);
+    }
+  });
+}
+
+function smoothPause(audio) {
+  if (!audio) return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    // Small delay before pause to prevent click
+    setTimeout(() => {
+      audio.pause();
+      resolve();
+    }, 10);
+  });
+}
+
+/**
+ * ============================================================
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  * This function handles ALL player positioning logic.
@@ -822,12 +852,18 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g.currentWavesurfer = wavesurfer;
   g.hasActiveSong = true;
   
-  // CRITICAL: Create Web Audio context and gain node for smooth start/stop
-  if (!g.audioContext) {
-    g.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  
-  // Create media source and gain node
+ // CRITICAL: Create Web Audio context and gain node for smooth start/stop
+if (!g.audioContext) {
+  g.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+// Resume audio context if suspended
+if (g.audioContext.state === 'suspended') {
+  g.audioContext.resume();
+}
+
+// Only create media source if not already created
+if (!audio._audioSetup) {
   const source = g.audioContext.createMediaElementSource(audio);
   const gainNode = g.audioContext.createGain();
   
@@ -836,6 +872,8 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   
   // Store gain node reference
   audio._gainNode = gainNode;
+  audio._audioSetup = true;
+}
   
   audio.addEventListener('loadedmetadata', () => {
     g.currentDuration = audio.duration;
