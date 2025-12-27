@@ -2383,52 +2383,43 @@ function restoreFilterState() {
           wrapper.classList.add('is-active');
         }
         
-        // Dispatch change event to trigger tag creation
-        input.dispatchEvent(new Event('change', { bubbles: true }));
         restoredCount++;
       }
     });
     
-    // Restore search
+    // CRITICAL: Dispatch change events AFTER all inputs are checked (in batch)
+    // This ensures initDynamicTagging can process them
+    setTimeout(() => {
+      filterState.filters.forEach(savedFilter => {
+        let selector = `[data-filter-group="${savedFilter.group}"]`;
+        
+        if (savedFilter.value) {
+          selector += `[data-filter-value="${savedFilter.value}"]`;
+        }
+        if (savedFilter.keyGroup) {
+          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
+        }
+        
+        const input = document.querySelector(selector);
+        if (input && input.checked) {
+          // Dispatch change event to trigger tag creation
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }, 100); // Small delay to ensure initDynamicTagging is ready
+    
+    // Restore search (stays in field, no tag)
     if (filterState.searchQuery) {
       const searchBar = document.querySelector('[data-filter-search="true"]');
       if (searchBar) {
         searchBar.value = filterState.searchQuery;
         searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-        
-        // CRITICAL: Manually create search tag (initDynamicTagging doesn't handle search)
-        const tagsContainer = document.querySelector('.filter-tags-container');
-        if (tagsContainer) {
-          // Check if search tag already exists
-          const existingSearchTag = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(tag => 
-            tag.dataset.searchTag === 'true'
-          );
-          
-          if (!existingSearchTag) {
-            const searchTag = document.createElement('div');
-            searchTag.className = 'filter-tag';
-            searchTag.dataset.searchTag = 'true';
-            searchTag.innerHTML = `
-              <span class="filter-tag-text">${filterState.searchQuery}</span>
-              <span class="filter-tag-remove x-button-style">×</span>
-            `;
-            
-            searchTag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-              searchBar.value = '';
-              searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-              searchTag.remove();
-              saveFilterState();
-            });
-            
-            tagsContainer.appendChild(searchTag);
-          }
-        }
       }
     }
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
-    // CRITICAL: Wait for filters to apply, then fade in songs
+    // CRITICAL: Wait for filters AND tags to be created, then fade in songs
     setTimeout(() => {
       const style = document.getElementById('filter-loading-style');
       if (style) {
@@ -2440,7 +2431,7 @@ function restoreFilterState() {
         setTimeout(() => style.remove(), 500);
         console.log('✨ Songs faded in');
       }
-    }, 200); // Small delay to ensure filters are applied
+    }, 350); // Increased delay to ensure tags are created (100ms for change events + 250ms buffer)
     
     return true;
   } catch (error) {
@@ -2479,49 +2470,12 @@ document.addEventListener('change', function(e) {
   }
 });
 
-// Auto-save on search (debounced) + create/remove search tag
+// Auto-save on search (debounced) - NO TAG CREATION
 let searchSaveTimeout;
 document.addEventListener('input', function(e) {
   if (e.target.matches('[data-filter-search="true"]')) {
     clearTimeout(searchSaveTimeout);
-    searchSaveTimeout = setTimeout(() => {
-      saveFilterState();
-      
-      // Create or remove search tag
-      const tagsContainer = document.querySelector('.filter-tags-container');
-      const searchValue = e.target.value.trim();
-      
-      if (tagsContainer) {
-        // Remove existing search tag
-        const existingSearchTag = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(tag => 
-          tag.dataset.searchTag === 'true'
-        );
-        if (existingSearchTag) {
-          existingSearchTag.remove();
-        }
-        
-        // Create new search tag if there's a value
-        if (searchValue) {
-          const searchTag = document.createElement('div');
-          searchTag.className = 'filter-tag';
-          searchTag.dataset.searchTag = 'true';
-          searchTag.innerHTML = `
-            <span class="filter-tag-text">${searchValue}</span>
-            <span class="filter-tag-remove x-button-style">×</span>
-          `;
-          
-          const searchBar = e.target;
-          searchTag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-            searchBar.value = '';
-            searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-            searchTag.remove();
-            saveFilterState();
-          });
-          
-          tagsContainer.appendChild(searchTag);
-        }
-      }
-    }, 500);
+    searchSaveTimeout = setTimeout(saveFilterState, 500);
   }
 });
 
@@ -2552,31 +2506,8 @@ function attemptRestore() {
 window.addEventListener('load', function() {
   filtersRestored = false; // Reset on page load
   
-  // Try immediately, then at intervals until successful
-  if (!attemptRestore()) {
-    setTimeout(() => { 
-      if (!attemptRestore()) {
-        setTimeout(() => {
-          if (!attemptRestore()) {
-            // Give up and show songs
-            const style = document.getElementById('filter-loading-style');
-            if (style) {
-              const musicList = document.querySelector('.music-list-wrapper');
-              if (musicList) musicList.style.opacity = '1';
-              setTimeout(() => style.remove(), 500);
-            }
-          }
-        }, 300);
-      }
-    }, 100);
-  }
-});
-
-// Also restore after Barba transitions
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', function() {
-    filtersRestored = false; // Reset on transition
-    
+  // CRITICAL: Wait longer to ensure initDynamicTagging (1000ms) is ready
+  setTimeout(() => {
     if (!attemptRestore()) {
       setTimeout(() => { 
         if (!attemptRestore()) {
@@ -2592,8 +2523,36 @@ if (typeof barba !== 'undefined') {
             }
           }, 300);
         }
-      }, 100);
+      }, 200);
     }
+  }, 1100); // Wait for initDynamicTagging (1000ms) + buffer
+});
+
+// Also restore after Barba transitions
+if (typeof barba !== 'undefined') {
+  window.addEventListener('barbaAfterTransition', function() {
+    filtersRestored = false; // Reset on transition
+    
+    // CRITICAL: Wait longer to ensure initDynamicTagging is ready
+    setTimeout(() => {
+      if (!attemptRestore()) {
+        setTimeout(() => { 
+          if (!attemptRestore()) {
+            setTimeout(() => {
+              if (!attemptRestore()) {
+                // Give up and show songs
+                const style = document.getElementById('filter-loading-style');
+                if (style) {
+                  const musicList = document.querySelector('.music-list-wrapper');
+                  if (musicList) musicList.style.opacity = '1';
+                  setTimeout(() => style.remove(), 500);
+                }
+              }
+            }, 300);
+          }
+        }, 200);
+      }
+    }, 1100); // Wait for initDynamicTagging + buffer
   });
 }
 
@@ -2608,17 +2567,6 @@ if (clearButton) {
     if (searchBar && searchBar.value) {
       searchBar.value = '';
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    
-    // Remove search tag if it exists
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (tagsContainer) {
-      const searchTag = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(tag => 
-        tag.dataset.searchTag === 'true'
-      );
-      if (searchTag) {
-        searchTag.remove();
-      }
     }
   });
 }
