@@ -1005,10 +1005,10 @@ function initializeWaveforms() {
     loadWaveformBatch(visibleCards);
   }
   
- // Link after waveforms are ready
-setTimeout(() => {
-  linkStandaloneToWaveform();
-}, 500); // Increased delay to ensure waveforms are loaded
+// Link immediately and repeatedly to catch waveform when ready
+setTimeout(() => linkStandaloneToWaveform(), 100);
+setTimeout(() => linkStandaloneToWaveform(), 300);
+setTimeout(() => linkStandaloneToWaveform(), 600);
 }
 
 /**
@@ -1109,6 +1109,8 @@ if (peaksData && peaksData.trim().length > 0 && storedDuration) {
         if (durationElement) durationElement.textContent = formatDuration(duration);
         
         resolve();
+         // CRITICAL: Try to link as soon as this waveform is ready
+  setTimeout(() => linkStandaloneToWaveform(), 50);
       });
       
       setTimeout(() => {
@@ -1208,15 +1210,15 @@ if (peaksData && peaksData.trim().length > 0 && storedDuration) {
     });
   });
   
-  setTimeout(() => {
-    waveformContainers.forEach((container) => {
-      if (container.style.opacity === '0') {
-        container.style.opacity = '1';
-      }
-    });
-      // CRITICAL: Link standalone audio to waveform after batch loads
+ setTimeout(() => {
+  waveformContainers.forEach((container) => {
+    if (container.style.opacity === '0') {
+      container.style.opacity = '1';
+    }
+  });
+  // Link again after fade-in completes
   linkStandaloneToWaveform();
-  }, 6000);
+}, 1000); // Reduced from 6000ms to 1000ms
 }
 
 /**
