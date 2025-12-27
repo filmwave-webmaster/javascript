@@ -299,16 +299,19 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-  if (wasPlaying) {
-    audio.play().catch(err => {
-      if (err.name !== 'AbortError') {
-        console.error('Playback error:', err);
-      }
-    });
-  } else {
-    g.isPlaying = false;
-    updateMasterControllerIcons(false);
-  }
+ if (wasPlaying || g.autoPlayNext) {
+  audio.play().catch(err => {
+    if (err.name !== 'AbortError') {
+      console.error('Playback error:', err);
+    }
+  });
+  g.autoPlayNext = false;
+} else {
+  g.isPlaying = false;
+  updateMasterControllerIcons(false);
+}
+
+const tempContainer = document.createElement('div');
   
   const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
@@ -849,27 +852,27 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(false);
   });
   
-  audio.addEventListener('ended', () => {
-    updatePlayPauseIcons(cardElement, false);
-    const pb = cardElement.querySelector('.play-button');
-    if (pb) pb.style.opacity = '0';
-    
-    const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
-    let nextWavesurfer = null;
-    for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-      const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-      if (data && data.cardElement.offsetParent !== null) {
-        nextWavesurfer = g.allWavesurfers[i];
-        break;
-      }
+audio.addEventListener('ended', () => {
+  updatePlayPauseIcons(cardElement, false);
+  const pb = cardElement.querySelector('.play-button');
+  if (pb) pb.style.opacity = '0';
+  
+  const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
+  let nextWavesurfer = null;
+  for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+    const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+    if (data && data.cardElement.offsetParent !== null) {
+      nextWavesurfer = g.allWavesurfers[i];
+      break;
     }
-    if (nextWavesurfer) {
-      const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
-      if (nextData) {
-        playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
-      }
+  }
+  if (nextWavesurfer) {
+    const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
+    if (nextData) {
+      playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
     }
-  });
+  }
+});
   
   audio.addEventListener('error', (e) => {
     console.error('❌ Audio error:', e);
