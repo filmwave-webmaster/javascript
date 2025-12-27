@@ -2327,6 +2327,13 @@ function restoreFilterState() {
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
+    
+    // Ensure tags/clear button are visible
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    const clearButton = document.querySelector('.circle-x');
+    if (tagsContainer) tagsContainer.style.opacity = '1';
+    if (clearButton) clearButton.style.opacity = '1';
+    
     // Clean up any old style elements
     const oldStyle = document.getElementById('filter-loading-style-fresh');
     if (oldStyle) oldStyle.remove();
@@ -2342,6 +2349,13 @@ function restoreFilterState() {
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
+    
+    // Ensure tags/clear button are visible
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    const clearButton = document.querySelector('.circle-x');
+    if (tagsContainer) tagsContainer.style.opacity = '1';
+    if (clearButton) clearButton.style.opacity = '1';
+    
     return false;
   }
   
@@ -2358,10 +2372,30 @@ function restoreFilterState() {
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
       }
+      
+      // Ensure tags/clear button are visible
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      const clearButton = document.querySelector('.circle-x');
+      if (tagsContainer) tagsContainer.style.opacity = '1';
+      if (clearButton) clearButton.style.opacity = '1';
+      
       return false;
     }
     
     console.log('📂 Restoring filter state:', filterState);
+    
+    // Hide tags container and clear button during restoration
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    const clearButton = document.querySelector('.circle-x');
+    
+    if (tagsContainer) {
+      tagsContainer.style.opacity = '0';
+      tagsContainer.style.transition = 'none'; // Disable transition for instant hide
+    }
+    if (clearButton) {
+      clearButton.style.opacity = '0';
+      clearButton.style.transition = 'none';
+    }
     
     let restoredCount = 0;
     
@@ -2494,6 +2528,19 @@ function restoreFilterState() {
           if (tagsToRemove.length > 0) {
             console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
           }
+          
+          // Fade in tags and clear button together
+          setTimeout(() => {
+            if (tagsContainer) {
+              tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
+              tagsContainer.style.opacity = '1';
+            }
+            if (clearButton) {
+              clearButton.style.transition = 'opacity 0.3s ease-in-out';
+              clearButton.style.opacity = '1';
+            }
+            console.log('✨ Tags and clear button faded in');
+          }, 10); // Small delay to ensure transition applies
         }
       }, 100); // Wait for initDynamicTagging to finish
     }, 50);
@@ -2533,6 +2580,12 @@ function restoreFilterState() {
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
+    
+    // Ensure tags/clear button are visible
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    const clearButton = document.querySelector('.circle-x');
+    if (tagsContainer) tagsContainer.style.opacity = '1';
+    if (clearButton) clearButton.style.opacity = '1';
     
     return false;
   }
@@ -2586,13 +2639,18 @@ function attemptRestore() {
     if (success) {
       filtersRestored = true;
     } else {
-      // If restoration failed or no filters to restore, show songs
+      // If restoration failed or no filters to restore, show everything
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
       }
+      
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      const clearButton = document.querySelector('.circle-x');
+      if (tagsContainer) tagsContainer.style.opacity = '1';
+      if (clearButton) clearButton.style.opacity = '1';
     }
     return success;
   }
@@ -2602,14 +2660,19 @@ function attemptRestore() {
 window.addEventListener('load', function() {
   filtersRestored = false; // Reset on page load
   
-  // Safety timeout: show songs if restoration takes too long
+  // Safety timeout: show everything if restoration takes too long
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
     if (musicList && musicList.style.opacity === '0') {
-      console.warn('⚠️ Filter restoration timeout - showing songs anyway');
+      console.warn('⚠️ Filter restoration timeout - showing everything anyway');
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
+      
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      const clearButton = document.querySelector('.circle-x');
+      if (tagsContainer) tagsContainer.style.opacity = '1';
+      if (clearButton) clearButton.style.opacity = '1';
     }
   }, 2000);
   
