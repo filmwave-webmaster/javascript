@@ -991,10 +991,10 @@ function initializeWaveforms() {
     loadWaveformBatch(visibleCards);
   }
   
-  setTimeout(() => {
-    linkStandaloneToWaveform();
-  }, 100);
-}
+// CRITICAL: Defer linking until waveforms are fully settled
+setTimeout(() => {
+  linkStandaloneToWaveform();
+}, 500);
 
 /**
  * ============================================================
