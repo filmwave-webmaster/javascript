@@ -443,6 +443,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 }
 
 function drawMasterWaveform(peaks, progress) {
+  const g = window.musicPlayerPersistent;
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
   
@@ -458,7 +459,6 @@ function drawMasterWaveform(peaks, progress) {
     container.innerHTML = '';
     container.appendChild(canvas);
     canvas.addEventListener('click', (e) => {
-      const g = window.musicPlayerPersistent;
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const newProgress = clickX / rect.width;
@@ -486,8 +486,8 @@ function drawMasterWaveform(peaks, progress) {
   // CRITICAL: Check if we need to resize canvas
   const needsResize = canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr;
   
-  // CRITICAL: Check if peaks changed (new song)
-  const peaksChanged = !canvas._currentPeaks || canvas._currentPeaks !== peaks;
+  // CRITICAL: Check if peaks changed (store in global state, not on canvas)
+  const peaksChanged = !g._lastDrawnPeaks || g._lastDrawnPeaks !== peaks;
   
   // Only resize/clear if necessary
   if (needsResize) {
@@ -500,7 +500,7 @@ function drawMasterWaveform(peaks, progress) {
   // CRITICAL: Only clear if peaks changed or canvas resized
   if (peaksChanged || needsResize) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvas._currentPeaks = peaks; // Store current peaks reference
+    g._lastDrawnPeaks = peaks; // Store in global state instead of on canvas
   }
   
   const internalHeight = canvas.height;
