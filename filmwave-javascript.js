@@ -443,10 +443,8 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 }
 
 function drawMasterWaveform(peaks, progress) {
-  const g = window.musicPlayerPersistent;
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
-  
   let canvas = container.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
@@ -459,6 +457,7 @@ function drawMasterWaveform(peaks, progress) {
     container.innerHTML = '';
     container.appendChild(canvas);
     canvas.addEventListener('click', (e) => {
+      const g = window.musicPlayerPersistent;
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const newProgress = clickX / rect.width;
@@ -482,27 +481,10 @@ function drawMasterWaveform(peaks, progress) {
   const dpr = window.devicePixelRatio || 1;
   const displayWidth = canvas.clientWidth;
   const displayHeight = 25;
-  
-  // CRITICAL: Check if we need to resize canvas
-  const needsResize = canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr;
-  
-  // CRITICAL: Check if peaks changed (store in global state, not on canvas)
-  const peaksChanged = !g._lastDrawnPeaks || g._lastDrawnPeaks !== peaks;
-  
-  // Only resize/clear if necessary
-  if (needsResize) {
-    canvas.width = displayWidth * dpr;
-    canvas.height = displayHeight * dpr;
-  }
-  
+  canvas.width = displayWidth * dpr;
+  canvas.height = displayHeight * dpr;
   const ctx = canvas.getContext('2d');
-  
-  // CRITICAL: Only clear if peaks changed or canvas resized
-  if (peaksChanged || needsResize) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    g._lastDrawnPeaks = peaks; // Store in global state instead of on canvas
-  }
-  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   const internalHeight = canvas.height;
   const centerY = internalHeight / 2;
   
@@ -524,7 +506,6 @@ function drawMasterWaveform(peaks, progress) {
   const barsCount = Math.floor(canvas.width / barTotal);
   const samplesPerBar = Math.floor(peaks.length / barsCount);
   
-  // CRITICAL: Redraw bars with new progress colors (no clear needed if same peaks)
   for (let i = 0; i < barsCount; i++) {
     const startSample = i * samplesPerBar;
     const endSample = startSample + samplesPerBar;
@@ -674,6 +655,7 @@ function initMasterPlayer() {
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
 }
+
 /**
  * ============================================================
  * SONG CARD FUNCTIONS
@@ -1768,7 +1750,6 @@ function reinitializeWebflowTabs() {
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
-    sync: true,
     transitions: [{
       name: 'default',
       
