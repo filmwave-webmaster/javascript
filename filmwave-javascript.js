@@ -2051,6 +2051,10 @@ if (typeof barba !== 'undefined') {
  * ============================================================
  * This is the solution that worked in past chats.
  * Key: MutationObserver + .click() + lastChangeSource + 500ms delay
+ * 
+ * SETUP: Add classes directly to the checkbox input elements in Webflow:
+ * - Song card checkbox: Add class "favourite-checkbox" to the input
+ * - Player checkbox: Add class "player-favourite-checkbox" to the input
  */
 
 function initFavoriteSync() {
@@ -2067,6 +2071,7 @@ function initFavoriteSync() {
   
   // Watch for player favourite to appear in DOM
   const observer = new MutationObserver(function() {
+    // The class is directly on the input element in Webflow
     const player = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
     if (player && !playerListenerAttached) {
       console.log('✅ Player favourite appeared in DOM');
@@ -2099,6 +2104,7 @@ function initFavoriteSync() {
   
   function getPlayerFavourite() {
     if (!playerFavourite || !document.body.contains(playerFavourite)) {
+      // The class is directly on the input element in Webflow
       playerFavourite = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
       if (playerFavourite && !playerListenerAttached) {
         console.log('✅ Player favourite found via getter');
@@ -2114,6 +2120,7 @@ function initFavoriteSync() {
       currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
     }
     
+    // The class is directly on the input element in Webflow
     currentSongFavourite = songCard.querySelector('.favourite-checkbox');
     console.log('Set current song favourite:', currentSongFavourite ? 'found' : 'not found');
     
