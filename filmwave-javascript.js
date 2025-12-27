@@ -2261,46 +2261,15 @@ if (typeof barba !== 'undefined') {
  * LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES
  * ============================================================
  * Saves user's active filters and favorite songs across sessions
+ * 
+ * BEHAVIOR:
+ * - Filters persist during Barba navigation (clicking links)
+ * - Filters reset on fresh page load (F5, hard refresh, opening new tab)
+ * - Uses sessionStorage flag to distinguish between navigation types
  */
 
 let filtersRestored = false;
 let favoritesRestored = false;
-
-// Check immediately if we have saved filters and hide songs if needed
-(function() {
-  const savedState = localStorage.getItem('musicFilters');
-  if (savedState) {
-    try {
-      const filterState = JSON.parse(savedState);
-      const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
-      
-      if (hasActiveFilters) {
-        // Add CSS to hide songs immediately
-        const style = document.createElement('style');
-        style.id = 'filter-loading-style';
-        style.textContent = `
-          .music-list-wrapper {
-            opacity: 0 !important;
-            transition: opacity 0.4s ease-in-out;
-          }
-        `;
-        document.head.appendChild(style);
-        console.log('🔒 Songs hidden - filters loading...');
-        
-        // Safety timeout: show songs after 2 seconds even if restoration fails
-        setTimeout(() => {
-          const style = document.getElementById('filter-loading-style');
-          if (style) {
-            console.warn('⚠️ Filter restoration timeout - showing songs anyway');
-            const musicList = document.querySelector('.music-list-wrapper');
-            if (musicList) musicList.style.opacity = '1';
-            setTimeout(() => style.remove(), 500);
-          }
-        }, 2000);
-      }
-    } catch (e) {}
-  }
-})();
 
 function saveFilterState() {
   const filterState = {
@@ -2330,13 +2299,39 @@ function saveFilterState() {
 }
 
 function restoreFilterState() {
+  // Check if this is a Barba navigation (not a fresh page load)
+  const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation') === 'true';
+  
+  // Clear the flag immediately after checking
+  sessionStorage.removeItem('isBarbaNavigation');
+  
+  if (!isBarbaNavigation) {
+    console.log('🔄 Fresh page load - not restoring filters');
+    // Remove hiding style for fresh loads
+    const style = document.getElementById('filter-loading-style');
+    if (style) {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
+      setTimeout(() => style.remove(), 500);
+    }
+    return false;
+  }
+  
   const savedState = localStorage.getItem('musicFilters');
   if (!savedState) {
     // No saved filters - remove hiding style immediately
     const style = document.getElementById('filter-loading-style');
     if (style) {
       const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) musicList.style.opacity = '1';
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
       setTimeout(() => style.remove(), 500);
     }
     return false;
@@ -2352,7 +2347,11 @@ function restoreFilterState() {
       const style = document.getElementById('filter-loading-style');
       if (style) {
         const musicList = document.querySelector('.music-list-wrapper');
-        if (musicList) musicList.style.opacity = '1';
+        if (musicList) {
+          musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+        }
         setTimeout(() => style.remove(), 500);
       }
       return false;
@@ -2426,6 +2425,9 @@ function restoreFilterState() {
         const musicList = document.querySelector('.music-list-wrapper');
         if (musicList) {
           musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+          musicList.style.transition = 'opacity 0.4s ease-in-out';
         }
         // Remove the style after fade completes
         setTimeout(() => style.remove(), 500);
@@ -2442,7 +2444,11 @@ function restoreFilterState() {
     const style = document.getElementById('filter-loading-style');
     if (style) {
       const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) musicList.style.opacity = '1';
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
       setTimeout(() => style.remove(), 500);
     }
     
@@ -2458,7 +2464,11 @@ function clearFilterState() {
   const style = document.getElementById('filter-loading-style');
   if (style) {
     const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) musicList.style.opacity = '1';
+    if (musicList) {
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
+    }
     setTimeout(() => style.remove(), 500);
   }
 }
@@ -2494,7 +2504,11 @@ function attemptRestore() {
       const style = document.getElementById('filter-loading-style');
       if (style) {
         const musicList = document.querySelector('.music-list-wrapper');
-        if (musicList) musicList.style.opacity = '1';
+        if (musicList) {
+          musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+        }
         setTimeout(() => style.remove(), 500);
       }
     }
@@ -2505,6 +2519,21 @@ function attemptRestore() {
 
 window.addEventListener('load', function() {
   filtersRestored = false; // Reset on page load
+  
+  // Safety timeout: show songs if restoration takes too long
+  setTimeout(() => {
+    const style = document.getElementById('filter-loading-style');
+    if (style) {
+      console.warn('⚠️ Filter restoration timeout - showing songs anyway');
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
+      style.remove();
+    }
+  }, 3000);
   
   // CRITICAL: Wait longer to ensure initDynamicTagging (1000ms) is ready
   setTimeout(() => {
@@ -2517,7 +2546,11 @@ window.addEventListener('load', function() {
               const style = document.getElementById('filter-loading-style');
               if (style) {
                 const musicList = document.querySelector('.music-list-wrapper');
-                if (musicList) musicList.style.opacity = '1';
+                if (musicList) {
+                  musicList.style.opacity = '1';
+                  musicList.style.visibility = 'visible';
+                  musicList.style.pointerEvents = 'auto';
+                }
                 setTimeout(() => style.remove(), 500);
               }
             }
@@ -2530,7 +2563,18 @@ window.addEventListener('load', function() {
 
 // Also restore after Barba transitions
 if (typeof barba !== 'undefined') {
+  // Set flag when user clicks any link (before transition starts)
+  document.addEventListener('click', function(e) {
+    const link = e.target.closest('a');
+    if (link && !link.classList.contains('no-barba')) {
+      sessionStorage.setItem('isBarbaNavigation', 'true');
+    }
+  });
+  
   window.addEventListener('barbaAfterTransition', function() {
+    // Ensure flag is set (redundant but safe)
+    sessionStorage.setItem('isBarbaNavigation', 'true');
+    
     filtersRestored = false; // Reset on transition
     
     // CRITICAL: Wait longer to ensure initDynamicTagging is ready
@@ -2544,7 +2588,11 @@ if (typeof barba !== 'undefined') {
                 const style = document.getElementById('filter-loading-style');
                 if (style) {
                   const musicList = document.querySelector('.music-list-wrapper');
-                  if (musicList) musicList.style.opacity = '1';
+                  if (musicList) {
+                    musicList.style.opacity = '1';
+                    musicList.style.visibility = 'visible';
+                    musicList.style.pointerEvents = 'auto';
+                  }
                   setTimeout(() => style.remove(), 500);
                 }
               }
