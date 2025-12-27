@@ -2125,7 +2125,13 @@ function initFavoriteSync() {
     console.log('Set current song favourite:', currentSongFavourite ? 'found' : 'not found');
     
     if (currentSongFavourite) {
+      console.log('Song checkbox element:', currentSongFavourite.tagName, currentSongFavourite.type, 'checked:', currentSongFavourite.checked);
+      
       const player = getPlayerFavourite();
+      
+      if (player) {
+        console.log('Player checkbox element:', player.tagName, player.type, 'checked:', player.checked);
+      }
       
       // Sync player if it exists and states differ
       if (player) {
