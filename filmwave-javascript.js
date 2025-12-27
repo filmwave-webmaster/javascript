@@ -19,7 +19,8 @@ if (!window.musicPlayerPersistent) {
     MASTER_DATA: [],
     allWavesurfers: [],
     waveformData: [],
-    filtersInitialized: false
+    filtersInitialized: false,
+    isTransitioning: false  // ADD THIS LINE
   };
 }
 
@@ -443,6 +444,13 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 }
 
 function drawMasterWaveform(peaks, progress) {
+  const g = window.musicPlayerPersistent;
+  
+  // CRITICAL: Skip redrawing during Barba transitions
+  if (g.isTransitioning) {
+    return;
+  }
+  
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
   let canvas = container.querySelector('canvas');
@@ -800,9 +808,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g.currentWavesurfer = wavesurfer;
   g.hasActiveSong = true;
   
-  // CRITICAL: Very brief fade in/out using volume to prevent clicks
-  audio.volume = 0.9; // Start slightly below max to avoid click
-  
   audio.addEventListener('loadedmetadata', () => {
     g.currentDuration = audio.duration;
     
@@ -836,9 +841,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(true);
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
-    
-    // Quickly ramp to full volume
-    audio.volume = 1;
   });
   
   audio.addEventListener('pause', () => {
@@ -1761,6 +1763,7 @@ if (typeof barba !== 'undefined') {
       
       beforeLeave(data) {
         const g = window.musicPlayerPersistent;
+        g.isTransitioning = true;
         const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
         
         // CRITICAL: Reset filters flag so they can be re-initialized
@@ -1870,6 +1873,9 @@ if (typeof barba !== 'undefined') {
           setupMasterPlayerControls();
           positionMasterPlayer();
           updateMasterPlayerVisibility();
+
+          // CRITICAL: Re-enable waveform drawing AFTER transition
+          g.isTransitioning = false;
           
           if (g.currentSongData) {
             updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
