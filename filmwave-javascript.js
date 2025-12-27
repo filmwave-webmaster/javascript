@@ -202,7 +202,7 @@ async function initMusicPage() {
  * STANDALONE AUDIO PLAYER (for non-music pages)
  * ============================================================
  */
-function navigateStandaloneTrack(direction, forceAutoplay = false) {
+function navigateStandaloneTrack(direction) {
   const g = window.musicPlayerPersistent;
   
   if (!g.currentSongData || g.MASTER_DATA.length === 0) return;
@@ -299,16 +299,16 @@ function navigateStandaloneTrack(direction, forceAutoplay = false) {
     }
   });
   
-if (wasPlaying || forceAutoplay) {
-  audio.play().catch(err => {
-    if (err.name !== 'AbortError') {
-      console.error('Playback error:', err);
-    }
-  });
-} else {
-  g.isPlaying = false;
-  updateMasterControllerIcons(false);
-}
+  if (wasPlaying) {
+    audio.play().catch(err => {
+      if (err.name !== 'AbortError') {
+        console.error('Playback error:', err);
+      }
+    });
+  } else {
+    g.isPlaying = false;
+    updateMasterControllerIcons(false);
+  }
   
   const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
@@ -849,16 +849,11 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(false);
   });
   
-audio.addEventListener('ended', () => {
-  updatePlayPauseIcons(cardElement, false);
-  const pb = cardElement.querySelector('.play-button');
-  if (pb) pb.style.opacity = '0';
-  
-  // CRITICAL: Check if we're on the music page or not
-  const isMusicPage = g.allWavesurfers.length > 0;
-  
-  if (isMusicPage) {
-    // On music page - use waveform navigation
+  audio.addEventListener('ended', () => {
+    updatePlayPauseIcons(cardElement, false);
+    const pb = cardElement.querySelector('.play-button');
+    if (pb) pb.style.opacity = '0';
+    
     const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
     let nextWavesurfer = null;
     for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
@@ -874,11 +869,7 @@ audio.addEventListener('ended', () => {
         playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
       }
     }
-  } else {
-    // On non-music page - use standalone navigation
-    navigateStandaloneTrack('next', true);
-  }
-});
+  });
   
   audio.addEventListener('error', (e) => {
     console.error('❌ Audio error:', e);
