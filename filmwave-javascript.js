@@ -2630,16 +2630,23 @@ document.addEventListener('input', function(e) {
 
 // Restore filters after they're initialized - try multiple times for faster response
 function attemptRestore() {
+  console.log('attemptRestore called, filtersRestored:', filtersRestored);
+  
   if (filtersRestored) return true;
   
   // Check if filters are ready
   const hasFilters = document.querySelectorAll('[data-filter-group]').length > 0;
+  console.log('Filters found on page:', hasFilters);
+  
   if (hasFilters) {
     const success = restoreFilterState();
+    console.log('restoreFilterState returned:', success);
+    
     if (success) {
       filtersRestored = true;
     } else {
       // If restoration failed or no filters to restore, show everything
+      console.log('Restoration failed - showing everything');
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
         musicList.style.opacity = '1';
@@ -2656,6 +2663,7 @@ function attemptRestore() {
   }
   
   // No filters on this page - show songs immediately
+  console.log('No filters on page - showing songs immediately');
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.opacity = '1';
@@ -2667,12 +2675,46 @@ function attemptRestore() {
 }
 
 window.addEventListener('load', function() {
+  console.log('🔄 Page load event fired');
   filtersRestored = false; // Reset on page load
+  
+  // Attach clear button listener
+  const clearButton = document.querySelector('.circle-x');
+  if (clearButton) {
+    console.log('✅ Clear button found, attaching listener');
+    clearButton.addEventListener('click', function() {
+      isClearing = true; // Set flag FIRST
+      
+      clearFilterState();
+      
+      // Clear search input (won't trigger auto-save due to flag)
+      const searchBar = document.querySelector('[data-filter-search="true"]');
+      if (searchBar && searchBar.value) {
+        searchBar.value = '';
+        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
+  
+  // AGGRESSIVE: Show songs immediately on page load
+  setTimeout(() => {
+    const musicList = document.querySelector('.music-list-wrapper');
+    console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
+    if (musicList) {
+      console.log('Current opacity:', musicList.style.opacity);
+      if (!musicList.style.opacity || musicList.style.opacity === '0') {
+        console.log('⚡ Setting initial visibility');
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
+    }
+  }, 100);
   
   // Safety timeout: show everything if restoration takes too long
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList && musicList.style.opacity === '0') {
+    if (musicList && (musicList.style.opacity === '0' || musicList.style.visibility === 'hidden')) {
       console.warn('⚠️ Filter restoration timeout - showing everything anyway');
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
@@ -2687,6 +2729,7 @@ window.addEventListener('load', function() {
   
   // Start restoration EARLY (100ms instead of 1100ms)
   setTimeout(() => {
+    console.log('Starting filter restoration attempts');
     if (!attemptRestore()) {
       setTimeout(() => { 
         if (!attemptRestore()) {
@@ -2708,12 +2751,15 @@ if (typeof barba !== 'undefined') {
   
   // Hook: BEFORE entering new page (but after HTML is fetched)
   barba.hooks.beforeEnter((data) => {
+    console.log('📥 Barba beforeEnter hook');
     const savedState = localStorage.getItem('musicFilters');
+    console.log('Saved filters:', savedState);
     
     if (savedState) {
       try {
         const filterState = JSON.parse(savedState);
         const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
+        console.log('Has active filters:', hasActiveFilters);
         
         if (hasActiveFilters) {
           // Hide songs BEFORE they render
@@ -2723,22 +2769,44 @@ if (typeof barba !== 'undefined') {
             musicList.style.visibility = 'hidden';
             musicList.style.pointerEvents = 'none';
             console.log('🔒 Songs hidden via Barba hook');
+          } else {
+            console.log('⚠️ Music list not found in next container');
           }
+        } else {
+          console.log('✅ No active filters - songs will show normally');
         }
       } catch (e) {
         console.error('Error in beforeEnter hook:', e);
       }
+    } else {
+      console.log('✅ No saved state - songs will show normally');
     }
   });
   
   // Hook: AFTER page transition completes
   barba.hooks.after((data) => {
+    console.log('✅ Barba after hook');
     filtersRestored = false;
+    
+    // AGGRESSIVE: Show songs after a short delay regardless
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
+      if (musicList) {
+        console.log('Music list opacity:', musicList.style.opacity);
+        if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
+          console.log('⚡ Forcing songs visible after 500ms');
+          musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+        }
+      }
+    }, 500);
     
     // Safety timeout: show everything if restoration takes too long
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList && musicList.style.opacity === '0') {
+      if (musicList && (musicList.style.opacity === '0' || musicList.style.visibility === 'hidden')) {
         console.warn('⚠️ Filter restoration timeout (Barba) - showing everything');
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
@@ -2753,10 +2821,15 @@ if (typeof barba !== 'undefined') {
     
     // Start restoration EARLY (don't wait for initDynamicTagging)
     setTimeout(() => {
+      console.log('Attempting restore at 100ms');
       if (!attemptRestore()) {
         setTimeout(() => {
+          console.log('Attempting restore at 200ms');
           if (!attemptRestore()) {
-            setTimeout(attemptRestore, 200);
+            setTimeout(() => {
+              console.log('Attempting restore at 400ms');
+              attemptRestore();
+            }, 200);
           }
         }, 100);
       }
