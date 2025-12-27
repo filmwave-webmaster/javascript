@@ -20,7 +20,8 @@ if (!window.musicPlayerPersistent) {
     allWavesurfers: [],
     waveformData: [],
     filtersInitialized: false,
-    isTransitioning: false  // ADD THIS LINE
+    isTransitioning: false,
+    audioContext: null  // ADD THIS
   };
 }
 
@@ -80,36 +81,6 @@ function adjustDropdownPosition(toggle, list) {
     list.style.top = '100%';
     list.style.bottom = 'auto';
   }
-}
-
-/**
- * ============================================================
- * AUDIO SMOOTH START/STOP
- * ============================================================
- */
-function smoothPlay(audio) {
-  if (!audio) return Promise.resolve();
-  
-  // Set a tiny delay before starting to avoid clicks
-  audio.currentTime = Math.max(0, audio.currentTime);
-  
-  return audio.play().catch(err => {
-    if (err.name !== 'AbortError') {
-      console.error('Playback error:', err);
-    }
-  });
-}
-
-function smoothPause(audio) {
-  if (!audio) return Promise.resolve();
-  
-  return new Promise((resolve) => {
-    // Small delay before pause to prevent click
-    setTimeout(() => {
-      audio.pause();
-      resolve();
-    }, 10);
-  });
 }
 
 /**
@@ -617,17 +588,30 @@ function setupMasterPlayerControls() {
   const controllerNext = document.querySelector('.controller-next');
   const controllerPrev = document.querySelector('.controller-prev');
   
-  const handlePlayPause = () => {
-    if (g.standaloneAudio) {
-      if (g.standaloneAudio.paused) {
-        g.standaloneAudio.play();
+const handlePlayPause = () => {
+  if (g.standaloneAudio) {
+    if (g.standaloneAudio.paused) {
+      g.standaloneAudio.play();
+    } else {
+      // CRITICAL: Ramp gain down before pause
+      const gainNode = g.standaloneAudio._gainNode;
+      if (gainNode && g.audioContext) {
+        const currentTime = g.audioContext.currentTime;
+        gainNode.gain.cancelScheduledValues(currentTime);
+        gainNode.gain.setValueAtTime(gainNode.gain.value, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0, currentTime + 0.02); // 20ms ramp
+        
+        setTimeout(() => {
+          g.standaloneAudio.pause();
+        }, 25);
       } else {
         g.standaloneAudio.pause();
       }
-    } else if (g.currentWavesurfer) {
-      g.currentWavesurfer.playPause();
     }
-  };
+  } else if (g.currentWavesurfer) {
+    g.currentWavesurfer.playPause();
+  }
+};
   
   if (masterPlayButton) masterPlayButton.onclick = handlePlayPause;
   if (controllerPlay) controllerPlay.onclick = handlePlayPause;
@@ -838,6 +822,21 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g.currentWavesurfer = wavesurfer;
   g.hasActiveSong = true;
   
+  // CRITICAL: Create Web Audio context and gain node for smooth start/stop
+  if (!g.audioContext) {
+    g.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  
+  // Create media source and gain node
+  const source = g.audioContext.createMediaElementSource(audio);
+  const gainNode = g.audioContext.createGain();
+  
+  source.connect(gainNode);
+  gainNode.connect(g.audioContext.destination);
+  
+  // Store gain node reference
+  audio._gainNode = gainNode;
+  
   audio.addEventListener('loadedmetadata', () => {
     g.currentDuration = audio.duration;
     
@@ -866,6 +865,15 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   });
   
   audio.addEventListener('play', () => {
+    // CRITICAL: Ramp gain up smoothly on play
+    const gainNode = audio._gainNode;
+    if (gainNode) {
+      const currentTime = g.audioContext.currentTime;
+      gainNode.gain.cancelScheduledValues(currentTime);
+      gainNode.gain.setValueAtTime(0, currentTime);
+      gainNode.gain.linearRampToValueAtTime(1, currentTime + 0.02); // 20ms ramp
+    }
+    
     g.isPlaying = true;
     updatePlayPauseIcons(cardElement, true);
     updateMasterControllerIcons(true);
@@ -917,7 +925,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   
   return audio;
 }
-
 /**
  * ============================================================
  * PLAY STANDALONE SONG
