@@ -1969,7 +1969,7 @@ if (typeof barba !== 'undefined') {
   
   window.scrollTo(0, 0);
   
- // ============================================================
+// ============================================================
 // CRITICAL: Extract data-wf-page from the incoming HTML
 // ============================================================
 console.log('🔍 Checking for page ID...');
@@ -1979,16 +1979,18 @@ let newPageId = null;
 newPageId = data.next.container?.getAttribute('data-wf-page');
 console.log('Method 1 (container):', newPageId);
 
-// Method 2: Parse the incoming HTML
+// Method 2: Extract directly from HTML string using regex
 if (!newPageId && data.next.html) {
-  console.log('Method 2: Parsing HTML string, length:', data.next.html.length);
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(data.next.html, 'text/html');
-  const bodyElement = doc.querySelector('body');
-  console.log('Body element found?', !!bodyElement);
-  if (bodyElement) {
-    newPageId = bodyElement.getAttribute('data-wf-page');
-    console.log('Page ID from body:', newPageId);
+  console.log('Method 2: Searching HTML string for data-wf-page');
+  
+  // Look for data-wf-page="VALUE" in the HTML string
+  const match = data.next.html.match(/data-wf-page="([^"]+)"/);
+  
+  if (match && match[1]) {
+    newPageId = match[1];
+    console.log('Page ID from regex:', newPageId);
+  } else {
+    console.log('No data-wf-page found in HTML string');
   }
 }
 
@@ -2002,10 +2004,11 @@ console.log('New page ID:', newPageId);
 if (newPageId && currentPageId !== newPageId) {
   console.log(`📄 Swapping Page ID from ${currentPageId} to ${newPageId}`);
   htmlTag.setAttribute('data-wf-page', newPageId);
+  console.log('✅ Page ID updated!');
 } else if (!newPageId) {
   console.log('⚠️ No new page ID found');
 } else if (currentPageId === newPageId) {
-  console.log('⚠️ Page IDs are already the same');
+  console.log('ℹ️ Page IDs are already the same - no swap needed');
 }
   
   // ============================================================
