@@ -2471,6 +2471,31 @@ function restoreFilterState() {
           input.dispatchEvent(new Event('change', { bubbles: true }));
         }
       });
+      
+      // Remove duplicate tags created by initDynamicTagging
+      setTimeout(() => {
+        if (tagsContainer) {
+          const seen = new Set();
+          const tagsToRemove = [];
+          
+          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
+            const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+            if (text) {
+              if (seen.has(text)) {
+                tagsToRemove.push(tag);
+              } else {
+                seen.add(text);
+              }
+            }
+          });
+          
+          tagsToRemove.forEach(tag => tag.remove());
+          
+          if (tagsToRemove.length > 0) {
+            console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
+          }
+        }
+      }, 100); // Wait for initDynamicTagging to finish
     }, 50);
     
     // Restore search (stays in field, no tag)
