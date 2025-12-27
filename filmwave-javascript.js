@@ -695,6 +695,13 @@ function populateSongCard(cardElement, song) {
   if (bpm) bpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
   const downloadLink = cardElement.querySelector('.download-icon');
   if (downloadLink && fields['R2 Audio URL']) downloadLink.href = fields['R2 Audio URL'];
+  
+  // ADD FAVOURITE-CHECKBOX CLASS FOR SYNCING
+  const favoriteCheckbox = cardElement.querySelector('input[type="checkbox"]');
+  if (favoriteCheckbox) {
+    favoriteCheckbox.classList.add('favourite-checkbox');
+  }
+  
   const stemsData = fields['Stems'];
   const stemsWrapper = cardElement.querySelector('.stems-dropdown-wrapper');
   const optionsToggle = cardElement.querySelector('.options-dropdown-toggle');
