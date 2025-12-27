@@ -299,7 +299,7 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
- if (wasPlaying || g.autoPlayNext) {
+if (wasPlaying || g.autoPlayNext) {
   audio.play().catch(err => {
     if (err.name !== 'AbortError') {
       console.error('Playback error:', err);
@@ -312,8 +312,6 @@ function navigateStandaloneTrack(direction) {
 }
 
 const tempContainer = document.createElement('div');
-  
-  const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
   
