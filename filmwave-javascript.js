@@ -819,10 +819,10 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   audio.addEventListener('timeupdate', () => {
     g.currentTime = audio.currentTime;
     
-   // if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
-  //    const progress = audio.currentTime / audio.duration;
-  //    wavesurfer.seekTo(progress);
-  //  }
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      wavesurfer.seekTo(progress);
+    }
     
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
