@@ -295,9 +295,18 @@ function navigateStandaloneTrack(direction) {
     navigateStandaloneTrack('next');
   });
   
-  audio.addEventListener('error', (e) => {
-    if (g.standaloneAudio === audio) {
-      console.error('❌ Audio error:', e);
+audio.addEventListener('error', (e) => {
+  // Log detailed error information
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.error('❌ AUDIO ERROR DETAILS:');
+  console.error('Song:', songData?.fields?.['Song Title'] || 'Unknown');
+  console.error('Artist:', songData?.fields?.['Artist'] || 'Unknown');
+  console.error('Audio URL:', audioUrl);
+  console.error('Error code:', audio.error?.code);
+  console.error('Error message:', audio.error?.message);
+  console.error('Network state:', audio.networkState);
+  console.error('Ready state:', audio.readyState);
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
   });
   
@@ -876,8 +885,18 @@ audio.addEventListener('ended', () => {
   }
 });
   
-  audio.addEventListener('error', (e) => {
-    console.error('❌ Audio error:', e);
+audio.addEventListener('error', (e) => {
+  // Log detailed error information
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.error('❌ AUDIO ERROR DETAILS:');
+  console.error('Song:', songData?.fields?.['Song Title'] || 'Unknown');
+  console.error('Artist:', songData?.fields?.['Artist'] || 'Unknown');
+  console.error('Audio URL:', audioUrl);
+  console.error('Error code:', audio.error?.code);
+  console.error('Error message:', audio.error?.message);
+  console.error('Network state:', audio.networkState);
+  console.error('Ready state:', audio.readyState);
+  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
   
   audio.src = audioUrl;
