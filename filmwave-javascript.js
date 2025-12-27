@@ -2384,10 +2384,11 @@ function restoreFilterState() {
     
     console.log('📂 Restoring filter state:', filterState);
     
-    // Hide tags container and clear button during restoration
+    // Declare tags container and clear button once at the top
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     
+    // Hide tags container and clear button during restoration
     if (tagsContainer) {
       tagsContainer.style.opacity = '0';
       tagsContainer.style.transition = 'none'; // Disable transition for instant hide
@@ -2426,7 +2427,6 @@ function restoreFilterState() {
     
     // CRITICAL: Dispatch change events AFTER all inputs are checked
     // Create tags MANUALLY instead of waiting for initDynamicTagging
-    const tagsContainer = document.querySelector('.filter-tags-container');
     
     if (tagsContainer) {
       // Clear existing tags first
