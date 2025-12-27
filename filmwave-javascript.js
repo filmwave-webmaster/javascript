@@ -871,11 +871,12 @@ audio.addEventListener('ended', () => {
     if (nextData) {
       playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
     }
-  } else {
-    // No waveforms available (not on music page) - use standalone navigation
+  } else if (g.allWavesurfers.length === 0) {
+    // ONLY use standalone navigation if we're truly off the music page
     g.autoPlayNext = true;
     navigateStandaloneTrack('next');
   }
+  // else: on music page but no more songs - stop playing
 });
   
   audio.addEventListener('error', (e) => {
