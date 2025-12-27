@@ -20,7 +20,8 @@ if (!window.musicPlayerPersistent) {
     allWavesurfers: [],
     waveformData: [],
     filtersInitialized: false,
-    isTransitioning: false  // ADD THIS LINE
+    isTransitioning: false,
+    autoPlayNext: false  // ADD THIS
   };
 }
 
@@ -290,6 +291,7 @@ function navigateStandaloneTrack(direction) {
   
   audio.addEventListener('ended', () => {
     if (g.standaloneAudio !== audio) return;
+    g.autoPlayNext = true;
     navigateStandaloneTrack('next');
   });
   
@@ -299,18 +301,19 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-  if (wasPlaying) {
-    audio.play().catch(err => {
-      if (err.name !== 'AbortError') {
-        console.error('Playback error:', err);
-      }
-    });
-  } else {
-    g.isPlaying = false;
-    updateMasterControllerIcons(false);
-  }
-  
-  const tempContainer = document.createElement('div');
+if (wasPlaying || g.autoPlayNext) {
+  audio.play().catch(err => {
+    if (err.name !== 'AbortError') {
+      console.error('Playback error:', err);
+    }
+  });
+  g.autoPlayNext = false;
+} else {
+  g.isPlaying = false;
+  updateMasterControllerIcons(false);
+}
+
+const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
   
@@ -849,7 +852,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(false);
   });
   
- audio.addEventListener('ended', () => {
+audio.addEventListener('ended', () => {
   updatePlayPauseIcons(cardElement, false);
   const pb = cardElement.querySelector('.play-button');
   if (pb) pb.style.opacity = '0';
