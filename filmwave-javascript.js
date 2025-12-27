@@ -445,6 +445,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 function drawMasterWaveform(peaks, progress) {
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
+  
   let canvas = container.querySelector('canvas');
   if (!canvas) {
     canvas = document.createElement('canvas');
@@ -481,10 +482,27 @@ function drawMasterWaveform(peaks, progress) {
   const dpr = window.devicePixelRatio || 1;
   const displayWidth = canvas.clientWidth;
   const displayHeight = 25;
-  canvas.width = displayWidth * dpr;
-  canvas.height = displayHeight * dpr;
+  
+  // CRITICAL: Check if we need to resize canvas
+  const needsResize = canvas.width !== displayWidth * dpr || canvas.height !== displayHeight * dpr;
+  
+  // CRITICAL: Check if peaks changed (new song)
+  const peaksChanged = !canvas._currentPeaks || canvas._currentPeaks !== peaks;
+  
+  // Only resize/clear if necessary
+  if (needsResize) {
+    canvas.width = displayWidth * dpr;
+    canvas.height = displayHeight * dpr;
+  }
+  
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // CRITICAL: Only clear if peaks changed or canvas resized
+  if (peaksChanged || needsResize) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas._currentPeaks = peaks; // Store current peaks reference
+  }
+  
   const internalHeight = canvas.height;
   const centerY = internalHeight / 2;
   
@@ -506,6 +524,7 @@ function drawMasterWaveform(peaks, progress) {
   const barsCount = Math.floor(canvas.width / barTotal);
   const samplesPerBar = Math.floor(peaks.length / barsCount);
   
+  // CRITICAL: Redraw bars with new progress colors (no clear needed if same peaks)
   for (let i = 0; i < barsCount; i++) {
     const startSample = i * samplesPerBar;
     const endSample = startSample + samplesPerBar;
@@ -655,7 +674,6 @@ function initMasterPlayer() {
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
 }
-
 /**
  * ============================================================
  * SONG CARD FUNCTIONS
