@@ -307,7 +307,6 @@ audio.addEventListener('error', (e) => {
   console.error('Network state:', audio.networkState);
   console.error('Ready state:', audio.readyState);
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    }
   });
   
 if (wasPlaying || g.autoPlayNext) {
