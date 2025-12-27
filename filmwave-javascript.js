@@ -84,45 +84,31 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
- * AUDIO FADE UTILITIES
+ * AUDIO SMOOTH START/STOP
  * ============================================================
  */
-function fadeAudioIn(audio, duration = 50) {
+function smoothPlay(audio) {
   if (!audio) return Promise.resolve();
   
-  return new Promise((resolve) => {
-    audio.volume = 0;
-    const step = 0.05;
-    const interval = duration / (1 / step);
-    
-    const fadeInterval = setInterval(() => {
-      if (audio.volume < 0.95) {
-        audio.volume = Math.min(audio.volume + step, 1);
-      } else {
-        audio.volume = 1;
-        clearInterval(fadeInterval);
-        resolve();
-      }
-    }, interval);
+  // Set a tiny delay before starting to avoid clicks
+  audio.currentTime = Math.max(0, audio.currentTime);
+  
+  return audio.play().catch(err => {
+    if (err.name !== 'AbortError') {
+      console.error('Playback error:', err);
+    }
   });
 }
 
-function fadeAudioOut(audio, duration = 50) {
+function smoothPause(audio) {
   if (!audio) return Promise.resolve();
   
   return new Promise((resolve) => {
-    const step = 0.05;
-    const interval = duration / (1 / step);
-    
-    const fadeInterval = setInterval(() => {
-      if (audio.volume > 0.05) {
-        audio.volume = Math.max(audio.volume - step, 0);
-      } else {
-        audio.volume = 0;
-        clearInterval(fadeInterval);
-        resolve();
-      }
-    }, interval);
+    // Small delay before pause to prevent click
+    setTimeout(() => {
+      audio.pause();
+      resolve();
+    }, 10);
   });
 }
 
