@@ -2654,6 +2654,15 @@ function attemptRestore() {
     }
     return success;
   }
+  
+  // No filters on this page - show songs immediately
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.opacity = '1';
+    musicList.style.visibility = 'visible';
+    musicList.style.pointerEvents = 'auto';
+  }
+  
   return false;
 }
 
@@ -2725,6 +2734,22 @@ if (typeof barba !== 'undefined') {
   // Hook: AFTER page transition completes
   barba.hooks.after((data) => {
     filtersRestored = false;
+    
+    // Safety timeout: show everything if restoration takes too long
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList && musicList.style.opacity === '0') {
+        console.warn('⚠️ Filter restoration timeout (Barba) - showing everything');
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        const clearButton = document.querySelector('.circle-x');
+        if (tagsContainer) tagsContainer.style.opacity = '1';
+        if (clearButton) clearButton.style.opacity = '1';
+      }
+    }, 2000);
     
     // Start restoration EARLY (don't wait for initDynamicTagging)
     setTimeout(() => {
