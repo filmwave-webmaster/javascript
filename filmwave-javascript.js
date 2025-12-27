@@ -84,6 +84,50 @@ function adjustDropdownPosition(toggle, list) {
 
 /**
  * ============================================================
+ * AUDIO FADE UTILITIES
+ * ============================================================
+ */
+function fadeAudioIn(audio, duration = 50) {
+  if (!audio) return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    audio.volume = 0;
+    const step = 0.05;
+    const interval = duration / (1 / step);
+    
+    const fadeInterval = setInterval(() => {
+      if (audio.volume < 0.95) {
+        audio.volume = Math.min(audio.volume + step, 1);
+      } else {
+        audio.volume = 1;
+        clearInterval(fadeInterval);
+        resolve();
+      }
+    }, interval);
+  });
+}
+
+function fadeAudioOut(audio, duration = 50) {
+  if (!audio) return Promise.resolve();
+  
+  return new Promise((resolve) => {
+    const step = 0.05;
+    const interval = duration / (1 / step);
+    
+    const fadeInterval = setInterval(() => {
+      if (audio.volume > 0.05) {
+        audio.volume = Math.max(audio.volume - step, 0);
+      } else {
+        audio.volume = 0;
+        clearInterval(fadeInterval);
+        resolve();
+      }
+    }, interval);
+  });
+}
+
+/**
+ * ============================================================
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  * This function handles ALL player positioning logic.
