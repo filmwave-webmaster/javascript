@@ -1768,6 +1768,7 @@ function reinitializeWebflowTabs() {
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
+    sync: true,
     transitions: [{
       name: 'default',
       
