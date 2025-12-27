@@ -20,7 +20,9 @@ if (!window.musicPlayerPersistent) {
     allWavesurfers: [],
     waveformData: [],
     filtersInitialized: false,
-    isTransitioning: false  // ADD THIS LINE
+    isTransitioning: false,
+    autoPlayNext: false,
+    wasPlayingBeforeHidden: false  // ADD THIS
   };
 }
 
@@ -1655,6 +1657,42 @@ function removeDuplicateIds() {
 }
 
 removeDuplicateIds();
+
+/**
+ * ============================================================
+ * HANDLE TAB VISIBILITY - Prevent audio breaking on tab switch
+ * ============================================================
+ */
+document.addEventListener('visibilitychange', function() {
+  const g = window.musicPlayerPersistent;
+  
+  if (document.hidden) {
+    // Tab is hidden - save current state
+    if (g.standaloneAudio && !g.standaloneAudio.paused) {
+      g.wasPlayingBeforeHidden = true;
+    } else {
+      g.wasPlayingBeforeHidden = false;
+    }
+  } else {
+    // Tab is visible again - restore audio if needed
+    if (g.standaloneAudio) {
+      // Force audio element to refresh its state
+      const currentTime = g.standaloneAudio.currentTime;
+      
+      // Only resume if it was playing before
+      if (g.wasPlayingBeforeHidden && g.standaloneAudio.paused) {
+        // Small delay to ensure browser is ready
+        setTimeout(() => {
+          if (g.standaloneAudio) {
+            g.standaloneAudio.play().catch(err => {
+              console.log('Could not resume playback:', err);
+            });
+          }
+        }, 100);
+      }
+    }
+  }
+});
 
 /**
  * ============================================================
