@@ -2266,6 +2266,12 @@ if (typeof barba !== 'undefined') {
  * - Filters persist during Barba navigation (clicking links)
  * - Filters reset on fresh page load (F5, hard refresh, opening new tab)
  * - Uses sessionStorage flag to distinguish between navigation types
+ * 
+ * PERFORMANCE:
+ * - Uses Barba hooks to hide content BEFORE transition (no flash)
+ * - Creates tags manually without waiting for initDynamicTagging
+ * - Restoration starts at 100ms (was 1100ms)
+ * - Total time: ~250ms from navigation to filtered display
  */
 
 let filtersRestored = false;
@@ -2314,34 +2320,27 @@ function restoreFilterState() {
   
   if (!isBarbaNavigation) {
     console.log('🔄 Fresh page load - not restoring filters');
-    // Remove hiding style for fresh loads
-    const style = document.getElementById('filter-loading-style');
-    if (style) {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.display = '';
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-      }
-      setTimeout(() => style.remove(), 500);
+    // Show songs immediately for fresh loads
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) {
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
     }
+    // Clean up any old style elements
+    const oldStyle = document.getElementById('filter-loading-style-fresh');
+    if (oldStyle) oldStyle.remove();
     return false;
   }
   
   const savedState = localStorage.getItem('musicFilters');
   if (!savedState) {
-    // No saved filters - remove hiding style immediately
-    const style = document.getElementById('filter-loading-style');
-    if (style) {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.display = '';
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-      }
-      setTimeout(() => style.remove(), 500);
+    // No saved filters - show songs
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) {
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
     }
     return false;
   }
@@ -2352,17 +2351,12 @@ function restoreFilterState() {
     // Check if there are actually any active filters
     const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
     if (!hasActiveFilters) {
-      // No active filters - remove hiding style
-      const style = document.getElementById('filter-loading-style');
-      if (style) {
-        const musicList = document.querySelector('.music-list-wrapper');
-        if (musicList) {
-          musicList.style.display = '';
-          musicList.style.opacity = '1';
-          musicList.style.visibility = 'visible';
-          musicList.style.pointerEvents = 'auto';
-        }
-        setTimeout(() => style.remove(), 500);
+      // No active filters - show songs
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
       }
       return false;
     }
@@ -2396,8 +2390,55 @@ function restoreFilterState() {
       }
     });
     
-    // CRITICAL: Dispatch change events AFTER all inputs are checked (in batch)
-    // This ensures initDynamicTagging can process them
+    // CRITICAL: Dispatch change events AFTER all inputs are checked
+    // Create tags MANUALLY instead of waiting for initDynamicTagging
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    
+    if (tagsContainer) {
+      // Clear existing tags first
+      tagsContainer.innerHTML = '';
+      
+      // Create tag for each restored filter
+      filterState.filters.forEach(savedFilter => {
+        let selector = `[data-filter-group="${savedFilter.group}"]`;
+        
+        if (savedFilter.value) {
+          selector += `[data-filter-value="${savedFilter.value}"]`;
+        }
+        if (savedFilter.keyGroup) {
+          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
+        }
+        
+        const input = document.querySelector(selector);
+        if (input && input.checked) {
+          // Create tag manually
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          
+          // Get tag text (use value or group name)
+          const tagText = savedFilter.value || savedFilter.group;
+          
+          tag.innerHTML = `
+            <span class="filter-tag-text">${tagText}</span>
+            <span class="filter-tag-remove x-button-style">×</span>
+          `;
+          
+          // Add click handler for remove button
+          tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+            input.checked = false;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            tag.remove();
+            saveFilterState();
+          });
+          
+          tagsContainer.appendChild(tag);
+        }
+      });
+      
+      console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
+    }
+    
+    // Still dispatch change events for filtering logic
     setTimeout(() => {
       filterState.filters.forEach(savedFilter => {
         let selector = `[data-filter-group="${savedFilter.group}"]`;
@@ -2411,11 +2452,10 @@ function restoreFilterState() {
         
         const input = document.querySelector(selector);
         if (input && input.checked) {
-          // Dispatch change event to trigger tag creation
           input.dispatchEvent(new Event('change', { bubbles: true }));
         }
       });
-    }, 100); // Small delay to ensure initDynamicTagging is ready
+    }, 50);
     
     // Restore search (stays in field, no tag)
     if (filterState.searchQuery) {
@@ -2428,43 +2468,29 @@ function restoreFilterState() {
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
-    // CRITICAL: Wait for filters AND tags to be created, then fade in songs
+    // Fade in songs immediately after tags are created (much faster now!)
     setTimeout(() => {
-      const style = document.getElementById('filter-loading-style');
-      if (style) {
-        const musicList = document.querySelector('.music-list-wrapper');
-        if (musicList) {
-          // First remove the display:none, then trigger opacity transition
-          musicList.style.display = '';
-          setTimeout(() => {
-            musicList.style.opacity = '1';
-            musicList.style.visibility = 'visible';
-            musicList.style.pointerEvents = 'auto';
-            musicList.style.transition = 'opacity 0.4s ease-in-out';
-          }, 10);
-        }
-        // Remove the style after fade completes
-        setTimeout(() => style.remove(), 500);
-        console.log('✨ Songs faded in');
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
       }
-    }, 350); // Increased delay to ensure tags are created (100ms for change events + 250ms buffer)
+      console.log('✨ Songs faded in');
+    }, 150); // Much faster! (50ms for change events + 100ms buffer)
     
     return true;
   } catch (error) {
     console.error('Error restoring filters:', error);
     localStorage.removeItem('musicFilters');
     
-    // Remove hiding style if there's an error
-    const style = document.getElementById('filter-loading-style');
-    if (style) {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.display = '';
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-      }
-      setTimeout(() => style.remove(), 500);
+    // Show songs if there's an error
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) {
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
     }
     
     return false;
@@ -2477,17 +2503,12 @@ function clearFilterState() {
   localStorage.removeItem('musicFilters');
   console.log('🗑️ Cleared filter state');
   
-  // Remove hiding style if it exists
-  const style = document.getElementById('filter-loading-style');
-  if (style) {
-    const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) {
-      musicList.style.display = '';
-      musicList.style.opacity = '1';
-      musicList.style.visibility = 'visible';
-      musicList.style.pointerEvents = 'auto';
-    }
-    setTimeout(() => style.remove(), 500);
+  // Show songs
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.opacity = '1';
+    musicList.style.visibility = 'visible';
+    musicList.style.pointerEvents = 'auto';
   }
   
   // Reset flag after clearing is complete and inputs have settled
@@ -2525,16 +2546,11 @@ function attemptRestore() {
       filtersRestored = true;
     } else {
       // If restoration failed or no filters to restore, show songs
-      const style = document.getElementById('filter-loading-style');
-      if (style) {
-        const musicList = document.querySelector('.music-list-wrapper');
-        if (musicList) {
-          musicList.style.display = '';
-          musicList.style.opacity = '1';
-          musicList.style.visibility = 'visible';
-          musicList.style.pointerEvents = 'auto';
-        }
-        setTimeout(() => style.remove(), 500);
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
       }
     }
     return success;
@@ -2547,88 +2563,75 @@ window.addEventListener('load', function() {
   
   // Safety timeout: show songs if restoration takes too long
   setTimeout(() => {
-    const style = document.getElementById('filter-loading-style');
-    if (style) {
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList && musicList.style.opacity === '0') {
       console.warn('⚠️ Filter restoration timeout - showing songs anyway');
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.display = '';
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-      }
-      style.remove();
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
     }
-  }, 3000);
+  }, 2000);
   
-  // CRITICAL: Wait longer to ensure initDynamicTagging (1000ms) is ready
+  // Start restoration EARLY (100ms instead of 1100ms)
   setTimeout(() => {
     if (!attemptRestore()) {
       setTimeout(() => { 
         if (!attemptRestore()) {
-          setTimeout(() => {
-            if (!attemptRestore()) {
-              // Give up and show songs
-              const style = document.getElementById('filter-loading-style');
-              if (style) {
-                const musicList = document.querySelector('.music-list-wrapper');
-                if (musicList) {
-                  musicList.style.display = '';
-                  musicList.style.opacity = '1';
-                  musicList.style.visibility = 'visible';
-                  musicList.style.pointerEvents = 'auto';
-                }
-                setTimeout(() => style.remove(), 500);
-              }
-            }
-          }, 300);
+          setTimeout(attemptRestore, 200);
         }
-      }, 200);
+      }, 100);
     }
-  }, 1100); // Wait for initDynamicTagging (1000ms) + buffer
+  }, 100);
 });
 
-// Also restore after Barba transitions
+// Barba.js integration - hide content BEFORE transition starts
 if (typeof barba !== 'undefined') {
-  // Set flag when user clicks any link (before transition starts)
-  document.addEventListener('click', function(e) {
-    const link = e.target.closest('a');
-    if (link && !link.classList.contains('no-barba')) {
-      sessionStorage.setItem('isBarbaNavigation', 'true');
+  // Hook: BEFORE leaving current page
+  barba.hooks.before((data) => {
+    // Set flag for next page
+    sessionStorage.setItem('isBarbaNavigation', 'true');
+    console.log('🚀 Barba navigation starting');
+  });
+  
+  // Hook: BEFORE entering new page (but after HTML is fetched)
+  barba.hooks.beforeEnter((data) => {
+    const savedState = localStorage.getItem('musicFilters');
+    
+    if (savedState) {
+      try {
+        const filterState = JSON.parse(savedState);
+        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
+        
+        if (hasActiveFilters) {
+          // Hide songs BEFORE they render
+          const musicList = data.next.container.querySelector('.music-list-wrapper');
+          if (musicList) {
+            musicList.style.opacity = '0';
+            musicList.style.visibility = 'hidden';
+            musicList.style.pointerEvents = 'none';
+            console.log('🔒 Songs hidden via Barba hook');
+          }
+        }
+      } catch (e) {
+        console.error('Error in beforeEnter hook:', e);
+      }
     }
   });
   
-  window.addEventListener('barbaAfterTransition', function() {
-    // Ensure flag is set (redundant but safe)
-    sessionStorage.setItem('isBarbaNavigation', 'true');
+  // Hook: AFTER page transition completes
+  barba.hooks.after((data) => {
+    filtersRestored = false;
     
-    filtersRestored = false; // Reset on transition
-    
-    // CRITICAL: Wait longer to ensure initDynamicTagging is ready
+    // Start restoration EARLY (don't wait for initDynamicTagging)
     setTimeout(() => {
       if (!attemptRestore()) {
-        setTimeout(() => { 
+        setTimeout(() => {
           if (!attemptRestore()) {
-            setTimeout(() => {
-              if (!attemptRestore()) {
-                // Give up and show songs
-                const style = document.getElementById('filter-loading-style');
-                if (style) {
-                  const musicList = document.querySelector('.music-list-wrapper');
-                  if (musicList) {
-                    musicList.style.display = '';
-                    musicList.style.opacity = '1';
-                    musicList.style.visibility = 'visible';
-                    musicList.style.pointerEvents = 'auto';
-                  }
-                  setTimeout(() => style.remove(), 500);
-                }
-              }
-            }, 300);
+            setTimeout(attemptRestore, 200);
           }
-        }, 200);
+        }, 100);
       }
-    }, 1100); // Wait for initDynamicTagging + buffer
+    }, 100); // Start at 100ms instead of 1100ms
   });
 }
 
