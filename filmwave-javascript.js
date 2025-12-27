@@ -19,7 +19,8 @@ if (!window.musicPlayerPersistent) {
     MASTER_DATA: [],
     allWavesurfers: [],
     waveformData: [],
-    filtersInitialized: false
+    filtersInitialized: false,
+    isTransitioning: false  // ADD THIS LINE
   };
 }
 
@@ -443,6 +444,13 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 }
 
 function drawMasterWaveform(peaks, progress) {
+  const g = window.musicPlayerPersistent;
+  
+  // CRITICAL: Skip redrawing during Barba transitions
+  if (g.isTransitioning) {
+    return;
+  }
+  
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
   let canvas = container.querySelector('canvas');
@@ -1755,6 +1763,7 @@ if (typeof barba !== 'undefined') {
       
       beforeLeave(data) {
         const g = window.musicPlayerPersistent;
+        g.isTransitioning = true;
         const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
         
         // CRITICAL: Reset filters flag so they can be re-initialized
@@ -1864,6 +1873,8 @@ if (typeof barba !== 'undefined') {
           setupMasterPlayerControls();
           positionMasterPlayer();
           updateMasterPlayerVisibility();
+
+          g.isTransitioning = false;
           
           if (g.currentSongData) {
             updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
