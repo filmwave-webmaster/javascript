@@ -770,13 +770,11 @@ function linkStandaloneToWaveform() {
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     
-    // CRITICAL: Only seek if audio is paused or not playing
-    // If audio is playing, the timeupdate listener will sync it naturally
-    if (g.standaloneAudio.paused && g.standaloneAudio.duration > 0) {
+    // CRITICAL: Always seek to current position when linking
+    if (g.standaloneAudio.duration > 0) {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
       wavesurfer.seekTo(progress);
     }
-    // If playing, just let the timeupdate listener handle syncing - no seeking!
     
     const existingListener = g.standaloneAudio._waveformSyncListener;
     if (existingListener) {
@@ -1007,10 +1005,10 @@ function initializeWaveforms() {
     loadWaveformBatch(visibleCards);
   }
   
-  setTimeout(() => {
-    linkStandaloneToWaveform();
-  }, 100);
-}
+ // Link after waveforms are ready
+setTimeout(() => {
+  linkStandaloneToWaveform();
+}, 500); // Increased delay to ensure waveforms are loaded
 
 /**
  * ============================================================
@@ -1215,6 +1213,8 @@ if (peaksData && peaksData.trim().length > 0 && storedDuration) {
         container.style.opacity = '1';
       }
     });
+      // CRITICAL: Link standalone audio to waveform after batch loads
+  linkStandaloneToWaveform();
   }, 6000);
 }
 
