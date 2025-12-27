@@ -2415,8 +2415,24 @@ function restoreFilterState() {
           const tag = document.createElement('div');
           tag.className = 'filter-tag';
           
-          // Get tag text (use value or group name)
-          const tagText = savedFilter.value || savedFilter.group;
+          // Get tag text - try multiple sources for best result
+          let tagText;
+          
+          // 1. Try to find associated label text
+          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
+          const label = wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]');
+          
+          if (label && label.textContent.trim()) {
+            tagText = label.textContent.trim();
+          } 
+          // 2. Fall back to value if it's not "true" or empty
+          else if (savedFilter.value && savedFilter.value !== 'true' && savedFilter.value !== 'false') {
+            tagText = savedFilter.value;
+          }
+          // 3. Last resort: use group name
+          else {
+            tagText = savedFilter.group;
+          }
           
           tag.innerHTML = `
             <span class="filter-tag-text">${tagText}</span>
