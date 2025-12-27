@@ -2047,160 +2047,154 @@ if (typeof barba !== 'undefined') {
 
 /**
  * ============================================================
- * FAVORITE BUTTON SYNCING
+ * FAVORITE BUTTON SYNCING (WORKING SOLUTION)
  * ============================================================
- * Syncs the favorite checkbox between song cards and music player.
- * 
- * REQUIRED WEBFLOW SETUP:
- * 1. Song card favorite checkbox: Add class "favourite-checkbox" to the checkbox input
- * 2. Player favorite checkbox: Add class "player-favourite-checkbox" to the checkbox input
- * 
- * This code integrates with window.musicPlayerPersistent and works with Barba transitions.
+ * This is the solution that worked in past chats.
+ * Key: MutationObserver + .click() + lastChangeSource + 500ms delay
  */
 
 function initFavoriteSync() {
   const g = window.musicPlayerPersistent;
   if (!g) {
-    console.warn('⚠️ musicPlayerPersistent not found - skipping favorite sync');
+    console.warn('⚠️ musicPlayerPersistent not found');
     return;
   }
   
   let currentSongFavourite = null;
   let playerFavourite = null;
   let lastChangeSource = null;
-  let lastSyncedSongId = null;
+  let playerListenerAttached = false;
   
-  /**
-   * Get or find the player favorite checkbox
-   */
+  // Watch for player favourite to appear in DOM
+  const observer = new MutationObserver(function() {
+    const player = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
+    if (player && !playerListenerAttached) {
+      console.log('✅ Player favourite appeared in DOM');
+      playerFavourite = player;
+      playerFavourite.addEventListener('change', handlePlayerFavouriteChange);
+      playerListenerAttached = true;
+      
+      // Sync immediately if we have a current song (500ms delay for Webflow)
+      if (currentSongFavourite) {
+        console.log('Current song exists, syncing on player appear');
+        setTimeout(() => {
+          if (playerFavourite.checked !== currentSongFavourite.checked) {
+            console.log(`🔄 Syncing: Song is ${currentSongFavourite.checked}, Player is ${playerFavourite.checked}`);
+            lastChangeSource = 'sync';
+            playerFavourite.click();
+            setTimeout(() => { lastChangeSource = null; }, 100);
+          }
+        }, 500);
+      } else {
+        console.log('No current song yet');
+      }
+    }
+  });
+  
+  // Start observing the document for changes
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
   function getPlayerFavourite() {
     if (!playerFavourite || !document.body.contains(playerFavourite)) {
       playerFavourite = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
-      
-      if (playerFavourite) {
-        // Remove any existing listener to prevent duplicates
-        playerFavourite.removeEventListener('change', handlePlayerFavouriteChange);
+      if (playerFavourite && !playerListenerAttached) {
+        console.log('✅ Player favourite found via getter');
         playerFavourite.addEventListener('change', handlePlayerFavouriteChange);
-        console.log('✅ Player favourite checkbox found and listener attached');
+        playerListenerAttached = true;
       }
     }
     return playerFavourite;
   }
   
-  /**
-   * Sync favorites when a new song is selected
-   */
   function syncFavourites(songCard) {
-    if (!songCard) return;
-    
-    // Clean up previous song listener
     if (currentSongFavourite) {
       currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
     }
     
-    // Find the new song's favorite checkbox
     currentSongFavourite = songCard.querySelector('.favourite-checkbox');
+    console.log('Set current song favourite:', currentSongFavourite ? 'found' : 'not found');
     
-    if (!currentSongFavourite) {
-      console.warn('⚠️ Song favorite checkbox not found - make sure .favourite-checkbox class is added');
-      return;
-    }
-    
-    const player = getPlayerFavourite();
-    
-    if (player) {
-      // Sync player to match song state (if different)
-      if (player.checked !== currentSongFavourite.checked) {
-        console.log(`🔄 Syncing player favorite: ${player.checked} → ${currentSongFavourite.checked}`);
-        lastChangeSource = 'sync';
-        // Use .click() to trigger Webflow's visual update
-        player.click();
-        setTimeout(() => { lastChangeSource = null; }, 100);
-      }
-    }
-    
-    // Attach listener to new song's favorite
-    currentSongFavourite.addEventListener('change', handleSongFavouriteChange);
-  }
-  
-  /**
-   * Handle when song card favorite is clicked
-   */
-  function handleSongFavouriteChange(e) {
-    // Prevent circular updates
-    if (lastChangeSource === 'player') {
-      lastChangeSource = null;
-      return;
-    }
-    
-    const player = getPlayerFavourite();
-    if (!player) return;
-    
-    // Update player to match song
-    if (player.checked !== e.target.checked) {
-      lastChangeSource = 'song';
-      console.log(`💛 Song favorite clicked: ${e.target.checked}`);
-      // Use .click() to trigger Webflow's visual update
-      player.click();
-      setTimeout(() => { lastChangeSource = null; }, 100);
-    }
-  }
-  
-  /**
-   * Handle when player favorite is clicked
-   */
-  function handlePlayerFavouriteChange() {
-    // Prevent circular updates
-    if (lastChangeSource === 'song' || lastChangeSource === 'sync') {
-      lastChangeSource = null;
-      return;
-    }
-    
-    if (!currentSongFavourite) return;
-    
-    // Update song to match player
-    if (currentSongFavourite.checked !== this.checked) {
-      lastChangeSource = 'player';
-      console.log(`💛 Player favorite clicked: ${this.checked}`);
-      // Use .click() to trigger Webflow's visual update
-      currentSongFavourite.click();
-      setTimeout(() => { lastChangeSource = null; }, 100);
-    }
-  }
-  
-  /**
-   * Watch for song changes and sync favorites
-   */
-  function watchForSongChanges() {
-    // Check every 500ms if the current song has changed
-    setInterval(() => {
-      if (g.currentSongData && g.currentSongData.id !== lastSyncedSongId) {
-        lastSyncedSongId = g.currentSongData.id;
-        
-        // Find the matching song card in waveformData
-        const matchingData = g.waveformData.find(data => 
-          data.songData && data.songData.id === g.currentSongData.id
-        );
-        
-        if (matchingData && matchingData.cardElement) {
-          console.log('🎵 New song detected, syncing favorites');
-          syncFavourites(matchingData.cardElement);
+    if (currentSongFavourite) {
+      const player = getPlayerFavourite();
+      
+      // Sync player if it exists and states differ
+      if (player) {
+        if (player.checked !== currentSongFavourite.checked) {
+          console.log(`🔄 Song changed - syncing player from ${player.checked} to ${currentSongFavourite.checked}`);
+          lastChangeSource = 'sync';
+          player.click();
+          setTimeout(() => { lastChangeSource = null; }, 100);
+        } else {
+          console.log('Player already matches song:', player.checked);
         }
       }
       
-      // If no song is playing, clear the current reference
-      if (!g.currentSongData && currentSongFavourite) {
-        if (currentSongFavourite) {
-          currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
-        }
-        currentSongFavourite = null;
-        lastSyncedSongId = null;
-      }
-    }, 500);
+      currentSongFavourite.addEventListener('change', handleSongFavouriteChange);
+      console.log('Synced favourite for current song');
+    }
   }
   
-  // Start watching for song changes
-  watchForSongChanges();
+  function handleSongFavouriteChange(e) {
+    if (lastChangeSource === 'player') {
+      console.log('Ignoring song change - triggered by player');
+      lastChangeSource = null;
+      return;
+    }
+    
+    const player = getPlayerFavourite();
+    if (!player) {
+      console.log('Player not available, song favourite changed to:', e.target.checked);
+      return;
+    }
+    
+    if (player.checked !== e.target.checked) {
+      lastChangeSource = 'song';
+      console.log('💛 Song favourite clicked, syncing player to:', e.target.checked);
+      player.click();
+    }
+  }
+  
+  function handlePlayerFavouriteChange() {
+    if (lastChangeSource === 'song' || lastChangeSource === 'sync') {
+      console.log('Ignoring player change - triggered by', lastChangeSource);
+      lastChangeSource = null;
+      return;
+    }
+    
+    if (currentSongFavourite && currentSongFavourite.checked !== this.checked) {
+      lastChangeSource = 'player';
+      console.log('💛 Player favourite clicked, syncing song to:', this.checked);
+      currentSongFavourite.click();
+    }
+  }
+  
+  // Watch for song changes
+  let lastSyncedSongId = null;
+  setInterval(() => {
+    if (g.currentSongData && g.currentSongData.id !== lastSyncedSongId) {
+      lastSyncedSongId = g.currentSongData.id;
+      
+      const matchingData = g.waveformData.find(data => 
+        data.songData && data.songData.id === g.currentSongData.id
+      );
+      
+      if (matchingData && matchingData.cardElement) {
+        console.log('🎵 New song detected, syncing favorites');
+        syncFavourites(matchingData.cardElement);
+      }
+    }
+    
+    if (!g.currentSongData && currentSongFavourite) {
+      if (currentSongFavourite) {
+        currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
+      }
+      currentSongFavourite = null;
+      lastSyncedSongId = null;
+    }
+  }, 500);
   
   // Initial sync if a song is already playing
   setTimeout(() => {
