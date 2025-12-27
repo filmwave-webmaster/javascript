@@ -1055,18 +1055,31 @@ function loadWaveformBatch(cardElements) {
       minPxPerSec: 1
     });
     
-    const peaksData = songData.fields['Waveform Peaks'];
-    if (peaksData && peaksData.trim().length > 0) {
-      try {
-        const peaks = JSON.parse(peaksData);
-        wavesurfer.load(audioUrl, [peaks]);
-      } catch (e) {
-        console.error('Error loading peaks:', e);
-        wavesurfer.load(audioUrl);
-      }
-    } else {
-      wavesurfer.load(audioUrl);
-    }
+  // CRITICAL: Get stored duration and peaks
+const peaksData = songData.fields['Waveform Peaks'];
+const storedDuration = songData.fields['Duration'];
+
+if (peaksData && peaksData.trim().length > 0 && storedDuration) {
+  try {
+    const peaks = JSON.parse(peaksData);
+    
+    // CRITICAL: Pass duration as third parameter - NO audio file loading!
+    wavesurfer.load(audioUrl, [peaks], storedDuration);
+    
+    console.log(`⚡ Instant load with peaks + duration (no audio fetch!)`);
+  } catch (e) {
+    console.error('Error loading peaks:', e);
+    wavesurfer.load(audioUrl);
+  }
+} else {
+  if (!peaksData || peaksData.trim().length === 0) {
+    console.warn('⚠️ No peaks available - loading audio');
+  }
+  if (!storedDuration) {
+    console.warn('⚠️ No duration stored - loading audio');
+  }
+  wavesurfer.load(audioUrl);
+}
     
     const waveformReadyPromise = new Promise((resolve) => {
       let resolved = false;
