@@ -1009,6 +1009,7 @@ function initializeWaveforms() {
 setTimeout(() => {
   linkStandaloneToWaveform();
 }, 500); // Increased delay to ensure waveforms are loaded
+}
 
 /**
  * ============================================================
