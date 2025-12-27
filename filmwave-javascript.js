@@ -898,9 +898,6 @@ audio.addEventListener('error', (e) => {
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
   
-  audio.src = audioUrl;
-  audio.load();
-  
   if (shouldAutoPlay) {
     audio.play().catch(err => console.error('Playback error:', err));
   }
