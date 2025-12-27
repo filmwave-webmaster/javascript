@@ -1969,33 +1969,44 @@ if (typeof barba !== 'undefined') {
   
   window.scrollTo(0, 0);
   
-  // ============================================================
-  // CRITICAL: Extract data-wf-page from the incoming HTML
-  // ============================================================
-  let newPageId = null;
-  
-  // Method 1: Try to get from container first (unlikely to work)
-  newPageId = data.next.container?.getAttribute('data-wf-page');
-  
-  // Method 2: Parse the incoming HTML and get from body tag
-  if (!newPageId && data.next.html) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(data.next.html, 'text/html');
-    const bodyElement = doc.querySelector('body');
-    if (bodyElement) {
-      newPageId = bodyElement.getAttribute('data-wf-page');
-    }
+ // ============================================================
+// CRITICAL: Extract data-wf-page from the incoming HTML
+// ============================================================
+console.log('🔍 Checking for page ID...');
+let newPageId = null;
+
+// Method 1: Try to get from container first
+newPageId = data.next.container?.getAttribute('data-wf-page');
+console.log('Method 1 (container):', newPageId);
+
+// Method 2: Parse the incoming HTML
+if (!newPageId && data.next.html) {
+  console.log('Method 2: Parsing HTML string, length:', data.next.html.length);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(data.next.html, 'text/html');
+  const bodyElement = doc.querySelector('body');
+  console.log('Body element found?', !!bodyElement);
+  if (bodyElement) {
+    newPageId = bodyElement.getAttribute('data-wf-page');
+    console.log('Page ID from body:', newPageId);
   }
-  
-  // Update the current page's html tag
-  const htmlTag = document.documentElement;
-  
-  if (newPageId && htmlTag.getAttribute('data-wf-page') !== newPageId) {
-    console.log(`📄 Swapping Page ID from ${htmlTag.getAttribute('data-wf-page')} to ${newPageId}`);
-    htmlTag.setAttribute('data-wf-page', newPageId);
-  } else {
-    console.log('⚠️ No page ID change needed or ID not found');
-  }
+}
+
+// Update the current page's html tag
+const htmlTag = document.documentElement;
+const currentPageId = htmlTag.getAttribute('data-wf-page');
+
+console.log('Current page ID:', currentPageId);
+console.log('New page ID:', newPageId);
+
+if (newPageId && currentPageId !== newPageId) {
+  console.log(`📄 Swapping Page ID from ${currentPageId} to ${newPageId}`);
+  htmlTag.setAttribute('data-wf-page', newPageId);
+} else if (!newPageId) {
+  console.log('⚠️ No new page ID found');
+} else if (currentPageId === newPageId) {
+  console.log('⚠️ Page IDs are already the same');
+}
   
   // ============================================================
   // IMPROVED WEBFLOW RE-INITIALIZATION
