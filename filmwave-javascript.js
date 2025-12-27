@@ -1845,6 +1845,42 @@ function reinitializeWebflowTabs() {
   console.log('✅ Tabs manually re-initialized');
 }
 
+/**
+ * ============================================================
+ * FORCE WEBFLOW IX2/IX3 RESTART WITH PAGE ID UPDATE
+ * ============================================================
+ */
+function forceWebflowRestart() {
+  console.log('🔄 Force-restarting Webflow IX engine...');
+  
+  // A. Clean up the old instance
+  if (window.Webflow) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+  }
+  
+  // B. The "Nuclear" Option for IX2/IX3
+  if (window.Webflow && window.Webflow.require('ix2')) {
+    const ix2 = window.Webflow.require('ix2');
+    
+    // Stop any running animations
+    if (ix2.store && ix2.actions) {
+      ix2.store.dispatch(ix2.actions.stop());
+    }
+    
+    // Re-initialize to force DOM re-scan
+    ix2.init();
+  }
+  
+  // C. The "Kickstarter" - trigger events that IX3 listens for
+  document.dispatchEvent(new Event('readystatechange'));
+  window.dispatchEvent(new Event('resize'));
+  
+  console.log('✅ Webflow IX engine restarted');
+}
+
+// END OF IX2/IX3 RESTART
+
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
@@ -1926,7 +1962,11 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
+    after(data) {
+  console.log('🚪 BARBA AFTER FIRED');
+  console.log('🔍 data.next.container:', data.next.container);
+  console.log('🔍 data.next.html:', data.next.html);
+  console.log('🔍 container has data-wf-page?:', data.next.container?.getAttribute('data-wf-page'));
         const g = window.musicPlayerPersistent;
         
         window.scrollTo(0, 0);
