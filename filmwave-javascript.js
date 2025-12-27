@@ -289,9 +289,10 @@ function navigateStandaloneTrack(direction) {
   });
   
   audio.addEventListener('ended', () => {
-    if (g.standaloneAudio !== audio) return;
-    navigateStandaloneTrack('next');
-  });
+  if (g.standaloneAudio !== audio) return;
+  g.autoPlayNext = true;  // ADD THIS LINE
+  navigateStandaloneTrack('next');
+});
   
 audio.addEventListener('error', (e) => {
   // Log detailed error information
