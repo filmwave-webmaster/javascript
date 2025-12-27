@@ -2270,8 +2270,15 @@ if (typeof barba !== 'undefined') {
 
 let filtersRestored = false;
 let favoritesRestored = false;
+let isClearing = false; // Flag to prevent auto-save during clear
 
 function saveFilterState() {
+  // Don't save if we're in the middle of clearing
+  if (isClearing) {
+    console.log('⏸️ Skipping save - clearing in progress');
+    return;
+  }
+  
   const filterState = {
     filters: [],
     searchQuery: ''
@@ -2312,6 +2319,7 @@ function restoreFilterState() {
     if (style) {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
+        musicList.style.display = '';
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
@@ -2328,6 +2336,7 @@ function restoreFilterState() {
     if (style) {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
+        musicList.style.display = '';
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
@@ -2348,6 +2357,7 @@ function restoreFilterState() {
       if (style) {
         const musicList = document.querySelector('.music-list-wrapper');
         if (musicList) {
+          musicList.style.display = '';
           musicList.style.opacity = '1';
           musicList.style.visibility = 'visible';
           musicList.style.pointerEvents = 'auto';
@@ -2424,10 +2434,14 @@ function restoreFilterState() {
       if (style) {
         const musicList = document.querySelector('.music-list-wrapper');
         if (musicList) {
-          musicList.style.opacity = '1';
-          musicList.style.visibility = 'visible';
-          musicList.style.pointerEvents = 'auto';
-          musicList.style.transition = 'opacity 0.4s ease-in-out';
+          // First remove the display:none, then trigger opacity transition
+          musicList.style.display = '';
+          setTimeout(() => {
+            musicList.style.opacity = '1';
+            musicList.style.visibility = 'visible';
+            musicList.style.pointerEvents = 'auto';
+            musicList.style.transition = 'opacity 0.4s ease-in-out';
+          }, 10);
         }
         // Remove the style after fade completes
         setTimeout(() => style.remove(), 500);
@@ -2445,6 +2459,7 @@ function restoreFilterState() {
     if (style) {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
+        musicList.style.display = '';
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
@@ -2457,6 +2472,8 @@ function restoreFilterState() {
 }
 
 function clearFilterState() {
+  isClearing = true; // Set flag to prevent auto-saves
+  
   localStorage.removeItem('musicFilters');
   console.log('🗑️ Cleared filter state');
   
@@ -2465,12 +2482,19 @@ function clearFilterState() {
   if (style) {
     const musicList = document.querySelector('.music-list-wrapper');
     if (musicList) {
+      musicList.style.display = '';
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
     setTimeout(() => style.remove(), 500);
   }
+  
+  // Reset flag after clearing is complete and inputs have settled
+  setTimeout(() => {
+    isClearing = false;
+    console.log('✅ Clear complete - auto-save re-enabled');
+  }, 1000);
 }
 
 // Auto-save on filter changes
@@ -2505,6 +2529,7 @@ function attemptRestore() {
       if (style) {
         const musicList = document.querySelector('.music-list-wrapper');
         if (musicList) {
+          musicList.style.display = '';
           musicList.style.opacity = '1';
           musicList.style.visibility = 'visible';
           musicList.style.pointerEvents = 'auto';
@@ -2527,6 +2552,7 @@ window.addEventListener('load', function() {
       console.warn('⚠️ Filter restoration timeout - showing songs anyway');
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
+        musicList.style.display = '';
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
@@ -2547,6 +2573,7 @@ window.addEventListener('load', function() {
               if (style) {
                 const musicList = document.querySelector('.music-list-wrapper');
                 if (musicList) {
+                  musicList.style.display = '';
                   musicList.style.opacity = '1';
                   musicList.style.visibility = 'visible';
                   musicList.style.pointerEvents = 'auto';
@@ -2589,6 +2616,7 @@ if (typeof barba !== 'undefined') {
                 if (style) {
                   const musicList = document.querySelector('.music-list-wrapper');
                   if (musicList) {
+                    musicList.style.display = '';
                     musicList.style.opacity = '1';
                     musicList.style.visibility = 'visible';
                     musicList.style.pointerEvents = 'auto';
@@ -2608,9 +2636,11 @@ if (typeof barba !== 'undefined') {
 const clearButton = document.querySelector('.circle-x');
 if (clearButton) {
   clearButton.addEventListener('click', function() {
+    isClearing = true; // Set flag FIRST
+    
     clearFilterState();
     
-    // Also clear search input
+    // Clear search input (won't trigger auto-save due to flag)
     const searchBar = document.querySelector('[data-filter-search="true"]');
     if (searchBar && searchBar.value) {
       searchBar.value = '';
