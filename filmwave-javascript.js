@@ -869,6 +869,10 @@ audio.addEventListener('ended', () => {
     if (nextData) {
       playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
     }
+  } else {
+    // No waveforms available (not on music page) - use standalone navigation
+    g.autoPlayNext = true;
+    navigateStandaloneTrack('next');
   }
 });
   
