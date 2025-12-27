@@ -852,27 +852,31 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(false);
   });
   
-  audio.addEventListener('ended', () => {
-    updatePlayPauseIcons(cardElement, false);
-    const pb = cardElement.querySelector('.play-button');
-    if (pb) pb.style.opacity = '0';
-    
-    const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
-    let nextWavesurfer = null;
-    for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-      const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-      if (data && data.cardElement.offsetParent !== null) {
-        nextWavesurfer = g.allWavesurfers[i];
-        break;
-      }
+audio.addEventListener('ended', () => {
+  updatePlayPauseIcons(cardElement, false);
+  const pb = cardElement.querySelector('.play-button');
+  if (pb) pb.style.opacity = '0';
+  
+  const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
+  let nextWavesurfer = null;
+  for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+    const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+    if (data && data.cardElement.offsetParent !== null) {
+      nextWavesurfer = g.allWavesurfers[i];
+      break;
     }
-    if (nextWavesurfer) {
-      const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
-      if (nextData) {
-        playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
-      }
+  }
+  if (nextWavesurfer) {
+    const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
+    if (nextData) {
+      playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
     }
-  });
+  } else {
+    // No waveforms available (not on music page) - use standalone navigation
+    g.autoPlayNext = true;
+    navigateStandaloneTrack('next');
+  }
+});
   
   audio.addEventListener('error', (e) => {
     console.error('❌ Audio error:', e);
