@@ -1585,40 +1585,63 @@ function initSearchAndFilters() {
     applyFilters();
   }
   
-  function applyFilters() {
-    const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
-    const keywords = query.split(/\s+/).filter(k => k.length > 0);
-    const filterInputs = document.querySelectorAll('[data-filter-group]');
-    const selectedFilters = [];
+ function applyFilters() {
+  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+  const keywords = query.split(/\s+/).filter(k => k.length > 0);
+  const filterInputs = document.querySelectorAll('[data-filter-group]');
+  const selectedFilters = [];
+  
+  filterInputs.forEach(input => {
+    if (input.checked) {
+      const group = input.getAttribute('data-filter-group');
+      const value = input.getAttribute('data-filter-value');
+      const keyGroup = input.getAttribute('data-key-group'); // RENAMED
+      
+      selectedFilters.push({
+        group: group,
+        value: value ? value.toLowerCase() : null,
+        keyGroup: keyGroup ? keyGroup.toLowerCase() : null // RENAMED
+      });
+    }
+  });
+  
+  const visibleIds = g.MASTER_DATA.filter(record => {
+    const fields = record.fields;
+    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+    const matchesSearch = keywords.every(k => allText.includes(k));
     
-    filterInputs.forEach(input => {
-      if (input.checked) {
-        selectedFilters.push({
-          group: input.getAttribute('data-filter-group'),
-          value: input.getAttribute('data-filter-value').toLowerCase()
-        });
+    const matchesAttributes = selectedFilters.every(filter => {
+      let recVal = fields[filter.group];
+      if (recVal === undefined || recVal === null) return false;
+      
+      // KEY GROUP MATCHING (for major/minor)
+      if (filter.keyGroup) {
+        if (filter.keyGroup === 'major') {
+          return String(recVal).toLowerCase().endsWith('maj');
+        }
+        if (filter.keyGroup === 'minor') {
+          return String(recVal).toLowerCase().endsWith('min');
+        }
       }
-    });
-    
-    const visibleIds = g.MASTER_DATA.filter(record => {
-      const fields = record.fields;
-      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-      const matchesSearch = keywords.every(k => allText.includes(k));
-      const matchesAttributes = selectedFilters.every(filter => {
-        let recVal = fields[filter.group];
-        if (recVal === undefined || recVal === null) return false;
+      
+      // EXACT MATCHING (for specific keys)
+      if (filter.value) {
         if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
         return String(recVal).toLowerCase() === filter.value;
-      });
-      return matchesSearch && matchesAttributes;
-    }).map(r => r.id);
-    
-    document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+      }
+      
+      return false;
     });
     
-    toggleClearButton();
-  }
+    return matchesSearch && matchesAttributes;
+  }).map(r => r.id);
+  
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+  });
+  
+  toggleClearButton();
+}
   
   if (clearBtn) {
     clearBtn.style.display = 'none';
