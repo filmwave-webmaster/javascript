@@ -849,11 +849,16 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(false);
   });
   
-  audio.addEventListener('ended', () => {
-    updatePlayPauseIcons(cardElement, false);
-    const pb = cardElement.querySelector('.play-button');
-    if (pb) pb.style.opacity = '0';
-    
+audio.addEventListener('ended', () => {
+  updatePlayPauseIcons(cardElement, false);
+  const pb = cardElement.querySelector('.play-button');
+  if (pb) pb.style.opacity = '0';
+  
+  // CRITICAL: Check if we're on the music page or not
+  const isMusicPage = g.allWavesurfers.length > 0;
+  
+  if (isMusicPage) {
+    // On music page - use waveform navigation
     const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
     let nextWavesurfer = null;
     for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
@@ -869,7 +874,11 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
         playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
       }
     }
-  });
+  } else {
+    // On non-music page - use standalone navigation
+    navigateStandaloneTrack('next');
+  }
+});
   
   audio.addEventListener('error', (e) => {
     console.error('❌ Audio error:', e);
