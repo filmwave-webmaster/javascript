@@ -2044,3 +2044,191 @@ if (typeof barba !== 'undefined') {
     }]
   });
 }
+
+/**
+ * ============================================================
+ * FAVORITE BUTTON SYNCING
+ * ============================================================
+ * Syncs the favorite checkbox between song cards and music player.
+ * 
+ * REQUIRED WEBFLOW SETUP:
+ * 1. Song card favorite checkbox: Add class "favourite-checkbox" to the checkbox input
+ * 2. Player favorite checkbox: Add class "player-favourite-checkbox" to the checkbox input
+ * 
+ * This code integrates with window.musicPlayerPersistent and works with Barba transitions.
+ */
+
+function initFavoriteSync() {
+  const g = window.musicPlayerPersistent;
+  if (!g) {
+    console.warn('⚠️ musicPlayerPersistent not found - skipping favorite sync');
+    return;
+  }
+  
+  let currentSongFavourite = null;
+  let playerFavourite = null;
+  let lastChangeSource = null;
+  let lastSyncedSongId = null;
+  
+  /**
+   * Get or find the player favorite checkbox
+   */
+  function getPlayerFavourite() {
+    if (!playerFavourite || !document.body.contains(playerFavourite)) {
+      playerFavourite = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
+      
+      if (playerFavourite) {
+        // Remove any existing listener to prevent duplicates
+        playerFavourite.removeEventListener('change', handlePlayerFavouriteChange);
+        playerFavourite.addEventListener('change', handlePlayerFavouriteChange);
+        console.log('✅ Player favourite checkbox found and listener attached');
+      }
+    }
+    return playerFavourite;
+  }
+  
+  /**
+   * Sync favorites when a new song is selected
+   */
+  function syncFavourites(songCard) {
+    if (!songCard) return;
+    
+    // Clean up previous song listener
+    if (currentSongFavourite) {
+      currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
+    }
+    
+    // Find the new song's favorite checkbox
+    currentSongFavourite = songCard.querySelector('.favourite-checkbox');
+    
+    if (!currentSongFavourite) {
+      console.warn('⚠️ Song favorite checkbox not found - make sure .favourite-checkbox class is added');
+      return;
+    }
+    
+    const player = getPlayerFavourite();
+    
+    if (player) {
+      // Sync player to match song state (if different)
+      if (player.checked !== currentSongFavourite.checked) {
+        console.log(`🔄 Syncing player favorite: ${player.checked} → ${currentSongFavourite.checked}`);
+        lastChangeSource = 'sync';
+        player.checked = currentSongFavourite.checked;
+        player.dispatchEvent(new Event('change', { bubbles: true }));
+        setTimeout(() => { lastChangeSource = null; }, 100);
+      }
+    }
+    
+    // Attach listener to new song's favorite
+    currentSongFavourite.addEventListener('change', handleSongFavouriteChange);
+  }
+  
+  /**
+   * Handle when song card favorite is clicked
+   */
+  function handleSongFavouriteChange(e) {
+    // Prevent circular updates
+    if (lastChangeSource === 'player') {
+      lastChangeSource = null;
+      return;
+    }
+    
+    const player = getPlayerFavourite();
+    if (!player) return;
+    
+    // Update player to match song
+    if (player.checked !== e.target.checked) {
+      lastChangeSource = 'song';
+      console.log(`💛 Song favorite clicked: ${e.target.checked}`);
+      player.checked = e.target.checked;
+      player.dispatchEvent(new Event('change', { bubbles: true }));
+      setTimeout(() => { lastChangeSource = null; }, 100);
+    }
+  }
+  
+  /**
+   * Handle when player favorite is clicked
+   */
+  function handlePlayerFavouriteChange() {
+    // Prevent circular updates
+    if (lastChangeSource === 'song' || lastChangeSource === 'sync') {
+      lastChangeSource = null;
+      return;
+    }
+    
+    if (!currentSongFavourite) return;
+    
+    // Update song to match player
+    if (currentSongFavourite.checked !== this.checked) {
+      lastChangeSource = 'player';
+      console.log(`💛 Player favorite clicked: ${this.checked}`);
+      currentSongFavourite.checked = this.checked;
+      currentSongFavourite.dispatchEvent(new Event('change', { bubbles: true }));
+      setTimeout(() => { lastChangeSource = null; }, 100);
+    }
+  }
+  
+  /**
+   * Watch for song changes and sync favorites
+   */
+  function watchForSongChanges() {
+    // Check every 500ms if the current song has changed
+    setInterval(() => {
+      if (g.currentSongData && g.currentSongData.id !== lastSyncedSongId) {
+        lastSyncedSongId = g.currentSongData.id;
+        
+        // Find the matching song card in waveformData
+        const matchingData = g.waveformData.find(data => 
+          data.songData && data.songData.id === g.currentSongData.id
+        );
+        
+        if (matchingData && matchingData.cardElement) {
+          console.log('🎵 New song detected, syncing favorites');
+          syncFavourites(matchingData.cardElement);
+        }
+      }
+      
+      // If no song is playing, clear the current reference
+      if (!g.currentSongData && currentSongFavourite) {
+        if (currentSongFavourite) {
+          currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
+        }
+        currentSongFavourite = null;
+        lastSyncedSongId = null;
+      }
+    }, 500);
+  }
+  
+  // Start watching for song changes
+  watchForSongChanges();
+  
+  // Initial sync if a song is already playing
+  setTimeout(() => {
+    if (g.currentSongData) {
+      const matchingData = g.waveformData.find(data => 
+        data.songData && data.songData.id === g.currentSongData.id
+      );
+      
+      if (matchingData && matchingData.cardElement) {
+        console.log('🎵 Initial song detected, syncing favorites');
+        syncFavourites(matchingData.cardElement);
+      }
+    }
+  }, 1000);
+}
+
+// Initialize on page load
+window.addEventListener('load', function() {
+  setTimeout(() => {
+    console.log('🚀 Initializing favorite sync system');
+    initFavoriteSync();
+  }, 2000);
+});
+
+// Re-initialize after Barba transitions
+if (typeof barba !== 'undefined') {
+  window.addEventListener('barbaAfterTransition', function() {
+    console.log('🔄 Re-initializing favorite sync after Barba transition');
+    setTimeout(initFavoriteSync, 1000);
+  });
+}
