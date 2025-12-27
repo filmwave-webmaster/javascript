@@ -2073,6 +2073,12 @@ function initFavoriteSync() {
     console.warn('⚠️ musicPlayerPersistent not found');
     return;
   }
+
+    const playerCheckbox = document.querySelector('.music-player-wrapper input[type="checkbox"]');
+  if (playerCheckbox) {
+    playerCheckbox.classList.add('player-favourite-checkbox');
+    console.log('✅ Added player-favourite-checkbox class to player');
+  }
   
   let currentSongFavourite = null;
   let playerFavourite = null;
