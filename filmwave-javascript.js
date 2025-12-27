@@ -2113,8 +2113,8 @@ function initFavoriteSync() {
       if (player.checked !== currentSongFavourite.checked) {
         console.log(`🔄 Syncing player favorite: ${player.checked} → ${currentSongFavourite.checked}`);
         lastChangeSource = 'sync';
-        player.checked = currentSongFavourite.checked;
-        player.dispatchEvent(new Event('change', { bubbles: true }));
+        // Use .click() to trigger Webflow's visual update
+        player.click();
         setTimeout(() => { lastChangeSource = null; }, 100);
       }
     }
@@ -2140,8 +2140,8 @@ function initFavoriteSync() {
     if (player.checked !== e.target.checked) {
       lastChangeSource = 'song';
       console.log(`💛 Song favorite clicked: ${e.target.checked}`);
-      player.checked = e.target.checked;
-      player.dispatchEvent(new Event('change', { bubbles: true }));
+      // Use .click() to trigger Webflow's visual update
+      player.click();
       setTimeout(() => { lastChangeSource = null; }, 100);
     }
   }
@@ -2162,8 +2162,8 @@ function initFavoriteSync() {
     if (currentSongFavourite.checked !== this.checked) {
       lastChangeSource = 'player';
       console.log(`💛 Player favorite clicked: ${this.checked}`);
-      currentSongFavourite.checked = this.checked;
-      currentSongFavourite.dispatchEvent(new Event('change', { bubbles: true }));
+      // Use .click() to trigger Webflow's visual update
+      currentSongFavourite.click();
       setTimeout(() => { lastChangeSource = null; }, 100);
     }
   }
