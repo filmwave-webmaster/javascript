@@ -20,8 +20,7 @@ if (!window.musicPlayerPersistent) {
     allWavesurfers: [],
     waveformData: [],
     filtersInitialized: false,
-    isTransitioning: false,
-    autoPlayNext: false  // ADD THIS
+    isTransitioning: false  // ADD THIS LINE
   };
 }
 
@@ -291,7 +290,6 @@ function navigateStandaloneTrack(direction) {
   
   audio.addEventListener('ended', () => {
     if (g.standaloneAudio !== audio) return;
-    g.autoPlayNext = true;
     navigateStandaloneTrack('next');
   });
   
@@ -301,19 +299,18 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-if (wasPlaying || g.autoPlayNext) {
-  audio.play().catch(err => {
-    if (err.name !== 'AbortError') {
-      console.error('Playback error:', err);
-    }
-  });
-  g.autoPlayNext = false;
-} else {
-  g.isPlaying = false;
-  updateMasterControllerIcons(false);
-}
-
-const tempContainer = document.createElement('div');
+  if (wasPlaying) {
+    audio.play().catch(err => {
+      if (err.name !== 'AbortError') {
+        console.error('Playback error:', err);
+      }
+    });
+  } else {
+    g.isPlaying = false;
+    updateMasterControllerIcons(false);
+  }
+  
+  const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
   
@@ -852,32 +849,27 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updateMasterControllerIcons(false);
   });
   
-audio.addEventListener('ended', () => {
-  updatePlayPauseIcons(cardElement, false);
-  const pb = cardElement.querySelector('.play-button');
-  if (pb) pb.style.opacity = '0';
-  
-  const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
-  let nextWavesurfer = null;
-  for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-    const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-    if (data && data.cardElement.offsetParent !== null) {
-      nextWavesurfer = g.allWavesurfers[i];
-      break;
+  audio.addEventListener('ended', () => {
+    updatePlayPauseIcons(cardElement, false);
+    const pb = cardElement.querySelector('.play-button');
+    if (pb) pb.style.opacity = '0';
+    
+    const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
+    let nextWavesurfer = null;
+    for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+      const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+      if (data && data.cardElement.offsetParent !== null) {
+        nextWavesurfer = g.allWavesurfers[i];
+        break;
+      }
     }
-  }
-  if (nextWavesurfer) {
-    const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
-    if (nextData) {
-      playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
+    if (nextWavesurfer) {
+      const nextData = g.waveformData.find(d => d.wavesurfer === nextWavesurfer);
+      if (nextData) {
+        playStandaloneSong(nextData.audioUrl, nextData.songData, nextWavesurfer, nextData.cardElement);
+      }
     }
-  } else if (g.allWavesurfers.length === 0) {
-    // ONLY use standalone navigation if we're truly off the music page
-    g.autoPlayNext = true;
-    navigateStandaloneTrack('next');
-  }
-  // else: on music page but no more songs - stop playing
-});
+  });
   
   audio.addEventListener('error', (e) => {
     console.error('❌ Audio error:', e);
