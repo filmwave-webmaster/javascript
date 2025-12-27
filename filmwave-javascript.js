@@ -229,17 +229,15 @@ function navigateStandaloneTrack(direction) {
   
   const wasPlaying = g.isPlaying;
   
-  if (g.standaloneAudio) {
-    try {
-      g.standaloneAudio.pause();
-      g.standaloneAudio.src = '';
-      g.standaloneAudio.load();
-      g.standaloneAudio = null;
-    } catch (e) {
-      console.warn('Error cleaning up audio:', e);
-      g.standaloneAudio = null;
-    }
+ if (g.standaloneAudio) {
+  try {
+    g.standaloneAudio.pause();
+    g.standaloneAudio = null;
+  } catch (e) {
+    console.warn('Error cleaning up audio:', e);
+    g.standaloneAudio = null;
   }
+}
   
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
