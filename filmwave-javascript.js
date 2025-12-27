@@ -1971,9 +1971,44 @@ if (typeof barba !== 'undefined') {
   // CRITICAL: UPDATE data-wf-page ON <html> TAG
   // ============================================================
   console.log('🚪 After transition - Updating Page ID');
+  console.log('🔍 DEBUG - data.next object:', data.next);
+  console.log('🔍 DEBUG - data.next.container:', data.next.container);
+  console.log('🔍 DEBUG - data.next.html:', data.next.html);
   
-  let newPageId = data.next.container.getAttribute('data-wf-page') ||
-                  data.next.html?.querySelector('body')?.getAttribute('data-wf-page');
+  // Try multiple methods to find the page ID
+  let newPageId = null;
+  
+  // Method 1: Check container
+  if (data.next.container) {
+    newPageId = data.next.container.getAttribute('data-wf-page');
+    console.log('🔍 Method 1 (container):', newPageId);
+  }
+  
+  // Method 2: Check if data.next.html is a string
+  if (!newPageId && typeof data.next.html === 'string') {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = data.next.html;
+    const bodyInHtml = tempDiv.querySelector('body');
+    if (bodyInHtml) {
+      newPageId = bodyInHtml.getAttribute('data-wf-page');
+      console.log('🔍 Method 2 (html string):', newPageId);
+    }
+  }
+  
+  // Method 3: Check if data.next.html is a Document
+  if (!newPageId && data.next.html?.querySelector) {
+    const bodyInHtml = data.next.html.querySelector('body');
+    if (bodyInHtml) {
+      newPageId = bodyInHtml.getAttribute('data-wf-page');
+      console.log('🔍 Method 3 (html document):', newPageId);
+    }
+  }
+  
+  // Method 4: Check current body (fallback)
+  if (!newPageId) {
+    newPageId = document.body.getAttribute('data-wf-page');
+    console.log('🔍 Method 4 (current body):', newPageId);
+  }
   
   const htmlTag = document.documentElement;
   
@@ -1981,11 +2016,9 @@ if (typeof barba !== 'undefined') {
     console.log(`📄 Swapping Page ID from ${htmlTag.getAttribute('data-wf-page')} to ${newPageId}`);
     htmlTag.setAttribute('data-wf-page', newPageId);
   } else {
-    console.warn('⚠️ Could not find new page ID');
-    console.log('Checked sources:', {
-      container: data.next.container.getAttribute('data-wf-page'),
-      body: data.next.html?.querySelector('body')?.getAttribute('data-wf-page')
-    });
+    console.warn('⚠️ Could not find new page ID or IDs match');
+    console.log('Current html data-wf-page:', htmlTag.getAttribute('data-wf-page'));
+    console.log('New page ID:', newPageId);
   }
   
   // ============================================================
