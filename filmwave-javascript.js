@@ -1173,6 +1173,15 @@ if (peaksData && peaksData.trim().length > 0 && storedDuration) {
     });
     
     const handlePlayPause = (e) => {
+
+  // TEMPORARY DEBUG - ADD THIS
+  console.log('🎯 handlePlayPause called');
+  console.log('Event target:', e?.target);
+  console.log('Closest dropdown toggle:', e?.target.closest('.w-dropdown-toggle, .w-dropdown-list'));
+  console.log('Closest stems toggle:', e?.target.closest('.stems-dropdown-toggle, .stems-dropdown-list'));
+  console.log('Closest options toggle:', e?.target.closest('.options-dropdown-toggle, .options-dropdown-list'));
+  // END DEBUG
+      
       if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
       if (e) e.stopPropagation();
       
