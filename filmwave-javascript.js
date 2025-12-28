@@ -203,7 +203,6 @@ async function initMusicPage() {
     if (hasFeaturedSongs) {
       displayFeaturedSongs(6);
     }
-    
   }
 } 
 
@@ -1335,8 +1334,8 @@ async function displayFeaturedSongs(limit = 6) {
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
   
-  // Get first 6 songs
-  const featuredSongs = g.MASTER_DATA.slice(0, limit);
+  // Get last 6 songs (newest)
+  const featuredSongs = g.MASTER_DATA.slice(-limit).reverse();
   
   // Create cards for each song
   featuredSongs.forEach(song => {
