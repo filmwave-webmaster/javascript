@@ -1235,43 +1235,6 @@ if (peaksData && peaksData.trim().length > 0 && storedDuration) {
       
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
     });
-
-    // CRITICAL: Create invisible overlays to catch dropdown clicks
-const stemsToggle = cardElement.querySelector('.stems-dropdown-toggle');
-const optionsToggle = cardElement.querySelector('.options-dropdown-toggle');
-
-[stemsToggle, optionsToggle].forEach(toggle => {
-  if (!toggle) return;
-  
-  const wrapper = toggle.closest('.stems-dropdown-wrapper, .options-dropdown-wrapper');
-  if (!wrapper) return;
-  
-  // Create invisible overlay
-  const overlay = document.createElement('div');
-  overlay.style.position = 'absolute';
-  overlay.style.top = '0';
-  overlay.style.left = '0';
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.zIndex = '1000';
-  overlay.style.cursor = 'pointer';
-  overlay.style.backgroundColor = 'transparent';
-  
-  // When overlay clicked, trigger the actual toggle
-  overlay.addEventListener('click', function(e) {
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    toggle.click();
-  });
-  
-  // Position wrapper relatively
-  wrapper.style.position = 'relative';
-  
-  // Add overlay
-  wrapper.appendChild(overlay);
-});
-
-cardElement.dataset.waveformInitialized = 'true';
     
     cardElement.dataset.waveformInitialized = 'true';
   });
