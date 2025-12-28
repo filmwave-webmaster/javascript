@@ -1179,7 +1179,6 @@ const handlePlayPause = (e) => {
   
   if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
   
-  // DEBUG LOGGING - START
   console.log('═══════════════════════════════════════════');
   console.log('🎯 CLICK DETECTED');
   console.log('Clicked song:', songData?.fields?.['Song Title']);
@@ -1187,17 +1186,10 @@ const handlePlayPause = (e) => {
   console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
   console.log('Current song ID:', g.currentSongData?.id);
   console.log('Is same song?', g.currentSongData?.id === songData.id);
-  console.log('g.isPlaying:', g.isPlaying);
-  console.log('g.standaloneAudio exists:', !!g.standaloneAudio);
-  console.log('g.standaloneAudio.paused:', g.standaloneAudio?.paused);
-  console.log('g.currentWavesurfer === wavesurfer?', g.currentWavesurfer === wavesurfer);
   console.log('═══════════════════════════════════════════');
-  // DEBUG LOGGING - END
       
   if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-    console.log('🔀 BRANCH: Different song detected');
-    const wasPlaying = g.isPlaying;
-    console.log('wasPlaying:', wasPlaying);
+    console.log('🔀 Different song clicked - always play it');
     
     if (g.standaloneAudio) {
       g.standaloneAudio.pause();
@@ -1205,28 +1197,19 @@ const handlePlayPause = (e) => {
     
     g.currentWavesurfer.seekTo(0);
     
-    if (wasPlaying) {
-      console.log('▶️ ACTION: Playing new song (was playing)');
-      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-    } else {
-      console.log('⏸️ ACTION: Syncing new song (was paused)');
-      g.currentWavesurfer = wavesurfer;
-      g.currentSongData = songData;
-      g.hasActiveSong = true;
-      syncMasterTrack(wavesurfer, songData, 0);
-    }
+    // ALWAYS play when clicking a different song
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
   } else {
-    console.log('🔁 BRANCH: Same song or no current song');
+    // Same song or no current song - toggle play/pause
     if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+      console.log('⏯️ Toggling current song');
       if (g.standaloneAudio.paused) {
-        console.log('▶️ ACTION: Playing current song');
         g.standaloneAudio.play();
       } else {
-        console.log('⏸️ ACTION: Pausing current song');
         g.standaloneAudio.pause();
       }
     } else {
-      console.log('▶️ ACTION: Playing new standalone song');
+      console.log('▶️ Playing new song');
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
     }
   }
