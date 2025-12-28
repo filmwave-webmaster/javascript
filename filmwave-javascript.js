@@ -1363,24 +1363,26 @@ async function displayFeaturedSongs(limit = 6) {
           
           if (waveformContainer) {
             // Set pointer-events: none on dropdown containers
-            const dropdowns = waveformContainer.querySelectorAll('.w-dropdown, .stems-dropdown-wrapper, .options-dropdown-wrapper');
+            const dropdowns = waveformContainer.querySelectorAll('.stems-dropdown, .options-dropdown');
             dropdowns.forEach(dd => {
               dd.style.pointerEvents = 'none';
+              console.log('Disabled dropdown container:', dd.className);
             });
             
-            // Re-enable pointer events on dropdown toggles
-            const dropdownToggles = waveformContainer.querySelectorAll('.w-dropdown-toggle, .stems-dropdown-toggle, .options-dropdown-toggle');
+            // Re-enable pointer events on dropdown toggles (using the correct class names!)
+            const dropdownToggles = waveformContainer.querySelectorAll('.stems-dropdown-toggle, .options-dropdown-toggle');
             dropdownToggles.forEach(toggle => {
               toggle.style.pointerEvents = 'auto';
-              console.log('Re-enabled pointer events on toggle:', toggle.className);
+              toggle.style.cursor = 'pointer';
+              console.log('✅ Re-enabled toggle:', toggle.className);
             });
           }
           
-          // Block dropdown clicks from triggering play/pause
+          // Block dropdown wrapper clicks from triggering play/pause
           const dropdownWrappers = card.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
           dropdownWrappers.forEach(wrapper => {
             wrapper.addEventListener('click', function(e) {
-              console.log('Dropdown clicked on home page - stopping propagation');
+              console.log('Dropdown wrapper clicked - stopping propagation');
               e.stopPropagation();
               e.stopImmediatePropagation();
             }, true);
