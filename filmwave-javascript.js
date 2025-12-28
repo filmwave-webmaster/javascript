@@ -67,7 +67,7 @@ function adjustDropdownPosition(toggle, list) {
   if (!container || !list || !toggle) return;
   const containerRect = container.getBoundingClientRect();
   const toggleRect = toggle.getBoundingClientRect();
-  const originalDisplay = list.style.display;
+  const original = list.style.display;
   list.style.display = 'block';
   list.style.visibility = 'hidden';
   const listHeight = list.offsetHeight;
@@ -196,6 +196,14 @@ async function initMusicPage() {
   } else {
     initMasterPlayer();
     updateMasterPlayerVisibility();
+
+  // ADD THESE LINES:
+    // Display featured songs on home page
+    const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+    if (hasFeaturedSongs) {
+      displayFeaturedSongs(6);
+    }
+    
   }
 } 
 
@@ -1293,6 +1301,63 @@ function displaySongs(songs) {
     window.Webflow.require('ix2').init();
   }
   setTimeout(() => initializeWaveforms(), 100);
+}
+
+/**
+ * ============================================================
+ * DISPLAY FEATURED SONGS ON HOME PAGE
+ * ============================================================
+ */
+async function displayFeaturedSongs(limit = 6) {
+  const container = document.querySelector('.featured-songs-wrapper');
+  if (!container) {
+    console.log('No featured songs container found on this page');
+    return;
+  }
+  
+  const g = window.musicPlayerPersistent;
+  
+  // Fetch songs if not already loaded
+  if (g.MASTER_DATA.length === 0) {
+    await fetchSongs();
+  }
+  
+  // Get template wrapper and template card
+  const templateWrapper = container.querySelector('.template-wrapper');
+  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
+  
+  if (!templateCard) {
+    console.warn('No template card found in featured-songs-wrapper');
+    return;
+  }
+  
+  // Clear container but keep template wrapper
+  container.innerHTML = '';
+  if (templateWrapper) container.appendChild(templateWrapper);
+  
+  // Get first 6 songs
+  const featuredSongs = g.MASTER_DATA.slice(0, limit);
+  
+  // Create cards for each song
+  featuredSongs.forEach(song => {
+    const newCard = templateCard.cloneNode(true);
+    newCard.style.opacity = '1';
+    newCard.style.position = 'relative';
+    newCard.style.pointerEvents = 'auto';
+    
+    populateSongCard(newCard, song);
+    container.appendChild(newCard);
+  });
+  
+  console.log(`✅ Displayed ${featuredSongs.length} featured songs on home page`);
+  
+  // Initialize waveforms for these cards
+  setTimeout(() => {
+    const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+    if (cards.length > 0) {
+      loadWaveformBatch(Array.from(cards));
+    }
+  }, 100);
 }
 
 /**
