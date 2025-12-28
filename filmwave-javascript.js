@@ -2017,6 +2017,16 @@ if (newPageId && currentPageId !== newPageId) {
 
           // CRITICAL: Re-enable waveform drawing AFTER transition
           g.isTransitioning = false;
+
+          // Initialize featured songs on home page after Barba transition
+setTimeout(() => {
+  const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+  console.log('🏠 [BARBA AFTER] Checking for featured songs container:', hasFeaturedSongs);
+  if (hasFeaturedSongs) {
+    console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
+    displayFeaturedSongs(6);
+  }
+}, 300);
           
           if (g.currentSongData) {
             updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
