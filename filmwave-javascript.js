@@ -1745,17 +1745,6 @@ document.addEventListener('visibilitychange', function() {
  */
 window.addEventListener('load', () => initMusicPage());
 
-
-
-
-
-
-
-
-
-
-
-
 /**
  * ============================================================
  * FORCE WEBFLOW IX2/IX3 RESTART WITH PAGE ID UPDATE
@@ -1999,14 +1988,6 @@ if (newPageId && currentPageId !== newPageId) {
               }
             }
             
-
-
-
-
-
-
-            
-            
           }, 400);
           
           window.dispatchEvent(new Event('scroll'));
@@ -2038,13 +2019,6 @@ if (newPageId && currentPageId !== newPageId) {
                 }
               } catch (e) {}
             }
-            
-       
-
-
-
-
-            
             
           }, 600);
           
