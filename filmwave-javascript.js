@@ -193,22 +193,17 @@ async function initMusicPage() {
       positionMasterPlayer();
       updateMasterPlayerVisibility();
     }, 200);
-} else {
-  initMasterPlayer();
-  updateMasterPlayerVisibility();
+  } else {
+    initMasterPlayer();
+    updateMasterPlayerVisibility();
 
-  // Display featured songs on home page (with delay for Barba transitions)
-  setTimeout(() => {
+  // ADD THESE LINES:
+    // Display featured songs on home page
     const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-    console.log('🏠 Checking for featured songs container:', hasFeaturedSongs);
     if (hasFeaturedSongs) {
-      console.log('🎵 Calling displayFeaturedSongs...');
       displayFeaturedSongs(6);
-    } else {
-      console.log('⚠️ No featured songs container found');
     }
-  }, 200);
-}
+  }
 } 
 
 /**
@@ -2017,16 +2012,6 @@ if (newPageId && currentPageId !== newPageId) {
 
           // CRITICAL: Re-enable waveform drawing AFTER transition
           g.isTransitioning = false;
-
-          // Initialize featured songs on home page after Barba transition
-setTimeout(() => {
-  const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-  console.log('🏠 [BARBA AFTER] Checking for featured songs container:', hasFeaturedSongs);
-  if (hasFeaturedSongs) {
-    console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
-    displayFeaturedSongs(6);
-  }
-}, 300);
           
           if (g.currentSongData) {
             updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
