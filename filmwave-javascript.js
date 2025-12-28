@@ -1167,9 +1167,10 @@ if (peaksData && peaksData.trim().length > 0 && storedDuration) {
       songData
     });
     
-    const handlePlayPause = (e) => {
-      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-      if (e) e.stopPropagation();
+   const handlePlayPause = (e) => {
+  // Check for BOTH Webflow default AND custom dropdown classes
+  if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list, .stems-dropdown-toggle, .options-dropdown-toggle, .stems-dropdown-list, .options-dropdown-list')) return;
+  if (e) e.stopPropagation();
       
       if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
         const wasPlaying = g.isPlaying;
