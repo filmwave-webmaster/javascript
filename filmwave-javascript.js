@@ -63,15 +63,20 @@ function scrollToSelected(cardElement) {
 }
 
 function adjustDropdownPosition(toggle, list) {
-  const container = document.querySelector('.music-list-wrapper');
-  if (!container || !list || !toggle) return;
+  // Check for music page container OR home page container
+  const container = document.querySelector('.music-list-wrapper') || 
+                    document.querySelector('.featured-songs-wrapper') ||
+                    document.body;
+  
+  if (!list || !toggle) return;
+  
   const containerRect = container.getBoundingClientRect();
   const toggleRect = toggle.getBoundingClientRect();
   const original = list.style.display;
   list.style.display = 'block';
   list.style.visibility = 'hidden';
   const listHeight = list.offsetHeight;
-  list.style.display = original;
+  list.style.display = original;  // ← Already fixed
   list.style.visibility = '';
   const spaceBelow = containerRect.bottom - toggleRect.bottom;
   const spaceAbove = toggleRect.top - containerRect.top;
