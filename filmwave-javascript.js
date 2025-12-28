@@ -67,7 +67,7 @@ function adjustDropdownPosition(toggle, list) {
   if (!container || !list || !toggle) return;
   const containerRect = container.getBoundingClientRect();
   const toggleRect = toggle.getBoundingClientRect();
-  const original = list.style.display;
+  const originalDisplay = list.style.display;
   list.style.display = 'block';
   list.style.visibility = 'hidden';
   const listHeight = list.offsetHeight;
@@ -196,13 +196,6 @@ async function initMusicPage() {
   } else {
     initMasterPlayer();
     updateMasterPlayerVisibility();
-
-  // ADD THESE LINES:
-    // Display featured songs on home page
-    const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-    if (hasFeaturedSongs) {
-      displayFeaturedSongs(6);
-    }
   }
 } 
 
@@ -1304,63 +1297,6 @@ function displaySongs(songs) {
 
 /**
  * ============================================================
- * DISPLAY FEATURED SONGS ON HOME PAGE
- * ============================================================
- */
-async function displayFeaturedSongs(limit = 6) {
-  const container = document.querySelector('.featured-songs-wrapper');
-  if (!container) {
-    console.log('No featured songs container found on this page');
-    return;
-  }
-  
-  const g = window.musicPlayerPersistent;
-  
-  // Fetch songs if not already loaded
-  if (g.MASTER_DATA.length === 0) {
-    await fetchSongs();
-  }
-  
-  // Get template wrapper and template card
-  const templateWrapper = container.querySelector('.template-wrapper');
-  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
-  
-  if (!templateCard) {
-    console.warn('No template card found in featured-songs-wrapper');
-    return;
-  }
-  
-  // Clear container but keep template wrapper
-  container.innerHTML = '';
-  if (templateWrapper) container.appendChild(templateWrapper);
-  
-  // Get last 6 songs (newest)
-  const featuredSongs = g.MASTER_DATA.slice(-limit).reverse();
-  
-  // Create cards for each song
-  featuredSongs.forEach(song => {
-    const newCard = templateCard.cloneNode(true);
-    newCard.style.opacity = '1';
-    newCard.style.position = 'relative';
-    newCard.style.pointerEvents = 'auto';
-    
-    populateSongCard(newCard, song);
-    container.appendChild(newCard);
-  });
-  
-  console.log(`✅ Displayed ${featuredSongs.length} featured songs on home page`);
-  
-  // Initialize waveforms for these cards
-  setTimeout(() => {
-    const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
-    if (cards.length > 0) {
-      loadWaveformBatch(Array.from(cards));
-    }
-  }, 100);
-}
-
-/**
- * ============================================================
  * KEYBOARD CONTROLS
  * ============================================================
  */
@@ -1811,39 +1747,103 @@ window.addEventListener('load', () => initMusicPage());
 
 /**
  * ============================================================
- * FORCE WEBFLOW IX2/IX3 RESTART WITH PAGE ID UPDATE
+ * FORCE WEBFLOW TABS TO RE-INITIALIZE (NUCLEAR OPTION)
  * ============================================================
  */
-function forceWebflowRestart() {
-  console.log('🔄 Force-restarting Webflow IX engine...');
+function reinitializeWebflowTabs() {
+  console.log('🔄 Re-initializing Webflow tabs (nuclear option)...');
   
-  // A. Clean up the old instance
-  if (window.Webflow) {
-    window.Webflow.destroy();
-    window.Webflow.ready();
+  const tabMenus = document.querySelectorAll('.w-tabs');
+  
+  if (tabMenus.length === 0) {
+    console.log('⏭️ No tabs found on this page');
+    return;
   }
   
-  // B. The "Nuclear" Option for IX2/IX3
-  if (window.Webflow && window.Webflow.require('ix2')) {
-    const ix2 = window.Webflow.require('ix2');
+  tabMenus.forEach((tabMenu, menuIndex) => {
+    const tabLinks = tabMenu.querySelectorAll('.w-tab-link');
+    const tabPanes = tabMenu.querySelectorAll('.w-tab-pane');
     
-    // Stop any running animations
-    if (ix2.store && ix2.actions) {
-      ix2.store.dispatch(ix2.actions.stop());
+    if (tabLinks.length === 0 || tabPanes.length === 0) {
+      console.warn(`Tab menu ${menuIndex + 1} has no links or panes`);
+      return;
     }
     
-    // Re-initialize to force DOM re-scan
-    ix2.init();
-  }
+    console.log(`Processing tab menu ${menuIndex + 1} with ${tabLinks.length} tabs`);
+    
+    // Reset all tabs to default state
+    tabLinks.forEach((link, i) => {
+      link.classList.remove('w--current');
+      if (i === 0) {
+        link.classList.add('w--current');
+        link.setAttribute('aria-selected', 'true');
+        link.setAttribute('tabindex', '0');
+      } else {
+        link.setAttribute('aria-selected', 'false');
+        link.setAttribute('tabindex', '-1');
+      }
+    });
+    
+    tabPanes.forEach((pane, i) => {
+      pane.classList.remove('w--tab-active');
+      pane.style.opacity = '';
+      pane.style.display = '';
+      if (i === 0) {
+        pane.classList.add('w--tab-active');
+      }
+    });
+    
+    // Manually add click handlers (clone to remove old listeners)
+    tabLinks.forEach((link, clickedIndex) => {
+      const newLink = link.cloneNode(true);
+      link.parentNode.replaceChild(newLink, link);
+      
+      newLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log(`🖱️ Tab ${clickedIndex + 1} clicked`);
+        
+        // Update all tabs in this menu
+        const allLinks = tabMenu.querySelectorAll('.w-tab-link');
+        const allPanes = tabMenu.querySelectorAll('.w-tab-pane');
+        
+        allLinks.forEach((l, i) => {
+          if (i === clickedIndex) {
+            l.classList.add('w--current');
+            l.setAttribute('aria-selected', 'true');
+            l.setAttribute('tabindex', '0');
+          } else {
+            l.classList.remove('w--current');
+            l.setAttribute('aria-selected', 'false');
+            l.setAttribute('tabindex', '-1');
+          }
+        });
+        
+        allPanes.forEach((p, i) => {
+          if (i === clickedIndex) {
+            p.classList.add('w--tab-active');
+            p.style.display = '';
+            p.style.opacity = '1';
+          } else {
+            p.classList.remove('w--tab-active');
+            p.style.display = 'none';
+            p.style.opacity = '0';
+          }
+        });
+        
+        console.log(`✅ Switched to tab ${clickedIndex + 1}`);
+        
+        // CRITICAL: Sync pricing toggle state for the new tab
+        if (typeof syncPricingTabState === 'function') {
+          const $activeTabPane = $(allPanes[clickedIndex]);
+          syncPricingTabState($activeTabPane);
+          console.log('✅ Pricing state synced to new tab');
+        }
+      });
+    });
+  });
   
-  // C. The "Kickstarter" - trigger events that IX3 listens for
-  document.dispatchEvent(new Event('readystatechange'));
-  window.dispatchEvent(new Event('resize'));
-  
-  console.log('✅ Webflow IX engine restarted');
+  console.log('✅ Tabs manually re-initialized');
 }
-
-// END OF IX2/IX3 RESTART
 
 if (typeof barba !== 'undefined') {
   barba.init({
@@ -1926,79 +1926,33 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-    after(data) {
-  console.log('🚪 BARBA AFTER FIRED');
-  
-  const g = window.musicPlayerPersistent;
-  
-  window.scrollTo(0, 0);
-  
-// ============================================================
-// CRITICAL: Extract data-wf-page from the incoming HTML
-// ============================================================
-console.log('🔍 Checking for page ID...');
-let newPageId = null;
-
-// Method 1: Try to get from container first
-newPageId = data.next.container?.getAttribute('data-wf-page');
-console.log('Method 1 (container):', newPageId);
-
-// Method 2: Extract directly from HTML string using regex
-if (!newPageId && data.next.html) {
-  console.log('Method 2: Searching HTML string for data-wf-page');
-  
-  // Look for data-wf-page="VALUE" in the HTML string
-  const match = data.next.html.match(/data-wf-page="([^"]+)"/);
-  
-  if (match && match[1]) {
-    newPageId = match[1];
-    console.log('Page ID from regex:', newPageId);
-  } else {
-    console.log('No data-wf-page found in HTML string');
-  }
-}
-
-// Update the current page's html tag
-const htmlTag = document.documentElement;
-const currentPageId = htmlTag.getAttribute('data-wf-page');
-
-console.log('Current page ID:', currentPageId);
-console.log('New page ID:', newPageId);
-
-if (newPageId && currentPageId !== newPageId) {
-  console.log(`📄 Swapping Page ID from ${currentPageId} to ${newPageId}`);
-  htmlTag.setAttribute('data-wf-page', newPageId);
-  console.log('✅ Page ID updated!');
-} else if (!newPageId) {
-  console.log('⚠️ No new page ID found');
-} else if (currentPageId === newPageId) {
-  console.log('ℹ️ Page IDs are already the same - no swap needed');
-}
-  
-  // ============================================================
-  // IMPROVED WEBFLOW RE-INITIALIZATION
-  // ============================================================
-  if (window.Webflow) {
-    try {
-      const ix2 = window.Webflow.require('ix2');
-      if (ix2 && ix2.destroy) {
-        ix2.destroy();
-      }
-      
-      window.Webflow.destroy();
-      document.body.offsetHeight;
-      window.Webflow.ready();
-      
-      setTimeout(() => {
-        if (window.Webflow && window.Webflow.require) {
-          const ix2 = window.Webflow.require('ix2');
-          if (ix2 && ix2.init) {
-            ix2.init();
-          }
-        }
-      }, 100);
-      
-     } catch (e) {
+      after(data) {
+        const g = window.musicPlayerPersistent;
+        
+        window.scrollTo(0, 0);
+        
+        // IMPROVED WEBFLOW RE-INITIALIZATION
+        if (window.Webflow) {
+          try {
+            const ix2 = window.Webflow.require('ix2');
+            if (ix2 && ix2.destroy) {
+              ix2.destroy();
+            }
+            
+            window.Webflow.destroy();
+            document.body.offsetHeight;
+            window.Webflow.ready();
+            
+            setTimeout(() => {
+              if (window.Webflow && window.Webflow.require) {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              }
+            }, 100);
+            
+          } catch (e) {
             console.warn('Webflow reinit error:', e);
           }
         }
@@ -2052,6 +2006,9 @@ if (newPageId && currentPageId !== newPageId) {
               }
             }
             
+            // CRITICAL: Re-initialize Webflow tabs
+            reinitializeWebflowTabs();
+            
           }, 400);
           
           window.dispatchEvent(new Event('scroll'));
@@ -2083,6 +2040,9 @@ if (newPageId && currentPageId !== newPageId) {
                 }
               } catch (e) {}
             }
+            
+            // Try tabs again after everything settles
+            reinitializeWebflowTabs();
             
           }, 600);
           
