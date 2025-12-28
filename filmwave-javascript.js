@@ -635,6 +635,13 @@ function setupMasterPlayerControls() {
   if (masterPlayButton) masterPlayButton.onclick = handlePlayPause;
   if (controllerPlay) controllerPlay.onclick = handlePlayPause;
   if (controllerPause) controllerPause.onclick = handlePlayPause;
+
+  // Add click handler for player cover art
+const playerCoverArt = document.querySelector('.player-cover-art');
+if (playerCoverArt) {
+  playerCoverArt.style.cursor = 'pointer';
+  playerCoverArt.onclick = handlePlayPause;
+}
   
   const navigateTrack = (direction) => {
     if (g.allWavesurfers.length > 0 && g.currentWavesurfer) {
