@@ -1100,31 +1100,31 @@ function loadWaveformBatch(cardElements) {
       minPxPerSec: 1
     });
     
-    // CRITICAL: Get stored duration and peaks
-    const peaksData = songData.fields['Waveform Peaks'];
-    const storedDuration = songData.fields['Duration'];
+   // CRITICAL: Get stored duration and peaks
+const peaksData = songData.fields['Waveform Peaks'];
+const storedDuration = songData.fields['Duration'];
 
-    if (peaksData && peaksData.trim().length > 0 && storedDuration) {
-      try {
-        const peaks = JSON.parse(peaksData);
-        
-        // CRITICAL: Pass duration as third parameter - NO audio file loading!
-        wavesurfer.load(audioUrl, [peaks], storedDuration);
-        
-        console.log(`⚡ Instant load with peaks + duration (no audio fetch!)`);
-      } catch (e) {
-        console.error('Error loading peaks:', e);
-        wavesurfer.load(audioUrl);
-      }
-    } else {
-      if (!peaksData || peaksData.trim().length === 0) {
-        console.warn('⚠️ No peaks available - loading audio');
-      }
-      if (!storedDuration) {
-        console.warn('⚠️ No duration stored - loading audio');
-      }
-      wavesurfer.load(audioUrl);
-    }
+if (peaksData && peaksData.trim().length > 0 && storedDuration) {
+  try {
+    const peaks = JSON.parse(peaksData);
+    
+    // CRITICAL: Pass duration as third parameter - NO audio file loading!
+    wavesurfer.load(audioUrl, [peaks], storedDuration);
+    
+    console.log(`⚡ Instant load with peaks + duration (no audio fetch!)`);
+  } catch (e) {
+    console.error('Error loading peaks:', e);
+    wavesurfer.load(audioUrl);
+  }
+} else {
+  if (!peaksData || peaksData.trim().length === 0) {
+    console.warn('⚠️ No peaks available - loading audio');
+  }
+  if (!storedDuration) {
+    console.warn('⚠️ No duration stored - loading audio');
+  }
+  wavesurfer.load(audioUrl);
+}
     
     const waveformReadyPromise = new Promise((resolve) => {
       let resolved = false;
@@ -1139,8 +1139,8 @@ function loadWaveformBatch(cardElements) {
         if (durationElement) durationElement.textContent = formatDuration(duration);
         
         resolve();
-        // CRITICAL: Try to link as soon as this waveform is ready
-        setTimeout(() => linkStandaloneToWaveform(), 50);
+         // CRITICAL: Try to link as soon as this waveform is ready
+  setTimeout(() => linkStandaloneToWaveform(), 50);
       });
       
       setTimeout(() => {
@@ -1163,8 +1163,7 @@ function loadWaveformBatch(cardElements) {
     });
     
     const handlePlayPause = (e) => {
-      // FIXED: Check for BOTH Webflow default AND custom dropdown classes
-      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list, .stems-dropdown-toggle, .options-dropdown-toggle, .stems-dropdown-list, .options-dropdown-list')) return;
+      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
       if (e) e.stopPropagation();
       
       if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
@@ -1231,16 +1230,6 @@ function loadWaveformBatch(cardElements) {
       
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
     });
-
-    // CRITICAL: Stop dropdown clicks from bubbling to play/pause handlers
-const dropdownWrappers = cardElement.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
-dropdownWrappers.forEach(wrapper => {
-  wrapper.addEventListener('click', function(e) {
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    console.log('🛑 Dropdown wrapper clicked - stopped propagation');
-  }, true);
-});
     
     cardElement.dataset.waveformInitialized = 'true';
   });
@@ -1251,15 +1240,15 @@ dropdownWrappers.forEach(wrapper => {
     });
   });
   
-  setTimeout(() => {
-    waveformContainers.forEach((container) => {
-      if (container.style.opacity === '0') {
-        container.style.opacity = '1';
-      }
-    });
-    // Link again after fade-in completes
-    linkStandaloneToWaveform();
-  }, 1000);
+ setTimeout(() => {
+  waveformContainers.forEach((container) => {
+    if (container.style.opacity === '0') {
+      container.style.opacity = '1';
+    }
+  });
+  // Link again after fade-in completes
+  linkStandaloneToWaveform();
+}, 1000); // Reduced from 6000ms to 1000ms
 }
 
 /**
@@ -1366,61 +1355,6 @@ async function displayFeaturedSongs(limit = 6) {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
       loadWaveformBatch(Array.from(cards));
-      
-      // ADD DROPDOWN PROTECTION AFTER WAVEFORMS LOAD
-      setTimeout(() => {
-        cards.forEach(card => {
-          console.log('Processing card for dropdowns...');
-          
-          // Find all dropdown toggles
-          const stemsToggle = card.querySelector('.stems-dropdown-toggle');
-          const optionsToggle = card.querySelector('.options-dropdown-toggle');
-          
-          // Create invisible clickable overlays for each toggle
-          [stemsToggle, optionsToggle].forEach(toggle => {
-            if (!toggle) return;
-            
-            const wrapper = toggle.closest('.stems-dropdown-wrapper, .options-dropdown-wrapper');
-            if (!wrapper) return;
-            
-            // Create overlay div
-            const overlay = document.createElement('div');
-            overlay.style.position = 'absolute';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.zIndex = '1000';
-            overlay.style.cursor = 'pointer';
-            overlay.style.backgroundColor = 'transparent';
-            
-            // When overlay is clicked, programmatically click the actual toggle
-            overlay.addEventListener('click', function(e) {
-              e.stopPropagation();
-              e.stopImmediatePropagation();
-              console.log('Overlay clicked - triggering dropdown:', toggle.className);
-              toggle.click();
-            });
-            
-            // Position the wrapper relatively so the overlay works
-            wrapper.style.position = 'relative';
-            
-            // Add overlay to wrapper
-            wrapper.appendChild(overlay);
-            console.log('✅ Added clickable overlay for:', toggle.className);
-          });
-          
-          // Block dropdown wrapper clicks from triggering play/pause
-          const dropdownWrappers = card.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
-          dropdownWrappers.forEach(wrapper => {
-            wrapper.addEventListener('click', function(e) {
-              e.stopPropagation();
-              e.stopImmediatePropagation();
-            }, true);
-          });
-        });
-        console.log('✅ Dropdown protection added to featured songs');
-      }, 500);
     }
   }, 100);
 }
