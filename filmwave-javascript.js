@@ -1182,6 +1182,8 @@ const handlePlayPause = (e) => {
   if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
   if (e && e.target.closest('.stems-dropdown-toggle, .stems-dropdown-list')) return;
   if (e && e.target.closest('.options-dropdown-toggle, .options-dropdown-list')) return;
+
+   if (e && e.target.closest('input[type="checkbox"], .w-checkbox, label[for]')) return;
       
       if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
         const wasPlaying = g.isPlaying;
