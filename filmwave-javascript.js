@@ -1356,35 +1356,6 @@ async function displayFeaturedSongs(limit = 6) {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
       loadWaveformBatch(Array.from(cards));
-    }
-  }, 100);
-}
-  
-  // Clear container but keep template wrapper
-  container.innerHTML = '';
-  if (templateWrapper) container.appendChild(templateWrapper);
-  
-  // Get last 6 songs (newest)
-  const featuredSongs = g.MASTER_DATA.slice(-limit).reverse();
-  
-  // Create cards for each song
-  featuredSongs.forEach(song => {
-    const newCard = templateCard.cloneNode(true);
-    newCard.style.opacity = '1';
-    newCard.style.position = 'relative';
-    newCard.style.pointerEvents = 'auto';
-    
-    populateSongCard(newCard, song);
-    container.appendChild(newCard);
-  });
-  
-  console.log(`✅ Displayed ${featuredSongs.length} featured songs on home page`);
-  
-  // Initialize waveforms for these cards
-  setTimeout(() => {
-    const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
-    if (cards.length > 0) {
-      loadWaveformBatch(Array.from(cards));
       
       // ADD DROPDOWN PROTECTION AFTER WAVEFORMS LOAD
       setTimeout(() => {
