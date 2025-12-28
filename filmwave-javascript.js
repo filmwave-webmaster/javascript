@@ -1745,105 +1745,16 @@ document.addEventListener('visibilitychange', function() {
  */
 window.addEventListener('load', () => initMusicPage());
 
-/**
- * ============================================================
- * FORCE WEBFLOW TABS TO RE-INITIALIZE (NUCLEAR OPTION)
- * ============================================================
- */
-function reinitializeWebflowTabs() {
-  console.log('🔄 Re-initializing Webflow tabs (nuclear option)...');
-  
-  const tabMenus = document.querySelectorAll('.w-tabs');
-  
-  if (tabMenus.length === 0) {
-    console.log('⏭️ No tabs found on this page');
-    return;
-  }
-  
-  tabMenus.forEach((tabMenu, menuIndex) => {
-    const tabLinks = tabMenu.querySelectorAll('.w-tab-link');
-    const tabPanes = tabMenu.querySelectorAll('.w-tab-pane');
-    
-    if (tabLinks.length === 0 || tabPanes.length === 0) {
-      console.warn(`Tab menu ${menuIndex + 1} has no links or panes`);
-      return;
-    }
-    
-    console.log(`Processing tab menu ${menuIndex + 1} with ${tabLinks.length} tabs`);
-    
-    // Reset all tabs to default state
-    tabLinks.forEach((link, i) => {
-      link.classList.remove('w--current');
-      if (i === 0) {
-        link.classList.add('w--current');
-        link.setAttribute('aria-selected', 'true');
-        link.setAttribute('tabindex', '0');
-      } else {
-        link.setAttribute('aria-selected', 'false');
-        link.setAttribute('tabindex', '-1');
-      }
-    });
-    
-    tabPanes.forEach((pane, i) => {
-      pane.classList.remove('w--tab-active');
-      pane.style.opacity = '';
-      pane.style.display = '';
-      if (i === 0) {
-        pane.classList.add('w--tab-active');
-      }
-    });
-    
-    // Manually add click handlers (clone to remove old listeners)
-    tabLinks.forEach((link, clickedIndex) => {
-      const newLink = link.cloneNode(true);
-      link.parentNode.replaceChild(newLink, link);
-      
-      newLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log(`🖱️ Tab ${clickedIndex + 1} clicked`);
-        
-        // Update all tabs in this menu
-        const allLinks = tabMenu.querySelectorAll('.w-tab-link');
-        const allPanes = tabMenu.querySelectorAll('.w-tab-pane');
-        
-        allLinks.forEach((l, i) => {
-          if (i === clickedIndex) {
-            l.classList.add('w--current');
-            l.setAttribute('aria-selected', 'true');
-            l.setAttribute('tabindex', '0');
-          } else {
-            l.classList.remove('w--current');
-            l.setAttribute('aria-selected', 'false');
-            l.setAttribute('tabindex', '-1');
-          }
-        });
-        
-        allPanes.forEach((p, i) => {
-          if (i === clickedIndex) {
-            p.classList.add('w--tab-active');
-            p.style.display = '';
-            p.style.opacity = '1';
-          } else {
-            p.classList.remove('w--tab-active');
-            p.style.display = 'none';
-            p.style.opacity = '0';
-          }
-        });
-        
-        console.log(`✅ Switched to tab ${clickedIndex + 1}`);
-        
-        // CRITICAL: Sync pricing toggle state for the new tab
-        if (typeof syncPricingTabState === 'function') {
-          const $activeTabPane = $(allPanes[clickedIndex]);
-          syncPricingTabState($activeTabPane);
-          console.log('✅ Pricing state synced to new tab');
-        }
-      });
-    });
-  });
-  
-  console.log('✅ Tabs manually re-initialized');
-}
+
+
+
+
+
+
+
+
+
+
 
 /**
  * ============================================================
@@ -2088,8 +1999,13 @@ if (newPageId && currentPageId !== newPageId) {
               }
             }
             
-            // CRITICAL: Re-initialize Webflow tabs
-            reinitializeWebflowTabs();
+
+
+
+
+
+
+            
             
           }, 400);
           
@@ -2123,8 +2039,12 @@ if (newPageId && currentPageId !== newPageId) {
               } catch (e) {}
             }
             
-            // Try tabs again after everything settles
-            reinitializeWebflowTabs();
+       
+
+
+
+
+            
             
           }, 600);
           
