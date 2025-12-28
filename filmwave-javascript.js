@@ -1366,6 +1366,13 @@ async function displayFeaturedSongs(limit = 6) {
     populateSongCard(newCard, song);
     container.appendChild(newCard);
   });
+
+   // Reinitialize Webflow for dropdowns to work
+  if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+    window.Webflow.require('ix2').init();
+  }
   
   console.log(`✅ Displayed ${featuredSongs.length} featured songs on home page`);
   
