@@ -1172,14 +1172,27 @@ function loadWaveformBatch(cardElements) {
     });
     
 const handlePlayPause = (e) => {
-  console.log('🎯 handlePlayPause called');
-  console.log('Event target:', e?.target);
-  console.log('Closest dropdown toggle:', e?.target.closest('.w-dropdown-toggle, .w-dropdown-list'));
-  console.log('Closest stems toggle:', e?.target.closest('.stems-dropdown-toggle, .stems-dropdown-list'));
-  console.log('Closest options toggle:', e?.target.closest('.options-dropdown-toggle, .options-dropdown-list'));
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
   
   if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-  if (e) e.stopPropagation();
+  
+  // DEBUG LOGGING - START
+  console.log('═══════════════════════════════════════════');
+  console.log('🎯 CLICK DETECTED');
+  console.log('Clicked song:', songData?.fields?.['Song Title']);
+  console.log('Clicked song ID:', songData?.id);
+  console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
+  console.log('Current song ID:', g.currentSongData?.id);
+  console.log('Is same song?', g.currentSongData?.id === songData.id);
+  console.log('g.isPlaying:', g.isPlaying);
+  console.log('g.standaloneAudio exists:', !!g.standaloneAudio);
+  console.log('g.standaloneAudio.paused:', g.standaloneAudio?.paused);
+  console.log('g.currentWavesurfer === wavesurfer?', g.currentWavesurfer === wavesurfer);
+  console.log('═══════════════════════════════════════════');
+  // DEBUG LOGGING - END
       
       if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
         const wasPlaying = g.isPlaying;
