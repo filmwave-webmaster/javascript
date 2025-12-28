@@ -1359,6 +1359,23 @@ async function displayFeaturedSongs(limit = 6) {
       // ADD DROPDOWN PROTECTION AFTER WAVEFORMS LOAD
       setTimeout(() => {
         cards.forEach(card => {
+          const waveformContainer = card.querySelector('.player-waveform-wrapper');
+          
+          if (waveformContainer) {
+            // Set pointer-events: none on dropdown containers
+            const dropdowns = waveformContainer.querySelectorAll('.w-dropdown, .stems-dropdown-wrapper, .options-dropdown-wrapper');
+            dropdowns.forEach(dd => {
+              dd.style.pointerEvents = 'none';
+            });
+            
+            // Re-enable pointer events on dropdown toggles
+            const dropdownToggles = waveformContainer.querySelectorAll('.w-dropdown-toggle, .stems-dropdown-toggle, .options-dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+              toggle.style.pointerEvents = 'auto';
+              console.log('Re-enabled pointer events on toggle:', toggle.className);
+            });
+          }
+          
           // Block dropdown clicks from triggering play/pause
           const dropdownWrappers = card.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
           dropdownWrappers.forEach(wrapper => {
@@ -1366,7 +1383,7 @@ async function displayFeaturedSongs(limit = 6) {
               console.log('Dropdown clicked on home page - stopping propagation');
               e.stopPropagation();
               e.stopImmediatePropagation();
-            }, true); // Capture phase
+            }, true);
           });
         });
         console.log('✅ Dropdown protection added to featured songs');
