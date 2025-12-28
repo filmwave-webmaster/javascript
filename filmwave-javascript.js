@@ -1355,6 +1355,22 @@ async function displayFeaturedSongs(limit = 6) {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
       loadWaveformBatch(Array.from(cards));
+      
+      // ADD DROPDOWN PROTECTION AFTER WAVEFORMS LOAD
+      setTimeout(() => {
+        cards.forEach(card => {
+          // Block dropdown clicks from triggering play/pause
+          const dropdownWrappers = card.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
+          dropdownWrappers.forEach(wrapper => {
+            wrapper.addEventListener('click', function(e) {
+              console.log('Dropdown clicked on home page - stopping propagation');
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+            }, true); // Capture phase
+          });
+        });
+        console.log('✅ Dropdown protection added to featured songs');
+      }, 500);
     }
   }, 100);
 }
