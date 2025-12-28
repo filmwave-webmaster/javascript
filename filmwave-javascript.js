@@ -1171,14 +1171,14 @@ function loadWaveformBatch(cardElements) {
       songData
     });
     
-   const handlePlayPause = (e) => {
-  // CRITICAL: Stop propagation FIRST to prevent double-firing
+const handlePlayPause = (e) => {
+  // CRITICAL: Prevent multiple handlers from firing
   if (e) {
     e.stopPropagation();
     e.preventDefault();
   }
   
-  // Ignore clicks on dropdown elements
+  // Ignore dropdown clicks
   if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
   if (e && e.target.closest('.stems-dropdown-toggle, .stems-dropdown-list')) return;
   if (e && e.target.closest('.options-dropdown-toggle, .options-dropdown-list')) return;
@@ -1213,15 +1213,25 @@ function loadWaveformBatch(cardElements) {
       }
     };
     
-    if (coverArtWrapper) {
-      coverArtWrapper.style.cursor = 'pointer';
-      coverArtWrapper.addEventListener('click', handlePlayPause);
-    }
-    
-    if (songName) {
-      songName.style.cursor = 'pointer';
-      songName.addEventListener('click', handlePlayPause);
-    }
+  if (coverArtWrapper) {
+  coverArtWrapper.style.cursor = 'pointer';
+  coverArtWrapper.addEventListener('click', handlePlayPause, { once: false });
+}
+
+if (songName) {
+  songName.style.cursor = 'pointer';
+  songName.addEventListener('click', handlePlayPause, { once: false });
+}
+
+// Add specific handler for play button to prevent bubbling
+if (playButton) {
+  playButton.style.cursor = 'pointer';
+  playButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    handlePlayPause(e);
+  }, { capture: true });
+}
     
     wavesurfer.on('interaction', function (newProgress) {
       if (g.currentSongData?.id === songData.id) {
