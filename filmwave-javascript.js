@@ -71,7 +71,7 @@ function adjustDropdownPosition(toggle, list) {
   list.style.display = 'block';
   list.style.visibility = 'hidden';
   const listHeight = list.offsetHeight;
-  list.style.display = originalDisplay;
+  list.style.display = original;
   list.style.visibility = '';
   const spaceBelow = containerRect.bottom - toggleRect.bottom;
   const spaceAbove = toggleRect.top - containerRect.top;
