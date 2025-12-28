@@ -1171,15 +1171,17 @@ function loadWaveformBatch(cardElements) {
       songData
     });
     
-    const handlePlayPause = (e) => {
-      console.log('🎯 handlePlayPause called');
-      console.log('Event target:', e?.target);
-      console.log('Closest dropdown toggle:', e?.target.closest('.w-dropdown-toggle, .w-dropdown-list'));
-      console.log('Closest stems toggle:', e?.target.closest('.stems-dropdown-toggle, .stems-dropdown-list'));
-      console.log('Closest options toggle:', e?.target.closest('.options-dropdown-toggle, .options-dropdown-list'));
-      
-      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-      if (e) e.stopPropagation();
+   const handlePlayPause = (e) => {
+  // CRITICAL: Stop propagation FIRST to prevent double-firing
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  
+  // Ignore clicks on dropdown elements
+  if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
+  if (e && e.target.closest('.stems-dropdown-toggle, .stems-dropdown-list')) return;
+  if (e && e.target.closest('.options-dropdown-toggle, .options-dropdown-list')) return;
       
       if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
         const wasPlaying = g.isPlaying;
