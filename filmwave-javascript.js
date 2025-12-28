@@ -1172,18 +1172,14 @@ function loadWaveformBatch(cardElements) {
     });
     
 const handlePlayPause = (e) => {
-  // CRITICAL: Prevent multiple handlers from firing
-  if (e) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
+  console.log('🎯 handlePlayPause called');
+  console.log('Event target:', e?.target);
+  console.log('Closest dropdown toggle:', e?.target.closest('.w-dropdown-toggle, .w-dropdown-list'));
+  console.log('Closest stems toggle:', e?.target.closest('.stems-dropdown-toggle, .stems-dropdown-list'));
+  console.log('Closest options toggle:', e?.target.closest('.options-dropdown-toggle, .options-dropdown-list'));
   
-  // Ignore dropdown clicks
   if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-  if (e && e.target.closest('.stems-dropdown-toggle, .stems-dropdown-list')) return;
-  if (e && e.target.closest('.options-dropdown-toggle, .options-dropdown-list')) return;
-
-   if (e && e.target.closest('input[type="checkbox"], .w-checkbox, label[for]')) return;
+  if (e) e.stopPropagation();
       
       if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
         const wasPlaying = g.isPlaying;
@@ -1215,24 +1211,14 @@ const handlePlayPause = (e) => {
       }
     };
     
-  if (coverArtWrapper) {
+if (coverArtWrapper) {
   coverArtWrapper.style.cursor = 'pointer';
-  coverArtWrapper.addEventListener('click', handlePlayPause, { once: false });
+  coverArtWrapper.addEventListener('click', handlePlayPause);
 }
 
 if (songName) {
   songName.style.cursor = 'pointer';
-  songName.addEventListener('click', handlePlayPause, { once: false });
-}
-
-// Add specific handler for play button to prevent bubbling
-if (playButton) {
-  playButton.style.cursor = 'pointer';
-  playButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    handlePlayPause(e);
-  }, { capture: true });
+  songName.addEventListener('click', handlePlayPause);
 }
     
     wavesurfer.on('interaction', function (newProgress) {
