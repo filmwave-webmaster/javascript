@@ -1231,6 +1231,16 @@ function loadWaveformBatch(cardElements) {
       
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
     });
+
+    // CRITICAL: Stop dropdown clicks from bubbling to play/pause handlers
+const dropdownWrappers = cardElement.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
+dropdownWrappers.forEach(wrapper => {
+  wrapper.addEventListener('click', function(e) {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    console.log('🛑 Dropdown wrapper clicked - stopped propagation');
+  }, true);
+});
     
     cardElement.dataset.waveformInitialized = 'true';
   });
