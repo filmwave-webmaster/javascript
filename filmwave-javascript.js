@@ -1359,30 +1359,50 @@ async function displayFeaturedSongs(limit = 6) {
       // ADD DROPDOWN PROTECTION AFTER WAVEFORMS LOAD
       setTimeout(() => {
         cards.forEach(card => {
-          const waveformContainer = card.querySelector('.player-waveform-wrapper');
+          console.log('Processing card for dropdowns...');
           
-          if (waveformContainer) {
-            // Set pointer-events: none on dropdown containers
-            const dropdowns = waveformContainer.querySelectorAll('.stems-dropdown, .options-dropdown');
-            dropdowns.forEach(dd => {
-              dd.style.pointerEvents = 'none';
-              console.log('Disabled dropdown container:', dd.className);
+          // Find all dropdown toggles
+          const stemsToggle = card.querySelector('.stems-dropdown-toggle');
+          const optionsToggle = card.querySelector('.options-dropdown-toggle');
+          
+          // Create invisible clickable overlays for each toggle
+          [stemsToggle, optionsToggle].forEach(toggle => {
+            if (!toggle) return;
+            
+            const wrapper = toggle.closest('.stems-dropdown-wrapper, .options-dropdown-wrapper');
+            if (!wrapper) return;
+            
+            // Create overlay div
+            const overlay = document.createElement('div');
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.zIndex = '1000';
+            overlay.style.cursor = 'pointer';
+            overlay.style.backgroundColor = 'transparent';
+            
+            // When overlay is clicked, programmatically click the actual toggle
+            overlay.addEventListener('click', function(e) {
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              console.log('Overlay clicked - triggering dropdown:', toggle.className);
+              toggle.click();
             });
             
-            // Re-enable pointer events on dropdown toggles (using the correct class names!)
-            const dropdownToggles = waveformContainer.querySelectorAll('.stems-dropdown-toggle, .options-dropdown-toggle');
-            dropdownToggles.forEach(toggle => {
-              toggle.style.pointerEvents = 'auto';
-              toggle.style.cursor = 'pointer';
-              console.log('✅ Re-enabled toggle:', toggle.className);
-            });
-          }
+            // Position the wrapper relatively so the overlay works
+            wrapper.style.position = 'relative';
+            
+            // Add overlay to wrapper
+            wrapper.appendChild(overlay);
+            console.log('✅ Added clickable overlay for:', toggle.className);
+          });
           
           // Block dropdown wrapper clicks from triggering play/pause
           const dropdownWrappers = card.querySelectorAll('.stems-dropdown-wrapper, .options-dropdown-wrapper');
           dropdownWrappers.forEach(wrapper => {
             wrapper.addEventListener('click', function(e) {
-              console.log('Dropdown wrapper clicked - stopping propagation');
               e.stopPropagation();
               e.stopImmediatePropagation();
             }, true);
@@ -1393,7 +1413,6 @@ async function displayFeaturedSongs(limit = 6) {
     }
   }, 100);
 }
-
 /**
  * ============================================================
  * KEYBOARD CONTROLS
