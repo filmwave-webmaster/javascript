@@ -1194,35 +1194,43 @@ const handlePlayPause = (e) => {
   console.log('═══════════════════════════════════════════');
   // DEBUG LOGGING - END
       
-      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-        const wasPlaying = g.isPlaying;
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-        }
-        
-        g.currentWavesurfer.seekTo(0);
-        
-        if (wasPlaying) {
-          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-        } else {
-          g.currentWavesurfer = wavesurfer;
-          g.currentSongData = songData;
-          g.hasActiveSong = true;
-          syncMasterTrack(wavesurfer, songData, 0);
-        }
+  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+    console.log('🔀 BRANCH: Different song detected');
+    const wasPlaying = g.isPlaying;
+    console.log('wasPlaying:', wasPlaying);
+    
+    if (g.standaloneAudio) {
+      g.standaloneAudio.pause();
+    }
+    
+    g.currentWavesurfer.seekTo(0);
+    
+    if (wasPlaying) {
+      console.log('▶️ ACTION: Playing new song (was playing)');
+      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+    } else {
+      console.log('⏸️ ACTION: Syncing new song (was paused)');
+      g.currentWavesurfer = wavesurfer;
+      g.currentSongData = songData;
+      g.hasActiveSong = true;
+      syncMasterTrack(wavesurfer, songData, 0);
+    }
+  } else {
+    console.log('🔁 BRANCH: Same song or no current song');
+    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+      if (g.standaloneAudio.paused) {
+        console.log('▶️ ACTION: Playing current song');
+        g.standaloneAudio.play();
       } else {
-        if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-          if (g.standaloneAudio.paused) {
-            g.standaloneAudio.play();
-          } else {
-            g.standaloneAudio.pause();
-          }
-        } else {
-          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-        }
+        console.log('⏸️ ACTION: Pausing current song');
+        g.standaloneAudio.pause();
       }
-    };
+    } else {
+      console.log('▶️ ACTION: Playing new standalone song');
+      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+    }
+  }
+};
     
 if (coverArtWrapper) {
   coverArtWrapper.style.cursor = 'pointer';
