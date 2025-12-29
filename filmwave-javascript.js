@@ -931,13 +931,14 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     }
   });
   
-  audio.addEventListener('timeupdate', () => {
-    g.currentTime = audio.currentTime;
-    
-    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
-      const progress = audio.currentTime / audio.duration;
-      wavesurfer.seekTo(progress);
-    }
+ audio.addEventListener('timeupdate', () => {
+  g.currentTime = audio.currentTime;
+  
+  // Update whatever the CURRENT wavesurfer is (not a specific instance)
+  if (g.currentWavesurfer && audio.duration > 0) {
+    const progress = audio.currentTime / audio.duration;
+    g.currentWavesurfer.seekTo(progress);
+  }
     
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
