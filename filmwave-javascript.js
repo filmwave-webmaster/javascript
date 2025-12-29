@@ -2088,31 +2088,34 @@ if (mainContent && isLoginPage) {
     }
   }
   
-  // Reinitialize Wized for password toggle
-if (window.Wized) {
-  try {
-    console.log('🔄 Re-initializing Wized...');
+ // Manual password toggle for login/signup pages
+const passwordToggles = document.querySelectorAll('.password-toggle-visible, .password-toggle-hidden');
+passwordToggles.forEach(toggle => {
+  // Remove any existing listeners
+  const newToggle = toggle.cloneNode(true);
+  toggle.parentNode.replaceChild(newToggle, toggle);
+  
+  newToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     
-    // Try different Wized methods
-    if (typeof window.Wized.init === 'function') {
-      window.Wized.init();
-    } else if (typeof window.Wized.refresh === 'function') {
-      window.Wized.refresh();
-    } else {
-      // Force re-execute Wized by reloading the script
-      const wizedScript = document.querySelector('script[src*="wized.com"]');
-      if (wizedScript) {
-        const newScript = document.createElement('script');
-        newScript.src = wizedScript.src;
-        newScript.async = true;
-        document.head.appendChild(newScript);
+    // Find the password input (usually a sibling or nearby)
+    const passwordField = this.closest('.form-field, .password-field, form')?.querySelector('input[type="password"], input[type="text"][name*="password"]');
+    
+    if (passwordField) {
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        console.log('👁️ Password shown');
+      } else {
+        passwordField.type = 'password';
+        console.log('🔒 Password hidden');
       }
     }
-    
-    console.log('✅ Wized re-initialized successfully');
-  } catch (e) {
-    console.error('❌ Error initializing Wized:', e);
-  }
+  });
+});
+
+if (passwordToggles.length > 0) {
+  console.log(`✅ Initialized ${passwordToggles.length} password toggles manually`);
 }
   
 }, 400);
