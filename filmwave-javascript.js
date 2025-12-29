@@ -1892,6 +1892,16 @@ if (typeof barba !== 'undefined') {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
+  // Inject CSS to hide main-content during transition
+  const styleId = 'barba-transition-style';
+  let style = document.getElementById(styleId);
+  if (!style) {
+    style = document.createElement('style');
+    style.id = styleId;
+    document.head.appendChild(style);
+  }
+  style.textContent = '.main-content { opacity: 0 !important; transition: none !important; }';
+
   if (!isMusicPage) {
     document.body.style.overflow = 'visible';
     document.documentElement.style.overflow = 'visible';
@@ -1899,21 +1909,7 @@ if (typeof barba !== 'undefined') {
     nextContainer.style.overflow = 'visible';
     
     const mainContent = nextContainer.querySelector('.main-content');
-    if (mainContent) {
-      mainContent.style.overflow = 'visible';
-      
-      // NEW: Set height BEFORE page shows to prevent flash
-      const g = window.musicPlayerPersistent;
-      const hasActiveSong = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
-      
-      if (hasActiveSong) {
-        mainContent.style.height = 'calc(100vh - 77px)';
-        console.log('📐 [beforeEnter] Main content: calc(100vh - 77px) - player will be visible');
-      } else {
-        mainContent.style.height = '100vh';
-        console.log('📐 [beforeEnter] Main content: 100vh - no active song');
-      }
-    }
+    if (mainContent) mainContent.style.overflow = 'visible';
   } else {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -2026,6 +2022,14 @@ if (typeof barba !== 'undefined') {
         mainContent.style.height = '100vh';
         console.log('📐 Main content: 100vh - player hidden');
       }
+
+    // Remove hiding CSS and reveal smoothly
+  const style = document.getElementById('barba-transition-style');
+  if (style) style.remove();
+  
+  mainContent.style.transition = 'opacity 0.15s ease';
+  mainContent.style.opacity = '1';
+      
     }
 
     g.isTransitioning = false;
