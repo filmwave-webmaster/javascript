@@ -223,28 +223,46 @@ function navigateStandaloneTrack(direction) {
   
   if (!g.currentSongData || g.MASTER_DATA.length === 0) return;
   
-  // 👇 USE FILTERED SONGS IF AVAILABLE, OTHERWISE USE ALL SONGS
+  // Use filtered songs if available, otherwise use all songs
   const songsToNavigate = g.filteredSongIds && g.filteredSongIds.length > 0
     ? g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id))
     : g.MASTER_DATA;
   
-  console.log(`🎵 Navigating through ${songsToNavigate.length} songs (filtered: ${g.filteredSongIds.length > 0})`);
+  console.log(`🎵 Navigation Debug:`);
+  console.log(`   - Total songs in library: ${g.MASTER_DATA.length}`);
+  console.log(`   - Filtered song IDs stored: ${g.filteredSongIds ? g.filteredSongIds.length : 0}`);
+  console.log(`   - Songs to navigate through: ${songsToNavigate.length}`);
+  console.log(`   - Using filters: ${g.filteredSongIds && g.filteredSongIds.length > 0}`);
   
   const currentIndex = songsToNavigate.findIndex(r => r.id === g.currentSongData.id);
-  if (currentIndex === -1) return;
+  
+  if (currentIndex === -1) {
+    console.warn(`⚠️ Current song not found in navigation list!`);
+    console.warn(`   - Current song ID: ${g.currentSongData.id}`);
+    console.warn(`   - Current song: ${g.currentSongData.fields?.['Song Title']}`);
+    return;
+  }
   
   let nextIndex = -1;
   
   if (direction === 'next') {
     nextIndex = currentIndex + 1;
-    if (nextIndex >= songsToNavigate.length) return;
+    if (nextIndex >= songsToNavigate.length) {
+      console.log('🛑 Already at last song');
+      return;
+    }
   } else {
     nextIndex = currentIndex - 1;
-    if (nextIndex < 0) return;
+    if (nextIndex < 0) {
+      console.log('🛑 Already at first song');
+      return;
+    }
   }
   
   const nextSong = songsToNavigate[nextIndex];
   const audioUrl = nextSong.fields['R2 Audio URL'];
+  
+  console.log(`➡️ Navigating ${direction}: ${nextSong.fields?.['Song Title']}`);
   
   if (!audioUrl) return;
   
