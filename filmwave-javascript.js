@@ -219,9 +219,18 @@ async function initMusicPage() {
  * ============================================================
  */
 function navigateStandaloneTrack(direction) {
+  console.log('🚨 NAVIGATION FUNCTION CALLED - Direction:', direction);
+  
   const g = window.musicPlayerPersistent;
   
-  if (!g.currentSongData || g.MASTER_DATA.length === 0) return;
+  console.log('🚨 CHECKING CONDITIONS:');
+  console.log('   - g.currentSongData exists:', !!g.currentSongData);
+  console.log('   - g.MASTER_DATA.length:', g.MASTER_DATA.length);
+  
+  if (!g.currentSongData || g.MASTER_DATA.length === 0) {
+    console.log('🚨 RETURNING EARLY - conditions not met');
+    return;
+  }
   
   // Use filtered songs if available, otherwise use all songs
   const songsToNavigate = g.filteredSongIds && g.filteredSongIds.length > 0
