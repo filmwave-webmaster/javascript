@@ -2077,18 +2077,29 @@ if (mainContent && isLoginPage) {
       positionMasterPlayer();
     }, 100);
     
-    setTimeout(() => {
-      if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
-        console.log('🔄 Attempting to re-initialize pricing toggle...');
-        try {
-          initPricingToggle();
-          console.log('✅ Pricing toggle re-initialized successfully');
-        } catch (e) {
-          console.error('❌ Error initializing pricing toggle:', e);
-        }
-      }
-      
-    }, 400);
+   setTimeout(() => {
+  if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
+    console.log('🔄 Attempting to re-initialize pricing toggle...');
+    try {
+      initPricingToggle();
+      console.log('✅ Pricing toggle re-initialized successfully');
+    } catch (e) {
+      console.error('❌ Error initializing pricing toggle:', e);
+    }
+  }
+  
+  // NEW: Reinitialize Wized for password toggle
+  if (window.Wized) {
+    try {
+      console.log('🔄 Re-initializing Wized...');
+      window.Wized.reload();
+      console.log('✅ Wized re-initialized successfully');
+    } catch (e) {
+      console.error('❌ Error initializing Wized:', e);
+    }
+  }
+  
+}, 400);
     
     window.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
