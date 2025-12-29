@@ -1714,64 +1714,69 @@ function initSearchAndFilters() {
     applyFilters();
   }
   
-  function applyFilters() {
-    const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
-    const keywords = query.split(/\s+/).filter(k => k.length > 0);
-    const filterInputs = document.querySelectorAll('[data-filter-group]');
-    const selectedFilters = [];
-    
-    filterInputs.forEach(input => {
-      if (input.checked) {
-        const group = input.getAttribute('data-filter-group');
-        const value = input.getAttribute('data-filter-value');
-        const keyGroup = input.getAttribute('data-key-group');
-        
-        selectedFilters.push({
-          group: group,
-          value: value ? value.toLowerCase() : null,
-          keyGroup: keyGroup ? keyGroup.toLowerCase() : null
-        });
-      }
-    });
-    
-    const visibleIds = g.MASTER_DATA.filter(record => {
-      const fields = record.fields;
-      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-      const matchesSearch = keywords.every(k => allText.includes(k));
+ function applyFilters() {
+  const g = window.musicPlayerPersistent;
+  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+  const keywords = query.split(/\s+/).filter(k => k.length > 0);
+  const filterInputs = document.querySelectorAll('[data-filter-group]');
+  const selectedFilters = [];
+  
+  filterInputs.forEach(input => {
+    if (input.checked) {
+      const group = input.getAttribute('data-filter-group');
+      const value = input.getAttribute('data-filter-value');
+      const keyGroup = input.getAttribute('data-key-group');
       
-      const matchesAttributes = selectedFilters.every(filter => {
-        let recVal = fields[filter.group];
-        if (recVal === undefined || recVal === null) return false;
-        
-        if (filter.keyGroup) {
-          if (filter.keyGroup === 'major') {
-            return String(recVal).toLowerCase().endsWith('maj');
-          }
-          if (filter.keyGroup === 'minor') {
-            return String(recVal).toLowerCase().endsWith('min');
-          }
-        }
-        
-        if (filter.value) {
-          if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
-          return String(recVal).toLowerCase() === filter.value;
-        }
-        
-        return false;
+      selectedFilters.push({
+        group: group,
+        value: value ? value.toLowerCase() : null,
+        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
       });
-      
-      return matchesSearch && matchesAttributes;
-    }).map(r => r.id);
-
-      g.filteredSongIds = visibleIds;
-  console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
+    }
+  });
+  
+  const visibleIds = g.MASTER_DATA.filter(record => {
+    const fields = record.fields;
+    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+    const matchesSearch = keywords.every(k => allText.includes(k));
     
-    document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+    const matchesAttributes = selectedFilters.every(filter => {
+      let recVal = fields[filter.group];
+      if (recVal === undefined || recVal === null) return false;
+      
+      if (filter.keyGroup) {
+        if (filter.keyGroup === 'major') {
+          return String(recVal).toLowerCase().endsWith('maj');
+        }
+        if (filter.keyGroup === 'minor') {
+          return String(recVal).toLowerCase().endsWith('min');
+        }
+      }
+      
+      if (filter.value) {
+        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+        return String(recVal).toLowerCase() === filter.value;
+      }
+      
+      return false;
     });
     
-    toggleClearButton();
+    return matchesSearch && matchesAttributes;
+  }).map(r => r.id);
+  
+  // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (isMusicPage) {
+    g.filteredSongIds = visibleIds;
+    console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
   }
+  
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+  });
+  
+  toggleClearButton();
+}
   
   if (clearBtn) {
     clearBtn.style.display = 'none';
