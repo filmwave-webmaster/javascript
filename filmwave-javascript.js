@@ -1892,7 +1892,7 @@ if (typeof barba !== 'undefined') {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
-  // Inject CSS to hide main-content during transition
+  // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
   let style = document.getElementById(styleId);
   if (!style) {
@@ -1900,7 +1900,7 @@ if (typeof barba !== 'undefined') {
     style.id = styleId;
     document.head.appendChild(style);
   }
-  style.textContent = '.main-content { opacity: 0 !important; transition: none !important; }';
+  style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
   if (!isMusicPage) {
     document.body.style.overflow = 'visible';
@@ -2015,22 +2015,24 @@ if (typeof barba !== 'undefined') {
                            playerWrapper.style.visibility !== 'hidden';
     
     if (mainContent) {
-      if (isPlayerVisible) {
-        mainContent.style.height = 'calc(100vh - 77px)';
-        console.log('📐 Main content: calc(100vh - 77px) - player visible');
-      } else {
-        mainContent.style.height = '100vh';
-        console.log('📐 Main content: 100vh - player hidden');
-      }
-
-    // Remove hiding CSS and reveal smoothly
+  if (isPlayerVisible) {
+    mainContent.style.height = 'calc(100vh - 77px)';
+    console.log('📐 Main content: calc(100vh - 77px) - player visible');
+  } else {
+    mainContent.style.height = '100vh';
+    console.log('📐 Main content: 100vh - player hidden');
+  }
+  
+  // Remove hiding CSS and reveal .login-section smoothly
   const style = document.getElementById('barba-transition-style');
   if (style) style.remove();
   
-  mainContent.style.transition = 'opacity 0.15s ease';
-  mainContent.style.opacity = '1';
-      
-    }
+  const loginSection = document.querySelector('.login-section');
+  if (loginSection) {
+    loginSection.style.transition = 'opacity 0.15s ease';
+    loginSection.style.opacity = '1';
+  }
+}
 
     g.isTransitioning = false;
 
