@@ -1888,28 +1888,42 @@ if (typeof barba !== 'undefined') {
         return Promise.resolve();
       },
 
-      beforeEnter(data) {
-        const nextContainer = data.next.container;
-        const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
+     beforeEnter(data) {
+  const nextContainer = data.next.container;
+  const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
-        if (!isMusicPage) {
-          document.body.style.overflow = 'visible';
-          document.documentElement.style.overflow = 'visible';
-          document.body.style.height = 'auto';
-          nextContainer.style.overflow = 'visible';
-          
-          const mainContent = nextContainer.querySelector('.main-content');
-          if (mainContent) mainContent.style.overflow = 'visible';
-        } else {
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.height = '100vh';
-          nextContainer.style.overflow = 'hidden';
-          
-          const musicArea = nextContainer.querySelector('.music-area-wrapper');
-          if (musicArea) musicArea.style.overflow = 'hidden';
-        }
-      },
+  if (!isMusicPage) {
+    document.body.style.overflow = 'visible';
+    document.documentElement.style.overflow = 'visible';
+    document.body.style.height = 'auto';
+    nextContainer.style.overflow = 'visible';
+    
+    const mainContent = nextContainer.querySelector('.main-content');
+    if (mainContent) {
+      mainContent.style.overflow = 'visible';
+      
+      // NEW: Set height BEFORE page shows to prevent flash
+      const g = window.musicPlayerPersistent;
+      const hasActiveSong = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
+      
+      if (hasActiveSong) {
+        mainContent.style.height = 'calc(100vh - 77px)';
+        console.log('📐 [beforeEnter] Main content: calc(100vh - 77px) - player will be visible');
+      } else {
+        mainContent.style.height = '100vh';
+        console.log('📐 [beforeEnter] Main content: 100vh - no active song');
+      }
+    }
+  } else {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    nextContainer.style.overflow = 'hidden';
+    
+    const musicArea = nextContainer.querySelector('.music-area-wrapper');
+    if (musicArea) musicArea.style.overflow = 'hidden';
+  }
+},
 
       enter(data) {
         removeDuplicateIds();
