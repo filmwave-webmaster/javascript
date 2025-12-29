@@ -1101,7 +1101,7 @@ function loadWaveformBatch(cardElements) {
       progressColor: '#191919',
       cursorColor: 'transparent',
       cursorWidth: 0,
-      height: 40,
+      height: 25,
       barWidth: 2,
       barGap: 1,
       normalize: true,
