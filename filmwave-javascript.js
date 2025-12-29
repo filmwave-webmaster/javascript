@@ -853,11 +853,26 @@ function linkStandaloneToWaveform() {
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     
-    // Function to sync progress - called when waveform is ready
+    // Function to sync progress - force visual update
     const syncProgress = () => {
       if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
         const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+        
+        // Seek to position
         wavesurfer.seekTo(progress);
+        
+        // FORCE visual update by triggering a redraw
+        try {
+          const decodedData = wavesurfer.getDecodedData();
+          if (decodedData && g.currentPeaksData) {
+            // This forces the waveform to redraw with the current progress
+            const event = new CustomEvent('seeking');
+            wavesurfer.emit('seeking', progress);
+          }
+        } catch (e) {
+          console.warn('Could not force waveform redraw:', e);
+        }
+        
         console.log(`🔗 Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
       }
     };
@@ -876,11 +891,16 @@ function linkStandaloneToWaveform() {
       g.standaloneAudio.removeEventListener('timeupdate', existingListener);
     }
     
-    // Add new sync listener for ongoing updates
+    // Add new sync listener that FORCES visual updates
     const syncListener = () => {
       if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
         const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
         wavesurfer.seekTo(progress);
+        
+        // Force a render update
+        try {
+          wavesurfer.emit('seeking', progress);
+        } catch (e) {}
       }
     };
     
