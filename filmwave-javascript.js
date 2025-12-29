@@ -2007,14 +2007,16 @@ if (typeof barba !== 'undefined') {
     positionMasterPlayer();
     updateMasterPlayerVisibility();
 
-    // NEW: Adjust main-content height based on player visibility
-    const mainContent = document.querySelector('.main-content');
-    const playerWrapper = document.querySelector('.music-player-wrapper');
-    const isPlayerVisible = playerWrapper && 
-                           playerWrapper.style.display !== 'none' && 
-                           playerWrapper.style.visibility !== 'hidden';
-    
-    if (mainContent) {
+    // Adjust main-content height based on player visibility (login/signup pages only)
+const mainContent = document.querySelector('.main-content');
+const playerWrapper = document.querySelector('.music-player-wrapper');
+const isPlayerVisible = playerWrapper && 
+                       playerWrapper.style.display !== 'none' && 
+                       playerWrapper.style.visibility !== 'hidden';
+
+const isLoginPage = !!document.querySelector('.login-section');
+
+if (mainContent && isLoginPage) {
   if (isPlayerVisible) {
     mainContent.style.height = 'calc(100vh - 77px)';
     console.log('📐 Main content: calc(100vh - 77px) - player visible');
@@ -2032,6 +2034,10 @@ if (typeof barba !== 'undefined') {
     loginSection.style.transition = 'opacity 0.15s ease';
     loginSection.style.opacity = '1';
   }
+} else if (mainContent) {
+  mainContent.style.height = '';  // Remove any forced height on other pages
+  const style = document.getElementById('barba-transition-style');
+  if (style) style.remove();
 }
 
     g.isTransitioning = false;
