@@ -1420,70 +1420,52 @@ async function displayFeaturedSongs(limit = 6) {
  * KEYBOARD CONTROLS
  * ============================================================
  */
-document.addEventListener('keydown', function (e) {
-  const g = window.musicPlayerPersistent;
-  const activeEl = document.activeElement;
-  if (activeEl.tagName === 'TEXTAREA' || (activeEl.tagName === 'INPUT' && !['checkbox', 'radio'].includes(activeEl.type))) return;
+if (['ArrowDown', 'ArrowUp'].includes(e.code)) {
+  e.preventDefault();
   
-  if (e.code === 'Space') {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    
-    if (g.standaloneAudio) {
-      if (g.standaloneAudio.paused) {
-        g.standaloneAudio.play();
-      } else {
-        g.standaloneAudio.pause();
-      }
-    }
-    return false;
-  }
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
-  if (['ArrowDown', 'ArrowUp'].includes(e.code)) {
-    e.preventDefault();
-    
-    if (g.allWavesurfers.length > 0 && g.currentWavesurfer) {
-      const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
-      let nextWS = null;
-      if (e.code === 'ArrowDown') {
-        for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-          const d = g.waveformData.find(wf => wf.wavesurfer === g.allWavesurfers[i]);
-          if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
-        }
-      } else {
-        for (let i = currentIndex - 1; i >= 0; i--) {
-          const d = g.waveformData.find(wf => wf.wavesurfer === g.allWavesurfers[i]);
-          if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
-        }
-      }
-      
-      if (nextWS) {
-        const wasPlaying = g.isPlaying;
-        const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-        if (prevData?.cardElement.querySelector('.play-button')) {
-          prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-        }
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-          g.standaloneAudio = null;
-        }
-        
-        g.currentWavesurfer.seekTo(0);
-        g.currentWavesurfer = nextWS;
-        const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
-        if (nextD?.cardElement.querySelector('.play-button')) {
-          nextD.cardElement.querySelector('.play-button').style.opacity = '1';
-        }
-        scrollToSelected(nextD.cardElement);
-        
-        playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
+  if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
+    const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
+    let nextWS = null;
+    if (e.code === 'ArrowDown') {
+      for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+        const d = g.waveformData.find(wf => wf.wavesurfer === g.allWavesurfers[i]);
+        if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
       }
     } else {
-      navigateStandaloneTrack(e.code === 'ArrowDown' ? 'next' : 'prev');
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        const d = g.waveformData.find(wf => wf.wavesurfer === g.allWavesurfers[i]);
+        if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
+      }
     }
+    
+    if (nextWS) {
+      const wasPlaying = g.isPlaying;
+      const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
+      if (prevData?.cardElement.querySelector('.play-button')) {
+        prevData.cardElement.querySelector('.play-button').style.opacity = '0';
+      }
+      
+      if (g.standaloneAudio) {
+        g.standaloneAudio.pause();
+        g.standaloneAudio = null;
+      }
+      
+      g.currentWavesurfer.seekTo(0);
+      g.currentWavesurfer = nextWS;
+      const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
+      if (nextD?.cardElement.querySelector('.play-button')) {
+        nextD.cardElement.querySelector('.play-button').style.opacity = '1';
+      }
+      scrollToSelected(nextD.cardElement);
+      
+      playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
+    }
+  } else {
+    navigateStandaloneTrack(e.code === 'ArrowDown' ? 'next' : 'prev');
   }
-}, true);
+}
 
 /**
  * ============================================================
