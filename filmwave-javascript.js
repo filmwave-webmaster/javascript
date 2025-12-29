@@ -305,24 +305,32 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-  audio.addEventListener('timeupdate', () => {
-    if (g.standaloneAudio !== audio) return;
-    
-    if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
-    if (!isFinite(audio.currentTime)) return;
-    
-    g.currentTime = audio.currentTime;
-    const masterCounter = document.querySelector('.player-duration-counter');
-    if (masterCounter) {
-      masterCounter.textContent = formatDuration(audio.currentTime);
+ audio.addEventListener('timeupdate', () => {
+  if (g.standaloneAudio !== audio) return;
+  
+  if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
+  if (!isFinite(audio.currentTime)) return;
+  
+  g.currentTime = audio.currentTime;
+  
+  // Update song card waveform progress
+  if (g.currentWavesurfer && audio.duration > 0) {
+    const progress = audio.currentTime / audio.duration;
+    g.currentWavesurfer.seekTo(progress);
+    drawSongCardProgress(g.currentWavesurfer, progress);
+  }
+  
+  const masterCounter = document.querySelector('.player-duration-counter');
+  if (masterCounter) {
+    masterCounter.textContent = formatDuration(audio.currentTime);
+  }
+  if (g.currentPeaksData && g.currentDuration > 0) {
+    const progress = audio.currentTime / audio.duration;
+    if (isFinite(progress)) {
+      drawMasterWaveform(g.currentPeaksData, progress);
     }
-    if (g.currentPeaksData && g.currentDuration > 0) {
-      const progress = audio.currentTime / audio.duration;
-      if (isFinite(progress)) {
-        drawMasterWaveform(g.currentPeaksData, progress);
-      }
-    }
-  });
+  }
+});
   
   audio.addEventListener('play', () => {
     if (g.standaloneAudio !== audio) return;
@@ -590,6 +598,69 @@ function drawMasterWaveform(peaks, progress) {
   }
 }
 
+function drawSongCardProgress(wavesurfer, progress) {
+  if (!wavesurfer) return;
+  
+  try {
+    const container = wavesurfer.getWrapper();
+    if (!container) return;
+    
+    const canvas = container.querySelector('canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const decodedData = wavesurfer.getDecodedData();
+    if (!decodedData) return;
+    
+    const peaks = decodedData.getChannelData(0);
+    if (!peaks || peaks.length === 0) return;
+    
+    // Clear and redraw
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    const centerY = height / 2;
+    const barWidth = 2 * dpr;
+    const barGap = 1 * dpr;
+    const barTotal = barWidth + barGap;
+    const barsCount = Math.floor(width / barTotal);
+    const samplesPerBar = Math.floor(peaks.length / barsCount);
+    
+    // Normalize
+    let maxVal = 0;
+    for (let i = 0; i < peaks.length; i++) {
+      const p = Math.abs(peaks[i]);
+      if (p > maxVal) maxVal = p;
+    }
+    const normalizationScale = maxVal > 0 ? 1 / maxVal : 1;
+    
+    // Draw bars
+    for (let i = 0; i < barsCount; i++) {
+      const startSample = i * samplesPerBar;
+      const endSample = startSample + samplesPerBar;
+      let barPeak = 0;
+      
+      for (let j = startSample; j < endSample; j++) {
+        const val = Math.abs(peaks[j] || 0);
+        if (val > barPeak) barPeak = val;
+      }
+      
+      const peak = barPeak * normalizationScale;
+      const barHeight = Math.max(peak * height * 0.85, 2 * dpr);
+      const x = i * barTotal;
+      const barProgress = i / barsCount;
+      
+      ctx.fillStyle = barProgress < progress ? '#191919' : '#e2e2e2';
+      ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
+    }
+  } catch (e) {
+    console.warn('Error drawing song card progress:', e);
+  }
+}
+
 function updateMasterControllerIcons(isPlaying) {
   const playBtn = document.querySelector('.controller-play');
   const pauseBtn = document.querySelector('.controller-pause');
@@ -741,7 +812,7 @@ function initMasterPlayer() {
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
 }
-  
+
 /**
  * ============================================================
  * SONG CARD FUNCTIONS
@@ -934,26 +1005,11 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 audio.addEventListener('timeupdate', () => {
   g.currentTime = audio.currentTime;
   
-  // Update whatever the CURRENT wavesurfer is
+  // Update song card waveform progress
   if (g.currentWavesurfer && audio.duration > 0) {
     const progress = audio.currentTime / audio.duration;
-    
-    // Seek to position
     g.currentWavesurfer.seekTo(progress);
-    
-    // Force visual update by accessing the container
-    try {
-      const container = g.currentWavesurfer.getWrapper();
-      if (container) {
-        const canvas = container.querySelector('canvas');
-        if (canvas) {
-          // Trigger a redraw by emitting the seeking event
-          g.currentWavesurfer.emit('audioprocess', audio.currentTime);
-        }
-      }
-    } catch (e) {
-      // Silently fail if waveform doesn't support this
-    }
+    drawSongCardProgress(g.currentWavesurfer, progress);
   }
   
   const masterCounter = document.querySelector('.player-duration-counter');
