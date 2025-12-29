@@ -1104,6 +1104,16 @@ function initializeWaveforms() {
     if (isInTemplate || hasNoData) {
       return;
     }
+
+     // Check if this is the currently playing song
+  const songId = cardElement.dataset.songId;
+  const isCurrentSong = g.currentSongData && g.currentSongData.id === songId;
+  
+  // If this is the current song, always load it immediately (don't lazy load)
+  if (isCurrentSong) {
+    visibleCards.push(cardElement);
+    return; // Skip the rest of the logic for this card
+  }
     
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
