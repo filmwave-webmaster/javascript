@@ -971,8 +971,12 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   });
   
   if (shouldAutoPlay) {
-    audio.play().catch(err => console.error('Playback error:', err));
-  }
+  audio.play().catch(err => {
+    if (err.name !== 'AbortError') {
+      console.error('Playback error:', err);
+    }
+  });
+}
   
   syncMasterTrack(wavesurfer, songData);
   updateMasterPlayerVisibility();
@@ -988,12 +992,16 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
-  if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-    if (shouldAutoPlay) {
-      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
-    }
-    return;
+ if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+  if (shouldAutoPlay) {
+    g.standaloneAudio.play().catch(err => {
+      if (err.name !== 'AbortError') {
+        console.error('Playback error:', err);
+      }
+    });
   }
+  return;
+}
   
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
