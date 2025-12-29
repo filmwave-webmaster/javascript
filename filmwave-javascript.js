@@ -2043,7 +2043,6 @@ if (typeof barba !== 'undefined') {
       }
     }
     
-    const playerWrapper = document.querySelector('.music-player-wrapper');
     if (playerWrapper) {
       playerWrapper.style.transition = '';
     }
