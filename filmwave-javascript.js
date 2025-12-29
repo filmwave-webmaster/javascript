@@ -2137,26 +2137,7 @@ passwordFields.forEach(passwordField => {
   
   console.log('✅ Password toggle initialized');
 });
-    
-    // Find the password input (usually a sibling or nearby)
-    const passwordField = this.closest('.form-field, .password-field, form')?.querySelector('input[type="password"], input[type="text"][name*="password"]');
-    
-    if (passwordField) {
-      if (passwordField.type === 'password') {
-        passwordField.type = 'text';
-        console.log('👁️ Password shown');
-      } else {
-        passwordField.type = 'password';
-        console.log('🔒 Password hidden');
-      }
-    }
-  });
-});
-
-if (passwordToggles.length > 0) {
-  console.log(`✅ Initialized ${passwordToggles.length} password toggles manually`);
-}
-  
+     
 }, 400);
     
     window.dispatchEvent(new Event('scroll'));
