@@ -2100,35 +2100,33 @@ passwordFields.forEach(passwordField => {
   
   if (!visibleToggle || !hiddenToggle) return;
   
-  function setupToggle(toggle, shouldShow) {
-    const newToggle = toggle.cloneNode(true);
-    toggle.parentNode.replaceChild(newToggle, toggle);
-    
-    newToggle.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (shouldShow) {
-        // Show password
-        passwordField.type = 'text';
-        visibleToggle.style.display = 'none';
-        hiddenToggle.style.display = 'flex';
-        console.log('👁️ Password shown');
-      } else {
-        // Hide password
-        passwordField.type = 'password';
-        visibleToggle.style.display = 'flex';
-        hiddenToggle.style.display = 'none';
-        console.log('🔒 Password hidden');
-      }
-    });
-    
-    return newToggle;
-  }
+  // Clone to remove old listeners
+  const newVisibleToggle = visibleToggle.cloneNode(true);
+  const newHiddenToggle = hiddenToggle.cloneNode(true);
+  visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
+  hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
   
-  // Setup both toggles
-  const newVisibleToggle = setupToggle(visibleToggle, true);
-  const newHiddenToggle = setupToggle(hiddenToggle, false);
+  // Setup visible toggle (shows password when clicked)
+  newVisibleToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    passwordField.type = 'text';
+    newVisibleToggle.style.display = 'none';
+    newHiddenToggle.style.display = 'flex';
+    console.log('👁️ Password shown');
+  });
+  
+  // Setup hidden toggle (hides password when clicked)
+  newHiddenToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    passwordField.type = 'password';
+    newVisibleToggle.style.display = 'flex';
+    newHiddenToggle.style.display = 'none';
+    console.log('🔒 Password hidden');
+  });
   
   // Set initial state
   passwordField.type = 'password';
