@@ -22,7 +22,8 @@ if (!window.musicPlayerPersistent) {
     filtersInitialized: false,
     isTransitioning: false,
     autoPlayNext: false,
-    wasPlayingBeforeHidden: false
+    wasPlayingBeforeHidden: false,
+    filteredSongIds: []  
   };
 }
 
@@ -222,20 +223,27 @@ function navigateStandaloneTrack(direction) {
   
   if (!g.currentSongData || g.MASTER_DATA.length === 0) return;
   
-  const currentIndex = g.MASTER_DATA.findIndex(r => r.id === g.currentSongData.id);
+  // 👇 USE FILTERED SONGS IF AVAILABLE, OTHERWISE USE ALL SONGS
+  const songsToNavigate = g.filteredSongIds && g.filteredSongIds.length > 0
+    ? g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id))
+    : g.MASTER_DATA;
+  
+  console.log(`🎵 Navigating through ${songsToNavigate.length} songs (filtered: ${g.filteredSongIds.length > 0})`);
+  
+  const currentIndex = songsToNavigate.findIndex(r => r.id === g.currentSongData.id);
   if (currentIndex === -1) return;
   
   let nextIndex = -1;
   
   if (direction === 'next') {
     nextIndex = currentIndex + 1;
-    if (nextIndex >= g.MASTER_DATA.length) return;
+    if (nextIndex >= songsToNavigate.length) return;
   } else {
     nextIndex = currentIndex - 1;
     if (nextIndex < 0) return;
   }
   
-  const nextSong = g.MASTER_DATA[nextIndex];
+  const nextSong = songsToNavigate[nextIndex];
   const audioUrl = nextSong.fields['R2 Audio URL'];
   
   if (!audioUrl) return;
@@ -1736,6 +1744,9 @@ function initSearchAndFilters() {
       
       return matchesSearch && matchesAttributes;
     }).map(r => r.id);
+
+      g.filteredSongIds = visibleIds;
+  console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
     
     document.querySelectorAll('.song-wrapper').forEach(card => {
       card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
