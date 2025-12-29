@@ -853,16 +853,30 @@ function linkStandaloneToWaveform() {
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     
-    if (g.standaloneAudio.duration > 0) {
-      const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-      wavesurfer.seekTo(progress);
+    // Function to sync progress - called when waveform is ready
+    const syncProgress = () => {
+      if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+        wavesurfer.seekTo(progress);
+        console.log(`🔗 Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
+      }
+    };
+    
+    // Check if waveform is already ready
+    if (wavesurfer.getDuration() > 0) {
+      syncProgress();
+    } else {
+      // Wait for waveform to be ready, then sync
+      wavesurfer.once('ready', syncProgress);
     }
     
+    // Clean up old listener
     const existingListener = g.standaloneAudio._waveformSyncListener;
     if (existingListener) {
       g.standaloneAudio.removeEventListener('timeupdate', existingListener);
     }
     
+    // Add new sync listener for ongoing updates
     const syncListener = () => {
       if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
         const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
