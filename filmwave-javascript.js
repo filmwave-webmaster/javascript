@@ -1815,6 +1815,64 @@ document.addEventListener('visibilitychange', function() {
 
 /**
  * ============================================================
+ * MANUAL TAB REINITIALIZATION FOR BARBA
+ * ============================================================
+ */
+function reinitializeTabs() {
+  document.querySelectorAll('.w-tabs').forEach(tabsComponent => {
+    const allLinks = tabsComponent.querySelectorAll('.w-tab-link');
+    const allPanes = tabsComponent.querySelectorAll('.w-tab-pane');
+    
+    allLinks.forEach((link, linkIndex) => {
+      // Remove old listeners by cloning
+      const newLink = link.cloneNode(true);
+      link.parentNode.replaceChild(newLink, link);
+      
+      newLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        const clickedIndex = Array.from(allLinks).indexOf(link);
+        
+        // Update tab links
+        allLinks.forEach((l, i) => {
+          if (i === clickedIndex) {
+            l.classList.add('w--current');
+            l.setAttribute('aria-selected', 'true');
+            l.setAttribute('tabindex', '0');
+          } else {
+            l.classList.remove('w--current');
+            l.setAttribute('aria-selected', 'false');
+            l.setAttribute('tabindex', '-1');
+          }
+        });
+        
+        // Update tab panes
+        allPanes.forEach((p, i) => {
+          if (i === clickedIndex) {
+            p.classList.add('w--tab-active');
+            p.style.display = '';
+            p.style.opacity = '1';
+          } else {
+            p.classList.remove('w--tab-active');
+            p.style.display = 'none';
+            p.style.opacity = '0';
+          }
+        });
+        
+        console.log(`✅ Switched to tab ${clickedIndex + 1}`);
+        
+        // Sync pricing toggle state if on pricing page
+        if (typeof initPricingToggle === 'function') {
+          setTimeout(() => initPricingToggle(), 50);
+        }
+      });
+    });
+  });
+  
+  console.log('✅ Tabs manually re-initialized');
+}
+
+/**
+ * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
@@ -2087,6 +2145,9 @@ if (mainContent && isLoginPage) {
       console.error('❌ Error initializing pricing toggle:', e);
     }
   }
+
+// NEW: Reinitialize tabs
+  reinitializeTabs();
   
 // Manual password toggle for login/signup pages
 const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
