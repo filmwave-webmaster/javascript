@@ -2088,16 +2088,32 @@ if (mainContent && isLoginPage) {
     }
   }
   
-  // NEW: Reinitialize Wized for password toggle
-  if (window.Wized) {
-    try {
-      console.log('🔄 Re-initializing Wized...');
-      window.Wized.reload();
-      console.log('✅ Wized re-initialized successfully');
-    } catch (e) {
-      console.error('❌ Error initializing Wized:', e);
+  // Reinitialize Wized for password toggle
+if (window.Wized) {
+  try {
+    console.log('🔄 Re-initializing Wized...');
+    
+    // Try different Wized methods
+    if (typeof window.Wized.init === 'function') {
+      window.Wized.init();
+    } else if (typeof window.Wized.refresh === 'function') {
+      window.Wized.refresh();
+    } else {
+      // Force re-execute Wized by reloading the script
+      const wizedScript = document.querySelector('script[src*="wized.com"]');
+      if (wizedScript) {
+        const newScript = document.createElement('script');
+        newScript.src = wizedScript.src;
+        newScript.async = true;
+        document.head.appendChild(newScript);
+      }
     }
+    
+    console.log('✅ Wized re-initialized successfully');
+  } catch (e) {
+    console.error('❌ Error initializing Wized:', e);
   }
+}
   
 }, 400);
     
