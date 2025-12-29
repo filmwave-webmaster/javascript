@@ -2088,16 +2088,55 @@ if (mainContent && isLoginPage) {
     }
   }
   
- // Manual password toggle for login/signup pages
-const passwordToggles = document.querySelectorAll('.password-toggle-visible, .password-toggle-hidden');
-passwordToggles.forEach(toggle => {
-  // Remove any existing listeners
-  const newToggle = toggle.cloneNode(true);
-  toggle.parentNode.replaceChild(newToggle, toggle);
+// Manual password toggle for login/signup pages
+const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
+
+passwordFields.forEach(passwordField => {
+  const container = passwordField.closest('.form-field, .password-field, .form-block, form');
+  if (!container) return;
   
-  newToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  const visibleToggle = container.querySelector('.password-toggle-visible');
+  const hiddenToggle = container.querySelector('.password-toggle-hidden');
+  
+  if (!visibleToggle || !hiddenToggle) return;
+  
+  function setupToggle(toggle, shouldShow) {
+    const newToggle = toggle.cloneNode(true);
+    toggle.parentNode.replaceChild(newToggle, toggle);
+    
+    newToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (shouldShow) {
+        // Show password
+        passwordField.type = 'text';
+        visibleToggle.style.display = 'none';
+        hiddenToggle.style.display = 'flex';
+        console.log('👁️ Password shown');
+      } else {
+        // Hide password
+        passwordField.type = 'password';
+        visibleToggle.style.display = 'flex';
+        hiddenToggle.style.display = 'none';
+        console.log('🔒 Password hidden');
+      }
+    });
+    
+    return newToggle;
+  }
+  
+  // Setup both toggles
+  const newVisibleToggle = setupToggle(visibleToggle, true);
+  const newHiddenToggle = setupToggle(hiddenToggle, false);
+  
+  // Set initial state
+  passwordField.type = 'password';
+  newVisibleToggle.style.display = 'flex';
+  newHiddenToggle.style.display = 'none';
+  
+  console.log('✅ Password toggle initialized');
+});
     
     // Find the password input (usually a sibling or nearby)
     const passwordField = this.closest('.form-field, .password-field, form')?.querySelector('input[type="password"], input[type="text"][name*="password"]');
