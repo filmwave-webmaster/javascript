@@ -931,25 +931,41 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     }
   });
   
- audio.addEventListener('timeupdate', () => {
+audio.addEventListener('timeupdate', () => {
   g.currentTime = audio.currentTime;
   
-  // Update whatever the CURRENT wavesurfer is (not a specific instance)
+  // Update whatever the CURRENT wavesurfer is
   if (g.currentWavesurfer && audio.duration > 0) {
     const progress = audio.currentTime / audio.duration;
+    
+    // Seek to position
     g.currentWavesurfer.seekTo(progress);
+    
+    // Force visual update by accessing the container
+    try {
+      const container = g.currentWavesurfer.getWrapper();
+      if (container) {
+        const canvas = container.querySelector('canvas');
+        if (canvas) {
+          // Trigger a redraw by emitting the seeking event
+          g.currentWavesurfer.emit('audioprocess', audio.currentTime);
+        }
+      }
+    } catch (e) {
+      // Silently fail if waveform doesn't support this
+    }
   }
-    
-    const masterCounter = document.querySelector('.player-duration-counter');
-    if (masterCounter) {
-      masterCounter.textContent = formatDuration(audio.currentTime);
-    }
-    
-    if (g.currentPeaksData && g.currentDuration > 0) {
-      const progress = audio.currentTime / audio.duration;
-      drawMasterWaveform(g.currentPeaksData, progress);
-    }
-  });
+  
+  const masterCounter = document.querySelector('.player-duration-counter');
+  if (masterCounter) {
+    masterCounter.textContent = formatDuration(audio.currentTime);
+  }
+  
+  if (g.currentPeaksData && g.currentDuration > 0) {
+    const progress = audio.currentTime / audio.duration;
+    drawMasterWaveform(g.currentPeaksData, progress);
+  }
+});
   
   audio.addEventListener('play', () => {
     g.isPlaying = true;
