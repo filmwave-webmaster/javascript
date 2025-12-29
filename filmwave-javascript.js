@@ -730,6 +730,17 @@ if (playerCoverArt) {
     navigateStandaloneTrack(direction);
   }
 };
+
+    if (controllerNext) controllerNext.onclick = () => navigateTrack('next');
+  if (controllerPrev) controllerPrev.onclick = () => navigateTrack('prev');
+}
+
+function initMasterPlayer() {
+  const container = document.querySelector('.player-waveform-visual');
+  if (!container) return;
+  drawMasterWaveform([], 0);
+  setupMasterPlayerControls();
+}
   
 /**
  * ============================================================
