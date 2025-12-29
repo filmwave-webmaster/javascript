@@ -678,67 +678,59 @@ if (playerCoverArt) {
   playerCoverArt.onclick = handlePlayPause;
 }
   
-  const navigateTrack = (direction) => {
-    if (g.allWavesurfers.length > 0 && g.currentWavesurfer) {
-      const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
-      let targetWS = null;
-      
-      if (direction === 'next') {
-        for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-          const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-          if (data && data.cardElement.offsetParent !== null) {
-            targetWS = g.allWavesurfers[i];
-            break;
-          }
+ const navigateTrack = (direction) => {
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  
+  if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
+    const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
+    let targetWS = null;
+    
+    if (direction === 'next') {
+      for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+        if (data && data.cardElement.offsetParent !== null) {
+          targetWS = g.allWavesurfers[i];
+          break;
         }
-      } else {
-        for (let i = currentIndex - 1; i >= 0; i--) {
-          const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-          if (data && data.cardElement.offsetParent !== null) {
-            targetWS = g.allWavesurfers[i];
-            break;
-          }
-        }
-      }
-      
-      if (targetWS) {
-        const wasPlaying = g.isPlaying;
-        const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-        if (prevData?.cardElement.querySelector('.play-button')) {
-          prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-        }
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-          g.standaloneAudio = null;
-        }
-        
-        g.currentWavesurfer.seekTo(0);
-        const nextData = g.waveformData.find(data => data.wavesurfer === targetWS);
-        
-        if (nextData?.cardElement.querySelector('.play-button')) {
-          nextData.cardElement.querySelector('.play-button').style.opacity = '1';
-        }
-        scrollToSelected(nextData.cardElement);
-        
-        playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
       }
     } else {
-      navigateStandaloneTrack(direction);
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+        if (data && data.cardElement.offsetParent !== null) {
+          targetWS = g.allWavesurfers[i];
+          break;
+        }
+      }
     }
-  };
+    
+    if (targetWS) {
+      const wasPlaying = g.isPlaying;
+      const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
+      if (prevData?.cardElement.querySelector('.play-button')) {
+        prevData.cardElement.querySelector('.play-button').style.opacity = '0';
+      }
+      
+      if (g.standaloneAudio) {
+        g.standaloneAudio.pause();
+        g.standaloneAudio = null;
+      }
+      
+      g.currentWavesurfer.seekTo(0);
+      const nextData = g.waveformData.find(data => data.wavesurfer === targetWS);
+      
+      if (nextData?.cardElement.querySelector('.play-button')) {
+        nextData.cardElement.querySelector('.play-button').style.opacity = '1';
+      }
+      scrollToSelected(nextData.cardElement);
+      
+      playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
+    }
+  } else {
+    // Not on music page or no waveforms - use standalone navigation
+    navigateStandaloneTrack(direction);
+  }
+};
   
-  if (controllerNext) controllerNext.onclick = () => navigateTrack('next');
-  if (controllerPrev) controllerPrev.onclick = () => navigateTrack('prev');
-}
-
-function initMasterPlayer() {
-  const container = document.querySelector('.player-waveform-visual');
-  if (!container) return;
-  drawMasterWaveform([], 0);
-  setupMasterPlayerControls();
-}
-
 /**
  * ============================================================
  * SONG CARD FUNCTIONS
