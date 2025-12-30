@@ -2841,13 +2841,18 @@ window.addEventListener('load', function() {
     clearButton.addEventListener('click', function() {
       isClearing = true;
       
-      clearFilterState();
-      
       const searchBar = document.querySelector('[data-filter-search="true"]');
       if (searchBar && searchBar.value) {
         searchBar.value = '';
-        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+        // Don't dispatch input event - we're clearing everything
       }
+      
+      clearFilterState();
+      
+      setTimeout(() => {
+        isClearing = false;
+        console.log('✅ Clear complete - auto-save re-enabled');
+      }, 100);
     });
   }
   
@@ -2985,13 +2990,18 @@ if (clearButton) {
   clearButton.addEventListener('click', function() {
     isClearing = true;
     
-    clearFilterState();
-    
     const searchBar = document.querySelector('[data-filter-search="true"]');
     if (searchBar && searchBar.value) {
       searchBar.value = '';
-      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+      // Don't dispatch input event - we're clearing everything
     }
+    
+    clearFilterState();
+    
+    setTimeout(() => {
+      isClearing = false;
+      console.log('✅ Clear complete - auto-save re-enabled');
+    }, 100);
   });
 }
 
