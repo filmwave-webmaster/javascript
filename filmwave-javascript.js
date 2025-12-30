@@ -2726,6 +2726,9 @@ function restoreFilterState() {
         searchBar.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
+
+    toggleClearButton(); // Make sure button visibility is correct after restore
+// If you have any visual "loading" state, hide it here too
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
