@@ -36,11 +36,13 @@ const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
-// Clear search input on full page refresh to prevent leftover text from browser form restore
+// Force-clear saved search query on hard refresh so field starts empty
 window.addEventListener('load', () => {
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  if (searchBar) {
-    searchBar.value = '';
+  // Only run on full refresh (not Barba)
+  if (!sessionStorage.getItem('isBarbaNavigation')) {
+    localStorage.removeItem('musicFilters'); // or set to empty
+    // Alternative: set to empty state
+    // localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
   }
 });
 
