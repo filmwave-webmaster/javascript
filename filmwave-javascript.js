@@ -2718,21 +2718,12 @@ function restoreFilterState() {
     musicList.style.pointerEvents = 'none';
   }
 
-  // Trigger filtering after a tiny delay so DOM is ready
+  // Trigger filtering after a tiny delay
   setTimeout(() => {
     if (searchBar) {
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }, 50);
-}
-
-  // Hide song list immediately to prevent flash of unfiltered content
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.opacity = '0';
-    musicList.style.visibility = 'hidden';
-    musicList.style.pointerEvents = 'none';
-  }
 }
 
 // === NEW: Ensure clear button state is correct after restore ===
