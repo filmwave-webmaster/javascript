@@ -599,34 +599,46 @@ function drawMasterWaveform(peaks, progress) {
 }
 
 function updateSongCardProgress(wavesurfer, progress) {
-  if (!wavesurfer) return;
+  if (!wavesurfer) {
+    console.warn('⚠️ No wavesurfer passed to updateSongCardProgress');
+    return;
+  }
+  
+  console.log('🎨 updateSongCardProgress called with progress:', (progress * 100).toFixed(1) + '%');
   
   try {
-    // Seek to position
     wavesurfer.seekTo(progress);
     
-    // Get the rendered waveform canvas
     const wrapper = wavesurfer.getWrapper();
+    console.log('Wrapper found:', !!wrapper);
     if (!wrapper) return;
     
     const canvases = wrapper.querySelectorAll('canvas');
+    console.log('Canvas count:', canvases.length);
     if (canvases.length === 0) return;
     
-    // WaveSurfer uses 2 canvases - the progress canvas is the second one
-    const progressCanvas = canvases[canvases.length - 1];
+    // WaveSurfer creates a progress canvas - it's usually the second one
+    const progressCanvas = canvases.length > 1 ? canvases[1] : canvases[0];
+    console.log('Progress canvas found:', !!progressCanvas);
+    console.log('Canvas width:', progressCanvas.width, 'height:', progressCanvas.height);
+    
     if (!progressCanvas) return;
     
-    // Force a style change to trigger repaint
-    progressCanvas.style.opacity = '0.99';
-    setTimeout(() => {
-      progressCanvas.style.opacity = '1';
-    }, 0);
+    const ctx = progressCanvas.getContext('2d');
+    const width = progressCanvas.width;
+    const progressWidth = width * progress;
     
-    console.log(`🎨 Forced canvas redraw at ${(progress * 100).toFixed(1)}%`);
+    // Clear and redraw the progress overlay
+    ctx.clearRect(0, 0, width, progressCanvas.height);
+    ctx.fillStyle = '#191919'; // Your dark progress color
+    ctx.fillRect(0, 0, progressWidth, progressCanvas.height);
+    
+    console.log(`✅ Drew progress bar: ${progressWidth}px of ${width}px`);
   } catch (e) {
-    console.warn('Error updating song card progress:', e);
+    console.error('❌ Error in updateSongCardProgress:', e);
   }
 }
+
 function updateMasterControllerIcons(isPlaying) {
   const playBtn = document.querySelector('.controller-play');
   const pauseBtn = document.querySelector('.controller-pause');
