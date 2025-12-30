@@ -2708,6 +2708,7 @@ function restoreFilterState() {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
     searchBar.value = filterState.searchQuery;
+    // Critical: trigger filtering immediately on restore (even on full refresh)
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }
