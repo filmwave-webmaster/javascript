@@ -2520,26 +2520,22 @@ function saveFilterState() {
 }
 
 function restoreFilterState() {
-  const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation') === 'true';
-  
-  sessionStorage.removeItem('isBarbaNavigation');
-  
-  if (!isBarbaNavigation) {
-    console.log('🔄 Fresh page load - not restoring filters');
+  sessionStorage.removeItem('isBarbaNavigation'); // Always clear the Barba flag
+
+  const savedState = localStorage.getItem('musicFilters');
+  if (!savedState) {
     const musicList = document.querySelector('.music-list-wrapper');
     if (musicList) {
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
-    
+   
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     if (tagsContainer) tagsContainer.style.opacity = '1';
     if (clearButton) clearButton.style.opacity = '1';
-    
-    const oldStyle = document.getElementById('filter-loading-style-fresh');
-    if (oldStyle) oldStyle.remove();
+   
     return false;
   }
   
