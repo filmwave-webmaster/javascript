@@ -2757,8 +2757,6 @@ function restoreFilterState() {
 }
 
 function clearFilterState() {
-  isClearing = true;
-  
   localStorage.removeItem('musicFilters');
   console.log('🗑️ Cleared filter state');
   
@@ -2768,11 +2766,6 @@ function clearFilterState() {
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
   }
-  
-  setTimeout(() => {
-    isClearing = false;
-    console.log('✅ Clear complete - auto-save re-enabled');
-  }, 1000);
 }
 
 document.addEventListener('change', function(e) {
