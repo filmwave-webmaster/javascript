@@ -2539,23 +2539,6 @@ function restoreFilterState() {
     return false;
   }
   
-  const savedState = localStorage.getItem('musicFilters');
-  if (!savedState) {
-    const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) {
-      musicList.style.opacity = '1';
-      musicList.style.visibility = 'visible';
-      musicList.style.pointerEvents = 'auto';
-    }
-    
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    const clearButton = document.querySelector('.circle-x');
-    if (tagsContainer) tagsContainer.style.opacity = '1';
-    if (clearButton) clearButton.style.opacity = '1';
-    
-    return false;
-  }
-  
   try {
     const filterState = JSON.parse(savedState);
     
