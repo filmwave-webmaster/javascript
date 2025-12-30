@@ -923,6 +923,11 @@ function linkStandaloneToWaveform() {
         
         wavesurfer.seekTo(progress);
         updateSongCardProgress(wavesurfer, progress);
+
+            // Wait for DOM to be ready before updating visuals
+    setTimeout(() => {
+      updateSongCardProgress(wavesurfer, progress);
+    }, 50);
         
         console.log(`✅ Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
       } else {
