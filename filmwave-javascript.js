@@ -1344,20 +1344,27 @@ if (songName) {
     cardElement.dataset.waveformInitialized = 'true';
   });
   
-  Promise.all(waveformPromises).then(() => {
-    waveformContainers.forEach((container) => {
-      container.style.opacity = '1';
-    });
+ Promise.all(waveformPromises).then(() => {
+  waveformContainers.forEach((container) => {
+    container.style.opacity = '1';
   });
   
+  // Try linking immediately after batch loads
   setTimeout(() => {
-    waveformContainers.forEach((container) => {
-      if (container.style.opacity === '0') {
-        container.style.opacity = '1';
-      }
-    });
     linkStandaloneToWaveform();
-  }, 1000);
+    console.log('🔗 Attempted link after batch load');
+  }, 100);
+});
+
+setTimeout(() => {
+  waveformContainers.forEach((container) => {
+    if (container.style.opacity === '0') {
+      container.style.opacity = '1';
+    }
+  });
+  // Try linking again in case first attempt was too early
+  linkStandaloneToWaveform();
+}, 1000);
 }
 
 /**
