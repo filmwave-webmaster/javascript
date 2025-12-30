@@ -317,7 +317,7 @@ function navigateStandaloneTrack(direction) {
   if (g.currentWavesurfer && audio.duration > 0) {
     const progress = audio.currentTime / audio.duration;
     g.currentWavesurfer.seekTo(progress);
-    drawSongCardProgress(g.currentWavesurfer, progress);
+    updateSongCardProgress(g.currentWavesurfer, progress);
   }
   
   const masterCounter = document.querySelector('.player-duration-counter');
@@ -598,66 +598,18 @@ function drawMasterWaveform(peaks, progress) {
   }
 }
 
-function drawSongCardProgress(wavesurfer, progress) {
+function updateSongCardProgress(wavesurfer, progress) {
   if (!wavesurfer) return;
   
   try {
-    const container = wavesurfer.getWrapper();
-    if (!container) return;
+    // Set the progress without playing
+    wavesurfer.seekTo(progress);
     
-    const canvas = container.querySelector('canvas');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    const decodedData = wavesurfer.getDecodedData();
-    if (!decodedData) return;
-    
-    const peaks = decodedData.getChannelData(0);
-    if (!peaks || peaks.length === 0) return;
-    
-    // Clear and redraw
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width;
-    const height = canvas.height;
-    
-    ctx.clearRect(0, 0, width, height);
-    
-    const centerY = height / 2;
-    const barWidth = 2 * dpr;
-    const barGap = 1 * dpr;
-    const barTotal = barWidth + barGap;
-    const barsCount = Math.floor(width / barTotal);
-    const samplesPerBar = Math.floor(peaks.length / barsCount);
-    
-    // Normalize
-    let maxVal = 0;
-    for (let i = 0; i < peaks.length; i++) {
-      const p = Math.abs(peaks[i]);
-      if (p > maxVal) maxVal = p;
-    }
-    const normalizationScale = maxVal > 0 ? 1 / maxVal : 1;
-    
-    // Draw bars
-    for (let i = 0; i < barsCount; i++) {
-      const startSample = i * samplesPerBar;
-      const endSample = startSample + samplesPerBar;
-      let barPeak = 0;
-      
-      for (let j = startSample; j < endSample; j++) {
-        const val = Math.abs(peaks[j] || 0);
-        if (val > barPeak) barPeak = val;
-      }
-      
-      const peak = barPeak * normalizationScale;
-      const barHeight = Math.max(peak * height * 0.85, 2 * dpr);
-      const x = i * barTotal;
-      const barProgress = i / barsCount;
-      
-      ctx.fillStyle = barProgress < progress ? '#191919' : '#e2e2e2';
-      ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
-    }
+    // Force WaveSurfer to render by triggering its internal events
+    wavesurfer.emit('timeupdate');
+    wavesurfer.emit('audioprocess');
   } catch (e) {
-    console.warn('Error drawing song card progress:', e);
+    console.warn('Error updating song card progress:', e);
   }
 }
 
@@ -931,7 +883,7 @@ function linkStandaloneToWaveform() {
         wavesurfer.seekTo(progress);
         
         // Force immediate visual update
-        drawSongCardProgress(wavesurfer, progress);
+        updateSongCardProgress(wavesurfer, progress);
         
         console.log(`🔗 Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
       }
@@ -985,7 +937,7 @@ audio.addEventListener('timeupdate', () => {
   if (g.currentWavesurfer && audio.duration > 0) {
     const progress = audio.currentTime / audio.duration;
     g.currentWavesurfer.seekTo(progress);
-    drawSongCardProgress(g.currentWavesurfer, progress);
+    updateSongCardProgress(g.currentWavesurfer, progress);
   }
   
   const masterCounter = document.querySelector('.player-duration-counter');
