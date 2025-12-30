@@ -863,12 +863,35 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
 function linkStandaloneToWaveform() {
   const g = window.musicPlayerPersistent;
   
-  if (!g.standaloneAudio || !g.currentSongData) return;
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔗 LINK FUNCTION CALLED');
+  console.log('Has standalone audio:', !!g.standaloneAudio);
+  console.log('Has current song:', !!g.currentSongData);
+  
+  if (!g.standaloneAudio || !g.currentSongData) {
+    console.log('❌ No audio or song - exiting');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    return;
+  }
+  
+  console.log('Current song ID:', g.currentSongData.id);
+  console.log('Current song title:', g.currentSongData.fields?.['Song Title']);
+  console.log('Total waveforms in memory:', g.waveformData.length);
+  
+  // List all waveform IDs
+  g.waveformData.forEach((data, index) => {
+    console.log(`  Waveform ${index}: ${data.songData.id} - ${data.songData.fields?.['Song Title']}`);
+  });
   
   const matchingData = g.waveformData.find(data => data.songData.id === g.currentSongData.id);
   
+  console.log('Found matching waveform:', !!matchingData);
+  
   if (matchingData) {
     const { wavesurfer, cardElement } = matchingData;
+    
+    console.log('Waveform ready:', wavesurfer.getDuration() > 0);
+    console.log('Waveform duration:', wavesurfer.getDuration());
     
     g.currentWavesurfer = wavesurfer;
     
@@ -876,36 +899,38 @@ function linkStandaloneToWaveform() {
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     
-    // Function to sync progress - called when waveform is ready
     const syncProgress = () => {
+      console.log('📊 SYNC PROGRESS CALLED');
       if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
         const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        wavesurfer.seekTo(progress);
+        console.log('Audio time:', g.standaloneAudio.currentTime);
+        console.log('Audio duration:', g.standaloneAudio.duration);
+        console.log('Progress:', (progress * 100).toFixed(1) + '%');
         
-        // Force immediate visual update
+        wavesurfer.seekTo(progress);
         updateSongCardProgress(wavesurfer, progress);
         
-        console.log(`🔗 Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
+        console.log(`✅ Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
+      } else {
+        console.log('❌ Audio not ready for sync');
       }
     };
     
-    // Check if waveform is already ready
     if (wavesurfer.getDuration() > 0) {
+      console.log('✅ Waveform already ready - syncing now');
       syncProgress();
     } else {
-      // Wait for waveform to be ready, then sync
-      wavesurfer.once('ready', syncProgress);
+      console.log('⏳ Waveform not ready - waiting for ready event');
+      wavesurfer.once('ready', () => {
+        console.log('✅ Waveform ready event fired');
+        syncProgress();
+      });
     }
-    
-    // Clean up old listener
-    const existingListener = g.standaloneAudio._waveformSyncListener;
-    if (existingListener) {
-      g.standaloneAudio.removeEventListener('timeupdate', existingListener);
-    }
-    
-    // The main timeupdate listener in createStandaloneAudio already handles ongoing updates
-    // No need for a separate sync listener here anymore
+  } else {
+    console.log('❌ NO MATCHING WAVEFORM FOUND');
   }
+  
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 
 /**
