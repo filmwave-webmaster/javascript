@@ -1956,43 +1956,45 @@ if (typeof barba !== 'undefined') {
     transitions: [{
       name: 'default',
       
-      beforeLeave(data) {
-        const g = window.musicPlayerPersistent;
-        g.isTransitioning = true;
-        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-        
-        g.filtersInitialized = false;
-        
-        if (isMusicPage) {
-          g.allWavesurfers.forEach(ws => {
-            try {
-              ws.unAll();
-              ws.destroy();
-            } catch (error) {
-              console.warn('Error destroying wavesurfer:', error);
-            }
-          });
-          
-          document.querySelectorAll('.waveform').forEach(container => {
-            container.innerHTML = '';
-          });
-          
-          g.allWavesurfers = [];
-          g.waveformData = [];
-          g.persistedWaveformContainer = null;
-          g.currentWavesurfer = null;
-        }
-        
-        const playerWrapper = document.querySelector('.music-player-wrapper');
-        if (playerWrapper && g.hasActiveSong) {
-          playerWrapper.style.transition = 'none';
-        }
-        
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.body.style.height = '';
-        return Promise.resolve();
-      },
+    beforeLeave(data) {
+  const g = window.musicPlayerPersistent;
+  g.isTransitioning = true;
+  const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+  const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
+  
+  g.filtersInitialized = false;
+  
+  // Clean up waveforms from ANY page (music page OR home page with featured songs)
+  if (isMusicPage || hasFeaturedSongs) {
+    g.allWavesurfers.forEach(ws => {
+      try {
+        ws.unAll();
+        ws.destroy();
+      } catch (error) {
+        console.warn('Error destroying wavesurfer:', error);
+      }
+    });
+    
+    document.querySelectorAll('.waveform').forEach(container => {
+      container.innerHTML = '';
+    });
+    
+    g.allWavesurfers = [];
+    g.waveformData = [];
+    g.persistedWaveformContainer = null;
+    g.currentWavesurfer = null;
+  }
+  
+  const playerWrapper = document.querySelector('.music-player-wrapper');
+  if (playerWrapper && g.hasActiveSong) {
+    playerWrapper.style.transition = 'none';
+  }
+  
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+  document.body.style.height = '';
+  return Promise.resolve();
+},
 
      beforeEnter(data) {
   const nextContainer = data.next.container;
