@@ -1055,12 +1055,22 @@ function initializeWaveforms() {
   });
   
   songCards.forEach((cardElement) => {
-    const isInTemplate = cardElement.closest('.template-wrapper');
-    const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
-    
-    if (isInTemplate || hasNoData) {
-      return;
-    }
+  const isInTemplate = cardElement.closest('.template-wrapper');
+  const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
+  
+  if (isInTemplate || hasNoData) {
+    return;
+  }
+
+  // Check if this is the currently playing song - prioritize it!
+  const songId = cardElement.dataset.songId;
+  const isCurrentSong = g.currentSongData && g.currentSongData.id === songId;
+  
+  if (isCurrentSong) {
+    console.log('✅ FOUND CURRENT SONG - PRIORITIZING:', songId);
+    visibleCards.push(cardElement);
+    return;
+  }
     
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
