@@ -36,6 +36,14 @@ const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
+// Clear search input on full page refresh to prevent leftover text from browser form restore
+window.addEventListener('load', () => {
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (searchBar) {
+    searchBar.value = '';
+  }
+});
+
 /**
  * ============================================================
  * UTILITY FUNCTIONS
@@ -1679,20 +1687,19 @@ function initMutualExclusion() {
   }
 }
 
- function toggleClearButton() {
-  const clearBtn = document.querySelector('.circle-x');
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  if (!clearBtn) return;
-
-  const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-
-  clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
-}
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const clearBtn = document.querySelector('.circle-x');
+  
+  function toggleClearButton() {
+    if (!clearBtn) return;
+    
+    const hasSearch = searchBar && searchBar.value.trim().length > 0;
+    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+    
+    clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+  }
   
   function clearAllFilters() {
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
@@ -2709,7 +2716,6 @@ function restoreFilterState() {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
     searchBar.value = filterState.searchQuery;
-    // Critical: trigger filtering immediately on restore (even on full refresh)
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }
