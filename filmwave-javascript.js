@@ -2829,30 +2829,6 @@ window.addEventListener('load', function() {
   console.log('🔄 Page load event fired');
   filtersRestored = false;
   
-  const clearButton = document.querySelector('.circle-x');
-  if (clearButton) {
-    console.log('✅ Clear button found, attaching listener');
-    clearButton.addEventListener('click', function() {
-      isClearing = true;
-
-      // Clear any pending search save
-      clearTimeout(searchSaveTimeout);
-      
-      const searchBar = document.querySelector('[data-filter-search="true"]');
-      if (searchBar && searchBar.value) {
-        searchBar.value = '';
-        // Don't dispatch input event - we're clearing everything
-      }
-      
-      clearFilterState();
-      
-      setTimeout(() => {
-        isClearing = false;
-        console.log('✅ Clear complete - auto-save re-enabled');
-      }, 100);
-    });
-  }
-  
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
     console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
