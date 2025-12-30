@@ -1680,14 +1680,15 @@ function initMutualExclusion() {
 }
 
  function toggleClearButton() {
-    if (!clearBtn) return;
-    
-    const hasSearch = searchBar && searchBar.value.trim().length > 0;
-    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-    
-    clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
-  }
+  const clearBtn = document.querySelector('.circle-x');
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (!clearBtn) return;
 
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+
+  clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+}
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
