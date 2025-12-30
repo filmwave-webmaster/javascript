@@ -1694,39 +1694,43 @@ function initSearchAndFilters() {
   }
   
   function clearAllFilters() {
-    const hasSearch = searchBar && searchBar.value.trim().length > 0;
-    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-    
-    if (!hasSearch && !hasFilters) {
-      return;
-    }
-    
-    if (searchBar && hasSearch) {
-      searchBar.value = '';
-    }
-    
-    if (hasFilters) {
-      const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-      
-      if (tagRemoveButtons.length > 0) {
-        tagRemoveButtons.forEach((btn) => {
-          btn.click();
-        });
-      } else {
-        document.querySelectorAll('[data-filter-group]').forEach(input => {
-          if (input.checked) {
-            input.checked = false;
-            const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-            if (wrapper) wrapper.classList.remove('is-active');
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        });
-      }
-    }
-    
-    toggleClearButton();
-    applyFilters();
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+
+  if (!hasSearch && !hasFilters) {
+    return;
   }
+
+  if (searchBar && hasSearch) {
+    searchBar.value = '';
+    // Optional: dispatch input to trigger applyFilters early
+    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // Clear checkbox filters
+  const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+  if (tagRemoveButtons.length > 0) {
+    tagRemoveButtons.forEach((btn) => btn.click());
+  } else {
+    document.querySelectorAll('[data-filter-group]').forEach(input => {
+      if (input.checked) {
+        input.checked = false;
+        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+        if (wrapper) wrapper.classList.remove('is-active');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  }
+
+  // Save empty state so restoration knows it was intentionally cleared
+  localStorage.setItem('musicFilters', JSON.stringify({
+    filters: [],
+    searchQuery: ''
+  }));
+
+  toggleClearButton();
+  applyFilters();
+}
   
  function applyFilters() {
   const g = window.musicPlayerPersistent;
@@ -2758,8 +2762,12 @@ function restoreFilterState() {
 }
 
 function clearFilterState() {
-  localStorage.removeItem('musicFilters');
-  console.log('🗑️ Cleared filter state');
+  // Instead of removing, save an empty state
+  localStorage.setItem('musicFilters', JSON.stringify({
+    filters: [],
+    searchQuery: ''
+  }));
+  console.log('💾 Saved empty filter state');
   
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
@@ -2981,34 +2989,12 @@ if (typeof barba !== 'undefined') {
   });
 }
 
-const clearButton = document.querySelector('.circle-x');
-if (clearButton) {
-  clearButton.addEventListener('click', function() {
-    isClearing = true;
-
-    // Clear any pending search save
-    clearTimeout(searchSaveTimeout);
-    
-    const searchBar = document.querySelector('[data-filter-search="true"]');
-    if (searchBar && searchBar.value) {
-      searchBar.value = '';
-      // Don't dispatch input event - we're clearing everything
-    }
-    
-    clearFilterState();
-    
-    setTimeout(() => {
-      isClearing = false;
-      console.log('✅ Clear complete - auto-save re-enabled');
-    }, 100);
-  });
-}
-
 /**
  * ============================================================
  * FAVORITE SONGS PERSISTENCE
  * ============================================================
  */
+
 function saveFavorites() {
   const favorites = [];
   document.querySelectorAll('input.favourite-checkbox:checked').forEach(checkbox => {
