@@ -2710,6 +2710,14 @@ function restoreFilterState() {
     searchBar.value = filterState.searchQuery;
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
+
+  // Hide song list immediately to prevent flash of unfiltered content
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.opacity = '0';
+    musicList.style.visibility = 'hidden';
+    musicList.style.pointerEvents = 'none';
+  }
 }
 
 // === NEW: Ensure clear button state is correct after restore ===
