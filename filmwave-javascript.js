@@ -602,17 +602,31 @@ function updateSongCardProgress(wavesurfer, progress) {
   if (!wavesurfer) return;
   
   try {
-    // Set the progress without playing
+    // Seek to position
     wavesurfer.seekTo(progress);
     
-    // Force WaveSurfer to render by triggering its internal events
-    wavesurfer.emit('timeupdate');
-    wavesurfer.emit('audioprocess');
+    // Get the rendered waveform canvas
+    const wrapper = wavesurfer.getWrapper();
+    if (!wrapper) return;
+    
+    const canvases = wrapper.querySelectorAll('canvas');
+    if (canvases.length === 0) return;
+    
+    // WaveSurfer uses 2 canvases - the progress canvas is the second one
+    const progressCanvas = canvases[canvases.length - 1];
+    if (!progressCanvas) return;
+    
+    // Force a style change to trigger repaint
+    progressCanvas.style.opacity = '0.99';
+    setTimeout(() => {
+      progressCanvas.style.opacity = '1';
+    }, 0);
+    
+    console.log(`🎨 Forced canvas redraw at ${(progress * 100).toFixed(1)}%`);
   } catch (e) {
     console.warn('Error updating song card progress:', e);
   }
 }
-
 function updateMasterControllerIcons(isPlaying) {
   const playBtn = document.querySelector('.controller-play');
   const pauseBtn = document.querySelector('.controller-pause');
