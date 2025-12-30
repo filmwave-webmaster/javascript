@@ -602,21 +602,48 @@ function updateSongCardProgress(wavesurfer, progress) {
   if (!wavesurfer) return;
   
   try {
-    // Simply seek - this should update WaveSurfer's internal position
     wavesurfer.seekTo(progress);
     
-    // The key: WaveSurfer's progress only renders when its backend thinks time changed
-    // So we need to get WaveSurfer's audio backend and update its currentTime
-    const backend = wavesurfer.getMediaElement();
-    if (backend && backend.duration > 0) {
-      const targetTime = backend.duration * progress;
-      // Only update if different to avoid thrashing
-      if (Math.abs(backend.currentTime - targetTime) > 0.1) {
-        backend.currentTime = targetTime;
+    // WaveSurfer won't update progress color when using external audio
+    // So we need to manually update the progress canvas overlay
+    const wrapper = wavesurfer.getWrapper();
+    if (!wrapper) return;
+    
+    const canvases = wrapper.querySelectorAll('canvas');
+    if (canvases.length < 2) return;
+    
+    // WaveSurfer uses 2 canvases: waveform + progress overlay
+    const progressCanvas = canvases[1];
+    const ctx = progressCanvas.getContext('2d');
+    
+    // Clear the progress canvas
+    ctx.clearRect(0, 0, progressCanvas.width, progressCanvas.height);
+    
+    // Get the waveform canvas to copy from
+    const waveformCanvas = canvases[0];
+    const waveCtx = waveformCanvas.getContext('2d');
+    
+    // Get the waveform image data
+    const imageData = waveCtx.getImageData(0, 0, waveformCanvas.width, waveformCanvas.height);
+    const pixels = imageData.data;
+    
+    // Calculate progress width
+    const progressWidth = Math.floor(progressCanvas.width * progress);
+    
+    // Draw the progress portion in dark color
+    for (let x = 0; x < progressWidth; x++) {
+      for (let y = 0; y < progressCanvas.height; y++) {
+        const i = (y * waveformCanvas.width + x) * 4;
+        
+        // If there's waveform content at this pixel (not transparent)
+        if (pixels[i + 3] > 0) {
+          ctx.fillStyle = '#191919';
+          ctx.fillRect(x, y, 1, 1);
+        }
       }
     }
     
-    console.log(`🎨 Updated waveform position to ${(progress * 100).toFixed(1)}%`);
+    console.log(`🎨 Drew progress at ${(progress * 100).toFixed(1)}%`);
   } catch (e) {
     console.warn('Error updating song card progress:', e);
   }
@@ -3005,10 +3032,19 @@ if (typeof barba !== 'undefined') {
     console.log('🚀 Barba navigation starting');
   });
   
-  barba.hooks.beforeEnter((data) => {
-    console.log('📥 Barba beforeEnter hook');
-    const savedState = localStorage.getItem('musicFilters');
-    console.log('Saved filters:', savedState);
+ barba.hooks.beforeEnter((data) => {
+  console.log('📥 Barba beforeEnter hook');
+  
+  // Clear search input on page transitions
+  const searchInput = data.next.container.querySelector('[data-filter-search="true"]');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.setAttribute('value', '');
+    console.log('🧹 Cleared search input');
+  }
+  
+  const savedState = localStorage.getItem('musicFilters');
+  console.log('Saved filters:', savedState);
     
     if (savedState) {
       try {
