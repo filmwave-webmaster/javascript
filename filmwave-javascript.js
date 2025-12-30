@@ -305,32 +305,24 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
- audio.addEventListener('timeupdate', () => {
-  if (g.standaloneAudio !== audio) return;
-  
-  if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
-  if (!isFinite(audio.currentTime)) return;
-  
-  g.currentTime = audio.currentTime;
-  
-  // Update song card waveform progress
-  if (g.currentWavesurfer && audio.duration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    g.currentWavesurfer.seekTo(progress);
-    updateSongCardProgress(g.currentWavesurfer, progress);
-  }
-  
-  const masterCounter = document.querySelector('.player-duration-counter');
-  if (masterCounter) {
-    masterCounter.textContent = formatDuration(audio.currentTime);
-  }
-  if (g.currentPeaksData && g.currentDuration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    if (isFinite(progress)) {
-      drawMasterWaveform(g.currentPeaksData, progress);
+  audio.addEventListener('timeupdate', () => {
+    if (g.standaloneAudio !== audio) return;
+    
+    if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
+    if (!isFinite(audio.currentTime)) return;
+    
+    g.currentTime = audio.currentTime;
+    const masterCounter = document.querySelector('.player-duration-counter');
+    if (masterCounter) {
+      masterCounter.textContent = formatDuration(audio.currentTime);
     }
-  }
-});
+    if (g.currentPeaksData && g.currentDuration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      if (isFinite(progress)) {
+        drawMasterWaveform(g.currentPeaksData, progress);
+      }
+    }
+  });
   
   audio.addEventListener('play', () => {
     if (g.standaloneAudio !== audio) return;
@@ -598,57 +590,6 @@ function drawMasterWaveform(peaks, progress) {
   }
 }
 
-function updateSongCardProgress(wavesurfer, progress) {
-  if (!wavesurfer) return;
-  
-  try {
-    wavesurfer.seekTo(progress);
-    
-    // WaveSurfer won't update progress color when using external audio
-    // So we need to manually update the progress canvas overlay
-    const wrapper = wavesurfer.getWrapper();
-    if (!wrapper) return;
-    
-    const canvases = wrapper.querySelectorAll('canvas');
-    if (canvases.length < 2) return;
-    
-    // WaveSurfer uses 2 canvases: waveform + progress overlay
-    const progressCanvas = canvases[1];
-    const ctx = progressCanvas.getContext('2d');
-    
-    // Clear the progress canvas
-    ctx.clearRect(0, 0, progressCanvas.width, progressCanvas.height);
-    
-    // Get the waveform canvas to copy from
-    const waveformCanvas = canvases[0];
-    const waveCtx = waveformCanvas.getContext('2d');
-    
-    // Get the waveform image data
-    const imageData = waveCtx.getImageData(0, 0, waveformCanvas.width, waveformCanvas.height);
-    const pixels = imageData.data;
-    
-    // Calculate progress width
-    const progressWidth = Math.floor(progressCanvas.width * progress);
-    
-    // Draw the progress portion in dark color
-    for (let x = 0; x < progressWidth; x++) {
-      for (let y = 0; y < progressCanvas.height; y++) {
-        const i = (y * waveformCanvas.width + x) * 4;
-        
-        // If there's waveform content at this pixel (not transparent)
-        if (pixels[i + 3] > 0) {
-          ctx.fillStyle = '#191919';
-          ctx.fillRect(x, y, 1, 1);
-        }
-      }
-    }
-    
-    console.log(`🎨 Drew progress at ${(progress * 100).toFixed(1)}%`);
-  } catch (e) {
-    console.warn('Error updating song card progress:', e);
-  }
-}
-
 function updateMasterControllerIcons(isPlaying) {
   const playBtn = document.querySelector('.controller-play');
   const pauseBtn = document.querySelector('.controller-pause');
@@ -800,7 +741,7 @@ function initMasterPlayer() {
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
 }
-
+  
 /**
  * ============================================================
  * SONG CARD FUNCTIONS
@@ -899,35 +840,12 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
 function linkStandaloneToWaveform() {
   const g = window.musicPlayerPersistent;
   
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🔗 LINK FUNCTION CALLED');
-  console.log('Has standalone audio:', !!g.standaloneAudio);
-  console.log('Has current song:', !!g.currentSongData);
-  
-  if (!g.standaloneAudio || !g.currentSongData) {
-    console.log('❌ No audio or song - exiting');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    return;
-  }
-  
-  console.log('Current song ID:', g.currentSongData.id);
-  console.log('Current song title:', g.currentSongData.fields?.['Song Title']);
-  console.log('Total waveforms in memory:', g.waveformData.length);
-  
-  // List all waveform IDs
-  g.waveformData.forEach((data, index) => {
-    console.log(`  Waveform ${index}: ${data.songData.id} - ${data.songData.fields?.['Song Title']}`);
-  });
+  if (!g.standaloneAudio || !g.currentSongData) return;
   
   const matchingData = g.waveformData.find(data => data.songData.id === g.currentSongData.id);
   
-  console.log('Found matching waveform:', !!matchingData);
-  
   if (matchingData) {
     const { wavesurfer, cardElement } = matchingData;
-    
-    console.log('Waveform ready:', wavesurfer.getDuration() > 0);
-    console.log('Waveform duration:', wavesurfer.getDuration());
     
     g.currentWavesurfer = wavesurfer;
     
@@ -935,43 +853,26 @@ function linkStandaloneToWaveform() {
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     
-    const syncProgress = () => {
-      console.log('📊 SYNC PROGRESS CALLED');
-      if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+    if (g.standaloneAudio.duration > 0) {
+      const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+      wavesurfer.seekTo(progress);
+    }
+    
+    const existingListener = g.standaloneAudio._waveformSyncListener;
+    if (existingListener) {
+      g.standaloneAudio.removeEventListener('timeupdate', existingListener);
+    }
+    
+    const syncListener = () => {
+      if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
         const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        console.log('Audio time:', g.standaloneAudio.currentTime);
-        console.log('Audio duration:', g.standaloneAudio.duration);
-        console.log('Progress:', (progress * 100).toFixed(1) + '%');
-        
         wavesurfer.seekTo(progress);
-        updateSongCardProgress(wavesurfer, progress);
-
-            // Wait for DOM to be ready before updating visuals
-    setTimeout(() => {
-      updateSongCardProgress(wavesurfer, progress);
-    }, 50);
-        
-        console.log(`✅ Synced waveform to ${(progress * 100).toFixed(1)}% progress`);
-      } else {
-        console.log('❌ Audio not ready for sync');
       }
     };
     
-    if (wavesurfer.getDuration() > 0) {
-      console.log('✅ Waveform already ready - syncing now');
-      syncProgress();
-    } else {
-      console.log('⏳ Waveform not ready - waiting for ready event');
-      wavesurfer.once('ready', () => {
-        console.log('✅ Waveform ready event fired');
-        syncProgress();
-      });
-    }
-  } else {
-    console.log('❌ NO MATCHING WAVEFORM FOUND');
+    g.standaloneAudio._waveformSyncListener = syncListener;
+    g.standaloneAudio.addEventListener('timeupdate', syncListener);
   }
-  
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 
 /**
@@ -996,26 +897,24 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     }
   });
   
-audio.addEventListener('timeupdate', () => {
-  g.currentTime = audio.currentTime;
-  
-  // Update song card waveform progress
-  if (g.currentWavesurfer && audio.duration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    g.currentWavesurfer.seekTo(progress);
-    updateSongCardProgress(g.currentWavesurfer, progress);
-  }
-  
-  const masterCounter = document.querySelector('.player-duration-counter');
-  if (masterCounter) {
-    masterCounter.textContent = formatDuration(audio.currentTime);
-  }
-  
-  if (g.currentPeaksData && g.currentDuration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    drawMasterWaveform(g.currentPeaksData, progress);
-  }
-});
+  audio.addEventListener('timeupdate', () => {
+    g.currentTime = audio.currentTime;
+    
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      wavesurfer.seekTo(progress);
+    }
+    
+    const masterCounter = document.querySelector('.player-duration-counter');
+    if (masterCounter) {
+      masterCounter.textContent = formatDuration(audio.currentTime);
+    }
+    
+    if (g.currentPeaksData && g.currentDuration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      drawMasterWaveform(g.currentPeaksData, progress);
+    }
+  });
   
   audio.addEventListener('play', () => {
     g.isPlaying = true;
@@ -1072,12 +971,8 @@ audio.addEventListener('timeupdate', () => {
   });
   
   if (shouldAutoPlay) {
-  audio.play().catch(err => {
-    if (err.name !== 'AbortError') {
-      console.error('Playback error:', err);
-    }
-  });
-}
+    audio.play().catch(err => console.error('Playback error:', err));
+  }
   
   syncMasterTrack(wavesurfer, songData);
   updateMasterPlayerVisibility();
@@ -1093,16 +988,12 @@ audio.addEventListener('timeupdate', () => {
 function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
- if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-  if (shouldAutoPlay) {
-    g.standaloneAudio.play().catch(err => {
-      if (err.name !== 'AbortError') {
-        console.error('Playback error:', err);
-      }
-    });
+  if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+    if (shouldAutoPlay) {
+      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    }
+    return;
   }
-  return;
-}
   
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
@@ -1138,16 +1029,6 @@ function initializeWaveforms() {
   const visibleCards = [];
   const notVisibleCards = [];
   
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🎬 INITIALIZE WAVEFORMS CALLED');
-  console.log('Total song cards found:', songCards.length);
-  console.log('Has current song:', !!g.currentSongData);
-  if (g.currentSongData) {
-    console.log('Current song ID:', g.currentSongData.id);
-    console.log('Current song title:', g.currentSongData.fields?.['Song Title']);
-  }
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  
   const observer = new IntersectionObserver((entries) => {
     const cardsToLoad = [];
     
@@ -1180,16 +1061,6 @@ function initializeWaveforms() {
     if (isInTemplate || hasNoData) {
       return;
     }
-
- // Check if this is the currently playing song
-const songId = cardElement.dataset.songId;
-const isCurrentSong = g.currentSongData && g.currentSongData.id === songId;
-
-if (isCurrentSong) {
-  console.log('✅ FOUND CURRENT SONG - PRIORITIZING:', songId);
-  visibleCards.push(cardElement);
-  return;
-}
     
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
@@ -1420,27 +1291,20 @@ if (songName) {
     cardElement.dataset.waveformInitialized = 'true';
   });
   
- Promise.all(waveformPromises).then(() => {
-  waveformContainers.forEach((container) => {
-    container.style.opacity = '1';
+  Promise.all(waveformPromises).then(() => {
+    waveformContainers.forEach((container) => {
+      container.style.opacity = '1';
+    });
   });
   
-  // Try linking immediately after batch loads
   setTimeout(() => {
+    waveformContainers.forEach((container) => {
+      if (container.style.opacity === '0') {
+        container.style.opacity = '1';
+      }
+    });
     linkStandaloneToWaveform();
-    console.log('🔗 Attempted link after batch load');
-  }, 100);
-});
-
-setTimeout(() => {
-  waveformContainers.forEach((container) => {
-    if (container.style.opacity === '0') {
-      container.style.opacity = '1';
-    }
-  });
-  // Try linking again in case first attempt was too early
-  linkStandaloneToWaveform();
-}, 1000);
+  }, 1000);
 }
 
 /**
@@ -3032,19 +2896,10 @@ if (typeof barba !== 'undefined') {
     console.log('🚀 Barba navigation starting');
   });
   
- barba.hooks.beforeEnter((data) => {
-  console.log('📥 Barba beforeEnter hook');
-  
-  // Clear search input on page transitions
-  const searchInput = data.next.container.querySelector('[data-filter-search="true"]');
-  if (searchInput) {
-    searchInput.value = '';
-    searchInput.setAttribute('value', '');
-    console.log('🧹 Cleared search input');
-  }
-  
-  const savedState = localStorage.getItem('musicFilters');
-  console.log('Saved filters:', savedState);
+  barba.hooks.beforeEnter((data) => {
+    console.log('📥 Barba beforeEnter hook');
+    const savedState = localStorage.getItem('musicFilters');
+    console.log('Saved filters:', savedState);
     
     if (savedState) {
       try {
