@@ -1679,11 +1679,6 @@ function initMutualExclusion() {
   }
 }
 
-function initSearchAndFilters() {
-  const g = window.musicPlayerPersistent;
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  const clearBtn = document.querySelector('.circle-x');
-  
   function toggleClearButton() {
     if (!clearBtn) return;
     
@@ -1692,6 +1687,11 @@ function initSearchAndFilters() {
     
     clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
   }
+
+function initSearchAndFilters() {
+  const g = window.musicPlayerPersistent;
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const clearBtn = document.querySelector('.circle-x');
   
   function clearAllFilters() {
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
