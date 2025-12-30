@@ -2704,26 +2704,25 @@ function restoreFilterState() {
       }, 100);
     }, 50);
     
-   if (filterState.searchQuery) {
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  if (searchBar) {
-    searchBar.value = filterState.searchQuery;
-  }
-
-  // Hide the full song list immediately to prevent flash
+   if (filterState.searchQuery || filterState.filters.length > 0) {
+  // Hide the song list immediately if ANY filter (search or checkboxes) is active
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.opacity = '0';
     musicList.style.visibility = 'hidden';
     musicList.style.pointerEvents = 'none';
   }
+}
 
-  // Trigger filtering after a tiny delay
-  setTimeout(() => {
-    if (searchBar) {
+if (filterState.searchQuery) {
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (searchBar) {
+    searchBar.value = filterState.searchQuery;
+    // Trigger filtering after a tiny delay to ensure hide took effect
+    setTimeout(() => {
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }, 50);
+    }, 50);
+  }
 }
 
 // === NEW: Ensure clear button state is correct after restore ===
