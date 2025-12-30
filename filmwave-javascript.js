@@ -2708,8 +2708,23 @@ function restoreFilterState() {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
     searchBar.value = filterState.searchQuery;
-    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
+
+  // Hide the full song list immediately to prevent flash
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.opacity = '0';
+    musicList.style.visibility = 'hidden';
+    musicList.style.pointerEvents = 'none';
+  }
+
+  // Trigger filtering after a tiny delay so DOM is ready
+  setTimeout(() => {
+    if (searchBar) {
+      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, 50);
+}
 
   // Hide song list immediately to prevent flash of unfiltered content
   const musicList = document.querySelector('.music-list-wrapper');
