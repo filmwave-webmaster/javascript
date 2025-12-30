@@ -1797,9 +1797,15 @@ function initSearchAndFilters() {
 }
   
   if (clearBtn) {
-    clearBtn.style.display = 'none';
-    clearBtn.addEventListener('click', clearAllFilters);
-  }
+  // Start hidden — will only show after restoration (if needed)
+  clearBtn.style.display = 'none';
+  clearBtn.addEventListener('click', clearAllFilters);
+
+  // Safety: update visibility after a delay in case restoration takes time
+  setTimeout(() => {
+    toggleClearButton();
+  }, 800);
+}
   
   if (searchBar) {
     searchBar.addEventListener('input', () => {
@@ -2719,13 +2725,18 @@ function restoreFilterState() {
       }, 100);
     }, 50);
     
-    if (filterState.searchQuery) {
-      const searchBar = document.querySelector('[data-filter-search="true"]');
-      if (searchBar) {
-        searchBar.value = filterState.searchQuery;
-        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }
+   if (filterState.searchQuery) {
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (searchBar) {
+    searchBar.value = filterState.searchQuery;
+    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+// === NEW: Ensure clear button state is correct after restore ===
+setTimeout(() => {
+  toggleClearButton();
+}, 100);
 
     toggleClearButton(); // Make sure button visibility is correct after restore
 // If you have any visual "loading" state, hide it here too
@@ -2765,13 +2776,13 @@ function restoreFilterState() {
 }
 
 function clearFilterState() {
-  // Instead of removing, save an empty state
+  // Save an EMPTY state instead of removing the item
   localStorage.setItem('musicFilters', JSON.stringify({
     filters: [],
     searchQuery: ''
   }));
-  console.log('💾 Saved empty filter state');
-  
+  console.log('💾 Saved empty filter state after clear');
+ 
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.opacity = '1';
