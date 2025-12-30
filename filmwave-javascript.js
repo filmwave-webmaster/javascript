@@ -1679,6 +1679,11 @@ function initMutualExclusion() {
   }
 }
 
+function initSearchAndFilters() {
+  const g = window.musicPlayerPersistent;
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const clearBtn = document.querySelector('.circle-x');
+  
   function toggleClearButton() {
     if (!clearBtn) return;
     
@@ -1687,11 +1692,6 @@ function initMutualExclusion() {
     
     clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
   }
-
-function initSearchAndFilters() {
-  const g = window.musicPlayerPersistent;
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  const clearBtn = document.querySelector('.circle-x');
   
   function clearAllFilters() {
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
@@ -2704,24 +2704,11 @@ function restoreFilterState() {
       }, 100);
     }, 50);
     
-   if (filterState.searchQuery || filterState.filters.length > 0) {
-  // Hide the song list immediately if ANY filter (search or checkboxes) is active
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.opacity = '0';
-    musicList.style.visibility = 'hidden';
-    musicList.style.pointerEvents = 'none';
-  }
-}
-
-if (filterState.searchQuery) {
+   if (filterState.searchQuery) {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
     searchBar.value = filterState.searchQuery;
-    // Trigger filtering after a tiny delay to ensure hide took effect
-    setTimeout(() => {
-      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-    }, 50);
+    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }
 
