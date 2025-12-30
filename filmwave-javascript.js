@@ -2477,6 +2477,7 @@ if (typeof barba !== 'undefined') {
 let filtersRestored = false;
 let favoritesRestored = false;
 let isClearing = false;
+let searchSaveTimeout;
 
 function saveFilterState() {
   if (isClearing) {
@@ -2774,7 +2775,6 @@ document.addEventListener('change', function(e) {
   }
 });
 
-let searchSaveTimeout;
 document.addEventListener('input', function(e) {
   if (e.target.matches('[data-filter-search="true"]')) {
     clearTimeout(searchSaveTimeout);
@@ -2833,6 +2833,9 @@ window.addEventListener('load', function() {
     console.log('✅ Clear button found, attaching listener');
     clearButton.addEventListener('click', function() {
       isClearing = true;
+
+      // Clear any pending search save
+      clearTimeout(searchSaveTimeout);
       
       const searchBar = document.querySelector('[data-filter-search="true"]');
       if (searchBar && searchBar.value) {
@@ -2982,6 +2985,9 @@ const clearButton = document.querySelector('.circle-x');
 if (clearButton) {
   clearButton.addEventListener('click', function() {
     isClearing = true;
+
+    // Clear any pending search save
+    clearTimeout(searchSaveTimeout);
     
     const searchBar = document.querySelector('[data-filter-search="true"]');
     if (searchBar && searchBar.value) {
