@@ -599,43 +599,26 @@ function drawMasterWaveform(peaks, progress) {
 }
 
 function updateSongCardProgress(wavesurfer, progress) {
-  if (!wavesurfer) {
-    console.warn('⚠️ No wavesurfer passed to updateSongCardProgress');
-    return;
-  }
-  
-  console.log('🎨 updateSongCardProgress called with progress:', (progress * 100).toFixed(1) + '%');
+  if (!wavesurfer) return;
   
   try {
+    // Simply seek - this should update WaveSurfer's internal position
     wavesurfer.seekTo(progress);
     
-    const wrapper = wavesurfer.getWrapper();
-    console.log('Wrapper found:', !!wrapper);
-    if (!wrapper) return;
+    // The key: WaveSurfer's progress only renders when its backend thinks time changed
+    // So we need to get WaveSurfer's audio backend and update its currentTime
+    const backend = wavesurfer.getMediaElement();
+    if (backend && backend.duration > 0) {
+      const targetTime = backend.duration * progress;
+      // Only update if different to avoid thrashing
+      if (Math.abs(backend.currentTime - targetTime) > 0.1) {
+        backend.currentTime = targetTime;
+      }
+    }
     
-    const canvases = wrapper.querySelectorAll('canvas');
-    console.log('Canvas count:', canvases.length);
-    if (canvases.length === 0) return;
-    
-    // WaveSurfer creates a progress canvas - it's usually the second one
-    const progressCanvas = canvases.length > 1 ? canvases[1] : canvases[0];
-    console.log('Progress canvas found:', !!progressCanvas);
-    console.log('Canvas width:', progressCanvas.width, 'height:', progressCanvas.height);
-    
-    if (!progressCanvas) return;
-    
-    const ctx = progressCanvas.getContext('2d');
-    const width = progressCanvas.width;
-    const progressWidth = width * progress;
-    
-    // Clear and redraw the progress overlay
-    ctx.clearRect(0, 0, width, progressCanvas.height);
-    ctx.fillStyle = '#191919'; // Your dark progress color
-    ctx.fillRect(0, 0, progressWidth, progressCanvas.height);
-    
-    console.log(`✅ Drew progress bar: ${progressWidth}px of ${width}px`);
+    console.log(`🎨 Updated waveform position to ${(progress * 100).toFixed(1)}%`);
   } catch (e) {
-    console.error('❌ Error in updateSongCardProgress:', e);
+    console.warn('Error updating song card progress:', e);
   }
 }
 
