@@ -1111,6 +1111,16 @@ function initializeWaveforms() {
   const visibleCards = [];
   const notVisibleCards = [];
   
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🎬 INITIALIZE WAVEFORMS CALLED');
+  console.log('Total song cards found:', songCards.length);
+  console.log('Has current song:', !!g.currentSongData);
+  if (g.currentSongData) {
+    console.log('Current song ID:', g.currentSongData.id);
+    console.log('Current song title:', g.currentSongData.fields?.['Song Title']);
+  }
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  
   const observer = new IntersectionObserver((entries) => {
     const cardsToLoad = [];
     
@@ -1144,15 +1154,15 @@ function initializeWaveforms() {
       return;
     }
 
-     // Check if this is the currently playing song
-  const songId = cardElement.dataset.songId;
-  const isCurrentSong = g.currentSongData && g.currentSongData.id === songId;
-  
-  // If this is the current song, always load it immediately (don't lazy load)
-  if (isCurrentSong) {
-    visibleCards.push(cardElement);
-    return; // Skip the rest of the logic for this card
-  }
+ // Check if this is the currently playing song
+const songId = cardElement.dataset.songId;
+const isCurrentSong = g.currentSongData && g.currentSongData.id === songId;
+
+if (isCurrentSong) {
+  console.log('✅ FOUND CURRENT SONG - PRIORITIZING:', songId);
+  visibleCards.push(cardElement);
+  return;
+}
     
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
