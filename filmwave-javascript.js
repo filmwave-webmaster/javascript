@@ -2063,23 +2063,13 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-          after(data) {
+      after(data) {
   console.log('🚪 BARBA AFTER FIRED');
-
-  // NEW: Force hide song list immediately to prevent flash from displaySongs() or Webflow IX2
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.opacity = '0';
-    musicList.style.visibility = 'hidden';
-    musicList.style.pointerEvents = 'none';
-    musicList.style.transition = 'none'; // prevent any premature fade
-    console.log('🔒 Force hidden song list in Barba after to prevent flash');
-  }
-
+  
   const g = window.musicPlayerPersistent;
- 
+  
   window.scrollTo(0, 0);
- 
+  
   console.log('🔍 Checking for page ID...');
   let newPageId = null;
 
@@ -2742,21 +2732,18 @@ setTimeout(() => {
     toggleClearButton(); // Make sure button visibility is correct after restore
 // If you have any visual "loading" state, hide it here too
     
-        console.log(`✅ Restored ${restoredCount} filters`);
-
-    // Delay fade-in: longer for search (wait for 400ms debounce + buffer), shorter for filter tags only
-    const delay = filterState.searchQuery ? 600 : 200;
-
+    console.log(`✅ Restored ${restoredCount} filters`);
+    
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
-        musicList.style.transition = 'opacity 0.3s ease-in-out';
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
       }
       console.log('✨ Songs faded in');
-    }, delay);
+    }, 150);
     
     return true;
   } catch (error) {
@@ -2909,7 +2896,7 @@ if (typeof barba !== 'undefined') {
     if (savedState) {
       try {
         const filterState = JSON.parse(savedState);
-        const hasActiveFilters = filterState.filters.length > 0 || (filterState.searchQuery && filterState.searchQuery.trim().length > 0);
+        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
         console.log('Has active filters:', hasActiveFilters);
         
         if (hasActiveFilters) {
