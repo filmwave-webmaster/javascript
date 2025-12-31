@@ -187,12 +187,9 @@ async function initMusicPage() {
   }
 
   if (g.MASTER_DATA.length === 0) {
-
-
-  
-  if (g.MASTER_DATA.length === 0) {
     await fetchSongs();
   }
+
   
   if (g.hasActiveSong && g.currentSongData) {
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
