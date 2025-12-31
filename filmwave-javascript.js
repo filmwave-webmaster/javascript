@@ -2883,7 +2883,7 @@ if (musicList) {
 }
 
 return false;
-
+}
 
 window.addEventListener('load', function() {
   console.log('🔄 Page load event fired');
