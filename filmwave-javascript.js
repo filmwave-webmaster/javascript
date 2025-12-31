@@ -1700,16 +1700,25 @@ function toggleClearButton() {
   clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
 }
 
+//Start of initSearchAndFilters Function
+
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const clearBtn = document.querySelector('.circle-x');
   const container = document.querySelector('.music-list-wrapper');
 
-  // 1. IMMEDIATELY HIDE the container if we are on the music page.
-  // This prevents the "flash" of the full list before restoration/filtering kicks in.
+  // 1. Set initial state: If there are search terms or filters in localStorage, 
+  // start at 0 to hide the flash. If NOT, start at 1 so it's visible immediately.
+  const saved = localStorage.getItem('musicFilters');
+  let hasSavedState = false;
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    hasSavedState = (parsed.searchQuery && parsed.searchQuery.length > 0) || (parsed.filters && parsed.filters.length > 0);
+  }
+
   if (container) {
-    container.style.opacity = '0';
+    container.style.opacity = hasSavedState ? '0' : '1';
   }
 
   function toggleClearButton() {
@@ -1720,17 +1729,12 @@ function initSearchAndFilters() {
   }
 
   function clearAllFilters() {
-    const hasSearch = searchBar && searchBar.value.trim().length > 0;
-    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-
-    if (!hasSearch && !hasFilters) return;
-
     if (container) {
       container.style.transition = 'opacity 0.2s ease-in-out';
       container.style.opacity = '0';
     }
 
-    if (searchBar && hasSearch) {
+    if (searchBar) {
       searchBar.value = '';
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
     }
@@ -1742,7 +1746,7 @@ function initSearchAndFilters() {
       document.querySelectorAll('[data-filter-group]').forEach(input => {
         if (input.checked) {
           input.checked = false;
-          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+          const wrapper = input.closest('.w-checkbox, .checkbox-single-select-wrapper');
           if (wrapper) wrapper.classList.remove('is-active');
           input.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -1752,7 +1756,6 @@ function initSearchAndFilters() {
     localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
 
     setTimeout(() => {
-      toggleClearButton();
       applyFilters();
       if (container) container.style.opacity = '1';
     }, 250);
@@ -1774,42 +1777,42 @@ function initSearchAndFilters() {
       }
     });
 
-    const visibleIds = g.MASTER_DATA.filter(record => {
-      const fields = record.fields;
-      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-      const matchesSearch = keywords.every(k => allText.includes(k));
-      const matchesAttributes = selectedFilters.every(filter => {
-        let recVal = fields[filter.group];
-        if (recVal === undefined || recVal === null) return false;
-        if (filter.keyGroup) {
-          if (filter.keyGroup === 'major') return String(recVal).toLowerCase().endsWith('maj');
-          if (filter.keyGroup === 'minor') return String(recVal).toLowerCase().endsWith('min');
-        }
-        if (filter.value) {
-          if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
-          return String(recVal).toLowerCase() === filter.value;
-        }
-        return false;
+    // We only filter if MASTER_DATA has arrived
+    if (g.MASTER_DATA && g.MASTER_DATA.length > 0) {
+      const visibleIds = g.MASTER_DATA.filter(record => {
+        const fields = record.fields;
+        const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+        const matchesSearch = keywords.every(k => allText.includes(k));
+        const matchesAttributes = selectedFilters.every(filter => {
+          let recVal = fields[filter.group];
+          if (recVal === undefined || recVal === null) return false;
+          if (filter.keyGroup) {
+            if (filter.keyGroup === 'major') return String(recVal).toLowerCase().endsWith('maj');
+            if (filter.keyGroup === 'minor') return String(recVal).toLowerCase().endsWith('min');
+          }
+          if (filter.value) {
+            if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+            return String(recVal).toLowerCase() === filter.value;
+          }
+          return false;
+        });
+        return matchesSearch && matchesAttributes;
+      }).map(r => r.id);
+
+      if (!!document.querySelector('.music-list-wrapper')) {
+        g.filteredSongIds = visibleIds;
+      }
+
+      document.querySelectorAll('.song-wrapper').forEach(card => {
+        card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
       });
-      return matchesSearch && matchesAttributes;
-    }).map(r => r.id);
-
-    const isMusicPage = !!document.querySelector('.music-list-wrapper');
-    if (isMusicPage) {
-      g.filteredSongIds = visibleIds;
     }
-
-    document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
-    });
 
     toggleClearButton();
   }
 
   // LISTENERS
-  if (clearBtn) {
-    clearBtn.addEventListener('click', clearAllFilters);
-  }
+  if (clearBtn) clearBtn.addEventListener('click', clearAllFilters);
 
   if (searchBar) {
     searchBar.addEventListener('input', () => {
@@ -1818,7 +1821,6 @@ function initSearchAndFilters() {
         container.style.opacity = '0';
       }
       clearTimeout(searchTimeout);
-      toggleClearButton();
       searchTimeout = setTimeout(() => {
         applyFilters();
         if (container) container.style.opacity = '1';
@@ -1834,21 +1836,17 @@ function initSearchAndFilters() {
       }
       setTimeout(() => {
         applyFilters();
-        toggleClearButton();
         if (container) container.style.opacity = '1';
       }, 250);
     });
   });
 
-  // 2. RESTORATION LOGIC
-  const saved = localStorage.getItem('musicFilters');
+  // RESTORATION
   if (saved) {
     try {
       const { filters, searchQuery } = JSON.parse(saved);
-      if (searchBar && searchQuery) {
-        searchBar.value = searchQuery;
-      }
-      if (filters && Array.isArray(filters)) {
+      if (searchBar && searchQuery) searchBar.value = searchQuery;
+      if (filters) {
         filters.forEach(f => {
           const input = document.querySelector(`[data-filter-group="${f.group}"][data-filter-value="${f.value}"]`);
           if (input) {
@@ -1858,43 +1856,22 @@ function initSearchAndFilters() {
           }
         });
       }
-    } catch (e) {
-      console.error("Error parsing saved filters", e);
-    }
+    } catch (e) {}
   }
 
-  // 3. FINAL STEP: Run filter once and fade in
-  // We use a small interval to ensure MASTER_DATA is populated before revealing
-  const revealList = () => {
-    if (g.MASTER_DATA && g.MASTER_DATA.length > 0) {
-      applyFilters();
-      setTimeout(() => {
-        if (container) {
-          container.style.transition = 'opacity 0.4s ease-in-out';
-          container.style.opacity = '1';
-        }
-      }, 100);
-      return true;
+  // FINAL: Run filter and ensure visibility
+  applyFilters();
+  
+  // Force visibility after a short delay regardless of data status
+  setTimeout(() => {
+    if (container) {
+      container.style.transition = 'opacity 0.4s ease-in-out';
+      container.style.opacity = '1';
     }
-    return false;
-  };
-
-  // Attempt reveal immediately
-  if (!revealList()) {
-    // If data wasn't ready, check every 200ms
-    const retryInterval = setInterval(() => {
-      if (revealList()) {
-        clearInterval(retryInterval);
-      }
-    }, 200);
-    
-    // Safety timeout: reveal anyway after 3 seconds so the page isn't stuck blank
-    setTimeout(() => {
-      clearInterval(retryInterval);
-      if (container) container.style.opacity = '1';
-    }, 3000);
-  }
+  }, 300);
 }
+
+// End of initSearchAndFilters Function
 
 /**
  * ============================================================
