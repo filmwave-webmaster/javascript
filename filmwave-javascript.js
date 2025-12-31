@@ -47,7 +47,8 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
     if (!savedState) return;
 
     const filterState = JSON.parse(savedState);
-    const hasActive = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
+    const hasActive =
+      (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
     if (!hasActive) return;
 
     // Inject a CSS kill-switch BEFORE first paint
@@ -56,20 +57,17 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
-style.textContent = `
-style.textContent = `
-style.textContent = `
- style.textContent = `
-  /* Pre-fade ONLY: do NOT use visibility/pointer-events or it can "stick" if restore fails */
-  .music-list-wrapper .song-wrapper { 
-    opacity: 0 !important;
-    transition: none !important;
-  }
-`;
+        /* Pre-fade ONLY: do NOT use visibility/pointer-events or it can "stick" if restore fails */
+        .music-list-wrapper .song-wrapper { 
+          opacity: 0 !important;
+          transition: none !important;
+        }
+      `;
       (document.head || document.documentElement).appendChild(style);
     }
   } catch (e) {}
 })();
+
 
 
 // Force-clear saved search query on hard refresh so field starts empty
