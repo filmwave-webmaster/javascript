@@ -2938,19 +2938,39 @@ window.addEventListener('load', function() {
   console.log('🔄 Page load event fired');
   filtersRestored = false;
   
-  setTimeout(() => {
-    const musicList = document.querySelector('.music-list-wrapper');
-    console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
-    if (musicList) {
-      console.log('Current opacity:', musicList.style.opacity);
-      if (!musicList.style.opacity || musicList.style.opacity === '0') {
-        console.log('⚡ Setting initial visibility');
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-      }
+ setTimeout(() => {
+  const musicList = document.querySelector('.music-list-wrapper');
+  console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
+
+  // ✅ If active saved filters/search exist, do NOT force-show on load
+  let hasActiveSavedFilters = false;
+  const savedState = localStorage.getItem('musicFilters');
+  if (savedState) {
+    try {
+      const filterState = JSON.parse(savedState);
+      hasActiveSavedFilters =
+        (filterState.filters && filterState.filters.length > 0) ||
+        !!filterState.searchQuery;
+    } catch (e) {}
+  }
+
+  if (musicList) {
+    console.log('Current opacity:', musicList.style.opacity);
+
+    if (hasActiveSavedFilters) {
+      console.log('⏳ Saved filters/search exist on load — keeping songs hidden');
+      return;
     }
-  }, 100);
+
+    if (!musicList.style.opacity || musicList.style.opacity === '0') {
+      console.log('⚡ Setting initial visibility');
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
+    }
+  }
+}, 100);
+
   
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
