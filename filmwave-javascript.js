@@ -2633,111 +2633,66 @@ function restoreFilterState() {
       }
     });
     
-    if (tagsContainer) {
-      tagsContainer.innerHTML = '';
-      
-      filterState.filters.forEach(savedFilter => {
-        let selector = `[data-filter-group="${savedFilter.group}"]`;
-        
-        if (savedFilter.value) {
-          selector += `[data-filter-value="${savedFilter.value}"]`;
-        }
-        if (savedFilter.keyGroup) {
-          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
-        }
-        
-        const input = document.querySelector(selector);
-        if (input && input.checked) {
-          const tag = document.createElement('div');
-          tag.className = 'filter-tag';
-          
-          let tagText;
-          
-          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
-          const label = wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]');
-          
-          if (label && label.textContent.trim()) {
-            tagText = label.textContent.trim();
-          } 
-          else if (savedFilter.value && savedFilter.value !== 'true' && savedFilter.value !== 'false') {
-            tagText = savedFilter.value;
-          }
-          else {
-            tagText = savedFilter.group;
-          }
-          
-          tag.innerHTML = `
-            <span class="filter-tag-text">${tagText}</span>
-            <span class="filter-tag-remove x-button-style">×</span>
-          `;
-          
-          tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-            input.checked = false;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-            tag.remove();
-            saveFilterState();
-          });
-          
-          tagsContainer.appendChild(tag);
-        }
-      });
-      
-      console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
-    }
-    
-    setTimeout(() => {
-      filterState.filters.forEach(savedFilter => {
-        let selector = `[data-filter-group="${savedFilter.group}"]`;
-        
-        if (savedFilter.value) {
-          selector += `[data-filter-value="${savedFilter.value}"]`;
-        }
-        if (savedFilter.keyGroup) {
-          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
-        }
-        
-        const input = document.querySelector(selector);
-        if (input && input.checked) {
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
-      
-      setTimeout(() => {
         if (tagsContainer) {
-          const seen = new Set();
-          const tagsToRemove = [];
-          
-          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-            const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-            if (text) {
-              if (seen.has(text)) {
-                tagsToRemove.push(tag);
-              } else {
-                seen.add(text);
-              }
-            }
-          });
-          
-          tagsToRemove.forEach(tag => tag.remove());
-          
-          if (tagsToRemove.length > 0) {
-            console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
-          }
-          
-          setTimeout(() => {
-            if (tagsContainer) {
-              tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
-              tagsContainer.style.opacity = '1';
-            }
-            if (clearButton) {
-              clearButton.style.transition = 'opacity 0.3s ease-in-out';
-              clearButton.style.opacity = '1';
-            }
-            console.log('✨ Tags and clear button faded in');
-          }, 10);
+      tagsContainer.innerHTML = ''; // Clear any existing (prevents rare duplicates)
+     
+      filterState.filters.forEach(savedFilter => {
+        let selector = `[data-filter-group="${savedFilter.group}"]`;
+       
+        if (savedFilter.value) {
+          selector += `[data-filter-value="${savedFilter.value}"]`;
         }
-      }, 100);
-    }, 50);
+        if (savedFilter.keyGroup) {
+          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
+        }
+       
+        const input = document.querySelector(selector);
+        if (input && input.checked) {
+          // Find if tag already exists from initDynamicTagging
+          const existingTag = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(tag => 
+            tag.querySelector('.filter-tag-text')?.textContent.trim() === (
+              // Same tagText logic as before
+              (() => {
+                const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
+                const label = wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]');
+                if (label && label.textContent.trim()) return label.textContent.trim();
+                if (savedFilter.value && savedFilter.value !== 'true' && savedFilter.value !== 'false') return savedFilter.value;
+                return savedFilter.group;
+              })()
+            )
+          );
+         
+          if (!existingTag) {
+            const tag = document.createElement('div');
+            tag.className = 'filter-tag';
+           
+            const tagText = (() => {
+              const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
+              const label = wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]');
+              if (label && label.textContent.trim()) return label.textContent.trim();
+              if (savedFilter.value && savedFilter.value !== 'true' && savedFilter.value !== 'false') return savedFilter.value;
+              return savedFilter.group;
+            })();
+           
+            tag.innerHTML = `
+              <span class="filter-tag-text">${tagText}</span>
+              <span class="filter-tag-remove x-button-style">×</span>
+            `;
+           
+            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+              input.checked = false;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              tag.remove();
+              saveFilterState();
+            });
+           
+            tagsContainer.appendChild(tag);
+          }
+        }
+      });
+     
+      console.log(`✅ Created/matched ${tagsContainer.children.length} filter tags`);
+    }
     
    if (filterState.searchQuery) {
   const searchBar = document.querySelector('[data-filter-search="true"]');
