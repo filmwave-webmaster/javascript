@@ -2550,10 +2550,10 @@ function restoreFilterState() {
    
     return false;
   }
-  
+ 
   try {
     const filterState = JSON.parse(savedState);
-    
+   
     const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
     if (!hasActiveFilters) {
       const musicList = document.querySelector('.music-list-wrapper');
@@ -2562,20 +2562,28 @@ function restoreFilterState() {
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
       }
-      
+     
       const tagsContainer = document.querySelector('.filter-tags-container');
       const clearButton = document.querySelector('.circle-x');
       if (tagsContainer) tagsContainer.style.opacity = '1';
       if (clearButton) clearButton.style.opacity = '1';
-      
+     
       return false;
     }
-    
+   
     console.log('📂 Restoring filter state:', filterState);
-    
+   
+    // NEW: Hide song list immediately if ANY restoration (search OR filters)
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) {
+      musicList.style.opacity = '0';
+      musicList.style.visibility = 'hidden';
+      musicList.style.pointerEvents = 'none';
+    }
+   
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
-    
+   
     if (tagsContainer) {
       tagsContainer.style.opacity = '0';
       tagsContainer.style.transition = 'none';
@@ -2584,106 +2592,106 @@ function restoreFilterState() {
       clearButton.style.opacity = '0';
       clearButton.style.transition = 'none';
     }
-    
+   
     let restoredCount = 0;
-    
+   
     filterState.filters.forEach(savedFilter => {
       let selector = `[data-filter-group="${savedFilter.group}"]`;
-      
+     
       if (savedFilter.value) {
         selector += `[data-filter-value="${savedFilter.value}"]`;
       }
       if (savedFilter.keyGroup) {
         selector += `[data-key-group="${savedFilter.keyGroup}"]`;
       }
-      
+     
       const input = document.querySelector(selector);
       if (input && !input.checked) {
         input.checked = true;
-        
+       
         const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
         if (wrapper) {
           wrapper.classList.add('is-active');
         }
-        
+       
         restoredCount++;
       }
     });
-    
+   
     if (tagsContainer) {
       tagsContainer.innerHTML = '';
-      
+     
       filterState.filters.forEach(savedFilter => {
         let selector = `[data-filter-group="${savedFilter.group}"]`;
-        
+       
         if (savedFilter.value) {
           selector += `[data-filter-value="${savedFilter.value}"]`;
         }
         if (savedFilter.keyGroup) {
           selector += `[data-key-group="${savedFilter.keyGroup}"]`;
         }
-        
+       
         const input = document.querySelector(selector);
         if (input && input.checked) {
           const tag = document.createElement('div');
           tag.className = 'filter-tag';
-          
+         
           let tagText;
-          
+         
           const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
           const label = wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]');
-          
+         
           if (label && label.textContent.trim()) {
             tagText = label.textContent.trim();
-          } 
+          }
           else if (savedFilter.value && savedFilter.value !== 'true' && savedFilter.value !== 'false') {
             tagText = savedFilter.value;
           }
           else {
             tagText = savedFilter.group;
           }
-          
+         
           tag.innerHTML = `
             <span class="filter-tag-text">${tagText}</span>
             <span class="filter-tag-remove x-button-style">×</span>
           `;
-          
+         
           tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
             input.checked = false;
             input.dispatchEvent(new Event('change', { bubbles: true }));
             tag.remove();
             saveFilterState();
           });
-          
+         
           tagsContainer.appendChild(tag);
         }
       });
-      
+     
       console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
     }
-    
+   
     setTimeout(() => {
       filterState.filters.forEach(savedFilter => {
         let selector = `[data-filter-group="${savedFilter.group}"]`;
-        
+       
         if (savedFilter.value) {
           selector += `[data-filter-value="${savedFilter.value}"]`;
         }
         if (savedFilter.keyGroup) {
           selector += `[data-key-group="${savedFilter.keyGroup}"]`;
         }
-        
+       
         const input = document.querySelector(selector);
         if (input && input.checked) {
           input.dispatchEvent(new Event('change', { bubbles: true }));
         }
       });
-      
+     
       setTimeout(() => {
         if (tagsContainer) {
           const seen = new Set();
           const tagsToRemove = [];
-          
+         
           tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
             const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
             if (text) {
@@ -2694,13 +2702,13 @@ function restoreFilterState() {
               }
             }
           });
-          
+         
           tagsToRemove.forEach(tag => tag.remove());
-          
+         
           if (tagsToRemove.length > 0) {
             console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
           }
-          
+         
           setTimeout(() => {
             if (tagsContainer) {
               tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
@@ -2715,7 +2723,7 @@ function restoreFilterState() {
         }
       }, 100);
     }, 50);
-    
+   
    if (filterState.searchQuery) {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
@@ -2723,17 +2731,15 @@ function restoreFilterState() {
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }
-
 // === NEW: Ensure clear button state is correct after restore ===
 setTimeout(() => {
   toggleClearButton();
 }, 100);
-
     toggleClearButton(); // Make sure button visibility is correct after restore
 // If you have any visual "loading" state, hide it here too
-    
+   
     console.log(`✅ Restored ${restoredCount} filters`);
-    
+   
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
@@ -2744,24 +2750,24 @@ setTimeout(() => {
       }
       console.log('✨ Songs faded in');
     }, 150);
-    
+   
     return true;
   } catch (error) {
     console.error('Error restoring filters:', error);
     localStorage.removeItem('musicFilters');
-    
+   
     const musicList = document.querySelector('.music-list-wrapper');
     if (musicList) {
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
-    
+   
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     if (tagsContainer) tagsContainer.style.opacity = '1';
     if (clearButton) clearButton.style.opacity = '1';
-    
+   
     return false;
   }
 }
