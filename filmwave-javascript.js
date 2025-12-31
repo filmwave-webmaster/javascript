@@ -2573,10 +2573,10 @@ if (typeof barba !== 'undefined') {
  * LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES
  * ============================================================
  */
-let filtersRestored = false;
-let favoritesRestored = false;
-let isClearing = false;
-let searchSaveTimeout;
+var filtersRestored = false;
+var favoritesRestored = false;
+var isClearing = false;
+var searchSaveTimeout;
 
 function saveFilterState() {
   if (isClearing) {
@@ -3063,6 +3063,7 @@ if (typeof barba !== 'undefined') {
     }, 100);
   });
 }
+
 
 /**
  * ============================================================
