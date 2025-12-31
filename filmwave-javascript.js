@@ -168,8 +168,6 @@ async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
 
-    const isMusicPage = !!document.querySelector('.music-list-wrapper');
-
   // HARD HIDE list immediately if we have saved filters/search (prevents flash)
   if (isMusicPage) {
     let saved = null;
@@ -187,6 +185,9 @@ async function initMusicPage() {
       }
     }
   }
+
+  if (g.MASTER_DATA.length === 0) {
+
 
   
   if (g.MASTER_DATA.length === 0) {
