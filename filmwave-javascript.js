@@ -167,6 +167,27 @@ function updateMasterPlayerVisibility() {
 async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
+
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+
+  // HARD HIDE list immediately if we have saved filters/search (prevents flash)
+  if (isMusicPage) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('musicFilters') || 'null'); } catch (e) {}
+    const hasSavedFilters = !!(saved && Array.isArray(saved.filters) && saved.filters.length > 0);
+    const hasSavedSearch = !!(saved && typeof saved.searchQuery === 'string' && saved.searchQuery.trim().length > 0);
+
+    if (hasSavedFilters || hasSavedSearch) {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.transition = 'none';
+        musicList.style.opacity = '0';
+        musicList.style.visibility = 'hidden';
+        musicList.style.pointerEvents = 'none';
+      }
+    }
+  }
+
   
   if (g.MASTER_DATA.length === 0) {
     await fetchSongs();
@@ -2790,16 +2811,20 @@ setTimeout(() => {
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
-    setTimeout(() => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-        musicList.style.transition = 'opacity 0.3s ease-in-out';
-      }
-      console.log('✨ Songs faded in');
-    }, 150);
+   setTimeout(() => {
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.visibility = 'visible';
+    musicList.style.pointerEvents = 'auto';
+    musicList.style.transition = 'opacity 0.25s ease-in-out';
+
+    requestAnimationFrame(() => {
+      musicList.style.opacity = '1';
+    });
+  }
+  console.log('✨ Songs faded in');
+}, 150);
+
     
     return true;
   } catch (error) {
