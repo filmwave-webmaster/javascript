@@ -2902,7 +2902,7 @@ if (typeof barba !== 'undefined') {
     if (savedState) {
       try {
         const filterState = JSON.parse(savedState);
-        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
+        const hasActiveFilters = filterState.filters.length > 0 || (filterState.searchQuery && filterState.searchQuery.trim().length > 0);
         console.log('Has active filters:', hasActiveFilters);
         
         if (hasActiveFilters) {
