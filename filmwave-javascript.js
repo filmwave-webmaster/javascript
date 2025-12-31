@@ -36,6 +36,34 @@ const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
+/**
+ * ============================================================
+ * EARLY PRE-HIDE (prevents first paint flash)
+ * ============================================================
+ */
+(function prehideMusicListOnBoot() {
+  try {
+    const savedState = localStorage.getItem('musicFilters');
+    if (!savedState) return;
+
+    const filterState = JSON.parse(savedState);
+    const hasActive = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
+    if (!hasActive) return;
+
+    // Inject a CSS kill-switch BEFORE first paint
+    const styleId = 'music-prehide-style';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        .music-list-wrapper { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+      `;
+      (document.head || document.documentElement).appendChild(style);
+    }
+  } catch (e) {}
+})();
+
+
 // Force-clear saved search query on hard refresh so field starts empty
 window.addEventListener('load', () => {
   // Only run on full refresh (not Barba)
@@ -2810,6 +2838,10 @@ setTimeout(() => {
     console.log(`✅ Restored ${restoredCount} filters`);
     
    setTimeout(() => {
+  // Remove boot pre-hide once we're ready to reveal
+  const prehideStyle = document.getElementById('music-prehide-style');
+  if (prehideStyle) prehideStyle.remove();
+
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.visibility = 'visible';
