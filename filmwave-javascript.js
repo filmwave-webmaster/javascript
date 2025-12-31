@@ -2732,18 +2732,22 @@ setTimeout(() => {
     toggleClearButton(); // Make sure button visibility is correct after restore
 // If you have any visual "loading" state, hide it here too
     
-    console.log(`✅ Restored ${restoredCount} filters`);
-    
+        console.log(`✅ Restored ${restoredCount} filters`);
+
+    // Use longer delay for search (wait for 400ms debounce + buffer)
+    // Short delay for tags only (keeps existing fast behavior)
+    const delay = filterState.searchQuery && filterState.searchQuery.trim().length > 0 ? 600 : 150;
+
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
-        musicList.style.transition = 'opacity 0.3s ease-in-out';
       }
       console.log('✨ Songs faded in');
-    }, 150);
+    }, delay);
     
     return true;
   } catch (error) {
@@ -2896,7 +2900,7 @@ if (typeof barba !== 'undefined') {
     if (savedState) {
       try {
         const filterState = JSON.parse(savedState);
-        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
+        const hasActiveFilters = filterState.filters.length > 0 || (filterState.searchQuery && filterState.searchQuery.trim().length > 0);
         console.log('Has active filters:', hasActiveFilters);
         
         if (hasActiveFilters) {
