@@ -1836,12 +1836,29 @@ document.querySelectorAll('.song-wrapper').forEach(card => {
 }
   
   if (searchBar) {
-    searchBar.addEventListener('input', () => {
-      clearTimeout(searchTimeout);
-      toggleClearButton();
-      searchTimeout = setTimeout(applyFilters, 400);
-    });
+  searchBar.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    toggleClearButton();
+
+    // 👇 immediately hide list to prevent flash
+   document.querySelectorAll('.song-wrapper').forEach(card => {
+  const isVisible = visibleIds.includes(card.dataset.songId);
+
+  card.style.display = isVisible ? 'flex' : 'none';
+
+  if (isVisible) {
+    const waveform = card.querySelector('.waveform');
+    if (waveform) {
+      waveform.style.opacity = '0';
+    }
   }
+});
+
+
+    searchTimeout = setTimeout(applyFilters, 400);
+  });
+}
+
   
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     input.addEventListener('change', () => {
