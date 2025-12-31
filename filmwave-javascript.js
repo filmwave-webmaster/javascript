@@ -1861,8 +1861,23 @@ function initSearchAndFilters() {
   
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     input.addEventListener('change', () => {
-      applyFilters();
-      toggleClearButton();
+      // 1. Immediate Fade Out
+      const container = document.querySelector('.music-list-wrapper');
+      if (container) {
+        container.style.transition = 'opacity 0.2s ease-in-out';
+        container.style.opacity = '0';
+      }
+
+      // 2. Small delay to allow fade out before logic runs
+      setTimeout(() => {
+        applyFilters();
+        toggleClearButton();
+
+        // 3. Fade Back In
+        if (container) {
+          container.style.opacity = '1';
+        }
+      }, 250); // Matches the transition speed
     });
   });
 }
