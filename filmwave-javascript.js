@@ -36,40 +36,6 @@ const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
-/**
- * ============================================================
- * EARLY PRE-HIDE (prevents first paint flash)
- * ============================================================
- */
-(function prehideMusicListOnBoot() {
-  try {
-    const savedState = localStorage.getItem('musicFilters');
-    if (!savedState) return;
-
-    const filterState = JSON.parse(savedState);
-    const hasActive =
-      (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
-    if (!hasActive) return;
-
-    // Inject a CSS kill-switch BEFORE first paint
-    const styleId = 'music-prehide-style';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-        /* Pre-fade ONLY: do NOT use visibility/pointer-events or it can "stick" if restore fails */
-        .music-list-wrapper .song-wrapper { 
-          opacity: 0 !important;
-          transition: none !important;
-        }
-      `;
-      (document.head || document.documentElement).appendChild(style);
-    }
-  } catch (e) {}
-})();
-
-
-
 // Force-clear saved search query on hard refresh so field starts empty
 window.addEventListener('load', () => {
   // Only run on full refresh (not Barba)
@@ -201,29 +167,10 @@ function updateMasterPlayerVisibility() {
 async function initMusicPage() {
   const g = window.musicPlayerPersistent;
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-
-  // HARD HIDE list immediately if we have saved filters/search (prevents flash)
-  if (isMusicPage) {
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem('musicFilters') || 'null'); } catch (e) {}
-    const hasSavedFilters = !!(saved && Array.isArray(saved.filters) && saved.filters.length > 0);
-    const hasSavedSearch = !!(saved && typeof saved.searchQuery === 'string' && saved.searchQuery.trim().length > 0);
-
-    if (hasSavedFilters || hasSavedSearch) {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.transition = 'none';
-        musicList.style.opacity = '0';
-        musicList.style.visibility = 'hidden';
-        musicList.style.pointerEvents = 'none';
-      }
-    }
-  }
-
+  
   if (g.MASTER_DATA.length === 0) {
     await fetchSongs();
   }
-
   
   if (g.hasActiveSong && g.currentSongData) {
     updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
@@ -1355,11 +1302,9 @@ if (songName) {
   });
   
   Promise.all(waveformPromises).then(() => {
-   waveformContainers.forEach((container) => {
-  container.style.transition = 'opacity 0.6s ease-in-out';
-  container.style.opacity = '1';
-});
-
+    waveformContainers.forEach((container) => {
+      container.style.opacity = '1';
+    });
   });
   
   setTimeout(() => {
@@ -1856,53 +1801,9 @@ function initSearchAndFilters() {
     console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
   }
   
- const isSearchOnly =
-  query.length > 0 && selectedFilters.length === 0;
-
-const cards = Array.from(document.querySelectorAll('.song-wrapper'));
-
-cards.forEach(card => {
-  const isVisible = visibleIds.includes(card.dataset.songId);
-  card.style.display = isVisible ? 'flex' : 'none';
-
-  if (isVisible && isSearchOnly) {
-    const waveform = card.querySelector('.waveform');
-    if (waveform) {
-      waveform.style.transition = 'opacity 0.6s ease-in-out';
-      waveform.style.opacity = '0';
-    }
-  }
-});
-
-// 👇 FADE IN (all at once) for search-only
-if (isSearchOnly) {
-  const listWrapper = document.querySelector('.music-list-wrapper');
-
-  // next frame: flip opacity back to 1
-  requestAnimationFrame(() => {
-    if (listWrapper) {
-      listWrapper.style.transition = 'opacity 0.25s ease-in-out';
-      listWrapper.style.opacity = '1';
-    }
-
-    cards.forEach(card => {
-      if (card.style.display !== 'none') {
-        const waveform = card.querySelector('.waveform');
-        if (waveform) {
-          waveform.style.opacity = '1';
-        }
-      }
-    });
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
   });
-} else {
-  // if not search-only, ensure wrapper is visible
-  const listWrapper = document.querySelector('.music-list-wrapper');
-  if (listWrapper) {
-    listWrapper.style.opacity = '1';
-  }
-}
-
-
   
   toggleClearButton();
 }
@@ -1919,22 +1820,12 @@ if (isSearchOnly) {
 }
   
   if (searchBar) {
-  searchBar.addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    toggleClearButton();
-
-    // 👇 hide the LIST WRAPPER (prevents flash, doesn't break waveform load order)
-    const listWrapper = document.querySelector('.music-list-wrapper');
-    if (listWrapper) {
-      listWrapper.style.transition = 'none';
-      listWrapper.style.opacity = '0';
-    }
-
-    searchTimeout = setTimeout(applyFilters, 400);
-  });
-}
-
-
+    searchBar.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      toggleClearButton();
+      searchTimeout = setTimeout(applyFilters, 400);
+    });
+  }
   
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     input.addEventListener('change', () => {
@@ -2605,10 +2496,10 @@ if (typeof barba !== 'undefined') {
  * LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES
  * ============================================================
  */
-var filtersRestored = false;
-var favoritesRestored = false;
-var isClearing = false;
-var searchSaveTimeout;
+let filtersRestored = false;
+let favoritesRestored = false;
+let isClearing = false;
+let searchSaveTimeout;
 
 function saveFilterState() {
   if (isClearing) {
@@ -2843,24 +2734,16 @@ setTimeout(() => {
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
-   setTimeout(() => {
-  // Remove boot pre-hide once we're ready to reveal
-  const prehideStyle = document.getElementById('music-prehide-style');
-  if (prehideStyle) prehideStyle.remove();
-
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.visibility = 'visible';
-    musicList.style.pointerEvents = 'auto';
-    musicList.style.transition = 'opacity 0.25s ease-in-out';
-
-    requestAnimationFrame(() => {
-      musicList.style.opacity = '1';
-    });
-  }
-  console.log('✨ Songs faded in');
-}, 150);
-
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
+      }
+      console.log('✨ Songs faded in');
+    }, 150);
     
     return true;
   } catch (error) {
@@ -2944,71 +2827,33 @@ function attemptRestore() {
   }
   
   console.log('No filters on page - showing songs immediately');
-
-  // ✅ If we HAVE active saved filters/search, do NOT show the master list yet.
-  // Keep hidden until filters exist and restoreFilterState can run.
-  let hasActiveSavedFilters = false;
-  const savedState = localStorage.getItem('musicFilters');
-  if (savedState) {
-    try {
-      const filterState = JSON.parse(savedState);
-      hasActiveSavedFilters = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
-    } catch (e) {}
-  }
-
-  if (hasActiveSavedFilters) {
-    console.log('⏳ Saved filters/search exist, but filter inputs not in DOM yet — keeping songs hidden');
-    return false;
-  }
-
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.opacity = '1';
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
   }
-
+  
   return false;
-
 }
 
 window.addEventListener('load', function() {
   console.log('🔄 Page load event fired');
   filtersRestored = false;
   
- setTimeout(() => {
-  const musicList = document.querySelector('.music-list-wrapper');
-  console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
-
-  // ✅ If active saved filters/search exist, do NOT force-show on load
-  let hasActiveSavedFilters = false;
-  const savedState = localStorage.getItem('musicFilters');
-  if (savedState) {
-    try {
-      const filterState = JSON.parse(savedState);
-      hasActiveSavedFilters =
-        (filterState.filters && filterState.filters.length > 0) ||
-        !!filterState.searchQuery;
-    } catch (e) {}
-  }
-
-  if (musicList) {
-    console.log('Current opacity:', musicList.style.opacity);
-
-    if (hasActiveSavedFilters) {
-      console.log('⏳ Saved filters/search exist on load — keeping songs hidden');
-      return;
+  setTimeout(() => {
+    const musicList = document.querySelector('.music-list-wrapper');
+    console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
+    if (musicList) {
+      console.log('Current opacity:', musicList.style.opacity);
+      if (!musicList.style.opacity || musicList.style.opacity === '0') {
+        console.log('⚡ Setting initial visibility');
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
     }
-
-    if (!musicList.style.opacity || musicList.style.opacity === '0') {
-      console.log('⚡ Setting initial visibility');
-      musicList.style.opacity = '1';
-      musicList.style.visibility = 'visible';
-      musicList.style.pointerEvents = 'auto';
-    }
-  }
-}, 100);
-
+  }, 100);
   
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
@@ -3080,31 +2925,18 @@ if (typeof barba !== 'undefined') {
     filtersRestored = false;
     
     setTimeout(() => {
-  const musicList = document.querySelector('.music-list-wrapper');
-  console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
-
-  // 👇 if there are active saved filters/search, DO NOT force-show (prevents master-list flash)
-  let hasActiveSavedFilters = false;
-  const savedState = localStorage.getItem('musicFilters');
-  if (savedState) {
-    try {
-      const filterState = JSON.parse(savedState);
-      hasActiveSavedFilters = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
-    } catch (e) {}
-  }
-
-  if (musicList) {
-    console.log('Music list opacity:', musicList.style.opacity);
-
-    if (!hasActiveSavedFilters && (musicList.style.opacity === '0' || musicList.style.opacity === '')) {
-      console.log('⚡ Forcing songs visible after 500ms');
-      musicList.style.opacity = '1';
-      musicList.style.visibility = 'visible';
-      musicList.style.pointerEvents = 'auto';
-    }
-  }
-}, 500);
-
+      const musicList = document.querySelector('.music-list-wrapper');
+      console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
+      if (musicList) {
+        console.log('Music list opacity:', musicList.style.opacity);
+        if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
+          console.log('⚡ Forcing songs visible after 500ms');
+          musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+        }
+      }
+    }, 500);
     
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
@@ -3137,7 +2969,6 @@ if (typeof barba !== 'undefined') {
     }, 100);
   });
 }
-
 
 /**
  * ============================================================
