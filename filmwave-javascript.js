@@ -58,11 +58,15 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
       style.textContent = `
 style.textContent = `
 style.textContent = `
-  /* Pre-fade ONLY: do NOT use visibility/pointer-events or it can "stick" if restore fails */
+style.textContent = `
+  /* Pre-hide ONLY the song list items (NOT the player wrapper) */
   .music-list-wrapper .song-wrapper { 
-    opacity: 0 !important;
-    transition: none !important;
+    opacity: 0 !important; 
+    visibility: hidden !important; 
+    pointer-events: none !important; 
   }
+`;
+
       `;
       (document.head || document.documentElement).appendChild(style);
     }
