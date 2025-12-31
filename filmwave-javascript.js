@@ -2572,6 +2572,11 @@ function restoreFilterState() {
     }
     
     console.log('📂 Restoring filter state:', filterState);
+
+    // ✅ HARD HIDE ALL SONGS immediately to prevent flash before applyFilters completes
+document.querySelectorAll('.song-wrapper').forEach(card => {
+  card.style.opacity = '0';
+});
     
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
@@ -2735,26 +2740,34 @@ setTimeout(() => {
     console.log(`✅ Restored ${restoredCount} filters`);
     
    setTimeout(() => {
+  // Remove any pre-hide injected styles (head / Barba)
+  const prehide = document.getElementById('music-prehide-head');
+  if (prehide) prehide.remove();
+
+  // Make wrapper interactable again
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
   }
 
-  // Fade in ALL song cards at once (no bottom-to-top)
-  const cards = document.querySelectorAll('.song-wrapper');
-  cards.forEach(card => {
+  // Fade in ONLY cards that survived filtering/search
+  const visibleCards = Array.from(document.querySelectorAll('.song-wrapper'))
+    .filter(card => getComputedStyle(card).display !== 'none');
+
+  visibleCards.forEach(card => {
     card.style.transition = 'opacity 0.25s ease-in-out';
   });
 
   requestAnimationFrame(() => {
-    cards.forEach(card => {
+    visibleCards.forEach(card => {
       card.style.opacity = '1';
     });
   });
 
   console.log('✨ Songs faded in');
 }, 150);
+
     
     return true;
   } catch (error) {
