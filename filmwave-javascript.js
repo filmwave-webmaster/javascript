@@ -1821,9 +1821,25 @@ function initSearchAndFilters() {
   
   if (searchBar) {
     searchBar.addEventListener('input', () => {
+      // 1. Immediate Fade Out
+      const container = document.querySelector('.music-list-wrapper');
+      if (container) {
+        container.style.transition = 'opacity 0.2s ease-in-out';
+        container.style.opacity = '0';
+      }
+
       clearTimeout(searchTimeout);
       toggleClearButton();
-      searchTimeout = setTimeout(applyFilters, 400);
+
+      searchTimeout = setTimeout(() => {
+        // 2. Apply Filters (updates visibleIds and DOM display)
+        applyFilters();
+
+        // 3. Fade Back In
+        if (container) {
+          container.style.opacity = '1';
+        }
+      }, 400);
     });
   }
   
