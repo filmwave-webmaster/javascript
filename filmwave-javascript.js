@@ -1704,45 +1704,61 @@ function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const clearBtn = document.querySelector('.circle-x');
+
+// Start of clearAllFilters Function
   
-  function clearAllFilters() {
-  const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+ function clearAllFilters() {
+    const hasSearch = searchBar && searchBar.value.trim().length > 0;
+    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
 
-  if (!hasSearch && !hasFilters) {
-    return;
-  }
+    if (!hasSearch && !hasFilters) {
+      return;
+    }
 
-  if (searchBar && hasSearch) {
-    searchBar.value = '';
-    // Optional: dispatch input to trigger applyFilters early
-    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-  }
+    // 1. Fade out immediately before clearing
+    const container = document.querySelector('.music-list-wrapper');
+    if (container) {
+      container.style.transition = 'opacity 0.2s ease-in-out';
+      container.style.opacity = '0';
+    }
 
-  // Clear checkbox filters
-  const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-  if (tagRemoveButtons.length > 0) {
-    tagRemoveButtons.forEach((btn) => btn.click());
-  } else {
-    document.querySelectorAll('[data-filter-group]').forEach(input => {
-      if (input.checked) {
-        input.checked = false;
-        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
+    if (searchBar && hasSearch) {
+      searchBar.value = '';
+      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Clear checkbox filters
+    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+    if (tagRemoveButtons.length > 0) {
+      tagRemoveButtons.forEach((btn) => btn.click());
+    } else {
+      document.querySelectorAll('[data-filter-group]').forEach(input => {
+        if (input.checked) {
+          input.checked = false;
+          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+          if (wrapper) wrapper.classList.remove('is-active');
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }
+
+    // Save empty state
+    localStorage.setItem('musicFilters', JSON.stringify({
+      filters: [],
+      searchQuery: ''
+    }));
+
+    // 2. Wait for the transition, then apply and fade back in
+    setTimeout(() => {
+      toggleClearButton();
+      applyFilters();
+      if (container) {
+        container.style.opacity = '1';
       }
-    });
+    }, 200);
   }
 
-  // Save empty state so restoration knows it was intentionally cleared
-  localStorage.setItem('musicFilters', JSON.stringify({
-    filters: [],
-    searchQuery: ''
-  }));
-
-  toggleClearButton();
-  applyFilters();
-}
+  // End of clearAllFilters Function
   
  function applyFilters() {
   const g = window.musicPlayerPersistent;
