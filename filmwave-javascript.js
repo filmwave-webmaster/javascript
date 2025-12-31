@@ -1302,9 +1302,11 @@ if (songName) {
   });
   
   Promise.all(waveformPromises).then(() => {
-    waveformContainers.forEach((container) => {
-      container.style.opacity = '1';
-    });
+   waveformContainers.forEach((container) => {
+  container.style.transition = 'opacity 0.6s ease-in-out';
+  container.style.opacity = '1';
+});
+
   });
   
   setTimeout(() => {
@@ -1801,9 +1803,23 @@ function initSearchAndFilters() {
     console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
   }
   
-  document.querySelectorAll('.song-wrapper').forEach(card => {
-    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
-  });
+ const isSearchOnly =
+  query.length > 0 && selectedFilters.length === 0;
+
+document.querySelectorAll('.song-wrapper').forEach(card => {
+  const isVisible = visibleIds.includes(card.dataset.songId);
+
+  card.style.display = isVisible ? 'flex' : 'none';
+
+  // 👇 trigger fade-in behavior for search-only
+  if (isVisible && isSearchOnly) {
+    const waveform = card.querySelector('.waveform');
+    if (waveform) {
+      waveform.style.opacity = '0';
+    }
+  }
+});
+
   
   toggleClearButton();
 }
