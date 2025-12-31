@@ -2906,14 +2906,32 @@ function attemptRestore() {
   }
   
   console.log('No filters on page - showing songs immediately');
+
+  // ✅ If we HAVE active saved filters/search, do NOT show the master list yet.
+  // Keep hidden until filters exist and restoreFilterState can run.
+  let hasActiveSavedFilters = false;
+  const savedState = localStorage.getItem('musicFilters');
+  if (savedState) {
+    try {
+      const filterState = JSON.parse(savedState);
+      hasActiveSavedFilters = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
+    } catch (e) {}
+  }
+
+  if (hasActiveSavedFilters) {
+    console.log('⏳ Saved filters/search exist, but filter inputs not in DOM yet — keeping songs hidden');
+    return false;
+  }
+
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.opacity = '1';
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
   }
-  
+
   return false;
+
 }
 
 window.addEventListener('load', function() {
