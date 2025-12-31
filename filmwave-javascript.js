@@ -1806,19 +1806,49 @@ function initSearchAndFilters() {
  const isSearchOnly =
   query.length > 0 && selectedFilters.length === 0;
 
-document.querySelectorAll('.song-wrapper').forEach(card => {
-  const isVisible = visibleIds.includes(card.dataset.songId);
+const cards = Array.from(document.querySelectorAll('.song-wrapper'));
 
+cards.forEach(card => {
+  const isVisible = visibleIds.includes(card.dataset.songId);
   card.style.display = isVisible ? 'flex' : 'none';
 
-  // 👇 trigger fade-in behavior for search-only
   if (isVisible && isSearchOnly) {
     const waveform = card.querySelector('.waveform');
     if (waveform) {
+      waveform.style.transition = 'opacity 0.6s ease-in-out';
       waveform.style.opacity = '0';
     }
   }
 });
+
+// 👇 FADE IN (all at once) for search-only
+if (isSearchOnly) {
+  const listWrapper = document.querySelector('.music-list-wrapper');
+
+  // next frame: flip opacity back to 1
+  requestAnimationFrame(() => {
+    if (listWrapper) {
+      listWrapper.style.transition = 'opacity 0.25s ease-in-out';
+      listWrapper.style.opacity = '1';
+    }
+
+    cards.forEach(card => {
+      if (card.style.display !== 'none') {
+        const waveform = card.querySelector('.waveform');
+        if (waveform) {
+          waveform.style.opacity = '1';
+        }
+      }
+    });
+  });
+} else {
+  // if not search-only, ensure wrapper is visible
+  const listWrapper = document.querySelector('.music-list-wrapper');
+  if (listWrapper) {
+    listWrapper.style.opacity = '1';
+  }
+}
+
 
   
   toggleClearButton();
@@ -1840,14 +1870,17 @@ document.querySelectorAll('.song-wrapper').forEach(card => {
     clearTimeout(searchTimeout);
     toggleClearButton();
 
-    // 👇 immediately hide list to prevent flash
-    document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = 'none';
-    });
+    // 👇 hide the LIST WRAPPER (prevents flash, doesn't break waveform load order)
+    const listWrapper = document.querySelector('.music-list-wrapper');
+    if (listWrapper) {
+      listWrapper.style.transition = 'none';
+      listWrapper.style.opacity = '0';
+    }
 
     searchTimeout = setTimeout(applyFilters, 400);
   });
 }
+
 
   
   document.querySelectorAll('[data-filter-group]').forEach(input => {
