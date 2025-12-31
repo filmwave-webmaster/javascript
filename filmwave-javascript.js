@@ -2735,24 +2735,26 @@ setTimeout(() => {
     console.log(`✅ Restored ${restoredCount} filters`);
     
    setTimeout(() => {
-  // ✅ REMOVE head pre-hide immediately before revealing
-  const s = document.getElementById('music-prehide-head');
-  if (s) s.remove();
-
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
-    musicList.style.transition = 'opacity 0.25s ease-in-out';
-
-    requestAnimationFrame(() => {
-      musicList.style.opacity = '1';
-    });
   }
+
+  // Fade in ALL song cards at once (no bottom-to-top)
+  const cards = document.querySelectorAll('.song-wrapper');
+  cards.forEach(card => {
+    card.style.transition = 'opacity 0.25s ease-in-out';
+  });
+
+  requestAnimationFrame(() => {
+    cards.forEach(card => {
+      card.style.opacity = '1';
+    });
+  });
 
   console.log('✨ Songs faded in');
 }, 150);
-
     
     return true;
   } catch (error) {
@@ -2925,29 +2927,21 @@ if (typeof barba !== 'undefined') {
         const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
         console.log('Has active filters:', hasActiveFilters);
         
-       if (hasActiveFilters) {
-  // Pre-hide ONLY song cards (prevents flash on Barba nav without hiding player)
-  const styleId = 'music-prehide-head';
-  let style = document.getElementById(styleId);
-  if (!style) {
-    style = document.createElement('style');
-    style.id = styleId;
-    document.head.appendChild(style);
-  }
-  style.textContent = `
-    .music-list-wrapper .song-wrapper {
-      opacity: 0 !important;
-      transition: none !important;
-    }
-  `;
+    if (hasActiveFilters) {
+  // Inline-hide song cards inside the NEXT container (prevents 1-frame flash)
+  const nextContainer = data.next.container;
+  const songCards = nextContainer.querySelectorAll('.song-wrapper');
+
+  songCards.forEach(card => {
+    card.style.transition = 'none';
+    card.style.opacity = '0';
+  });
 
   console.log('🔒 Songs pre-hidden via Barba hook');
 } else {
-  // If no active filters/search, ensure any prior prehide is removed
-  const s = document.getElementById('music-prehide-head');
-  if (s) s.remove();
   console.log('✅ No active filters - songs will show normally');
 }
+
 
       } catch (e) {
         console.error('Error in beforeEnter hook:', e);
