@@ -2732,11 +2732,12 @@ setTimeout(() => {
     toggleClearButton(); // Make sure button visibility is correct after restore
 // If you have any visual "loading" state, hide it here too
     
-        console.log(`✅ Restored ${restoredCount} filters`);
+     console.log(`✅ Restored ${restoredCount} filters`);
 
-    // Use longer delay for search (wait for 400ms debounce + buffer)
-    // Short delay for tags only (keeps existing fast behavior)
-    const delay = filterState.searchQuery && filterState.searchQuery.trim().length > 0 ? 600 : 150;
+    // For search-only: wait for the 400ms debounce + buffer
+    // For filter tags only: keep fast fade (existing behavior)
+    const hasSearch = filterState.searchQuery && filterState.searchQuery.trim().length > 0;
+    const delay = hasSearch ? 600 : 150;
 
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
@@ -2927,20 +2928,6 @@ if (typeof barba !== 'undefined') {
   barba.hooks.after((data) => {
     console.log('✅ Barba after hook');
     filtersRestored = false;
-    
-    setTimeout(() => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
-      if (musicList) {
-        console.log('Music list opacity:', musicList.style.opacity);
-        if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
-          console.log('⚡ Forcing songs visible after 500ms');
-          musicList.style.opacity = '1';
-          musicList.style.visibility = 'visible';
-          musicList.style.pointerEvents = 'auto';
-        }
-      }
-    }, 500);
     
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
