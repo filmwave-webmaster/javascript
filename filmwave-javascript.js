@@ -1841,7 +1841,6 @@ function initSearchAndFilters() {
   });
 
   // 2. RESTORATION LOGIC
-  // We read the saved state and update the inputs BEFORE the first applyFilters()
   const saved = localStorage.getItem('musicFilters');
   if (saved) {
     try {
@@ -1864,15 +1863,39 @@ function initSearchAndFilters() {
     }
   }
 
-  // 3. FINAL STEP: Run filter once based on restored state and fade back in
-  applyFilters();
-  setTimeout(() => {
-    if (container) {
-      container.style.transition = 'opacity 0.4s ease-in-out';
-      container.style.opacity = '1';
+  // 3. FINAL STEP: Run filter once and fade in
+  // We use a small interval to ensure MASTER_DATA is populated before revealing
+  const revealList = () => {
+    if (g.MASTER_DATA && g.MASTER_DATA.length > 0) {
+      applyFilters();
+      setTimeout(() => {
+        if (container) {
+          container.style.transition = 'opacity 0.4s ease-in-out';
+          container.style.opacity = '1';
+        }
+      }, 100);
+      return true;
     }
-  }, 100);
+    return false;
+  };
+
+  // Attempt reveal immediately
+  if (!revealList()) {
+    // If data wasn't ready, check every 200ms
+    const retryInterval = setInterval(() => {
+      if (revealList()) {
+        clearInterval(retryInterval);
+      }
+    }, 200);
+    
+    // Safety timeout: reveal anyway after 3 seconds so the page isn't stuck blank
+    setTimeout(() => {
+      clearInterval(retryInterval);
+      if (container) container.style.opacity = '1';
+    }, 3000);
+  }
 }
+
 /**
  * ============================================================
  * REMOVE DUPLICATE IDS
