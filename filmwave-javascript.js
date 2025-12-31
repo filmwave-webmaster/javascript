@@ -2734,25 +2734,16 @@ setTimeout(() => {
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
-   setTimeout(() => {
-  // ✅ REMOVE head pre-hide immediately before revealing
-  const s = document.getElementById('music-prehide-head');
-  if (s) s.remove();
-
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.visibility = 'visible';
-    musicList.style.pointerEvents = 'auto';
-    musicList.style.transition = 'opacity 0.25s ease-in-out';
-
-    requestAnimationFrame(() => {
-      musicList.style.opacity = '1';
-    });
-  }
-
-  console.log('✨ Songs faded in');
-}, 150);
-
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
+      }
+      console.log('✨ Songs faded in');
+    }, 150);
     
     return true;
   } catch (error) {
