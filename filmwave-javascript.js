@@ -2063,8 +2063,33 @@ if (typeof barba !== 'undefined') {
         return initMusicPage();
       },
 
-      after(data) {
+        after(data) {
   console.log('🚪 BARBA AFTER FIRED');
+
+  // NEW: Force re-hide if there is saved filter/search state to prevent rare flash
+  const savedState = localStorage.getItem('musicFilters');
+  if (savedState) {
+    try {
+      const filterState = JSON.parse(savedState);
+      const hasActive = filterState.filters.length > 0 || (filterState.searchQuery && filterState.searchQuery.trim().length > 0);
+      if (hasActive) {
+        const musicList = document.querySelector('.music-list-wrapper');
+        if (musicList) {
+          musicList.style.opacity = '0';
+          musicList.style.visibility = 'hidden';
+          musicList.style.pointerEvents = 'none';
+          musicList.style.transition = 'none'; // prevent flicker
+          console.log('🔒 Force re-hide to prevent rare flash');
+        }
+      }
+    } catch (e) {}
+  }
+
+  const g = window.musicPlayerPersistent;
+
+  window.scrollTo(0, 0);
+
+  console.log('🔍 Checking for page ID...');
   
   const g = window.musicPlayerPersistent;
   
