@@ -2850,7 +2850,7 @@ function attemptRestore() {
     return success;
   }
   
- console.log('No filters on page - showing songs immediately');
+console.log('No filters on page - showing songs immediately');
 
 let hasActiveSavedFilters = false;
 const savedState = localStorage.getItem('musicFilters');
@@ -2865,6 +2865,13 @@ if (savedState) {
 
 if (hasActiveSavedFilters) {
   console.log('⏳ Saved filters/search exist, but filter inputs not in DOM yet — keeping songs hidden');
+
+  // 🔒 HARD-HIDE SONG CARDS to prevent flash
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transition = 'none';
+  });
+
   return false;
 }
 
@@ -2876,7 +2883,7 @@ if (musicList) {
 }
 
 return false;
-}
+
 
 window.addEventListener('load', function() {
   console.log('🔄 Page load event fired');
