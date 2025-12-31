@@ -1841,19 +1841,9 @@ document.querySelectorAll('.song-wrapper').forEach(card => {
     toggleClearButton();
 
     // 👇 immediately hide list to prevent flash
-   document.querySelectorAll('.song-wrapper').forEach(card => {
-  const isVisible = visibleIds.includes(card.dataset.songId);
-
-  card.style.display = isVisible ? 'flex' : 'none';
-
-  if (isVisible) {
-    const waveform = card.querySelector('.waveform');
-    if (waveform) {
-      waveform.style.opacity = '0';
-    }
-  }
-});
-
+    document.querySelectorAll('.song-wrapper').forEach(card => {
+      card.style.display = 'none';
+    });
 
     searchTimeout = setTimeout(applyFilters, 400);
   });
