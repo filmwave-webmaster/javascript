@@ -1700,6 +1700,17 @@ function toggleClearButton() {
   clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
 }
 
+function fadeInSongList() {
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.transition = 'opacity 0.3s ease-in-out';
+    musicList.style.opacity = '1';
+    musicList.style.visibility = 'visible';
+    musicList.style.pointerEvents = 'auto';
+    console.log('✨ Filtered songs faded in');
+  }
+}
+
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
@@ -2738,18 +2749,27 @@ setTimeout(() => {
     toggleClearButton(); // Make sure button visibility is correct after restore
 // If you have any visual "loading" state, hide it here too
    
-    console.log(`✅ Restored ${restoredCount} filters`);
+       console.log(`✅ Restored ${restoredCount} filters`);
+   
+    // Fade in after filtering is guaranteed to have run
+    const delay = filterState.searchQuery ? 600 : 200; // longer for search debounce
    
     setTimeout(() => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-        musicList.style.transition = 'opacity 0.3s ease-in-out';
+      fadeInSongList();
+     
+      // Ensure tags and clear button are visible
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      const clearButton = document.querySelector('.circle-x');
+      if (tagsContainer) {
+        tagsContainer.style.opacity = '1';
+        tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
       }
-      console.log('✨ Songs faded in');
-    }, 150);
+      if (clearButton) {
+        clearButton.style.opacity = '1';
+        clearButton.style.transition = 'opacity 0.3s ease-in-out';
+      }
+      toggleClearButton();
+    }, delay);
    
     return true;
   } catch (error) {
