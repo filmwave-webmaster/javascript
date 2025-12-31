@@ -2927,19 +2927,6 @@ if (typeof barba !== 'undefined') {
         const hasActiveFilters = filterState.filters.length > 0 || (filterState.searchQuery && filterState.searchQuery.trim().length > 0);
         console.log('Has active filters:', hasActiveFilters);
         
-        if (hasActiveFilters) {
-          const musicList = data.next.container.querySelector('.music-list-wrapper');
-          if (musicList) {
-            musicList.style.opacity = '0';
-            musicList.style.visibility = 'hidden';
-            musicList.style.pointerEvents = 'none';
-            console.log('🔒 Songs hidden via Barba hook');
-          } else {
-            console.log('⚠️ Music list not found in next container');
-          }
-        } else {
-          console.log('✅ No active filters - songs will show normally');
-        }
       } catch (e) {
         console.error('Error in beforeEnter hook:', e);
       }
@@ -2965,7 +2952,7 @@ if (typeof barba !== 'undefined') {
         if (tagsContainer) tagsContainer.style.opacity = '1';
         if (clearButton) clearButton.style.opacity = '1';
       }
-    }, 2000);
+    }, 3000);
     
     setTimeout(() => {
       console.log('Attempting restore at 100ms');
