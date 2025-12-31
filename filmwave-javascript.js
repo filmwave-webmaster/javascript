@@ -2572,11 +2572,6 @@ function restoreFilterState() {
     }
     
     console.log('📂 Restoring filter state:', filterState);
-
-    // ✅ HARD HIDE ALL SONGS immediately to prevent flash before applyFilters completes
-document.querySelectorAll('.song-wrapper').forEach(card => {
-  card.style.opacity = '0';
-});
     
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
@@ -2739,35 +2734,16 @@ setTimeout(() => {
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
-   setTimeout(() => {
-  // Remove any pre-hide injected styles (head / Barba)
-  const prehide = document.getElementById('music-prehide-head');
-  if (prehide) prehide.remove();
-
-  // Make wrapper interactable again
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.visibility = 'visible';
-    musicList.style.pointerEvents = 'auto';
-  }
-
-  // Fade in ONLY cards that survived filtering/search
-  const visibleCards = Array.from(document.querySelectorAll('.song-wrapper'))
-    .filter(card => getComputedStyle(card).display !== 'none');
-
-  visibleCards.forEach(card => {
-    card.style.transition = 'opacity 0.25s ease-in-out';
-  });
-
-  requestAnimationFrame(() => {
-    visibleCards.forEach(card => {
-      card.style.opacity = '1';
-    });
-  });
-
-  console.log('✨ Songs faded in');
-}, 150);
-
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
+      }
+      console.log('✨ Songs faded in');
+    }, 150);
     
     return true;
   } catch (error) {
@@ -2850,39 +2826,15 @@ function attemptRestore() {
     return success;
   }
   
-console.log('No filters on page - showing songs immediately');
-
-let hasActiveSavedFilters = false;
-const savedState = localStorage.getItem('musicFilters');
-if (savedState) {
-  try {
-    const filterState = JSON.parse(savedState);
-    hasActiveSavedFilters =
-      (filterState.filters && filterState.filters.length > 0) ||
-      !!filterState.searchQuery;
-  } catch (e) {}
-}
-
-if (hasActiveSavedFilters) {
-  console.log('⏳ Saved filters/search exist, but filter inputs not in DOM yet — keeping songs hidden');
-
-  // 🔒 HARD-HIDE SONG CARDS to prevent flash
-  document.querySelectorAll('.song-wrapper').forEach(card => {
-    card.style.opacity = '0';
-    card.style.transition = 'none';
-  });
-
+  console.log('No filters on page - showing songs immediately');
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.opacity = '1';
+    musicList.style.visibility = 'visible';
+    musicList.style.pointerEvents = 'auto';
+  }
+  
   return false;
-}
-
-const musicList = document.querySelector('.music-list-wrapper');
-if (musicList) {
-  musicList.style.opacity = '1';
-  musicList.style.visibility = 'visible';
-  musicList.style.pointerEvents = 'auto';
-}
-
-return false;
 }
 
 window.addEventListener('load', function() {
@@ -2947,22 +2899,19 @@ if (typeof barba !== 'undefined') {
         const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
         console.log('Has active filters:', hasActiveFilters);
         
-    if (hasActiveFilters) {
-  // Inline-hide song cards inside the NEXT container (prevents 1-frame flash)
-  const nextContainer = data.next.container;
-  const songCards = nextContainer.querySelectorAll('.song-wrapper');
-
-  songCards.forEach(card => {
-    card.style.transition = 'none';
-    card.style.opacity = '0';
-  });
-
-  console.log('🔒 Songs pre-hidden via Barba hook');
-} else {
-  console.log('✅ No active filters - songs will show normally');
-}
-
-
+        if (hasActiveFilters) {
+          const musicList = data.next.container.querySelector('.music-list-wrapper');
+          if (musicList) {
+            musicList.style.opacity = '0';
+            musicList.style.visibility = 'hidden';
+            musicList.style.pointerEvents = 'none';
+            console.log('🔒 Songs hidden via Barba hook');
+          } else {
+            console.log('⚠️ Music list not found in next container');
+          }
+        } else {
+          console.log('✅ No active filters - songs will show normally');
+        }
       } catch (e) {
         console.error('Error in beforeEnter hook:', e);
       }
@@ -2976,38 +2925,18 @@ if (typeof barba !== 'undefined') {
     filtersRestored = false;
     
     setTimeout(() => {
-  const musicList = document.querySelector('.music-list-wrapper');
-  console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
-
-  // ✅ If active saved filters/search exist, NEVER force-show (prevents flash)
-  let hasActiveSavedFilters = false;
-  const savedState = localStorage.getItem('musicFilters');
-  if (savedState) {
-    try {
-      const filterState = JSON.parse(savedState);
-      hasActiveSavedFilters =
-        (filterState.filters && filterState.filters.length > 0) ||
-        !!(filterState.searchQuery && filterState.searchQuery.trim().length > 0);
-    } catch (e) {}
-  }
-
-  if (hasActiveSavedFilters) {
-    console.log('⏳ Saved filters/search exist — skipping 500ms force-show to prevent flash');
-    return;
-  }
-
-  if (musicList) {
-    console.log('Music list opacity:', musicList.style.opacity);
-
-    if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
-      console.log('⚡ Forcing songs visible after 500ms');
-      musicList.style.opacity = '1';
-      musicList.style.visibility = 'visible';
-      musicList.style.pointerEvents = 'auto';
-    }
-  }
-}, 500);
-
+      const musicList = document.querySelector('.music-list-wrapper');
+      console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
+      if (musicList) {
+        console.log('Music list opacity:', musicList.style.opacity);
+        if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
+          console.log('⚡ Forcing songs visible after 500ms');
+          musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+        }
+      }
+    }, 500);
     
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
