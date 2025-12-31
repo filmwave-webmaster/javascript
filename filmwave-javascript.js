@@ -1704,19 +1704,27 @@ function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const clearBtn = document.querySelector('.circle-x');
+  const container = document.querySelector('.music-list-wrapper');
 
-// Start of clearAllFilters Function
-  
- function clearAllFilters() {
+  // 1. IMMEDIATELY HIDE the container if we are on the music page.
+  // This prevents the "flash" of the full list before restoration/filtering kicks in.
+  if (container) {
+    container.style.opacity = '0';
+  }
+
+  function toggleClearButton() {
+    if (!clearBtn) return;
+    const hasSearch = searchBar && searchBar.value.trim().length > 0;
+    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+    clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+  }
+
+  function clearAllFilters() {
     const hasSearch = searchBar && searchBar.value.trim().length > 0;
     const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
 
-    if (!hasSearch && !hasFilters) {
-      return;
-    }
+    if (!hasSearch && !hasFilters) return;
 
-    // 1. Fade out immediately before clearing
-    const container = document.querySelector('.music-list-wrapper');
     if (container) {
       container.style.transition = 'opacity 0.2s ease-in-out';
       container.style.opacity = '0';
@@ -1727,7 +1735,6 @@ function initSearchAndFilters() {
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    // Clear checkbox filters
     const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
     if (tagRemoveButtons.length > 0) {
       tagRemoveButtons.forEach((btn) => btn.click());
@@ -1742,146 +1749,130 @@ function initSearchAndFilters() {
       });
     }
 
-    // Save empty state
-    localStorage.setItem('musicFilters', JSON.stringify({
-      filters: [],
-      searchQuery: ''
-    }));
+    localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
 
-    // 2. Wait for the transition, then apply and fade back in
     setTimeout(() => {
       toggleClearButton();
       applyFilters();
-      if (container) {
-        container.style.opacity = '1';
-      }
-    }, 200);
+      if (container) container.style.opacity = '1';
+    }, 250);
   }
 
-  // End of clearAllFilters Function
-  
- function applyFilters() {
-  const g = window.musicPlayerPersistent;
-  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
-  const keywords = query.split(/\s+/).filter(k => k.length > 0);
-  const filterInputs = document.querySelectorAll('[data-filter-group]');
-  const selectedFilters = [];
-  
-  filterInputs.forEach(input => {
-    if (input.checked) {
-      const group = input.getAttribute('data-filter-group');
-      const value = input.getAttribute('data-filter-value');
-      const keyGroup = input.getAttribute('data-key-group');
-      
-      selectedFilters.push({
-        group: group,
-        value: value ? value.toLowerCase() : null,
-        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
-      });
-    }
-  });
-  
-  const visibleIds = g.MASTER_DATA.filter(record => {
-    const fields = record.fields;
-    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-    const matchesSearch = keywords.every(k => allText.includes(k));
-    
-    const matchesAttributes = selectedFilters.every(filter => {
-      let recVal = fields[filter.group];
-      if (recVal === undefined || recVal === null) return false;
-      
-      if (filter.keyGroup) {
-        if (filter.keyGroup === 'major') {
-          return String(recVal).toLowerCase().endsWith('maj');
-        }
-        if (filter.keyGroup === 'minor') {
-          return String(recVal).toLowerCase().endsWith('min');
-        }
+  function applyFilters() {
+    const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+    const keywords = query.split(/\s+/).filter(k => k.length > 0);
+    const filterInputs = document.querySelectorAll('[data-filter-group]');
+    const selectedFilters = [];
+
+    filterInputs.forEach(input => {
+      if (input.checked) {
+        selectedFilters.push({
+          group: input.getAttribute('data-filter-group'),
+          value: input.getAttribute('data-filter-value') ? input.getAttribute('data-filter-value').toLowerCase() : null,
+          keyGroup: input.getAttribute('data-key-group') ? input.getAttribute('data-key-group').toLowerCase() : null
+        });
       }
-      
-      if (filter.value) {
-        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
-        return String(recVal).toLowerCase() === filter.value;
-      }
-      
-      return false;
     });
-    
-    return matchesSearch && matchesAttributes;
-  }).map(r => r.id);
-  
-  // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (isMusicPage) {
-    g.filteredSongIds = visibleIds;
-    console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
-  }
-  
-  document.querySelectorAll('.song-wrapper').forEach(card => {
-    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
-  });
-  
-  toggleClearButton();
-}
-  
-  if (clearBtn) {
-  // Start hidden — will only show after restoration (if needed)
-  clearBtn.style.display = 'none';
-  clearBtn.addEventListener('click', clearAllFilters);
 
-  // Safety: update visibility after a delay in case restoration takes time
-  setTimeout(() => {
+    const visibleIds = g.MASTER_DATA.filter(record => {
+      const fields = record.fields;
+      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+      const matchesSearch = keywords.every(k => allText.includes(k));
+      const matchesAttributes = selectedFilters.every(filter => {
+        let recVal = fields[filter.group];
+        if (recVal === undefined || recVal === null) return false;
+        if (filter.keyGroup) {
+          if (filter.keyGroup === 'major') return String(recVal).toLowerCase().endsWith('maj');
+          if (filter.keyGroup === 'minor') return String(recVal).toLowerCase().endsWith('min');
+        }
+        if (filter.value) {
+          if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+          return String(recVal).toLowerCase() === filter.value;
+        }
+        return false;
+      });
+      return matchesSearch && matchesAttributes;
+    }).map(r => r.id);
+
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+    if (isMusicPage) {
+      g.filteredSongIds = visibleIds;
+    }
+
+    document.querySelectorAll('.song-wrapper').forEach(card => {
+      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+    });
+
     toggleClearButton();
-  }, 800);
-}
-  
+  }
+
+  // LISTENERS
+  if (clearBtn) {
+    clearBtn.addEventListener('click', clearAllFilters);
+  }
+
   if (searchBar) {
     searchBar.addEventListener('input', () => {
-      // 1. Immediate Fade Out
-      const container = document.querySelector('.music-list-wrapper');
       if (container) {
         container.style.transition = 'opacity 0.2s ease-in-out';
         container.style.opacity = '0';
       }
-
       clearTimeout(searchTimeout);
       toggleClearButton();
-
       searchTimeout = setTimeout(() => {
-        // 2. Apply Filters (updates visibleIds and DOM display)
         applyFilters();
-
-        // 3. Fade Back In
-        if (container) {
-          container.style.opacity = '1';
-        }
+        if (container) container.style.opacity = '1';
       }, 400);
     });
   }
-  
+
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     input.addEventListener('change', () => {
-      // 1. Immediate Fade Out
-      const container = document.querySelector('.music-list-wrapper');
       if (container) {
         container.style.transition = 'opacity 0.2s ease-in-out';
         container.style.opacity = '0';
       }
-
-      // 2. Small delay to allow fade out before logic runs
       setTimeout(() => {
         applyFilters();
         toggleClearButton();
-
-        // 3. Fade Back In
-        if (container) {
-          container.style.opacity = '1';
-        }
-      }, 250); // Matches the transition speed
+        if (container) container.style.opacity = '1';
+      }, 250);
     });
   });
-}
 
+  // 2. RESTORATION LOGIC
+  // We read the saved state and update the inputs BEFORE the first applyFilters()
+  const saved = localStorage.getItem('musicFilters');
+  if (saved) {
+    try {
+      const { filters, searchQuery } = JSON.parse(saved);
+      if (searchBar && searchQuery) {
+        searchBar.value = searchQuery;
+      }
+      if (filters && Array.isArray(filters)) {
+        filters.forEach(f => {
+          const input = document.querySelector(`[data-filter-group="${f.group}"][data-filter-value="${f.value}"]`);
+          if (input) {
+            input.checked = true;
+            const wrapper = input.closest('.w-checkbox, .checkbox-single-select-wrapper');
+            if (wrapper) wrapper.classList.add('is-active');
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Error parsing saved filters", e);
+    }
+  }
+
+  // 3. FINAL STEP: Run filter once based on restored state and fade back in
+  applyFilters();
+  setTimeout(() => {
+    if (container) {
+      container.style.transition = 'opacity 0.4s ease-in-out';
+      container.style.opacity = '1';
+    }
+  }, 100);
+}
 /**
  * ============================================================
  * REMOVE DUPLICATE IDS
