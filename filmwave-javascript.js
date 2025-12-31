@@ -56,7 +56,14 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
       const style = document.createElement('style');
       style.id = styleId;
       style.textContent = `
-        .music-list-wrapper { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+style.textContent = `
+  /* Pre-hide ONLY the song list items (NOT the player wrapper) */
+  .music-list-wrapper .song-wrapper { 
+    opacity: 0 !important; 
+    visibility: hidden !important; 
+    pointer-events: none !important; 
+  }
+`;
       `;
       (document.head || document.documentElement).appendChild(style);
     }
