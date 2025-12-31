@@ -2085,8 +2085,6 @@ if (typeof barba !== 'undefined') {
     } catch (e) {}
   }
 
-  const g = window.musicPlayerPersistent;
-
   window.scrollTo(0, 0);
 
   console.log('🔍 Checking for page ID...');
