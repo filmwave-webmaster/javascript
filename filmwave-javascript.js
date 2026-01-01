@@ -1911,31 +1911,43 @@ function initKeyColumnToggle() {
   }
 
   function setColumnsInScope(scopeEl, mode) {
-    if (!scopeEl) return;
+  if (!scopeEl) return;
 
-    const majCol = scopeEl.querySelector('.maj-key-column');
-    const minCol = scopeEl.querySelector('.min-key-column');
+  const majCol = scopeEl.querySelector('.maj-key-column');
+  const minCol = scopeEl.querySelector('.min-key-column');
 
-    if (!majCol || !minCol) return;
+  if (!majCol || !minCol) return;
 
-    if (mode === 'major') {
-      majCol.style.opacity = '1';
-      majCol.style.visibility = 'visible';
-      majCol.style.pointerEvents = 'auto';
+  const showCol = (mode === 'major') ? majCol : minCol;
+  const hideCol = (mode === 'major') ? minCol : majCol;
 
-      minCol.style.opacity = '0';
-      minCol.style.visibility = 'hidden';
-      minCol.style.pointerEvents = 'none';
-    } else {
-      majCol.style.opacity = '0';
-      majCol.style.visibility = 'hidden';
-      majCol.style.pointerEvents = 'none';
+  // If already showing the correct one, bail
+  const showIsVisible = getComputedStyle(showCol).visibility !== 'hidden';
+  const showIsOpaque = parseFloat(getComputedStyle(showCol).opacity || '0') > 0.5;
+  if (showIsVisible && showIsOpaque) return;
 
-      minCol.style.opacity = '1';
-      minCol.style.visibility = 'visible';
-      minCol.style.pointerEvents = 'auto';
-    }
-  }
+  // 1) Ensure incoming is "present" so there is never a blank frame
+  showCol.style.visibility = 'visible';
+  showCol.style.pointerEvents = 'auto';
+  showCol.style.opacity = '0';
+
+  // Keep outgoing present during the crossfade
+  hideCol.style.visibility = 'visible';
+  hideCol.style.pointerEvents = 'auto';
+
+  // 2) Crossfade next paint
+  requestAnimationFrame(() => {
+    showCol.style.opacity = '1';
+    hideCol.style.opacity = '0';
+
+    // 3) After fade, fully hide outgoing
+    setTimeout(() => {
+      hideCol.style.visibility = 'hidden';
+      hideCol.style.pointerEvents = 'none';
+    }, 160); // slightly > your CSS transition (140ms)
+  });
+}
+
 
   function getKeyScopeFromButton(btnEl) {
     // Based on your screenshot: Key UI lives inside .key-radio-wrapper
