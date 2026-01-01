@@ -195,6 +195,7 @@ async function initMusicPage() {
       initDynamicTagging();
       initMutualExclusion();
       initSearchAndFilters();
+      initKeyColumnToggle();
       g.filtersInitialized = true;
     }
     
@@ -1755,8 +1756,8 @@ function initDynamicTagging() {
               console.log('carryOver: targetSuffix:', targetSuffix);
 
              const allCandidates = Array.from(
-  document.querySelectorAll('.filter-list input[type="radio"][data-filter-value][data-generic-key]')
-).filter(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
+              document.querySelectorAll('.filter-list input[type="radio"][data-filter-value][data-generic-key]')
+              ).filter(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
 
 
               console.log('carryOver: candidate count:', allCandidates.length);
@@ -1885,7 +1886,44 @@ function initDynamicTagging() {
   }, 1000);
 }
 
+// KEY VISIBILITY TOGGLE
 
+function initKeyColumnToggle() {
+  const majCol = document.querySelector('.maj-key-column');
+  const minCol = document.querySelector('.min-key-column');
+  const majBtn = document.querySelector('.maj-wrapper');
+  const minBtn = document.querySelector('.min-wrapper');
+
+  if (!majCol || !minCol || !majBtn || !minBtn) return;
+
+  function showMajor() {
+    majCol.style.opacity = '1';
+    majCol.style.visibility = 'visible';
+    majCol.style.pointerEvents = 'auto';
+
+    minCol.style.opacity = '0';
+    minCol.style.visibility = 'hidden';
+    minCol.style.pointerEvents = 'none';
+  }
+
+  function showMinor() {
+    majCol.style.opacity = '0';
+    majCol.style.visibility = 'hidden';
+    majCol.style.pointerEvents = 'none';
+
+    minCol.style.opacity = '1';
+    minCol.style.visibility = 'visible';
+    minCol.style.pointerEvents = 'auto';
+  }
+
+  // Initial state
+  showMajor();
+
+  majBtn.addEventListener('click', showMajor);
+  minBtn.addEventListener('click', showMinor);
+}
+
+// END OF KEY VISIBILITY TOGGLE
 
 
 function initMutualExclusion() {
