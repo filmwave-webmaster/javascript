@@ -1820,26 +1820,53 @@ function initSearchAndFilters() {
   applyFilters();
 }
   
- function applyFilters() {
+function applyFilters() {
   const g = window.musicPlayerPersistent;
   const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
   const keywords = query.split(/\s+/).filter(k => k.length > 0);
   const filterInputs = document.querySelectorAll('[data-filter-group]');
   const selectedFilters = [];
+    let hasSpecificKeySelected = false;
+   
   
-  filterInputs.forEach(input => {
-    if (input.checked) {
-      const group = input.getAttribute('data-filter-group');
-      const value = input.getAttribute('data-filter-value');
-      const keyGroup = input.getAttribute('data-key-group');
-      
-      selectedFilters.push({
-        group: group,
-        value: value ? value.toLowerCase() : null,
-        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
-      });
+filterInputs.forEach(input => {
+  if (input.checked) {
+    const group = input.getAttribute('data-filter-group');
+    const value = input.getAttribute('data-filter-value');
+    const keyGroup = input.getAttribute('data-key-group');
+
+    // ✅ NEW BIT (more robust detection — handles null/empty + ignores major/minor even if keyGroup exists)
+    const hasValue = value !== null && value !== '';
+    const hasKeyGroup = keyGroup !== null && keyGroup !== '';
+    const keyGroupLower = hasKeyGroup ? keyGroup.toLowerCase() : null;
+
+    // Detect if any specific key is selected (Amaj, Cmin, etc)
+    // i.e. group="key" and NOT keyGroup major/minor (those are the mode buttons)
+  if (group === 'key' && hasValue && keyGroupLower !== 'major' && keyGroupLower !== 'minor') {
+    hasSpecificKeySelected = true;
+  }
+
+  selectedFilters.push({
+    group: group,
+    value: value ? value.toLowerCase() : null,
+    keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+    });
+  }
+});
+
+   if (hasSpecificKeySelected) {
+  // Remove major/minor mode filters from the active filter set
+  // so they don't conflict with specific key selections.
+  for (let i = selectedFilters.length - 1; i >= 0; i--) {
+    if (
+      selectedFilters[i].group === 'key' &&
+      (selectedFilters[i].keyGroup === 'major' || selectedFilters[i].keyGroup === 'minor')
+    ) {
+      selectedFilters.splice(i, 1);
     }
-  });
+  }
+}
+
   
   const visibleIds = g.MASTER_DATA.filter(record => {
     const fields = record.fields;
