@@ -1620,51 +1620,61 @@ function initDynamicTagging() {
 
     // Start Radio Toggle Functionality
 
-        // --- SPECIAL CASE SETUP: key=major/minor should NOT be exclusive with other "key" radios ---
-    // Native radios will always uncheck same-name radios, so we give major/minor unique names
-    // and manage exclusivity only between each other.
-    const specialKeyRadios = Array.from(document.querySelectorAll(
-      '.filter-list input[type="radio"][data-filter-group="key"][data-key-group="major"],' +
-      '.filter-list input[type="radio"][data-filter-group="key"][data-key-group="minor"]'
-    ));
+// ------------------------------------------------------------
+// SPECIAL CASE SETUP: key=major/minor
+// - attributes are on wrapper/parent, not the input
+// - detach major/minor from native radio name group
+// - manage exclusivity only between major <-> minor
+// - allow toggle off on second click
+// ------------------------------------------------------------
 
-    specialKeyRadios.forEach(r => {
-      if (!r.dataset.originalRadioName) {
-        r.dataset.originalRadioName = r.name || '';
-        // Unique name so browser doesn't uncheck other key radios
-        r.name = `__key_${r.dataset.keyGroup || 'special'}_${Math.random().toString(36).slice(2)}`;
-      }
-    });
+// Find the host elements that carry the attributes
+const specialKeyHosts = Array.from(document.querySelectorAll(
+  '.filter-list [data-filter-group="key"][data-key-group="major"],' +
+  '.filter-list [data-filter-group="key"][data-key-group="minor"]'
+));
 
-    function specialTagKey(radio) {
-      // Stable tag key so removal only affects THIS special toggle (major/minor)
-      return `key:${radio.dataset.keyGroup || ''}`;
-    }
+// Detach their radios from native group so selecting other key radios won't uncheck them
+specialKeyHosts.forEach(host => {
+  const r = host.querySelector('input[type="radio"]');
+  if (!r) return;
 
-    function removeTagByKey(tagKey) {
-      const tags = tagsContainer.querySelectorAll('.filter-tag');
-      tags.forEach(tag => {
-        if (tag.dataset.radioName === tagKey) tag.remove();
-      });
-    }
+  if (!r.dataset.originalRadioName) {
+    r.dataset.originalRadioName = r.name || '';
+    const kg = host.getAttribute('data-key-group') || 'special';
+    r.name = `__key_${kg}_${Math.random().toString(36).slice(2)}`;
+  }
+});
 
-    function deactivateRadioUI(radio) {
-      const w = radio.closest('.radio-wrapper, .w-radio');
-      if (w) w.classList.remove('is-active');
-    }
+function specialTagKeyFromGroup(keyGroup) {
+  // Stable tag key so removal only affects THIS special toggle (major/minor)
+  return `key:${keyGroup}`;
+}
 
-    function activateRadioUI(radio) {
-      const w = radio.closest('.radio-wrapper, .w-radio');
-      if (w) w.classList.add('is-active');
-    }
+function removeTagByKey(tagKey) {
+  const tags = tagsContainer.querySelectorAll('.filter-tag');
+  tags.forEach(tag => {
+    if (tag.dataset.radioName === tagKey) tag.remove();
+  });
+}
 
-    // Track if it was already checked (only used for major/minor toggle-off)
-    radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
-        const radio = this.querySelector('input[type="radio"]');
-        if (radio) this.dataset.wasChecked = radio.checked;
-      });
-    });
+function deactivateWrapperUI(wrapperEl) {
+  if (wrapperEl) wrapperEl.classList.remove('is-active');
+}
+
+function activateWrapperUI(wrapperEl) {
+  if (wrapperEl) wrapperEl.classList.add('is-active');
+}
+
+// Track if it was already checked (only used for major/minor toggle-off)
+radioWrappers.forEach(wrapper => {
+  const remember = function() {
+    const radio = this.querySelector('input[type="radio"]');
+    if (radio) this.dataset.wasChecked = radio.checked;
+  };
+  wrapper.addEventListener('mousedown', remember);
+  wrapper.addEventListener('pointerdown', remember); // mobile-safe
+});
 
 radioWrappers.forEach(wrapper => {
   wrapper.addEventListener('click', function() {
@@ -1674,66 +1684,59 @@ radioWrappers.forEach(wrapper => {
 
     const labelText = label.innerText.trim();
 
-    // Attributes are often on wrapper/parent, not the input
+    // Host that contains data-filter-group / data-key-group
     const attrHost = this.closest('[data-filter-group]') || this;
 
     const filterGroup = attrHost.getAttribute('data-filter-group');
-    const specialKeyGroup = attrHost.getAttribute('data-key-group'); // rename to avoid redeclare
+    const specialKeyGroup = attrHost.getAttribute('data-key-group'); // "major" | "minor" | null
 
     const isSpecialKey =
       (filterGroup === 'key') && (specialKeyGroup === 'major' || specialKeyGroup === 'minor');
 
-    // Detach from native radio name-group so major/minor don't get unchecked
-    // when other "key" radios are selected.
-    if (isSpecialKey && !radio.dataset.originalRadioName) {
-      radio.dataset.originalRadioName = radio.name || '';
-      radio.name = `__key_${specialKeyGroup}_${Math.random().toString(36).slice(2)}`;
-    }
-    
     setTimeout(() => {
       // ============================================================
       // SPECIAL: Major/Minor
       // - mutually exclusive with each other
       // - NOT exclusive with other key radios
       // - can deactivate if clicked again
+      // - stays visually highlighted when other radios are clicked
       // ============================================================
       if (isSpecialKey) {
-        const tagKey = `key:${keyGroup}`; // stable key for tags/removal
+        const tagKey = specialTagKeyFromGroup(specialKeyGroup);
 
-        // If clicked again while already checked -> deactivate (ONLY for major/minor)
+        // Toggle OFF if clicked again
         if (this.dataset.wasChecked === "true") {
           radio.checked = false;
-          this.classList.remove('is-active');          // 👈 visual state (your CSS)
+          deactivateWrapperUI(this);
           removeTagByKey(tagKey);
           radio.dispatchEvent(new Event('change', { bubbles: true }));
           return;
         }
 
-        // Otherwise: activate this one
+        // Toggle ON
         radio.checked = true;
-        this.classList.add('is-active');               // 👈 visual state (your CSS)
+        activateWrapperUI(this);
 
         // Force the opposite special (major <-> minor) off
-        const otherKeyGroup = specialKeyGroup === 'major' ? 'minor' : 'major';
+        const otherKeyGroup = (specialKeyGroup === 'major') ? 'minor' : 'major';
 
-        // Find the OTHER special wrapper by attributes (not by input attrs)
-        const otherAttrHost = document.querySelector(
+        const otherHost = document.querySelector(
           `.filter-list [data-filter-group="key"][data-key-group="${otherKeyGroup}"]`
         );
 
-        if (otherAttrHost) {
-          const otherWrapper = otherAttrHost.closest('.radio-wrapper, .w-radio') || otherAttrHost;
+        if (otherHost) {
+          const otherWrapper = otherHost.closest('.radio-wrapper, .w-radio') || otherHost;
           const otherRadio = otherWrapper.querySelector('input[type="radio"]');
 
           if (otherRadio && otherRadio.checked) {
             otherRadio.checked = false;
-            otherWrapper.classList.remove('is-active'); // 👈 visual off
-            removeTagByKey(`key:${otherKeyGroup}`);
+            deactivateWrapperUI(otherWrapper);
+            removeTagByKey(specialTagKeyFromGroup(otherKeyGroup));
             otherRadio.dispatchEvent(new Event('change', { bubbles: true }));
           }
         }
 
-        // Replace this special tag (only affects this special toggle)
+        // Replace this special tag only
         removeTagByKey(tagKey);
         const tag = createTag(radio, labelText, tagKey);
         tag.dataset.radioName = tagKey;
@@ -1744,27 +1747,27 @@ radioWrappers.forEach(wrapper => {
       }
 
       // ============================================================
-      // NORMAL RADIOS (unchanged group behavior):
+      // NORMAL RADIOS (unchanged behavior)
       // - mutually exclusive within their name group
       // - DO NOT allow "click again to deactivate"
+      // - BUT: do not remove .is-active from major/minor
       // ============================================================
       const radioName = radio.name;
 
       if (radio.checked) {
-        // Update active UI for the group
-       document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
-  const otherWrapper = r.closest('.radio-wrapper, .w-radio');
-  if (!otherWrapper) return;
+        // Clear active UI for the group, but skip major/minor
+        document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+          const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+          if (!otherWrapper) return;
 
-  // 🔒 Don't clear visual highlight for major/minor
-  const host = otherWrapper.closest('[data-filter-group="key"]') || otherWrapper;
-  const kg = host.getAttribute('data-key-group');
-  const isMajorMinor = (kg === 'major' || kg === 'minor');
+          const host = otherWrapper.closest('[data-filter-group="key"]') || otherWrapper;
+          const kg = host.getAttribute('data-key-group');
+          const isMajorMinor = (kg === 'major' || kg === 'minor');
 
-  if (!isMajorMinor) {
-    otherWrapper.classList.remove('is-active');
-  }
-});
+          if (!isMajorMinor) {
+            otherWrapper.classList.remove('is-active');
+          }
+        });
 
         this.classList.add('is-active');
 
@@ -1785,6 +1788,7 @@ radioWrappers.forEach(wrapper => {
 });
 
 // End Radio Toggle Functionality
+
     
   }, 1000);
 }
