@@ -1682,8 +1682,9 @@ radioWrappers.forEach(wrapper => {
     const filterGroup = attrHost.getAttribute('data-filter-group');
     const keyGroup = attrHost.getAttribute('data-key-group');
 
-    const isSpecialKey =
-      filterGroup === 'key' && (keyGroup === 'major' || keyGroup === 'minor');
+    const host = this.closest('[data-filter-group="key"]') || this;
+const keyGroup = host.getAttribute('data-key-group');
+const isSpecialKey = (keyGroup === 'major' || keyGroup === 'minor');
 
     // 👇 Detach from native radio name-group so major/minor don't get unchecked
     // when other "key" radios are selected.
@@ -1754,10 +1755,20 @@ radioWrappers.forEach(wrapper => {
 
       if (radio.checked) {
         // Update active UI for the group
-        document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
-          const otherWrapper = r.closest('.radio-wrapper, .w-radio');
-          if (otherWrapper) otherWrapper.classList.remove('is-active');
-        });
+       document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+  const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+  if (!otherWrapper) return;
+
+  // 🔒 Don't clear visual highlight for major/minor
+  const host = otherWrapper.closest('[data-filter-group="key"]') || otherWrapper;
+  const kg = host.getAttribute('data-key-group');
+  const isMajorMinor = (kg === 'major' || kg === 'minor');
+
+  if (!isMajorMinor) {
+    otherWrapper.classList.remove('is-active');
+  }
+});
+
         this.classList.add('is-active');
 
         // Replace tag for this radio group
