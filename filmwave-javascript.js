@@ -1649,6 +1649,12 @@ function initDynamicTagging() {
       tag.className = 'filter-tag';
       if (radioName) tag.dataset.radioName = radioName;
 
+      // Target Single Key FIlter Tags
+      if (input && input.matches && input.matches('input[type="radio"][data-filter-value]')) {
+      tag.dataset.filterValue = input.getAttribute('data-filter-value'); // e.g. "Fmaj"
+      tag.classList.add('is-radio-filter'); // optional helper class
+      }
+
       tag.innerHTML = `
         <span class="filter-tag-text">${labelText}</span>
         <span class="filter-tag-remove x-button-style">×</span>
