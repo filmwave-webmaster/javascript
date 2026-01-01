@@ -1618,49 +1618,146 @@ function initDynamicTagging() {
       });
     });
 
+    // Start Radio Toggle Functionality
+
+        // --- SPECIAL CASE SETUP: key=major/minor should NOT be exclusive with other "key" radios ---
+    // Native radios will always uncheck same-name radios, so we give major/minor unique names
+    // and manage exclusivity only between each other.
+    const specialKeyRadios = Array.from(document.querySelectorAll(
+      '.filter-list input[type="radio"][data-filter-group="key"][data-key-group="major"],' +
+      '.filter-list input[type="radio"][data-filter-group="key"][data-key-group="minor"]'
+    ));
+
+    specialKeyRadios.forEach(r => {
+      if (!r.dataset.originalRadioName) {
+        r.dataset.originalRadioName = r.name || '';
+        // Unique name so browser doesn't uncheck other key radios
+        r.name = `__key_${r.dataset.keyGroup || 'special'}_${Math.random().toString(36).slice(2)}`;
+      }
+    });
+
+    function specialTagKey(radio) {
+      // Stable tag key so removal only affects THIS special toggle (major/minor)
+      return `key:${radio.dataset.keyGroup || ''}`;
+    }
+
+    function removeTagByKey(tagKey) {
+      const tags = tagsContainer.querySelectorAll('.filter-tag');
+      tags.forEach(tag => {
+        if (tag.dataset.radioName === tagKey) tag.remove();
+      });
+    }
+
+    function deactivateRadioUI(radio) {
+      const w = radio.closest('.radio-wrapper, .w-radio');
+      if (w) w.classList.remove('is-active');
+    }
+
+    function activateRadioUI(radio) {
+      const w = radio.closest('.radio-wrapper, .w-radio');
+      if (w) w.classList.add('is-active');
+    }
+
+    // Track if it was already checked (only used for major/minor toggle-off)
     radioWrappers.forEach(wrapper => {
       wrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
+    });
 
+    // --- RADIO CLICK LOGIC ---
+    radioWrappers.forEach(wrapper => {
       wrapper.addEventListener('click', function() {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
-        
+
         const labelText = label.innerText.trim();
-        const radioName = radio.name;
+
+        const isSpecialKey =
+          radio.getAttribute('data-filter-group') === 'key' &&
+          (radio.getAttribute('data-key-group') === 'major' || radio.getAttribute('data-key-group') === 'minor');
 
         setTimeout(() => {
-          if (this.dataset.wasChecked === "true") {
-            radio.checked = false;
-            this.classList.remove('is-active');
-            const tags = tagsContainer.querySelectorAll('.filter-tag');
-            tags.forEach(tag => { 
-              if (tag.dataset.radioName === radioName) tag.remove(); 
-            });
+          // ============================================================
+          // SPECIAL: Major/Minor
+          // - mutually exclusive with each other
+          // - NOT exclusive with other key radios
+          // - can deactivate if clicked again
+          // ============================================================
+          if (isSpecialKey) {
+            const tagKey = specialTagKey(radio);
+
+            // If clicked again while already checked -> deactivate (ONLY for major/minor)
+            if (this.dataset.wasChecked === "true") {
+              radio.checked = false;
+              deactivateRadioUI(radio);
+              removeTagByKey(tagKey);
+              radio.dispatchEvent(new Event('change', { bubbles: true }));
+              return;
+            }
+
+            // Otherwise: activate this one
+            radio.checked = true;
+            activateRadioUI(radio);
+
+            // Force the opposite special (major <-> minor) off
+            const otherKeyGroup = radio.dataset.keyGroup === 'major' ? 'minor' : 'major';
+            const other = document.querySelector(
+              `.filter-list input[type="radio"][data-filter-group="key"][data-key-group="${otherKeyGroup}"]`
+            );
+            if (other && other.checked) {
+              other.checked = false;
+              deactivateRadioUI(other);
+              removeTagByKey(specialTagKey(other));
+              other.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // Replace this special tag (only affects this special toggle)
+            removeTagByKey(tagKey);
+            const tag = createTag(radio, labelText, tagKey);
+            tag.dataset.radioName = tagKey;
+            tagsContainer.appendChild(tag);
+
             radio.dispatchEvent(new Event('change', { bubbles: true }));
-          } else {
+            return;
+          }
+
+          // ============================================================
+          // NORMAL RADIOS (unchanged group behavior):
+          // - mutually exclusive within their name group
+          // - DO NOT allow "click again to deactivate"
+          // ============================================================
+          const radioName = radio.name;
+
+          if (radio.checked) {
+            // Update active UI for the group
             document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
               const otherWrapper = r.closest('.radio-wrapper, .w-radio');
               if (otherWrapper) otherWrapper.classList.remove('is-active');
             });
-            
             this.classList.add('is-active');
-            
+
+            // Replace tag for this radio group
             const tags = tagsContainer.querySelectorAll('.filter-tag');
-            tags.forEach(tag => { 
-              if (tag.dataset.radioName === radioName) tag.remove(); 
+            tags.forEach(tag => {
+              if (tag.dataset.radioName === radioName) tag.remove();
             });
-            
-            const tag = createTag(radio, labelText);
+
+            const tag = createTag(radio, labelText, radioName);
             tag.dataset.radioName = radioName;
             tagsContainer.appendChild(tag);
+
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
           }
         }, 50);
       });
     });
+
+
+// End Radio Toggle Functionality
+    
   }, 1000);
 }
 
