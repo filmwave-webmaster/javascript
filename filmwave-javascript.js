@@ -1567,10 +1567,6 @@ function initDynamicTagging() {
     
     const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
-
-    // ✅ DEBUG: confirm init + count
-    console.log('✅ initDynamicTagging: radioWrappers found =', radioWrappers.length);
-    window.__dbgKey = window.__dbgKey || { last: null };
     
     function createTag(input, labelText, radioName = null) {
       const tag = document.createElement('div');
@@ -1622,160 +1618,192 @@ function initDynamicTagging() {
       });
     });
 
-   // START OF RADIO SECTION
+    // START OF RADIO SECTION
+    
+    // --- RADIO LOGIC (updated to keep Major/Minor active until toggled off or opposite clicked) ---
 
-// --- RADIO LOGIC (updated to keep Major/Minor active until toggled off or opposite clicked) ---
+    // 1) Detach Major/Minor from the native radio group so selecting Amaj/Cmin/etc won't uncheck them
+    // (Your Major/Minor inputs do NOT have data-filter-group="key", so we select by data-key-group only)
+    const keyModeRadios = document.querySelectorAll(
+      '.filter-list input[type="radio"][data-key-group="major"],' +
+      '.filter-list input[type="radio"][data-key-group="minor"]'
+    );
 
-// 1) Detach Major/Minor from the native radio group so selecting Amaj/Cmin/etc won't uncheck them
-// ✅ FIX: your Major/Minor inputs do NOT have data-filter-group="key", so we select by data-key-group only
-const keyModeRadios = document.querySelectorAll(
-  '.filter-list input[type="radio"][data-key-group="major"],' +
-  '.filter-list input[type="radio"][data-key-group="minor"]'
-);
-
-// ✅ DEBUG: see if we even find those inputs
-console.log('✅ keyModeRadios found =', keyModeRadios.length, keyModeRadios);
-
-keyModeRadios.forEach((r, i) => {
-  if (!r.dataset.detachedFromGroup) {
-    r.dataset.detachedFromGroup = '1';
-    r.dataset.originalRadioName = r.name || '';
-    // unique name -> prevents other key radios from unchecking it
-    r.name = `__keymode_${r.getAttribute('data-key-group') || 'x'}_${Date.now()}_${i}`;
-  }
-});
-
-// Track if it was already checked (keeps your "click again to turn off" behavior)
-radioWrappers.forEach(wrapper => {
-  wrapper.addEventListener('mousedown', function() {
-    const radio = this.querySelector('input[type="radio"]');
-    if (radio) this.dataset.wasChecked = radio.checked;
-  });
-});
-
-radioWrappers.forEach(wrapper => {
-  wrapper.addEventListener('click', function() {
-    const radio = this.querySelector('input[type="radio"]');
-    const label = this.querySelector('.radio-button-label');
-    if (!radio || !label) return;
-
-    const labelText = label.innerText.trim();
-    const radioName = radio.name;
-
-    // ✅ DEBUG: inspect where attributes actually live
-    const host = this.closest('[data-filter-group]') || this;
-    console.log('--- RADIO CLICK ---');
-    console.log('clicked wrapper:', this);
-    console.log('active host:', host);
-    console.log('data-filter-group:', host.getAttribute('data-filter-group'));
-    console.log('data-key-group (host):', host.getAttribute('data-key-group'));
-    console.log('data-key-group (input):', radio.getAttribute('data-key-group'));
-    console.log('data-filter-value (input):', radio.getAttribute('data-filter-value'));
-    console.log('radio.name:', radio.name);
-    console.log('radio.checked BEFORE:', radio.checked);
-
-    // ✅ FIX:
-    // Major/Minor = mode buttons:
-    // - identified by data-key-group major/minor
-    // - and they have NO data-filter-value
-    const keyGroup = radio.getAttribute('data-key-group');
-    const filterValue = radio.getAttribute('data-filter-value');
-    const isKeyMode =
-      (keyGroup === 'major' || keyGroup === 'minor') &&
-      (filterValue === null || filterValue === '');
-
-    console.log('isKeyMode computed:', isKeyMode);
-
-    setTimeout(() => {
-      // ✅ DEBUG: post-click state
-      console.log('radio.checked AFTER:', radio.checked);
-      console.log('wrapper classes AFTER:', (this.className || ''), ' | host classes:', (host.className || ''));
-
-      // Toggle OFF on second click (your existing behavior)
-      if (this.dataset.wasChecked === "true") {
-        radio.checked = false;
-        this.classList.remove('is-active');
-
-        const tags = tagsContainer.querySelectorAll('.filter-tag');
-        tags.forEach(tag => {
-          if (tag.dataset.radioName === radioName) tag.remove();
-        });
-
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-        return;
+    keyModeRadios.forEach((r, i) => {
+      if (!r.dataset.detachedFromGroup) {
+        r.dataset.detachedFromGroup = '1';
+        r.dataset.originalRadioName = r.name || '';
+        // unique name -> prevents other key radios from unchecking it
+        r.name = `__keymode_${r.getAttribute('data-key-group') || 'x'}_${Date.now()}_${i}`;
       }
+    });
 
-      // If Major/Minor is being turned ON, force the opposite OFF (only between these two)
-      if (isKeyMode) {
-        const otherGroup = keyGroup === 'major' ? 'minor' : 'major';
+    // Track if it was already checked (keeps your "click again to turn off" behavior)
+    radioWrappers.forEach(wrapper => {
+      wrapper.addEventListener('mousedown', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) this.dataset.wasChecked = radio.checked;
+      });
+    });
 
-        // ✅ FIX: select by data-key-group only (no data-filter-group assumption)
-        const otherRadio = document.querySelector(
-          `.filter-list input[type="radio"][data-key-group="${otherGroup}"]`
-        );
+    radioWrappers.forEach(wrapper => {
+      wrapper.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        const label = this.querySelector('.radio-button-label');
+        if (!radio || !label) return;
 
-        console.log('otherRadio found:', otherRadio);
+        const labelText = label.innerText.trim();
+        const radioName = radio.name;
 
-        if (otherRadio && otherRadio.checked) {
-          otherRadio.checked = false;
+        // Major/Minor mode buttons:
+        // - identified by data-key-group major/minor
+        // - and they have NO data-filter-value
+        const keyGroup = radio.getAttribute('data-key-group');
+        const filterValue = radio.getAttribute('data-filter-value');
+        const isKeyMode =
+          (keyGroup === 'major' || keyGroup === 'minor') &&
+          (filterValue === null || filterValue === '');
 
-          const otherWrapper = otherRadio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
-          if (otherWrapper) otherWrapper.classList.remove('is-active');
+        setTimeout(() => {
+          // Toggle OFF on second click (your existing behavior)
+          if (this.dataset.wasChecked === "true") {
+            radio.checked = false;
+            this.classList.remove('is-active');
 
-          const otherTags = tagsContainer.querySelectorAll('.filter-tag');
-          otherTags.forEach(tag => {
-            if (tag.dataset.radioName === otherRadio.name) tag.remove();
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => {
+              if (tag.dataset.radioName === radioName) tag.remove();
+            });
+
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+          }
+
+          // If Major/Minor is being turned ON, force the opposite OFF (only between these two)
+          if (isKeyMode) {
+            const otherGroup = keyGroup === 'major' ? 'minor' : 'major';
+
+            // ✅ NEW: Carry over selected specific key when switching Major/Minor
+            // If a specific key (like Gmaj) is selected and user switches to Minor,
+            // automatically select the equivalent (Gmin) that shares data-generic-key.
+            (function carryOverKeySelection() {
+              // Find currently selected specific key radio (has data-filter-value)
+              // NOTE: mode radios have NO data-filter-value (per your setup)
+              const currentSpecific = document.querySelector(
+                '.filter-list input[type="radio"][name="Key"][data-filter-value]:checked'
+              );
+              if (!currentSpecific) return;
+
+              const generic = currentSpecific.getAttribute('data-generic-key');
+              if (!generic) return;
+
+              const targetSuffix = otherGroup === 'major' ? 'maj' : 'min';
+
+              const targetSpecific = Array.from(
+                document.querySelectorAll('.filter-list input[type="radio"][name="Key"][data-filter-value][data-generic-key]')
+              ).find(r => {
+                const gk = (r.getAttribute('data-generic-key') || '').toLowerCase();
+                const fv = (r.getAttribute('data-filter-value') || '').toLowerCase();
+                return gk === generic.toLowerCase() && fv.endsWith(targetSuffix);
+              });
+
+              if (!targetSpecific || targetSpecific === currentSpecific) return;
+
+              // Turn off old key visually + tag
+              currentSpecific.checked = false;
+              const curWrap = currentSpecific.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
+              if (curWrap) curWrap.classList.remove('is-active');
+
+              const curTags = tagsContainer.querySelectorAll('.filter-tag');
+              curTags.forEach(tag => {
+                if (tag.dataset.radioName === currentSpecific.name) tag.remove();
+              });
+
+              currentSpecific.dispatchEvent(new Event('change', { bubbles: true }));
+
+              // Turn on new key visually + tag
+              targetSpecific.checked = true;
+              const tgtWrap = targetSpecific.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
+              if (tgtWrap) tgtWrap.classList.add('is-active');
+
+              const tgtTags = tagsContainer.querySelectorAll('.filter-tag');
+              tgtTags.forEach(tag => {
+                if (tag.dataset.radioName === targetSpecific.name) tag.remove();
+              });
+
+              const tgtLabel = tgtWrap ? tgtWrap.querySelector('.radio-button-label') : null;
+              const tgtText = tgtLabel ? tgtLabel.innerText.trim() : (targetSpecific.getAttribute('data-filter-value') || 'Key');
+
+              const newTag = createTag(targetSpecific, tgtText);
+              newTag.dataset.radioName = targetSpecific.name;
+              tagsContainer.appendChild(newTag);
+
+              targetSpecific.dispatchEvent(new Event('change', { bubbles: true }));
+            })();
+
+            const otherRadio = document.querySelector(
+              `.filter-list input[type="radio"][data-key-group="${otherGroup}"]`
+            );
+
+            if (otherRadio && otherRadio.checked) {
+              otherRadio.checked = false;
+
+              const otherWrapper = otherRadio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
+              if (otherWrapper) otherWrapper.classList.remove('is-active');
+
+              const otherTags = tagsContainer.querySelectorAll('.filter-tag');
+              otherTags.forEach(tag => {
+                if (tag.dataset.radioName === otherRadio.name) tag.remove();
+              });
+
+              otherRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // Turn this one ON visually + tag (does NOT affect other key radios now)
+            this.classList.add('is-active');
+
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => {
+              if (tag.dataset.radioName === radioName) tag.remove();
+            });
+
+            const tag = createTag(radio, labelText);
+            tag.dataset.radioName = radioName;
+            tagsContainer.appendChild(tag);
+
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+          }
+
+          // NORMAL RADIOS (unchanged behavior)
+          // Do not clear Major/Minor mode radios' is-active
+          document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+            const kg = r.getAttribute('data-key-group');
+            const fv = r.getAttribute('data-filter-value');
+            const isMode = (kg === 'major' || kg === 'minor') && (fv === null || fv === '');
+            if (isMode) return;
+
+            const otherWrapper = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
+            if (otherWrapper) otherWrapper.classList.remove('is-active');
           });
 
-          otherRadio.dispatchEvent(new Event('change', { bubbles: true }));
-        }
+          this.classList.add('is-active');
 
-        // Turn this one ON visually + tag (does NOT affect other key radios now)
-        this.classList.add('is-active');
+          const tags = tagsContainer.querySelectorAll('.filter-tag');
+          tags.forEach(tag => {
+            if (tag.dataset.radioName === radioName) tag.remove();
+          });
 
-        const tags = tagsContainer.querySelectorAll('.filter-tag');
-        tags.forEach(tag => {
-          if (tag.dataset.radioName === radioName) tag.remove();
-        });
+          const tag = createTag(radio, labelText);
+          tag.dataset.radioName = radioName;
+          tagsContainer.appendChild(tag);
 
-        const tag = createTag(radio, labelText);
-        tag.dataset.radioName = radioName;
-        tagsContainer.appendChild(tag);
-
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-        return;
-      }
-
-      // NORMAL RADIOS (unchanged behavior)
-      // ✅ FIX: when clearing the group, DO NOT clear Major/Minor mode radios' is-active
-      document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
-        const kg = r.getAttribute('data-key-group');
-        const fv = r.getAttribute('data-filter-value');
-        const isMode = (kg === 'major' || kg === 'minor') && (fv === null || fv === '');
-        if (isMode) return; // keep Major/Minor visually active
-
-        const otherWrapper = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
-        if (otherWrapper) otherWrapper.classList.remove('is-active');
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }, 50);
       });
+    });
 
-      this.classList.add('is-active');
-
-      const tags = tagsContainer.querySelectorAll('.filter-tag');
-      tags.forEach(tag => {
-        if (tag.dataset.radioName === radioName) tag.remove();
-      });
-
-      const tag = createTag(radio, labelText);
-      tag.dataset.radioName = radioName;
-      tagsContainer.appendChild(tag);
-
-      radio.dispatchEvent(new Event('change', { bubbles: true }));
-    }, 50);
-  });
-});
-
-// END OF RADIO SECTION
-
+    // END OF RADIO SECTION
 
   }, 1000);
 }
