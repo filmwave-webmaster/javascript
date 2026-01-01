@@ -1508,25 +1508,32 @@ document.addEventListener('keydown', function (e) {
 // START ACCIDENTAL COLUMNS
 
 function setAccidentalColumns(mode) {
-  const scope = document.querySelector('.sharp-flat-toggle-wrapper');
-  if (!scope) return;
+  const toggleWrap = document.querySelector('.sharp-flat-toggle-wrapper');
+  if (!toggleWrap) return;
 
-  const sharpCol = scope.querySelector('.sharp-key-column');
-  const flatCol  = scope.querySelector('.flat-key-column');
+  // columns are siblings inside the same filter-list
+  const listScope = toggleWrap.closest('.filter-list') || toggleWrap.parentElement;
+  if (!listScope) return;
+
+  const sharpCol = listScope.querySelector('.sharp-key-column');
+  const flatCol  = listScope.querySelector('.flat-key-column');
   if (!sharpCol || !flatCol) return;
 
   const show = (col) => {
+    col.style.display = '';
     col.style.opacity = '1';
     col.style.visibility = 'visible';
     col.style.pointerEvents = 'auto';
-    col.querySelectorAll('input').forEach(i => i.disabled = false);
+    col.querySelectorAll('input').forEach(i => (i.disabled = false));
   };
 
   const hide = (col) => {
     col.style.opacity = '0';
     col.style.visibility = 'hidden';
     col.style.pointerEvents = 'none';
-    col.querySelectorAll('input').forEach(i => i.disabled = true);
+    col.querySelectorAll('input').forEach(i => (i.disabled = true));
+    // optional: remove from layout (uncomment if you want)
+    // col.style.display = 'none';
   };
 
   if (mode === 'sharp') {
@@ -1538,6 +1545,22 @@ function setAccidentalColumns(mode) {
   }
 }
 
+function initSharpFlatToggle() {
+  const toggleWrap = document.querySelector('.sharp-flat-toggle-wrapper');
+  if (!toggleWrap) return;
+
+  const toggles = toggleWrap.querySelectorAll('.sharp-flat-toggle');
+  if (toggles.length < 2) return;
+
+  // prevent double-binding if this init runs more than once (Barba/Webflow)
+  if (toggleWrap.dataset.bound === '1') return;
+  toggleWrap.dataset.bound = '1';
+
+  toggles[0].addEventListener('click', () => setAccidentalColumns('sharp'));
+  toggles[1].addEventListener('click', () => setAccidentalColumns('flat'));
+
+  setAccidentalColumns('sharp'); // default
+}
 // END ACCIDENTAL COLUMNS
 
 // START FLAT/SHARP TOGGLE
@@ -1699,33 +1722,38 @@ function initDynamicTagging() {
       });
     }
 
-    function createTag(input, labelText, radioName = null) {
-      const tag = document.createElement('div');
-      tag.className = 'filter-tag';
-      if (radioName) tag.dataset.radioName = radioName;
+   function createTag(input, labelText, radioName = null) {
+  const tag = document.createElement('div');
+  tag.className = 'filter-tag';
 
-      // Target Single Key FIlter Tags
-      if (input && input.matches && input.matches('input[type="radio"][data-filter-value]')) {
-      tag.dataset.filterValue = input.getAttribute('data-filter-value'); // e.g. "Fmaj"
-      tag.classList.add('is-radio-filter'); // optional helper class
-      }
+  // keep your existing radioName tagging
+  if (radioName) tag.dataset.radioName = radioName;
 
-      tag.innerHTML = `
-        <span class="filter-tag-text">${labelText}</span>
-        <span class="filter-tag-remove x-button-style">×</span>
-      `;
+  // ✅ NEW: if this tag came from a radio that has data-filter-value, copy it onto the tag
+  if (
+    input &&
+    input.type === 'radio' &&
+    input.hasAttribute('data-filter-value') &&
+    input.getAttribute('data-filter-value')
+  ) {
+    tag.setAttribute('data-filter-value', input.getAttribute('data-filter-value'));
+  }
 
-      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-        input.checked = false;
-        const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        tag.remove();
-      });
+  tag.innerHTML = `
+    <span class="filter-tag-text">${labelText}</span>
+    <span class="filter-tag-remove x-button-style">×</span>
+  `;
 
-      return tag;
-    }
+  tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+    input.checked = false;
+    const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
+    if (wrapper) wrapper.classList.remove('is-active');
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    tag.remove();
+  });
 
+  return tag;
+}
     checkboxes.forEach(checkbox => {
       checkbox.addEventListener('change', function() {
         let label;
