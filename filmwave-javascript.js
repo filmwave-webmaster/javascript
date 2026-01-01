@@ -1618,9 +1618,9 @@ function initDynamicTagging() {
       });
     });
 
-    // START OF RADIO SECTION
-    
-    // --- RADIO LOGIC (updated to keep Major/Minor active until toggled off or opposite clicked) ---
+// START OF RADIO SECTION
+
+// --- RADIO LOGIC (updated to keep Major/Minor active until toggled off or opposite clicked) ---
 
 // 1) Detach Major/Minor from the native radio group so selecting Amaj/Cmin/etc won't uncheck them
 const keyModeRadios = document.querySelectorAll(
@@ -1636,6 +1636,11 @@ keyModeRadios.forEach((r, i) => {
     r.name = `__keymode_${r.getAttribute('data-key-group') || 'x'}_${Date.now()}_${i}`;
   }
 });
+
+// ✅ helper: choose the correct wrapper to receive `.is-active`
+function getActiveWrapperFromEl(el) {
+  return el.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper') || el;
+}
 
 // Track if it was already checked (keeps your "click again to turn off" behavior)
 radioWrappers.forEach(wrapper => {
@@ -1659,10 +1664,12 @@ radioWrappers.forEach(wrapper => {
       (radio.getAttribute('data-key-group') === 'major' || radio.getAttribute('data-key-group') === 'minor');
 
     setTimeout(() => {
+      const activeWrapper = getActiveWrapperFromEl(this);
+
       // Toggle OFF on second click (your existing behavior)
       if (this.dataset.wasChecked === "true") {
         radio.checked = false;
-        this.classList.remove('is-active');
+        activeWrapper.classList.remove('is-active');
 
         const tags = tagsContainer.querySelectorAll('.filter-tag');
         tags.forEach(tag => {
@@ -1685,7 +1692,7 @@ radioWrappers.forEach(wrapper => {
         if (otherRadio && otherRadio.checked) {
           otherRadio.checked = false;
 
-          const otherWrapper = otherRadio.closest('.radio-wrapper, .w-radio');
+          const otherWrapper = getActiveWrapperFromEl(otherRadio);
           if (otherWrapper) otherWrapper.classList.remove('is-active');
 
           const otherTags = tagsContainer.querySelectorAll('.filter-tag');
@@ -1697,7 +1704,7 @@ radioWrappers.forEach(wrapper => {
         }
 
         // Turn this one ON visually + tag (does NOT affect other key radios now)
-        this.classList.add('is-active');
+        activeWrapper.classList.add('is-active');
 
         const tags = tagsContainer.querySelectorAll('.filter-tag');
         tags.forEach(tag => {
@@ -1714,11 +1721,11 @@ radioWrappers.forEach(wrapper => {
 
       // NORMAL RADIOS (unchanged behavior)
       document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
-        const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+        const otherWrapper = getActiveWrapperFromEl(r);
         if (otherWrapper) otherWrapper.classList.remove('is-active');
       });
 
-      this.classList.add('is-active');
+      activeWrapper.classList.add('is-active');
 
       const tags = tagsContainer.querySelectorAll('.filter-tag');
       tags.forEach(tag => {
@@ -1734,8 +1741,8 @@ radioWrappers.forEach(wrapper => {
   });
 });
 
-
 // END OF RADIO SECTION
+
 
   }, 1000);
 }
