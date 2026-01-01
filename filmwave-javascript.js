@@ -1508,75 +1508,38 @@ document.addEventListener('keydown', function (e) {
 // START ACCIDENTAL COLUMNS
 
 function setAccidentalColumns(mode) {
-  const toggleWrap = document.querySelector('.sharp-flat-toggle-wrapper');
-  if (!toggleWrap) return;
-
-  // columns are siblings inside the same filter-list
-  const listScope = toggleWrap.closest('.filter-list') || toggleWrap.parentElement;
-  if (!listScope) return;
-
-  const sharpCol = listScope.querySelector('.sharp-key-column');
-  const flatCol  = listScope.querySelector('.flat-key-column');
+  const sharpCol = document.querySelector('.sharp-key-column');
+  const flatCol  = document.querySelector('.flat-key-column');
   if (!sharpCol || !flatCol) return;
 
-  const show = (col) => {
-    col.style.display = '';
-    col.style.opacity = '1';
-    col.style.visibility = 'visible';
-    col.style.pointerEvents = 'auto';
-    col.querySelectorAll('input').forEach(i => (i.disabled = false));
-  };
-
-  const hide = (col) => {
-    col.style.opacity = '0';
-    col.style.visibility = 'hidden';
-    col.style.pointerEvents = 'none';
-    col.querySelectorAll('input').forEach(i => (i.disabled = true));
-    // optional: remove from layout (uncomment if you want)
-    // col.style.display = 'none';
-  };
-
   if (mode === 'sharp') {
-    show(sharpCol);
-    hide(flatCol);
+    sharpCol.style.display = 'block';
+    flatCol.style.display = 'none';
+
+    // disable hidden inputs (prevents filtering + tag duplication)
+    flatCol.querySelectorAll('input').forEach(i => i.disabled = true);
+    sharpCol.querySelectorAll('input').forEach(i => i.disabled = false);
   } else {
-    hide(sharpCol);
-    show(flatCol);
+    sharpCol.style.display = 'none';
+    flatCol.style.display = 'block';
+
+    sharpCol.querySelectorAll('input').forEach(i => i.disabled = true);
+    flatCol.querySelectorAll('input').forEach(i => i.disabled = false);
   }
 }
 
-function initSharpFlatToggle() {
-  const toggleWrap = document.querySelector('.sharp-flat-toggle-wrapper');
-  if (!toggleWrap) return;
-
-  const toggles = toggleWrap.querySelectorAll('.sharp-flat-toggle');
-  if (toggles.length < 2) return;
-
-  // prevent double-binding if this init runs more than once (Barba/Webflow)
-  if (toggleWrap.dataset.bound === '1') return;
-  toggleWrap.dataset.bound = '1';
-
-  toggles[0].addEventListener('click', () => setAccidentalColumns('sharp'));
-  toggles[1].addEventListener('click', () => setAccidentalColumns('flat'));
-
-  setAccidentalColumns('sharp'); // default
-}
 // END ACCIDENTAL COLUMNS
 
 // START FLAT/SHARP TOGGLE
 
 function initSharpFlatToggle() {
-  const scope = document.querySelector('.sharp-flat-toggle-wrapper');
-  if (!scope) return;
-
-  const toggles = scope.querySelectorAll('.sharp-flat-toggle');
+  const toggles = document.querySelectorAll('.sharp-flat-toggle');
   if (toggles.length < 2) return;
 
   toggles[0].addEventListener('click', () => setAccidentalColumns('sharp'));
   toggles[1].addEventListener('click', () => setAccidentalColumns('flat'));
 
-  // default
-  setAccidentalColumns('sharp');
+  setAccidentalColumns('sharp'); // default
 }
 
 // END FLAT SHARP TOGGLE
