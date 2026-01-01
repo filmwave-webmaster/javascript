@@ -1666,7 +1666,6 @@ function initDynamicTagging() {
       });
     });
 
-    // --- RADIO CLICK LOGIC ---
 radioWrappers.forEach(wrapper => {
   wrapper.addEventListener('click', function() {
     const radio = this.querySelector('input[type="radio"]');
@@ -1675,24 +1674,22 @@ radioWrappers.forEach(wrapper => {
 
     const labelText = label.innerText.trim();
 
-    // 👇 IMPORTANT:
-    // These attributes are often on the wrapper (or a parent), not the input.
+    // Attributes are often on wrapper/parent, not the input
     const attrHost = this.closest('[data-filter-group]') || this;
 
     const filterGroup = attrHost.getAttribute('data-filter-group');
-    const keyGroup = attrHost.getAttribute('data-key-group');
+    const specialKeyGroup = attrHost.getAttribute('data-key-group'); // rename to avoid redeclare
 
-    const host = this.closest('[data-filter-group="key"]') || this;
-const keyGroup = host.getAttribute('data-key-group');
-const isSpecialKey = (keyGroup === 'major' || keyGroup === 'minor');
+    const isSpecialKey =
+      (filterGroup === 'key') && (specialKeyGroup === 'major' || specialKeyGroup === 'minor');
 
-    // 👇 Detach from native radio name-group so major/minor don't get unchecked
+    // Detach from native radio name-group so major/minor don't get unchecked
     // when other "key" radios are selected.
     if (isSpecialKey && !radio.dataset.originalRadioName) {
       radio.dataset.originalRadioName = radio.name || '';
-      radio.name = `__key_${keyGroup}_${Math.random().toString(36).slice(2)}`;
+      radio.name = `__key_${specialKeyGroup}_${Math.random().toString(36).slice(2)}`;
     }
-
+    
     setTimeout(() => {
       // ============================================================
       // SPECIAL: Major/Minor
@@ -1717,7 +1714,7 @@ const isSpecialKey = (keyGroup === 'major' || keyGroup === 'minor');
         this.classList.add('is-active');               // 👈 visual state (your CSS)
 
         // Force the opposite special (major <-> minor) off
-        const otherKeyGroup = keyGroup === 'major' ? 'minor' : 'major';
+        const otherKeyGroup = specialKeyGroup === 'major' ? 'minor' : 'major';
 
         // Find the OTHER special wrapper by attributes (not by input attrs)
         const otherAttrHost = document.querySelector(
