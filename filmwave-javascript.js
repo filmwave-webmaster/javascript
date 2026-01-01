@@ -1737,6 +1737,9 @@ radioWrappers.forEach(wrapper => {
 
 // END OF RADIO SECTION
 
+  }, 1000);
+}
+
 function initMutualExclusion() {
   const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
   const acapWrapper = document.querySelector('[data-exclusive="acapella"]');
@@ -1907,6 +1910,7 @@ function initSearchAndFilters() {
     });
   });
 }
+
 
 /**
  * ============================================================
