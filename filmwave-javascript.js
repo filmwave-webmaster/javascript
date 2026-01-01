@@ -1683,24 +1683,26 @@ function initDynamicTagging() {
           if (isKeyMode) {
             const otherGroup = keyGroup === 'major' ? 'minor' : 'major';
 
-            // ✅ NEW: Carry over selected specific key when switching Major/Minor
+            // ✅ NEW (fixed): Carry over selected specific key when switching Major/Minor
             // If a specific key (like Gmaj) is selected and user switches to Minor,
             // automatically select the equivalent (Gmin) that shares data-generic-key.
             (function carryOverKeySelection() {
-              // Find currently selected specific key radio (has data-filter-value)
-              // NOTE: mode radios have NO data-filter-value (per your setup)
+              // Current selected single-key radio (has data-filter-group="key" + data-filter-value)
               const currentSpecific = document.querySelector(
-                '.filter-list input[type="radio"][name="Key"][data-filter-value]:checked'
+                '.filter-list input[type="radio"][data-filter-group="key"][data-filter-value]:checked'
               );
               if (!currentSpecific) return;
 
               const generic = currentSpecific.getAttribute('data-generic-key');
               if (!generic) return;
 
-              const targetSuffix = otherGroup === 'major' ? 'maj' : 'min';
+              // IMPORTANT: target suffix should match the mode the user just selected (keyGroup),
+              // not the opposite.
+              const targetSuffix = keyGroup === 'major' ? 'maj' : 'min';
 
+              // Find equivalent single-key in the selected mode using generic-key + suffix
               const targetSpecific = Array.from(
-                document.querySelectorAll('.filter-list input[type="radio"][name="Key"][data-filter-value][data-generic-key]')
+                document.querySelectorAll('.filter-list input[type="radio"][data-filter-group="key"][data-filter-value][data-generic-key]')
               ).find(r => {
                 const gk = (r.getAttribute('data-generic-key') || '').toLowerCase();
                 const fv = (r.getAttribute('data-filter-value') || '').toLowerCase();
@@ -1807,6 +1809,7 @@ function initDynamicTagging() {
 
   }, 1000);
 }
+
 
 
 function initMutualExclusion() {
