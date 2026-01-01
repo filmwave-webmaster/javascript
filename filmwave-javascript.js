@@ -1572,6 +1572,100 @@ function initDynamicTagging() {
     // ✅ DEBUG: confirm init + count
     console.log('✅ initDynamicTagging: radioWrappers found =', radioWrappers.length);
     window.__dbgKey = window.__dbgKey || { last: null };
+
+    // ✅ DEBUG: GLOBAL flash diagnostics (only attach once)
+    if (!window.__dbgFlash) {
+      window.__dbgFlash = { attached: true, t0: performance.now() };
+      console.log('🧪 DBG: Flash diagnostics ATTACHED', { t0: window.__dbgFlash.t0 });
+
+      // Track opacity transitions on key columns
+      document.addEventListener('transitionstart', (e) => {
+        const el = e.target;
+        if (!el || !(el instanceof Element)) return;
+        if (el.classList.contains('maj-key-column') || el.classList.contains('min-key-column')) {
+          const cs = getComputedStyle(el);
+          console.log('🎞️ transitionstart:', el.className, 'prop=', e.propertyName, 'opacity=', cs.opacity, 'visibility=', cs.visibility, 't=', performance.now());
+        }
+        if (el.classList.contains('radio-button-label')) {
+          const cs = getComputedStyle(el);
+          console.log('🎞️ label transitionstart:', 'prop=', e.propertyName, 'bg=', cs.backgroundColor, 'color=', cs.color, 't=', performance.now(), 'label=', el.innerText?.trim());
+        }
+      }, true);
+
+      document.addEventListener('transitionend', (e) => {
+        const el = e.target;
+        if (!el || !(el instanceof Element)) return;
+        if (el.classList.contains('maj-key-column') || el.classList.contains('min-key-column')) {
+          const cs = getComputedStyle(el);
+          console.log('✅ transitionend:', el.className, 'prop=', e.propertyName, 'opacity=', cs.opacity, 'visibility=', cs.visibility, 't=', performance.now());
+        }
+        if (el.classList.contains('radio-button-label')) {
+          const cs = getComputedStyle(el);
+          console.log('✅ label transitionend:', 'prop=', e.propertyName, 'bg=', cs.backgroundColor, 'color=', cs.color, 't=', performance.now(), 'label=', el.innerText?.trim());
+        }
+      }, true);
+
+      // Watch for is-active class toggles in the key area (helps catch a “blink”)
+      const obsTargets = document.querySelectorAll('.key-button-wrapper, .key-radio-wrapper, .filter-list');
+      const mo = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+          if (m.type !== 'attributes') return;
+          const el = m.target;
+          if (!(el instanceof Element)) return;
+
+          // Only care about wrappers that might receive is-active
+          const isInteresting =
+            el.classList.contains('radio-wrapper') ||
+            el.classList.contains('w-radio') ||
+            el.classList.contains('maj-wrapper') ||
+            el.classList.contains('min-wrapper') ||
+            el.classList.contains('maj-min-wrapper');
+
+          if (!isInteresting) return;
+
+          if (m.attributeName === 'class') {
+            const hasActive = el.classList.contains('is-active');
+            const radio = el.querySelector('input[type="radio"]');
+            const label = el.querySelector('.radio-button-label');
+            const v = radio ? radio.getAttribute('data-filter-value') : null;
+            const kg = radio ? radio.getAttribute('data-key-group') : null;
+            const fg = radio ? radio.getAttribute('data-filter-group') : null;
+            console.log('🔍 class mutation:', { hasActive, fg, kg, v, label: label ? label.innerText.trim() : null, t: performance.now(), el });
+          }
+        });
+      });
+
+      obsTargets.forEach(t => {
+        try {
+          mo.observe(t, { attributes: true, subtree: true, attributeFilter: ['class'] });
+        } catch (err) {
+          console.log('⚠️ MutationObserver attach failed on', t, err);
+        }
+      });
+
+      // Quick snapshot helper (call from console: window.__dbgSnap())
+      window.__dbgSnap = function(label = 'snapshot') {
+        const majCol = document.querySelector('.maj-key-column');
+        const minCol = document.querySelector('.min-key-column');
+        const majCS = majCol ? getComputedStyle(majCol) : null;
+        const minCS = minCol ? getComputedStyle(minCol) : null;
+
+        const active = Array.from(document.querySelectorAll('.filter-list .is-active input[type="radio"]')).map(r => ({
+          fg: r.getAttribute('data-filter-group'),
+          kg: r.getAttribute('data-key-group'),
+          fv: r.getAttribute('data-filter-value'),
+          gk: r.getAttribute('data-generic-key'),
+          name: r.name
+        }));
+
+        console.log('📸 __dbgSnap:', label, {
+          maj: majCS ? { opacity: majCS.opacity, visibility: majCS.visibility, display: majCS.display } : null,
+          min: minCS ? { opacity: minCS.opacity, visibility: minCS.visibility, display: minCS.display } : null,
+          activeRadios: active,
+          t: performance.now()
+        });
+      };
+    }
     
     function createTag(input, labelText, radioName = null) {
       const tag = document.createElement('div');
@@ -1626,36 +1720,66 @@ function initDynamicTagging() {
     // SINGLE kEY FLASH REDUCER
 
     function forceRadioActiveNow(radio) {
-  if (!radio) return;
+      if (!radio) return;
 
-  const wrapper = radio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-wrapper.w-radio, .min-wrapper.w-radio, label');
-  const name = radio.name;
+      const wrapper = radio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-wrapper.w-radio, .min-wrapper.w-radio, label');
+      const name = radio.name;
 
-  // Clear active class from other radios in the same name group
-  document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach(r => {
-    const w = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
-    if (w) w.classList.remove('is-active');
-  });
+      // ✅ DEBUG: before force
+      try {
+        const wLabel = wrapper ? wrapper.querySelector('.radio-button-label') : null;
+        const cs = wLabel ? getComputedStyle(wLabel) : null;
+        console.log('🧩 forceRadioActiveNow BEFORE:', {
+          fv: radio.getAttribute('data-filter-value'),
+          kg: radio.getAttribute('data-key-group'),
+          fg: radio.getAttribute('data-filter-group'),
+          checked: radio.checked,
+          wrapperHasActive: wrapper ? wrapper.classList.contains('is-active') : null,
+          labelBg: cs ? cs.backgroundColor : null,
+          t: performance.now()
+        });
+      } catch (e) {}
 
-  // Set this one active immediately
-  if (wrapper) wrapper.classList.add('is-active');
+      // Clear active class from other radios in the same name group
+      document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach(r => {
+        const w = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+        if (w) w.classList.remove('is-active');
+      });
 
-  // Update tag immediately (so there’s no visual lag)
-  const labelEl =
-    (wrapper && wrapper.querySelector('.radio-button-label')) ||
-    (radio.closest('.w-radio') && radio.closest('.w-radio').querySelector('.radio-button-label'));
+      // Set this one active immediately
+      if (wrapper) wrapper.classList.add('is-active');
 
-  const labelText = labelEl ? labelEl.innerText.trim() : (radio.getAttribute('data-filter-value') || 'Filter');
+      // Update tag immediately (so there’s no visual lag)
+      const labelEl =
+        (wrapper && wrapper.querySelector('.radio-button-label')) ||
+        (radio.closest('.w-radio') && radio.closest('.w-radio').querySelector('.radio-button-label'));
 
-  // Remove any existing tag for this radio name
-  tagsContainer.querySelectorAll('.filter-tag').forEach(t => {
-    if (t.dataset.radioName === name) t.remove();
-  });
+      const labelText = labelEl ? labelEl.innerText.trim() : (radio.getAttribute('data-filter-value') || 'Filter');
 
-  const tag = createTag(radio, labelText);
-  tag.dataset.radioName = name;
-  tagsContainer.appendChild(tag);
-}
+      // Remove any existing tag for this radio name
+      tagsContainer.querySelectorAll('.filter-tag').forEach(t => {
+        if (t.dataset.radioName === name) t.remove();
+      });
+
+      const tag = createTag(radio, labelText);
+      tag.dataset.radioName = name;
+      tagsContainer.appendChild(tag);
+
+      // ✅ DEBUG: after force (next paint)
+      requestAnimationFrame(() => {
+        try {
+          const wLabel = wrapper ? wrapper.querySelector('.radio-button-label') : null;
+          const cs = wLabel ? getComputedStyle(wLabel) : null;
+          console.log('🧩 forceRadioActiveNow AFTER:', {
+            fv: radio.getAttribute('data-filter-value'),
+            checked: radio.checked,
+            wrapperHasActive: wrapper ? wrapper.classList.contains('is-active') : null,
+            labelBg: cs ? cs.backgroundColor : null,
+            t: performance.now()
+          });
+        } catch (e) {}
+      });
+    }
 
 
     // START OF RADIO SECTION
@@ -1763,9 +1887,8 @@ function initDynamicTagging() {
             (function carryOverKeySelection() {
               // Current selected single-key radio (must have data-filter-group="key" + data-filter-value)
               const currentSpecific = Array.from(document.querySelectorAll(
-              '.filter-list input[type="radio"][data-filter-value]:checked'
+                '.filter-list input[type="radio"][data-filter-value]:checked'
               )).find(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
-
 
               console.log('carryOver: currentSpecific found:', currentSpecific);
 
@@ -1790,10 +1913,9 @@ function initDynamicTagging() {
               const targetSuffix = keyGroup === 'major' ? 'maj' : 'min';
               console.log('carryOver: targetSuffix:', targetSuffix);
 
-             const allCandidates = Array.from(
-              document.querySelectorAll('.filter-list input[type="radio"][data-filter-value][data-generic-key]')
+              const allCandidates = Array.from(
+                document.querySelectorAll('.filter-list input[type="radio"][data-filter-value][data-generic-key]')
               ).filter(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
-
 
               console.log('carryOver: candidate count:', allCandidates.length);
               console.log('carryOver: candidates sample:', allCandidates.slice(0, 8).map(r => ({
@@ -1846,10 +1968,11 @@ function initDynamicTagging() {
               newTag.dataset.radioName = targetSpecific.name;
               tagsContainer.appendChild(newTag);
 
+              // ✅ Attempt immediate force (flash reducer)
               targetSpecific.checked = true;
               forceRadioActiveNow(targetSpecific);
               targetSpecific.dispatchEvent(new Event('change', { bubbles: true }));
-              })(); 
+            })();
 
             console.groupEnd();
             // ✅ DEBUG GROUP END
@@ -1922,6 +2045,7 @@ function initDynamicTagging() {
 
   }, 1000);
 }
+
 
 // KEY VISIBILITY TOGGLE
 
