@@ -1728,8 +1728,8 @@ function initDynamicTagging() {
             (function carryOverKeySelection() {
               // Current selected single-key radio (must have data-filter-group="key" + data-filter-value)
               const currentSpecific = Array.from(document.querySelectorAll(
-  '.filter-list input[type="radio"][data-filter-value]:checked'
-)).find(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
+              '.filter-list input[type="radio"][data-filter-value]:checked'
+              )).find(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
 
 
               console.log('carryOver: currentSpecific found:', currentSpecific);
@@ -1895,6 +1895,21 @@ function initKeyColumnToggle() {
   // If your key UI isn't on this page, safely bail
   if (!majBtn || !minBtn) return;
 
+  function withNoKeyFlash(scopeEl, fn) {
+    const wrap = (scopeEl && scopeEl.querySelector('.key-button-wrapper')) || document.querySelector('.key-button-wrapper');
+    if (!wrap) return fn();
+
+    wrap.classList.add('is-switching-keys');
+
+    fn();
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        wrap.classList.remove('is-switching-keys');
+      });
+    });
+  }
+
   function setColumnsInScope(scopeEl, mode) {
     if (!scopeEl) return;
 
@@ -1929,12 +1944,16 @@ function initKeyColumnToggle() {
 
   function showMajor(e) {
     const scope = getKeyScopeFromButton(e.currentTarget);
-    setColumnsInScope(scope, 'major');
+    withNoKeyFlash(scope, () => {
+      setColumnsInScope(scope, 'major');
+    });
   }
 
   function showMinor(e) {
     const scope = getKeyScopeFromButton(e.currentTarget);
-    setColumnsInScope(scope, 'minor');
+    withNoKeyFlash(scope, () => {
+      setColumnsInScope(scope, 'minor');
+    });
   }
 
   // Initial sync: look for whichever key mode input is checked
@@ -1945,9 +1964,13 @@ function initKeyColumnToggle() {
   const initScope = getKeyScopeFromButton(majBtn) || getKeyScopeFromButton(minBtn);
 
   if (checkedMinor && !checkedMajor) {
-    setColumnsInScope(initScope, 'minor');
+    withNoKeyFlash(initScope, () => {
+      setColumnsInScope(initScope, 'minor');
+    });
   } else {
-    setColumnsInScope(initScope, 'major'); // default
+    withNoKeyFlash(initScope, () => {
+      setColumnsInScope(initScope, 'major'); // default
+    });
   }
 
   // Bind clicks (only once — since you’re putting this in your filtersInitialized block)
@@ -1955,9 +1978,7 @@ function initKeyColumnToggle() {
   minBtn.addEventListener('click', showMinor);
 }
 
-
 // END OF KEY VISIBILITY TOGGLE
-
 
 function initMutualExclusion() {
   const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
