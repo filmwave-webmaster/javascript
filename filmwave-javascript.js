@@ -1567,6 +1567,10 @@ function initDynamicTagging() {
     
     const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
+
+    // ✅ DEBUG: confirm init + count
+    console.log('✅ initDynamicTagging: radioWrappers found =', radioWrappers.length);
+    window.__dbgKey = window.__dbgKey || { last: null };
     
     function createTag(input, labelText, radioName = null) {
       const tag = document.createElement('div');
@@ -1623,11 +1627,14 @@ function initDynamicTagging() {
     // --- RADIO LOGIC (updated to keep Major/Minor active until toggled off or opposite clicked) ---
 
     // 1) Detach Major/Minor from the native radio group so selecting Amaj/Cmin/etc won't uncheck them
-    // (Your Major/Minor inputs do NOT have data-filter-group="key", so we select by data-key-group only)
+    // ✅ FIX: your Major/Minor inputs do NOT have data-filter-group="key", so we select by data-key-group only
     const keyModeRadios = document.querySelectorAll(
       '.filter-list input[type="radio"][data-key-group="major"],' +
       '.filter-list input[type="radio"][data-key-group="minor"]'
     );
+
+    // ✅ DEBUG: see if we find those inputs
+    console.log('✅ keyModeRadios found =', keyModeRadios.length, keyModeRadios);
 
     keyModeRadios.forEach((r, i) => {
       if (!r.dataset.detachedFromGroup) {
@@ -1655,7 +1662,20 @@ function initDynamicTagging() {
         const labelText = label.innerText.trim();
         const radioName = radio.name;
 
-        // Major/Minor mode buttons:
+        // ✅ DEBUG: inspect where attributes actually live
+        const host = this.closest('[data-filter-group]') || this;
+        console.log('--- RADIO CLICK ---');
+        console.log('clicked wrapper:', this);
+        console.log('active host:', host);
+        console.log('data-filter-group (host):', host.getAttribute('data-filter-group'));
+        console.log('data-key-group (host):', host.getAttribute('data-key-group'));
+        console.log('data-key-group (input):', radio.getAttribute('data-key-group'));
+        console.log('data-filter-value (input):', radio.getAttribute('data-filter-value'));
+        console.log('data-generic-key (input):', radio.getAttribute('data-generic-key'));
+        console.log('radio.name:', radio.name);
+        console.log('radio.checked BEFORE:', radio.checked);
+
+        // ✅ Mode buttons:
         // - identified by data-key-group major/minor
         // - and they have NO data-filter-value
         const keyGroup = radio.getAttribute('data-key-group');
@@ -1664,7 +1684,13 @@ function initDynamicTagging() {
           (keyGroup === 'major' || keyGroup === 'minor') &&
           (filterValue === null || filterValue === '');
 
+        console.log('isKeyMode computed:', isKeyMode);
+
         setTimeout(() => {
+          // ✅ DEBUG: post-click state
+          console.log('radio.checked AFTER:', radio.checked);
+          console.log('wrapper classes AFTER:', (this.className || ''), ' | host classes:', (host.className || ''));
+
           // Toggle OFF on second click (your existing behavior)
           if (this.dataset.wasChecked === "true") {
             radio.checked = false;
@@ -1683,33 +1709,75 @@ function initDynamicTagging() {
           if (isKeyMode) {
             const otherGroup = keyGroup === 'major' ? 'minor' : 'major';
 
-            // ✅ NEW (fixed): Carry over selected specific key when switching Major/Minor
-            // If a specific key (like Gmaj) is selected and user switches to Minor,
-            // automatically select the equivalent (Gmin) that shares data-generic-key.
+            // ✅ DEBUG GROUP START
+            console.group('🔁 KEY MODE SWITCH');
+            console.log('Mode clicked (keyGroup):', keyGroup);
+            console.log('Opposite mode (otherGroup):', otherGroup);
+
+            // DEBUG: show all checked radios in key list (helps spot selector mismatches)
+            const checkedKeyRadios = Array.from(document.querySelectorAll('.filter-list input[type="radio"]:checked')).map(r => ({
+              name: r.name,
+              value: r.getAttribute('data-filter-value'),
+              keyGroup: r.getAttribute('data-key-group'),
+              generic: r.getAttribute('data-generic-key')
+            }));
+            console.log('All checked radios:', checkedKeyRadios);
+
+            // ✅ Carry-over selected specific key when switching Major/Minor
             (function carryOverKeySelection() {
-              // Current selected single-key radio (has data-filter-group="key" + data-filter-value)
+              // Current selected single-key radio (must have data-filter-group="key" + data-filter-value)
               const currentSpecific = document.querySelector(
                 '.filter-list input[type="radio"][data-filter-group="key"][data-filter-value]:checked'
               );
-              if (!currentSpecific) return;
+
+              console.log('carryOver: currentSpecific found:', currentSpecific);
+
+              if (!currentSpecific) {
+                console.log('carryOver: EXIT (no currentSpecific matched selector)');
+                return;
+              }
+
+              console.log('carryOver: currentSpecific data-filter-value:', currentSpecific.getAttribute('data-filter-value'));
+              console.log('carryOver: currentSpecific name:', currentSpecific.name);
+              console.log('carryOver: currentSpecific checked:', currentSpecific.checked);
 
               const generic = currentSpecific.getAttribute('data-generic-key');
-              if (!generic) return;
+              console.log('carryOver: generic key:', generic);
 
-              // IMPORTANT: target suffix should match the mode the user just selected (keyGroup),
-              // not the opposite.
+              if (!generic) {
+                console.log('carryOver: EXIT (currentSpecific has no data-generic-key)');
+                return;
+              }
+
+              // IMPORTANT: target suffix should match the mode the user just selected (keyGroup)
               const targetSuffix = keyGroup === 'major' ? 'maj' : 'min';
+              console.log('carryOver: targetSuffix:', targetSuffix);
 
-              // Find equivalent single-key in the selected mode using generic-key + suffix
-              const targetSpecific = Array.from(
+              const allCandidates = Array.from(
                 document.querySelectorAll('.filter-list input[type="radio"][data-filter-group="key"][data-filter-value][data-generic-key]')
-              ).find(r => {
+              );
+
+              console.log('carryOver: candidate count:', allCandidates.length);
+              console.log('carryOver: candidates sample:', allCandidates.slice(0, 8).map(r => ({
+                value: r.getAttribute('data-filter-value'),
+                generic: r.getAttribute('data-generic-key'),
+                checked: r.checked
+              })));
+
+              const targetSpecific = allCandidates.find(r => {
                 const gk = (r.getAttribute('data-generic-key') || '').toLowerCase();
                 const fv = (r.getAttribute('data-filter-value') || '').toLowerCase();
                 return gk === generic.toLowerCase() && fv.endsWith(targetSuffix);
               });
 
-              if (!targetSpecific || targetSpecific === currentSpecific) return;
+              console.log('carryOver: targetSpecific found:', targetSpecific);
+
+              if (!targetSpecific || targetSpecific === currentSpecific) {
+                console.log('carryOver: EXIT (no target found OR target is same as current)');
+                return;
+              }
+
+              console.log('carryOver: switching from', currentSpecific.getAttribute('data-filter-value'), 'to', targetSpecific.getAttribute('data-filter-value'));
 
               // Turn off old key visually + tag
               currentSpecific.checked = false;
@@ -1743,9 +1811,14 @@ function initDynamicTagging() {
               targetSpecific.dispatchEvent(new Event('change', { bubbles: true }));
             })();
 
+            console.groupEnd();
+            // ✅ DEBUG GROUP END
+
             const otherRadio = document.querySelector(
               `.filter-list input[type="radio"][data-key-group="${otherGroup}"]`
             );
+
+            console.log('otherRadio found:', otherRadio);
 
             if (otherRadio && otherRadio.checked) {
               otherRadio.checked = false;
@@ -1778,12 +1851,12 @@ function initDynamicTagging() {
           }
 
           // NORMAL RADIOS (unchanged behavior)
-          // Do not clear Major/Minor mode radios' is-active
+          // ✅ keep Major/Minor visually active
           document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
             const kg = r.getAttribute('data-key-group');
             const fv = r.getAttribute('data-filter-value');
             const isMode = (kg === 'major' || kg === 'minor') && (fv === null || fv === '');
-            if (isMode) return;
+            if (isMode) return; // keep Major/Minor visually active
 
             const otherWrapper = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
             if (otherWrapper) otherWrapper.classList.remove('is-active');
@@ -1809,6 +1882,7 @@ function initDynamicTagging() {
 
   }, 1000);
 }
+
 
 
 
