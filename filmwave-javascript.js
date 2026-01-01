@@ -1835,21 +1835,20 @@ filterInputs.forEach(input => {
     const value = input.getAttribute('data-filter-value');
     const keyGroup = input.getAttribute('data-key-group');
 
-    // ✅ NEW BIT (more robust detection — handles null/empty + ignores major/minor even if keyGroup exists)
+    // ✅ NEW BIT (robust specific-key detection)
     const hasValue = value !== null && value !== '';
-    const hasKeyGroup = keyGroup !== null && keyGroup !== '';
-    const keyGroupLower = hasKeyGroup ? keyGroup.toLowerCase() : null;
+    const keyGroupLower = keyGroup ? keyGroup.toLowerCase() : null;
 
-    // Detect if any specific key is selected (Amaj, Cmin, etc)
-    // i.e. group="key" and NOT keyGroup major/minor (those are the mode buttons)
-  if (group === 'key' && hasValue && keyGroupLower !== 'major' && keyGroupLower !== 'minor') {
-    hasSpecificKeySelected = true;
-  }
+    // Specific key = group "key" + has a filter value (Amaj/Cmin/etc)
+    // Major/minor mode = keyGroup is "major" or "minor"
+    if (group === 'key' && hasValue && keyGroupLower !== 'major' && keyGroupLower !== 'minor') {
+      hasSpecificKeySelected = true;
+    }
 
-  selectedFilters.push({
-    group: group,
-    value: value ? value.toLowerCase() : null,
-    keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+    selectedFilters.push({
+      group: group,
+      value: value ? value.toLowerCase() : null,
+      keyGroup: keyGroup ? keyGroup.toLowerCase() : null
     });
   }
 });
@@ -1866,6 +1865,7 @@ filterInputs.forEach(input => {
     }
   }
 }
+
 
   
   const visibleIds = g.MASTER_DATA.filter(record => {
