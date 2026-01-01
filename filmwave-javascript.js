@@ -1726,9 +1726,10 @@ function initDynamicTagging() {
             // ✅ Carry-over selected specific key when switching Major/Minor
             (function carryOverKeySelection() {
               // Current selected single-key radio (must have data-filter-group="key" + data-filter-value)
-              const currentSpecific = document.querySelector(
-                '.filter-list input[type="radio"][data-filter-group="key"][data-filter-value]:checked'
-              );
+              const currentSpecific = Array.from(document.querySelectorAll(
+  '.filter-list input[type="radio"][data-filter-value]:checked'
+)).find(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
+
 
               console.log('carryOver: currentSpecific found:', currentSpecific);
 
@@ -1753,9 +1754,10 @@ function initDynamicTagging() {
               const targetSuffix = keyGroup === 'major' ? 'maj' : 'min';
               console.log('carryOver: targetSuffix:', targetSuffix);
 
-              const allCandidates = Array.from(
-                document.querySelectorAll('.filter-list input[type="radio"][data-filter-group="key"][data-filter-value][data-generic-key]')
-              );
+             const allCandidates = Array.from(
+  document.querySelectorAll('.filter-list input[type="radio"][data-filter-value][data-generic-key]')
+).filter(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
+
 
               console.log('carryOver: candidate count:', allCandidates.length);
               console.log('carryOver: candidates sample:', allCandidates.slice(0, 8).map(r => ({
