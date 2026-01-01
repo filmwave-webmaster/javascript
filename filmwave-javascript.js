@@ -1820,7 +1820,7 @@ function initSearchAndFilters() {
   applyFilters();
 }
   
-function applyFilters() {
+ function applyFilters() {
   const g = window.musicPlayerPersistent;
   const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
   const keywords = query.split(/\s+/).filter(k => k.length > 0);
@@ -1835,20 +1835,16 @@ filterInputs.forEach(input => {
     const value = input.getAttribute('data-filter-value');
     const keyGroup = input.getAttribute('data-key-group');
 
-    // ✅ NEW BIT (robust specific-key detection)
-    const hasValue = value !== null && value !== '';
-    const keyGroupLower = keyGroup ? keyGroup.toLowerCase() : null;
+    // Detect if any specific key is selected (Amaj, Cmin, etc)
+    // ✅ Specific key = group="key" AND has a filter value
+  if (group === 'key' && value) {
+    hasSpecificKeySelected = true;
+  }
 
-    // Specific key = group "key" + has a filter value (Amaj/Cmin/etc)
-    // Major/minor mode = keyGroup is "major" or "minor"
-    if (group === 'key' && hasValue && keyGroupLower !== 'major' && keyGroupLower !== 'minor') {
-      hasSpecificKeySelected = true;
-    }
-
-    selectedFilters.push({
-      group: group,
-      value: value ? value.toLowerCase() : null,
-      keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+  selectedFilters.push({
+    group: group,
+    value: value ? value.toLowerCase() : null,
+    keyGroup: keyGroup ? keyGroup.toLowerCase() : null
     });
   }
 });
@@ -1859,12 +1855,14 @@ filterInputs.forEach(input => {
   for (let i = selectedFilters.length - 1; i >= 0; i--) {
     if (
       selectedFilters[i].group === 'key' &&
-      (selectedFilters[i].keyGroup === 'major' || selectedFilters[i].keyGroup === 'minor')
+      (selectedFilters[i].keyGroup === 'major' || selectedFilters[i].keyGroup === 'minor') &&
+      !selectedFilters[i].value // ✅ only remove the mode buttons (they should have no data-filter-value)
     ) {
       selectedFilters.splice(i, 1);
     }
   }
 }
+
 
 
   
