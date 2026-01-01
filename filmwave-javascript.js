@@ -1505,32 +1505,122 @@ document.addEventListener('keydown', function (e) {
  * ============================================================
  */
 
-// START ACCIDENTAL COLUMNS
+/**
+ * ============================================================
+ * KEY STATE (ONE SOURCE OF TRUTH)
+ * ============================================================
+ */
+
+const KEY_STATE_STORAGE = 'fw_key_state_v1';
+
+function getKeyState() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY_STATE_STORAGE)) || {
+      accidental: 'sharp', // 'sharp' | 'flat'
+      mode: 'maj',         // 'maj' | 'min'
+      generic: null        // e.g. 'F2'
+    };
+  } catch (e) {
+    return { accidental: 'sharp', mode: 'maj', generic: null };
+  }
+}
+
+function setKeyState(patch) {
+  const next = { ...getKeyState(), ...patch };
+  localStorage.setItem(KEY_STATE_STORAGE, JSON.stringify(next));
+  return next;
+}
+
+function isSpecificKeyRadio(radio) {
+  return !!(radio && radio.matches('input[type="radio"][data-filter-value][data-generic-key]'));
+}
+
+function suffixFromFilterValue(filterValue) {
+  const fv = (filterValue || '').toLowerCase();
+  if (fv.endsWith('maj')) return 'maj';
+  if (fv.endsWith('min')) return 'min';
+  return null;
+}
+
+function clearAllKeyRadios() {
+  const all = document.querySelectorAll(
+    '.sharp-key-column input[type="radio"], .flat-key-column input[type="radio"]'
+  );
+
+  all.forEach(r => {
+    if (isSpecificKeyRadio(r) || r.hasAttribute('data-key-group')) {
+      r.checked = false;
+      const w = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+      if (w) w.classList.remove('is-active');
+    }
+  });
+}
+
+function findKeyRadio({ accidental, mode, generic }) {
+  if (!generic) return null;
+
+  const col = document.querySelector(accidental === 'flat' ? '.flat-key-column' : '.sharp-key-column');
+  if (!col) return null;
+
+  const candidates = Array.from(
+    col.querySelectorAll(`input[type="radio"][data-filter-value][data-generic-key="${CSS.escape(generic)}"]`)
+  );
+
+  if (!candidates.length) return null;
+
+  // Prefer the one that matches current maj/min
+  return candidates.find(r => suffixFromFilterValue(r.getAttribute('data-filter-value')) === mode) || candidates[0] || null;
+}
+
+function applyKeyState() {
+  const st = getKeyState();
+
+  // Prevent “ghost” active styles by hard-resetting both columns
+  clearAllKeyRadios();
+
+  // Re-check the specific key for the currently visible column
+  const specific = findKeyRadio(st);
+  if (specific) {
+    specific.checked = true;
+    const w = specific.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+    if (w) w.classList.add('is-active');
+    specific.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Re-check key mode radio if present (Major/Minor pill)
+  const modeRadio = document.querySelector(
+    `.filter-list input[type="radio"][data-key-group="${st.mode === 'maj' ? 'major' : 'minor'}"]`
+  );
+  if (modeRadio) {
+    modeRadio.checked = true;
+    const w = modeRadio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+    if (w) w.classList.add('is-active');
+    modeRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+/**
+ * ============================================================
+ * SHARP / FLAT (ACCIDENTAL) COLUMNS
+ * ============================================================
+ */
 
 function setAccidentalColumns(mode) {
   const sharpCol = document.querySelector('.sharp-key-column');
   const flatCol  = document.querySelector('.flat-key-column');
   if (!sharpCol || !flatCol) return;
 
-  if (mode === 'sharp') {
-    sharpCol.style.display = 'block';
-    flatCol.style.display = 'none';
+  setKeyState({ accidental: mode });
 
-    // disable hidden inputs (prevents filtering + tag duplication)
-    flatCol.querySelectorAll('input').forEach(i => i.disabled = true);
-    sharpCol.querySelectorAll('input').forEach(i => i.disabled = false);
-  } else {
-    sharpCol.style.display = 'none';
-    flatCol.style.display = 'block';
+  const show = (el) => { el.style.display = 'block'; el.querySelectorAll('input').forEach(i => i.disabled = false); };
+  const hide = (el) => { el.style.display = 'none';  el.querySelectorAll('input').forEach(i => i.disabled = true);  };
 
-    sharpCol.querySelectorAll('input').forEach(i => i.disabled = true);
-    flatCol.querySelectorAll('input').forEach(i => i.disabled = false);
-  }
+  if (mode === 'flat') { hide(sharpCol); show(flatCol); }
+  else { show(sharpCol); hide(flatCol); }
+
+  // Critical: keep a single canonical key selected after swapping columns
+  applyKeyState();
 }
-
-// END ACCIDENTAL COLUMNS
-
-// START FLAT/SHARP TOGGLE
 
 function initSharpFlatToggle() {
   const toggles = document.querySelectorAll('.sharp-flat-toggle');
@@ -1539,27 +1629,31 @@ function initSharpFlatToggle() {
   toggles[0].addEventListener('click', () => setAccidentalColumns('sharp'));
   toggles[1].addEventListener('click', () => setAccidentalColumns('flat'));
 
-  setAccidentalColumns('sharp'); // default
+  setAccidentalColumns(getKeyState().accidental || 'sharp');
 }
 
-// END FLAT SHARP TOGGLE
+/**
+ * ============================================================
+ * FILTER ACCORDIONS
+ * ============================================================
+ */
 
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    header.addEventListener('click', function() {
+    header.addEventListener('click', function () {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
-      
+
       document.querySelectorAll('.filter-list').forEach(list => {
         list.style.maxHeight = '0px';
         list.classList.remove('open');
       });
-      
+
       document.querySelectorAll('.arrow-icon').forEach(arr => {
         arr.style.transform = 'rotate(0deg)';
       });
-      
+
       if (!isOpen) {
         const actualHeight = Math.min(content.scrollHeight, 300);
         content.style.maxHeight = actualHeight + 'px';
@@ -1570,228 +1664,129 @@ function initFilterAccordions() {
   });
 }
 
+/**
+ * ============================================================
+ * CHECKBOX VISUAL HELPERS
+ * ============================================================
+ */
+
 function initCheckboxTextColor() {
   document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
+    checkbox.addEventListener('change', function () {
       const label = this.parentElement.querySelector('.w-form-label');
-      if (label) {
-        label.style.color = this.checked ? '#191919' : '';
-      }
+      if (label) label.style.color = this.checked ? '#191919' : '';
     });
   });
 }
 
 function initFilterItemBackground() {
-  setTimeout(function() {
+  setTimeout(() => {
     let checkboxes = document.querySelectorAll('.checkbox-wrapper input[type="checkbox"]');
-    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
-    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    
+    if (!checkboxes.length) checkboxes = document.querySelectorAll('.checkbox-include input');
+    if (!checkboxes.length) checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
+      checkbox.addEventListener('change', function () {
         const filterItem = this.closest('.filter-item');
-        if (filterItem) {
-          if (this.checked) {
-            filterItem.classList.add('is-selected');
-          } else {
-            filterItem.classList.remove('is-selected');
-          }
-        }
+        if (!filterItem) return;
+        filterItem.classList.toggle('is-selected', !!this.checked);
       });
     });
   }, 100);
 }
 
+/**
+ * ============================================================
+ * TAGGING + RADIOS
+ * ============================================================
+ */
+
 function initDynamicTagging() {
-  setTimeout(function() {
+  setTimeout(() => {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
 
-    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
-    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
+    const checkboxes = document.querySelectorAll(
+      '.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]'
+    );
 
-    // ✅ DEBUG: confirm init + count
+    const radioWrappers = document.querySelectorAll(
+      '.filter-list label.radio-wrapper, .filter-list .w-radio'
+    );
+
+    // ----------------------------
+    // OPTIONAL DEBUG (turn off later)
+    // ----------------------------
     console.log('✅ initDynamicTagging: radioWrappers found =', radioWrappers.length);
 
-    // ------------------------------------------------------------
-    // FLASH DIAGNOSTICS (already useful — keep)
-    // ------------------------------------------------------------
-    if (!window.__dbgFlashAttached) {
-      window.__dbgFlashAttached = true;
-      console.log('🧪 DBG: Flash diagnostics ATTACHED');
+    // ----------------------------
+    // Tag helper
+    // ----------------------------
+    function createTag(input, labelText, radioName = null) {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      if (radioName) tag.dataset.radioName = radioName;
 
-      document.addEventListener('transitionstart', (e) => {
-        const el = e.target;
-        // Only log transitions for key labels / key columns to reduce noise
-        const isKeyLabel = el && el.classList && el.classList.contains('radio-button-label');
-        const isKeyColumn = el && el.classList && (el.classList.contains('maj-key-column') || el.classList.contains('min-key-column'));
-        if (!isKeyLabel && !isKeyColumn) return;
-
-        const cs = getComputedStyle(el);
-        const labelText = (el.innerText || el.textContent || '').trim().slice(0, 30);
-        console.log(
-          `🟨 transitionstart: ${el.className} prop=${e.propertyName}`,
-          `bg=${cs.backgroundColor}`,
-          `color=${cs.color}`,
-          `t=${performance.now().toFixed(2)}`,
-          `label=${labelText || '(no text)'}`
-        );
-      }, true);
-
-      document.addEventListener('transitionend', (e) => {
-        const el = e.target;
-        const isKeyLabel = el && el.classList && el.classList.contains('radio-button-label');
-        const isKeyColumn = el && el.classList && (el.classList.contains('maj-key-column') || el.classList.contains('min-key-column'));
-        if (!isKeyLabel && !isKeyColumn) return;
-
-        const cs = getComputedStyle(el);
-        const labelText = (el.innerText || el.textContent || '').trim().slice(0, 30);
-        console.log(
-          `🟩 transitionend: ${el.className} prop=${e.propertyName}`,
-          `bg=${cs.backgroundColor}`,
-          `color=${cs.color}`,
-          `t=${performance.now().toFixed(2)}`,
-          `label=${labelText || '(no text)'}`
-        );
-      }, true);
-    }
-
-    // ------------------------------------------------------------
-    // Helper: temporarily disable transitions *only* in key scope
-    // ------------------------------------------------------------
-    function withNoKeyTransitions(scopeEl, fn, dbgLabel = '') {
-      const scope = scopeEl || document.querySelector('.key-radio-wrapper') || document.querySelector('.key-button-wrapper');
-      if (!scope) {
-        // fallback: run anyway (but we won’t be able to suppress)
-        console.warn('⚠️ withNoKeyTransitions: no scope found, running without suppression', dbgLabel);
-        fn();
-        return;
+      if (input && input.type === 'radio' && input.getAttribute('data-filter-value')) {
+        tag.setAttribute('data-filter-value', input.getAttribute('data-filter-value'));
       }
 
-      scope.classList.add('no-key-transitions');
-      console.log('🧊 no-key-transitions ON', dbgLabel, scope);
+      tag.innerHTML = `
+        <span class="filter-tag-text">${labelText}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
 
-      // Force style flush so the "transition: none" takes effect immediately
-      void scope.offsetHeight;
+      tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+        input.checked = false;
+        const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper, label');
+        if (wrapper) wrapper.classList.remove('is-active');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        tag.remove();
+      });
 
-      fn();
+      return tag;
+    }
 
-      // Remove after next paint (double rAF = safest)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          scope.classList.remove('no-key-transitions');
-          console.log('🔥 no-key-transitions OFF', dbgLabel, scope);
-        });
+    function removeTagByRadioName(radioName) {
+      tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
+        if (tag.dataset.radioName === radioName) tag.remove();
       });
     }
 
-   function createTag(input, labelText, radioName = null) {
-  const tag = document.createElement('div');
-  tag.className = 'filter-tag';
-
-  // keep your existing radioName tagging
-  if (radioName) tag.dataset.radioName = radioName;
-
-  // ✅ NEW: if this tag came from a radio that has data-filter-value, copy it onto the tag
-  if (
-    input &&
-    input.type === 'radio' &&
-    input.hasAttribute('data-filter-value') &&
-    input.getAttribute('data-filter-value')
-  ) {
-    tag.setAttribute('data-filter-value', input.getAttribute('data-filter-value'));
-  }
-
-  tag.innerHTML = `
-    <span class="filter-tag-text">${labelText}</span>
-    <span class="filter-tag-remove x-button-style">×</span>
-  `;
-
-  tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-    input.checked = false;
-    const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
-    if (wrapper) wrapper.classList.remove('is-active');
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    tag.remove();
-  });
-
-  return tag;
-}
+    // ----------------------------
+    // CHECKBOXES => TAGS
+    // ----------------------------
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        let label;
+      checkbox.addEventListener('change', function () {
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
 
+        let labelEl;
         if (this.closest('.checkbox-single-select-wrapper')) {
-          label = this.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
+          labelEl = this.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
         } else {
-          label = wrapper?.querySelector('.w-form-label, .filter-text');
+          labelEl = wrapper?.querySelector('.w-form-label, .filter-text');
         }
 
-        const labelText = label ? label.textContent.trim() : 'Filter';
+        const labelText = labelEl ? labelEl.textContent.trim() : 'Filter';
 
         if (this.checked) {
           if (wrapper) wrapper.classList.add('is-active');
-          const tag = createTag(this, labelText);
-          tagsContainer.appendChild(tag);
+          tagsContainer.appendChild(createTag(this, labelText));
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
-          const tags = tagsContainer.querySelectorAll('.filter-tag');
-          tags.forEach(tag => {
-            if (tag.querySelector('.filter-tag-text').textContent === labelText) {
-              tag.remove();
-            }
+          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
+            if (tag.querySelector('.filter-tag-text')?.textContent === labelText) tag.remove();
           });
         }
       });
     });
 
-    // ------------------------------------------------------------
-    // SINGLE KEY FLASH REDUCER
-    // ------------------------------------------------------------
-    function forceRadioActiveNow(radio) {
-      if (!radio) return;
-
-      const wrapper = radio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-wrapper.w-radio, .min-wrapper.w-radio, label');
-      const name = radio.name;
-
-      // Clear active class from other radios in the same name group
-      document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach(r => {
-        const w = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
-        if (w) w.classList.remove('is-active');
-      });
-
-      // Set this one active immediately
-      if (wrapper) wrapper.classList.add('is-active');
-
-      // Update tag immediately
-      const labelEl =
-        (wrapper && wrapper.querySelector('.radio-button-label')) ||
-        (radio.closest('.w-radio') && radio.closest('.w-radio').querySelector('.radio-button-label'));
-
-      const labelText = labelEl ? labelEl.innerText.trim() : (radio.getAttribute('data-filter-value') || 'Filter');
-
-      // Remove any existing tag for this radio name
-      tagsContainer.querySelectorAll('.filter-tag').forEach(t => {
-        if (t.dataset.radioName === name) t.remove();
-      });
-
-      const tag = createTag(radio, labelText);
-      tag.dataset.radioName = name;
-      tagsContainer.appendChild(tag);
-    }
-
-    // ------------------------------------------------------------
-    // RADIO SECTION
-    // ------------------------------------------------------------
-
-    // 1) Detach Major/Minor from the native radio group so selecting Amaj/Cmin/etc won't uncheck them
+    // ----------------------------
+    // KEY MODE RADIOS: detach name so they don't get unchecked by specific keys
+    // ----------------------------
     const keyModeRadios = document.querySelectorAll(
-      '.filter-list input[type="radio"][data-key-group="major"],' +
-      '.filter-list input[type="radio"][data-key-group="minor"]'
+      '.filter-list input[type="radio"][data-key-group="major"], .filter-list input[type="radio"][data-key-group="minor"]'
     );
-
-    console.log('✅ keyModeRadios found =', keyModeRadios.length, keyModeRadios);
 
     keyModeRadios.forEach((r, i) => {
       if (!r.dataset.detachedFromGroup) {
@@ -1801,16 +1796,21 @@ function initDynamicTagging() {
       }
     });
 
-    // Track if it was already checked
+    // ----------------------------
+    // Track "was checked" to support toggle-off behavior
+    // ----------------------------
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
+      wrapper.addEventListener('mousedown', function () {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
     });
 
+    // ----------------------------
+    // RADIOS => TAGS (+ KEY STATE)
+    // ----------------------------
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('click', function() {
+      wrapper.addEventListener('click', function () {
         const radio = this.querySelector('input[type="radio"]');
         const label = this.querySelector('.radio-button-label');
         if (!radio || !label) return;
@@ -1818,194 +1818,81 @@ function initDynamicTagging() {
         const labelText = label.innerText.trim();
         const radioName = radio.name;
 
-        const host = this.closest('[data-filter-group]') || this;
+        const keyGroup = radio.getAttribute('data-key-group');       // 'major' | 'minor' | null
+        const filterValue = radio.getAttribute('data-filter-value'); // specific keys have this, mode radios usually don't
 
-        console.log('--- RADIO CLICK ---');
-        console.log('clicked wrapper:', this);
-        console.log('active host:', host);
-        console.log('data-filter-group (host):', host.getAttribute('data-filter-group'));
-        console.log('data-key-group (host):', host.getAttribute('data-key-group'));
-        console.log('data-key-group (input):', radio.getAttribute('data-key-group'));
-        console.log('data-filter-value (input):', radio.getAttribute('data-filter-value'));
-        console.log('data-generic-key (input):', radio.getAttribute('data-generic-key'));
-        console.log('radio.name:', radio.name);
-        console.log('radio.checked BEFORE:', radio.checked);
-
-        const keyGroup = radio.getAttribute('data-key-group');
-        const filterValue = radio.getAttribute('data-filter-value');
         const isKeyMode =
           (keyGroup === 'major' || keyGroup === 'minor') &&
           (filterValue === null || filterValue === '');
 
-        console.log('isKeyMode computed:', isKeyMode);
-
+        // Let Webflow finish its native click work, then we correct/augment
         setTimeout(() => {
-          console.log('radio.checked AFTER:', radio.checked);
-          console.log('wrapper classes AFTER:', (this.className || ''), ' | host classes:', (host.className || ''));
-
           // Toggle OFF on second click
-          if (this.dataset.wasChecked === "true") {
+          if (this.dataset.wasChecked === 'true') {
             radio.checked = false;
             this.classList.remove('is-active');
-
-            tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-              if (tag.dataset.radioName === radioName) tag.remove();
-            });
-
+            removeTagByRadioName(radioName);
             radio.dispatchEvent(new Event('change', { bubbles: true }));
             return;
           }
 
-          // KEY MODE SWITCH
+          // 1) KEY MODE SWITCH (Major/Minor pills)
           if (isKeyMode) {
+            const nextMode = keyGroup === 'major' ? 'maj' : 'min';
+            setKeyState({ mode: nextMode });
+
+            // Keep the opposite mode visually off (safety)
             const otherGroup = keyGroup === 'major' ? 'minor' : 'major';
-
-            console.group('🔁 KEY MODE SWITCH');
-            console.log('Mode clicked (keyGroup):', keyGroup);
-            console.log('Opposite mode (otherGroup):', otherGroup);
-
-            const checkedKeyRadios = Array.from(document.querySelectorAll('.filter-list input[type="radio"]:checked')).map(r => ({
-              name: r.name,
-              value: r.getAttribute('data-filter-value'),
-              keyGroup: r.getAttribute('data-key-group'),
-              generic: r.getAttribute('data-generic-key')
-            }));
-            console.log('All checked radios:', checkedKeyRadios);
-
-            // ✅ Carry-over selected specific key when switching Major/Minor
-            (function carryOverKeySelection() {
-              const currentSpecific = Array.from(document.querySelectorAll(
-                '.filter-list input[type="radio"][data-filter-value]:checked'
-              )).find(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
-
-              console.log('carryOver: currentSpecific found:', currentSpecific);
-
-              if (!currentSpecific) {
-                console.log('carryOver: EXIT (no currentSpecific matched selector)');
-                return;
-              }
-
-              const keyScope =
-                currentSpecific.closest('.key-radio-wrapper') ||
-                currentSpecific.closest('.key-button-wrapper') ||
-                document.querySelector('.key-radio-wrapper') ||
-                document.querySelector('.key-button-wrapper');
-
-              console.log('carryOver: scope used for transition suppression:', keyScope);
-
-              const generic = currentSpecific.getAttribute('data-generic-key');
-              console.log('carryOver: generic key:', generic);
-
-              if (!generic) {
-                console.log('carryOver: EXIT (currentSpecific has no data-generic-key)');
-                return;
-              }
-
-              const targetSuffix = keyGroup === 'major' ? 'maj' : 'min';
-              console.log('carryOver: targetSuffix:', targetSuffix);
-
-              const allCandidates = Array.from(
-                document.querySelectorAll('.filter-list input[type="radio"][data-filter-value][data-generic-key]')
-              ).filter(r => ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key'));
-
-              const targetSpecific = allCandidates.find(r => {
-                const gk = (r.getAttribute('data-generic-key') || '').toLowerCase();
-                const fv = (r.getAttribute('data-filter-value') || '').toLowerCase();
-                return gk === generic.toLowerCase() && fv.endsWith(targetSuffix);
-              });
-
-              console.log('carryOver: targetSpecific found:', targetSpecific);
-
-              if (!targetSpecific || targetSpecific === currentSpecific) {
-                console.log('carryOver: EXIT (no target found OR target is same as current)');
-                return;
-              }
-
-              console.log('carryOver: switching from', currentSpecific.getAttribute('data-filter-value'), 'to', targetSpecific.getAttribute('data-filter-value'));
-
-              // ✅ This is the key fix:
-              // Temporarily kill transitions inside Key scope so the “active label” doesn’t animate/flash
-              withNoKeyTransitions(keyScope, () => {
-                // Turn off old key visually + tag
-                currentSpecific.checked = false;
-                const curWrap = currentSpecific.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
-                if (curWrap) curWrap.classList.remove('is-active');
-
-                tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-                  if (tag.dataset.radioName === currentSpecific.name) tag.remove();
-                });
-
-                currentSpecific.dispatchEvent(new Event('change', { bubbles: true }));
-
-                // Turn on new key visually + tag (instant)
-                targetSpecific.checked = true;
-                forceRadioActiveNow(targetSpecific); // sets wrapper class + tag immediately
-
-                // Still bubble change for your filtering logic
-                targetSpecific.dispatchEvent(new Event('change', { bubbles: true }));
-              }, `carryOver ${currentSpecific.getAttribute('data-filter-value')} -> ${targetSpecific.getAttribute('data-filter-value')}`);
-            })();
-
-            console.groupEnd();
-
-            // Turn OFF opposite Major/Minor mode (only between these two)
             const otherRadio = document.querySelector(`.filter-list input[type="radio"][data-key-group="${otherGroup}"]`);
-            console.log('otherRadio found:', otherRadio);
-
-            if (otherRadio && otherRadio.checked) {
+            if (otherRadio) {
               otherRadio.checked = false;
-
-              const otherWrapper = otherRadio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
-              if (otherWrapper) otherWrapper.classList.remove('is-active');
-
-              tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-                if (tag.dataset.radioName === otherRadio.name) tag.remove();
-              });
-
+              const otherWrap = otherRadio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+              if (otherWrap) otherWrap.classList.remove('is-active');
+              removeTagByRadioName(otherRadio.name);
               otherRadio.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
-            // Turn this mode ON visually + tag
+            // Mark this mode active + tag
             this.classList.add('is-active');
-
-            tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-              if (tag.dataset.radioName === radioName) tag.remove();
-            });
-
-            const tag = createTag(radio, labelText);
-            tag.dataset.radioName = radioName;
+            removeTagByRadioName(radioName);
+            const tag = createTag(radio, labelText, radioName);
             tagsContainer.appendChild(tag);
 
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
+            // ✅ Re-apply canonical key selection for the new mode (fixes wonky/ghost UI)
+            applyKeyState();
             return;
           }
 
-          // NORMAL RADIOS (unchanged behavior)
+          // 2) SPECIFIC KEY RADIO (Amaj, F#min, etc) => persist across modes + sharp/flat
+          if (isSpecificKeyRadio(radio)) {
+            const generic = radio.getAttribute('data-generic-key');
+            const mode = suffixFromFilterValue(filterValue) || getKeyState().mode;
+            const accidental = radio.closest('.flat-key-column') ? 'flat' : 'sharp';
+            setKeyState({ generic, mode, accidental });
+          }
+
+          // 3) NORMAL RADIO (all other groups): keep existing behavior
           document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+            // don't disturb the Major/Minor mode radios
             const kg = r.getAttribute('data-key-group');
             const fv = r.getAttribute('data-filter-value');
             const isMode = (kg === 'major' || kg === 'minor') && (fv === null || fv === '');
             if (isMode) return;
 
-            const otherWrapper = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper');
-            if (otherWrapper) otherWrapper.classList.remove('is-active');
+            const otherWrap = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+            if (otherWrap) otherWrap.classList.remove('is-active');
           });
 
           this.classList.add('is-active');
 
-          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-            if (tag.dataset.radioName === radioName) tag.remove();
-          });
-
-          const tag = createTag(radio, labelText);
-          tag.dataset.radioName = radioName;
+          removeTagByRadioName(radioName);
+          const tag = createTag(radio, labelText, radioName);
           tagsContainer.appendChild(tag);
 
           radio.dispatchEvent(new Event('change', { bubbles: true }));
         }, 50);
       });
     });
-
   }, 1000);
 }
 
