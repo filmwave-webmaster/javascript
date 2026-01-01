@@ -195,6 +195,7 @@ async function initMusicPage() {
       initDynamicTagging();
       initMutualExclusion();
       initSearchAndFilters();
+      initSharpFlatToggle();
       initKeyColumnToggle();
       g.filtersInitialized = true;
     }
@@ -1503,6 +1504,60 @@ document.addEventListener('keydown', function (e) {
  * FILTER HELPERS
  * ============================================================
  */
+
+// START ACCIDENTAL COLUMNS
+
+function setAccidentalColumns(mode) {
+  const scope = document.querySelector('.sharp-flat-toggle-wrapper');
+  if (!scope) return;
+
+  const sharpCol = scope.querySelector('.sharp-key-column');
+  const flatCol  = scope.querySelector('.flat-key-column');
+  if (!sharpCol || !flatCol) return;
+
+  const show = (col) => {
+    col.style.opacity = '1';
+    col.style.visibility = 'visible';
+    col.style.pointerEvents = 'auto';
+    col.querySelectorAll('input').forEach(i => i.disabled = false);
+  };
+
+  const hide = (col) => {
+    col.style.opacity = '0';
+    col.style.visibility = 'hidden';
+    col.style.pointerEvents = 'none';
+    col.querySelectorAll('input').forEach(i => i.disabled = true);
+  };
+
+  if (mode === 'sharp') {
+    show(sharpCol);
+    hide(flatCol);
+  } else {
+    hide(sharpCol);
+    show(flatCol);
+  }
+}
+
+// END ACCIDENTAL COLUMNS
+
+// START FLAT/SHARP TOGGLE
+
+function initSharpFlatToggle() {
+  const scope = document.querySelector('.sharp-flat-toggle-wrapper');
+  if (!scope) return;
+
+  const toggles = scope.querySelectorAll('.sharp-flat-toggle');
+  if (toggles.length < 2) return;
+
+  toggles[0].addEventListener('click', () => setAccidentalColumns('sharp'));
+  toggles[1].addEventListener('click', () => setAccidentalColumns('flat'));
+
+  // default
+  setAccidentalColumns('sharp');
+}
+
+// END FLAT SHARP TOGGLE
+
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
     header.addEventListener('click', function() {
