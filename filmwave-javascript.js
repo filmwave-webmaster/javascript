@@ -1889,39 +1889,72 @@ function initDynamicTagging() {
 // KEY VISIBILITY TOGGLE
 
 function initKeyColumnToggle() {
-  const majCol = document.querySelector('.maj-key-column');
-  const minCol = document.querySelector('.min-key-column');
   const majBtn = document.querySelector('.maj-wrapper');
   const minBtn = document.querySelector('.min-wrapper');
 
-  if (!majCol || !minCol || !majBtn || !minBtn) return;
+  // If your key UI isn't on this page, safely bail
+  if (!majBtn || !minBtn) return;
 
-  function showMajor() {
-    majCol.style.opacity = '1';
-    majCol.style.visibility = 'visible';
-    majCol.style.pointerEvents = 'auto';
+  function setColumnsInScope(scopeEl, mode) {
+    if (!scopeEl) return;
 
-    minCol.style.opacity = '0';
-    minCol.style.visibility = 'hidden';
-    minCol.style.pointerEvents = 'none';
+    const majCol = scopeEl.querySelector('.maj-key-column');
+    const minCol = scopeEl.querySelector('.min-key-column');
+
+    if (!majCol || !minCol) return;
+
+    if (mode === 'major') {
+      majCol.style.opacity = '1';
+      majCol.style.visibility = 'visible';
+      majCol.style.pointerEvents = 'auto';
+
+      minCol.style.opacity = '0';
+      minCol.style.visibility = 'hidden';
+      minCol.style.pointerEvents = 'none';
+    } else {
+      majCol.style.opacity = '0';
+      majCol.style.visibility = 'hidden';
+      majCol.style.pointerEvents = 'none';
+
+      minCol.style.opacity = '1';
+      minCol.style.visibility = 'visible';
+      minCol.style.pointerEvents = 'auto';
+    }
   }
 
-  function showMinor() {
-    majCol.style.opacity = '0';
-    majCol.style.visibility = 'hidden';
-    majCol.style.pointerEvents = 'none';
-
-    minCol.style.opacity = '1';
-    minCol.style.visibility = 'visible';
-    minCol.style.pointerEvents = 'auto';
+  function getKeyScopeFromButton(btnEl) {
+    // Based on your screenshot: Key UI lives inside .key-radio-wrapper
+    return btnEl.closest('.key-radio-wrapper') || btnEl.parentElement;
   }
 
-  // Initial state
-  showMajor();
+  function showMajor(e) {
+    const scope = getKeyScopeFromButton(e.currentTarget);
+    setColumnsInScope(scope, 'major');
+  }
 
+  function showMinor(e) {
+    const scope = getKeyScopeFromButton(e.currentTarget);
+    setColumnsInScope(scope, 'minor');
+  }
+
+  // Initial sync: look for whichever key mode input is checked
+  const checkedMajor = document.querySelector('input[type="radio"][data-key-group="major"]:checked');
+  const checkedMinor = document.querySelector('input[type="radio"][data-key-group="minor"]:checked');
+
+  // Pick a scope to initialize (use whichever button exists)
+  const initScope = getKeyScopeFromButton(majBtn) || getKeyScopeFromButton(minBtn);
+
+  if (checkedMinor && !checkedMajor) {
+    setColumnsInScope(initScope, 'minor');
+  } else {
+    setColumnsInScope(initScope, 'major'); // default
+  }
+
+  // Bind clicks (only once — since you’re putting this in your filtersInitialized block)
   majBtn.addEventListener('click', showMajor);
   minBtn.addEventListener('click', showMinor);
 }
+
 
 // END OF KEY VISIBILITY TOGGLE
 
