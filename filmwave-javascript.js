@@ -1623,6 +1623,41 @@ function initDynamicTagging() {
       });
     });
 
+    // SINGLE kEY FLASH REDUCER
+
+    function forceRadioActiveNow(radio) {
+  if (!radio) return;
+
+  const wrapper = radio.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-wrapper.w-radio, .min-wrapper.w-radio, label');
+  const name = radio.name;
+
+  // Clear active class from other radios in the same name group
+  document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach(r => {
+    const w = r.closest('.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, label');
+    if (w) w.classList.remove('is-active');
+  });
+
+  // Set this one active immediately
+  if (wrapper) wrapper.classList.add('is-active');
+
+  // Update tag immediately (so there’s no visual lag)
+  const labelEl =
+    (wrapper && wrapper.querySelector('.radio-button-label')) ||
+    (radio.closest('.w-radio') && radio.closest('.w-radio').querySelector('.radio-button-label'));
+
+  const labelText = labelEl ? labelEl.innerText.trim() : (radio.getAttribute('data-filter-value') || 'Filter');
+
+  // Remove any existing tag for this radio name
+  tagsContainer.querySelectorAll('.filter-tag').forEach(t => {
+    if (t.dataset.radioName === name) t.remove();
+  });
+
+  const tag = createTag(radio, labelText);
+  tag.dataset.radioName = name;
+  tagsContainer.appendChild(tag);
+}
+
+
     // START OF RADIO SECTION
     
     // --- RADIO LOGIC (updated to keep Major/Minor active until toggled off or opposite clicked) ---
@@ -1811,8 +1846,10 @@ function initDynamicTagging() {
               newTag.dataset.radioName = targetSpecific.name;
               tagsContainer.appendChild(newTag);
 
+              targetSpecific.checked = true;
+              forceRadioActiveNow(targetSpecific);
               targetSpecific.dispatchEvent(new Event('change', { bubbles: true }));
-            })();
+              })(); 
 
             console.groupEnd();
             // ✅ DEBUG GROUP END
