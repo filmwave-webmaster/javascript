@@ -1976,10 +1976,18 @@ function initKeyFilterSystem() {
       flatMajorColumn.style.visibility = 'visible';
       flatMajorColumn.style.opacity = '1';
     }
-    if (flatMinorColumn) {
+     if (flatMinorColumn) {
       flatMinorColumn.style.display = 'none';
     }
   }
+}
+    
+// Remove no-transitions after a brief delay
+setTimeout(() => {
+  if (keyButtonWrapper) {
+    keyButtonWrapper.classList.remove('no-key-transitions');
+  }
+}, 50);
 }
   
   /**
