@@ -1,5 +1,17 @@
 /**
  * ============================================================
+ * FILMWAVE MUSIC PLATFORM - VERSION 25
+ * Updated: January 1, 2026
+ * 
+ * NEW FEATURES IN THIS VERSION:
+ * - Key Filter System (Sharp/Flat toggle, Major/Minor toggle)
+ * - Enhanced Filter Persistence (saves Key filter state)
+ * - Automatic initialization on page load and Barba transitions
+ * ============================================================
+ */
+
+/**
+ * ============================================================
  * GLOBAL STATE - Persists across Barba page transitions
  * ============================================================
  */
@@ -194,6 +206,7 @@ async function initMusicPage() {
       initFilterItemBackground();
       initDynamicTagging();
       initMutualExclusion();
+      initKeyFilterSystem();
       initSearchAndFilters();
       g.filtersInitialized = true;
     }
@@ -1689,6 +1702,351 @@ function initMutualExclusion() {
   }
 }
 
+
+/**
+ * ============================================================
+ * KEY FILTER SYSTEM
+ * Handles Sharp/Flat toggle, Major/Minor toggle, and key selection
+ * ============================================================
+ */
+function initKeyFilterSystem() {
+  console.log('🎹 Initializing Key Filter System');
+  
+  const keyAccordion = document.querySelector('.key');
+  if (!keyAccordion) {
+    console.log('⚠️ Key accordion not found');
+    return;
+  }
+  
+  // Get all elements
+  const sharpButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:first-child, .sharp-flat-toggle-wrapper .radio-wrapper:first-child');
+  const flatButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:last-child, .sharp-flat-toggle-wrapper .radio-wrapper:last-child');
+  
+  const sharpColumn = keyAccordion.querySelector('.sharp-key-column');
+  const flatColumn = keyAccordion.querySelector('.flat-key-column');
+  
+  if (!sharpButton || !flatButton || !sharpColumn || !flatColumn) {
+    console.error('❌ Missing Sharp/Flat elements');
+    return;
+  }
+  
+  // Get Major/Minor elements for BOTH Sharp and Flat sections
+  const sharpMajorButton = sharpColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper');
+  const sharpMinorButton = sharpColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper');
+  const sharpMajorColumn = sharpColumn.querySelector('.maj-key-column');
+  const sharpMinorColumn = sharpColumn.querySelector('.min-key-column');
+  
+  const flatMajorButton = flatColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper');
+  const flatMinorButton = flatColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper');
+  const flatMajorColumn = flatColumn.querySelector('.maj-key-column');
+  const flatMinorColumn = flatColumn.querySelector('.min-key-column');
+  
+  console.log('✅ Found all Key filter elements');
+  
+  // State tracking
+  let currentSharpFlat = 'sharp'; // 'sharp' or 'flat'
+  let sharpMajMin = null; // 'major', 'minor', or null
+  let flatMajMin = null; // 'major', 'minor', or null
+  
+  /**
+   * Style Sharp/Flat buttons
+   */
+  function styleSharpFlatButton(button, isActive) {
+    const label = button.querySelector('.radio-button-label');
+    if (!label) return;
+    
+    if (isActive) {
+      label.style.color = '#191919';
+      label.style.borderBottom = '3px solid #191919';
+      label.style.backgroundColor = ''; // Remove any background
+    } else {
+      label.style.color = '';
+      label.style.borderBottom = '';
+      label.style.backgroundColor = '';
+    }
+  }
+  
+  /**
+   * Style Major/Minor buttons
+   */
+  function styleMajMinButton(button, isActive) {
+    if (!button) return;
+    
+    if (isActive) {
+      button.classList.add('is-active');
+    } else {
+      button.classList.remove('is-active');
+    }
+  }
+  
+  /**
+   * Show Sharp or Flat column
+   */
+  function showSharpFlat(which) {
+    // Add no-transitions class to prevent animation flash
+    const keyButtonWrapper = keyAccordion.querySelector('.key-button-wrapper');
+    if (keyButtonWrapper) {
+      keyButtonWrapper.classList.add('no-key-transitions');
+    }
+    
+    currentSharpFlat = which;
+    
+    if (which === 'sharp') {
+      sharpColumn.style.display = 'block';
+      sharpColumn.style.visibility = 'visible';
+      sharpColumn.style.opacity = '1';
+      
+      flatColumn.style.display = 'none';
+      flatColumn.style.visibility = 'hidden';
+      flatColumn.style.opacity = '0';
+      
+      styleSharpFlatButton(sharpButton, true);
+      styleSharpFlatButton(flatButton, false);
+      
+      // Show the appropriate Major/Minor column in Sharp section
+      if (sharpMajMin === 'major') {
+        showMajorMinor('major', 'sharp');
+      } else if (sharpMajMin === 'minor') {
+        showMajorMinor('minor', 'sharp');
+      } else {
+        // No selection - hide both
+        if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
+        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
+      }
+      
+    } else { // flat
+      flatColumn.style.display = 'block';
+      flatColumn.style.visibility = 'visible';
+      flatColumn.style.opacity = '1';
+      
+      sharpColumn.style.display = 'none';
+      sharpColumn.style.visibility = 'hidden';
+      sharpColumn.style.opacity = '0';
+      
+      styleSharpFlatButton(flatButton, true);
+      styleSharpFlatButton(sharpButton, false);
+      
+      // Show the appropriate Major/Minor column in Flat section
+      if (flatMajMin === 'major') {
+        showMajorMinor('major', 'flat');
+      } else if (flatMajMin === 'minor') {
+        showMajorMinor('minor', 'flat');
+      } else {
+        // No selection - hide both
+        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
+        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
+      }
+    }
+    
+    // Remove no-transitions after a brief delay
+    setTimeout(() => {
+      if (keyButtonWrapper) {
+        keyButtonWrapper.classList.remove('no-key-transitions');
+      }
+    }, 50);
+  }
+  
+  /**
+   * Show Major or Minor column (within current Sharp/Flat section)
+   */
+  function showMajorMinor(which, section) {
+    const isSharp = section === 'sharp';
+    const majorColumn = isSharp ? sharpMajorColumn : flatMajorColumn;
+    const minorColumn = isSharp ? sharpMinorColumn : flatMinorColumn;
+    const majorButton = isSharp ? sharpMajorButton : flatMajorButton;
+    const minorButton = isSharp ? sharpMinorButton : flatMinorButton;
+    
+    if (!majorColumn || !minorColumn) return;
+    
+    if (which === 'major') {
+      majorColumn.style.display = 'flex';
+      majorColumn.style.visibility = 'visible';
+      majorColumn.style.opacity = '1';
+      
+      minorColumn.style.display = 'none';
+      minorColumn.style.visibility = 'hidden';
+      minorColumn.style.opacity = '0';
+      
+      styleMajMinButton(majorButton, true);
+      styleMajMinButton(minorButton, false);
+      
+    } else { // minor
+      minorColumn.style.display = 'flex';
+      minorColumn.style.visibility = 'visible';
+      minorColumn.style.opacity = '1';
+      
+      majorColumn.style.display = 'none';
+      majorColumn.style.visibility = 'hidden';
+      majorColumn.style.opacity = '0';
+      
+      styleMajMinButton(minorButton, true);
+      styleMajMinButton(majorButton, false);
+    }
+  }
+  
+  /**
+   * Sharp/Flat button click handlers
+   */
+  sharpButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showSharpFlat('sharp');
+  });
+  
+  flatButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showSharpFlat('flat');
+  });
+  
+  /**
+   * Major/Minor button click handlers (Sharp section)
+   */
+  if (sharpMajorButton) {
+    sharpMajorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Toggle logic: if already major, turn off; otherwise turn on
+      if (sharpMajMin === 'major') {
+        sharpMajMin = null;
+        styleMajMinButton(sharpMajorButton, false);
+        if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
+        
+        // Uncheck all radio buttons in the major column
+        const radios = sharpMajorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        sharpMajMin = 'major';
+        showMajorMinor('major', 'sharp');
+      }
+    });
+  }
+  
+  if (sharpMinorButton) {
+    sharpMinorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (sharpMajMin === 'minor') {
+        sharpMajMin = null;
+        styleMajMinButton(sharpMinorButton, false);
+        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
+        
+        // Uncheck all radio buttons in the minor column
+        const radios = sharpMinorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        sharpMajMin = 'minor';
+        showMajorMinor('minor', 'sharp');
+      }
+    });
+  }
+  
+  /**
+   * Major/Minor button click handlers (Flat section)
+   */
+  if (flatMajorButton) {
+    flatMajorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (flatMajMin === 'major') {
+        flatMajMin = null;
+        styleMajMinButton(flatMajorButton, false);
+        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
+        
+        const radios = flatMajorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        flatMajMin = 'major';
+        showMajorMinor('major', 'flat');
+      }
+    });
+  }
+  
+  if (flatMinorButton) {
+    flatMinorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (flatMajMin === 'minor') {
+        flatMajMin = null;
+        styleMajMinButton(flatMinorButton, false);
+        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
+        
+        const radios = flatMinorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        flatMajMin = 'minor';
+        showMajorMinor('minor', 'flat');
+      }
+    });
+  }
+  
+  /**
+   * Listen for key radio button clicks to maintain Major/Minor active state
+   */
+  function attachKeyRadioListeners(column, section, majMin) {
+    const radios = column.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.checked) {
+          // Keep the Major/Minor button active
+          if (section === 'sharp') {
+            sharpMajMin = majMin;
+            if (majMin === 'major') {
+              styleMajMinButton(sharpMajorButton, true);
+            } else {
+              styleMajMinButton(sharpMinorButton, true);
+            }
+          } else {
+            flatMajMin = majMin;
+            if (majMin === 'major') {
+              styleMajMinButton(flatMajorButton, true);
+            } else {
+              styleMajMinButton(flatMinorButton, true);
+            }
+          }
+        }
+      });
+    });
+  }
+  
+  // Attach listeners to all key radio buttons
+  if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
+  if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
+  if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
+  if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
+  
+  /**
+   * Initial state: Show Sharp section by default
+   */
+  showSharpFlat('sharp');
+  
+  console.log('✅ Key Filter System initialized');
+}
+
 function toggleClearButton() {
   const clearBtn = document.querySelector('.circle-x');
   const searchBar = document.querySelector('[data-filter-search="true"]');
@@ -2501,6 +2859,12 @@ let favoritesRestored = false;
 let isClearing = false;
 let searchSaveTimeout;
 
+
+/**
+ * ============================================================
+ * ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT
+ * ============================================================
+ */
 function saveFilterState() {
   if (isClearing) {
     console.log('⏸️ Skipping save - clearing in progress');
@@ -2509,9 +2873,15 @@ function saveFilterState() {
   
   const filterState = {
     filters: [],
-    searchQuery: ''
+    searchQuery: '',
+    keyState: {
+      sharpFlat: 'sharp',
+      sharpMajMin: null,
+      flatMajMin: null
+    }
   };
   
+  // Save all checked filters
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     if (input.checked) {
       filterState.filters.push({
@@ -2522,13 +2892,43 @@ function saveFilterState() {
     }
   });
   
+  // Save search query
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar && searchBar.value) {
     filterState.searchQuery = searchBar.value;
   }
   
+  // Save Key filter UI state (Sharp/Flat, Major/Minor)
+  const sharpColumn = document.querySelector('.sharp-key-column');
+  const flatColumn = document.querySelector('.flat-key-column');
+  
+  // Detect which Sharp/Flat is active
+  if (flatColumn && flatColumn.style.display === 'block') {
+    filterState.keyState.sharpFlat = 'flat';
+  }
+  
+  // Detect Sharp section Major/Minor state
+  const sharpMajorButton = document.querySelector('.sharp-key-column .maj-wrapper .radio-wrapper.is-active, .sharp-key-column .maj-wrapper .w-radio.is-active');
+  const sharpMinorButton = document.querySelector('.sharp-key-column .min-wrapper .radio-wrapper.is-active, .sharp-key-column .min-wrapper .w-radio.is-active');
+  
+  if (sharpMajorButton) {
+    filterState.keyState.sharpMajMin = 'major';
+  } else if (sharpMinorButton) {
+    filterState.keyState.sharpMajMin = 'minor';
+  }
+  
+  // Detect Flat section Major/Minor state
+  const flatMajorButton = document.querySelector('.flat-key-column .maj-wrapper .radio-wrapper.is-active, .flat-key-column .maj-wrapper .w-radio.is-active');
+  const flatMinorButton = document.querySelector('.flat-key-column .min-wrapper .radio-wrapper.is-active, .flat-key-column .min-wrapper .w-radio.is-active');
+  
+  if (flatMajorButton) {
+    filterState.keyState.flatMajMin = 'major';
+  } else if (flatMinorButton) {
+    filterState.keyState.flatMajMin = 'minor';
+  }
+  
   localStorage.setItem('musicFilters', JSON.stringify(filterState));
-  console.log('💾 Saved filter state:', filterState);
+  console.log('💾 Saved filter state (with Key state):', filterState);
 }
 
 function restoreFilterState() {
@@ -2716,21 +3116,27 @@ function restoreFilterState() {
       }, 100);
     }, 50);
     
-   if (filterState.searchQuery) {
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  if (searchBar) {
-    searchBar.value = filterState.searchQuery;
-    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-}
-
-// === NEW: Ensure clear button state is correct after restore ===
-setTimeout(() => {
-  toggleClearButton();
-}, 100);
+    if (filterState.searchQuery) {
+      const searchBar = document.querySelector('[data-filter-search="true"]');
+      if (searchBar) {
+        searchBar.value = filterState.searchQuery;
+        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+    
+    // Restore Key filter UI state
+    if (filterState.keyState) {
+      setTimeout(() => {
+        restoreKeyFilterState(filterState.keyState);
+      }, 200);
+    }
+    
+    // Ensure clear button state is correct after restore
+    setTimeout(() => {
+      toggleClearButton();
+    }, 100);
 
     toggleClearButton(); // Make sure button visibility is correct after restore
-// If you have any visual "loading" state, hide it here too
     
     console.log(`✅ Restored ${restoredCount} filters`);
     
@@ -2748,6 +3154,67 @@ setTimeout(() => {
     return true;
   } catch (error) {
     console.error('Error restoring filters:', error);
+    
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) {
+      musicList.style.opacity = '1';
+      musicList.style.visibility = 'visible';
+      musicList.style.pointerEvents = 'auto';
+    }
+    
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    const clearButton = document.querySelector('.circle-x');
+    if (tagsContainer) tagsContainer.style.opacity = '1';
+    if (clearButton) clearButton.style.opacity = '1';
+    
+    return false;
+  }
+}
+
+/**
+ * Restore Key filter UI state
+ * @param {Object} keyState - Object containing sharpFlat, sharpMajMin, flatMajMin
+ */
+function restoreKeyFilterState(keyState) {
+  if (!keyState) return;
+  
+  console.log('🎹 Restoring Key filter state:', keyState);
+  
+  const keyAccordion = document.querySelector('.key');
+  if (!keyAccordion) return;
+  
+  // Get elements
+  const sharpButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:first-child, .sharp-flat-toggle-wrapper .radio-wrapper:first-child');
+  const flatButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:last-child, .sharp-flat-toggle-wrapper .radio-wrapper:last-child');
+  
+  // Restore Sharp/Flat selection
+  if (keyState.sharpFlat === 'flat' && flatButton) {
+    flatButton.click();
+  } else if (sharpButton) {
+    sharpButton.click();
+  }
+  
+  // Wait for Sharp/Flat to render, then restore Major/Minor
+  setTimeout(() => {
+    // Restore Sharp section Major/Minor
+    if (keyState.sharpMajMin === 'major') {
+      const sharpMajorButton = keyAccordion.querySelector('.sharp-key-column .maj-wrapper .w-radio, .sharp-key-column .maj-wrapper .radio-wrapper');
+      if (sharpMajorButton) sharpMajorButton.click();
+    } else if (keyState.sharpMajMin === 'minor') {
+      const sharpMinorButton = keyAccordion.querySelector('.sharp-key-column .min-wrapper .w-radio, .sharp-key-column .min-wrapper .radio-wrapper');
+      if (sharpMinorButton) sharpMinorButton.click();
+    }
+    
+    // Restore Flat section Major/Minor
+    if (keyState.flatMajMin === 'major') {
+      const flatMajorButton = keyAccordion.querySelector('.flat-key-column .maj-wrapper .w-radio, .flat-key-column .maj-wrapper .radio-wrapper');
+      if (flatMajorButton) flatMajorButton.click();
+    } else if (keyState.flatMajMin === 'minor') {
+      const flatMinorButton = keyAccordion.querySelector('.flat-key-column .min-wrapper .w-radio, .flat-key-column .min-wrapper .radio-wrapper');
+      if (flatMinorButton) flatMinorButton.click();
+    }
+  }, 100);
+}
     localStorage.removeItem('musicFilters');
     
     const musicList = document.querySelector('.music-list-wrapper');
