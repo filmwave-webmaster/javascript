@@ -1947,17 +1947,47 @@ function showSharpFlat(which) {
       if (currentKey && sharpMinorColumn) {
         setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
       }
-    } else {
-      // No major/minor selected - show major keys by default
-      if (sharpMajorColumn) {
-        sharpMajorColumn.style.display = 'flex';
-        sharpMajorColumn.style.visibility = 'visible';
-        sharpMajorColumn.style.opacity = '1';
-      }
-      if (sharpMinorColumn) {
-        sharpMinorColumn.style.display = 'none';
-      }
+   } else {
+  // Match the Flat section's major/minor state
+  if (flatMajMin === 'major') {
+    sharpMajMin = 'major';
+    if (sharpMajorColumn) {
+      sharpMajorColumn.style.display = 'flex';
+      sharpMajorColumn.style.visibility = 'visible';
+      sharpMajorColumn.style.opacity = '1';
     }
+    if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
+    styleMajMinButton(sharpMajorButton, true);
+    sharpMajorButton.checked = true;
+    if (currentKey && sharpMajorColumn) {
+      setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+    }
+  } else if (flatMajMin === 'minor') {
+    sharpMajMin = 'minor';
+    if (sharpMinorColumn) {
+      sharpMinorColumn.style.display = 'flex';
+      sharpMinorColumn.style.visibility = 'visible';
+      sharpMinorColumn.style.opacity = '1';
+    }
+    if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
+    styleMajMinButton(sharpMinorButton, true);
+    sharpMinorButton.checked = true;
+    if (currentKey && sharpMinorColumn) {
+      setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+    }
+  } else {
+    // No selection - show major keys by default
+    if (sharpMajorColumn) {
+      sharpMajorColumn.style.display = 'flex';
+      sharpMajorColumn.style.visibility = 'visible';
+      sharpMajorColumn.style.opacity = '1';
+    }
+    if (sharpMinorColumn) {
+      sharpMinorColumn.style.display = 'none';
+    }
+  }
+}
+
     
   } else { // flat
     flatColumn.style.display = 'block';
@@ -1997,16 +2027,37 @@ function showSharpFlat(which) {
         setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
       }
     } else {
-      // No major/minor selected - show major keys by default
-      if (flatMajorColumn) {
-        flatMajorColumn.style.display = 'flex';
-        flatMajorColumn.style.visibility = 'visible';
-        flatMajorColumn.style.opacity = '1';
-      }
-      if (flatMinorColumn) {
-        flatMinorColumn.style.display = 'none';
-      }
+  // Match the Sharp section's major/minor state
+  if (sharpMajMin === 'major') {
+    flatMajMin = 'major';
+    if (flatMajorColumn) {
+      flatMajorColumn.style.display = 'flex';
+      flatMajorColumn.style.visibility = 'visible';
+      flatMajorColumn.style.opacity = '1';
     }
+    if (flatMinorColumn) flatMinorColumn.style.display = 'none';
+    styleMajMinButton(flatMajorButton, true);
+    flatMajorButton.checked = true;
+    if (currentKey && flatMajorColumn) {
+      setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+    }
+  } else if (sharpMajMin === 'minor') {
+    flatMajMin = 'minor';
+    if (flatMinorColumn) {
+      flatMinorColumn.style.display = 'flex';
+      flatMinorColumn.style.visibility = 'visible';
+      flatMinorColumn.style.opacity = '1';
+    }
+    if (flatMajorColumn) flatMajorColumn.style.display = 'none';
+    styleMajMinButton(flatMinorButton, true);
+    flatMinorButton.checked = true;
+    if (currentKey && flatMinorColumn) {
+      setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+    }
+  } else {
+    // No selection - show major keys by default
+    if (flatMajorColumn) {
+      flatMajorColumn.style.display = 'flex';
   }
   
   // Remove no-transitions after a brief delay
