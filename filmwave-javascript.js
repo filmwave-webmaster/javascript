@@ -1925,10 +1925,16 @@ function initKeyFilterSystem() {
           setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
         }
       } else {
-        // No selection - hide both
-        if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
-        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
-      }
+  // No major/minor selected - show major keys by default
+  if (sharpMajorColumn) {
+    sharpMajorColumn.style.display = 'flex';
+    sharpMajorColumn.style.visibility = 'visible';
+    sharpMajorColumn.style.opacity = '1';
+  }
+  if (sharpMinorColumn) {
+    sharpMinorColumn.style.display = 'none';
+  }
+}
       
     } else { // flat
   flatColumn.style.display = 'block';
@@ -2269,7 +2275,12 @@ styleMajMinButton(sharpMinorButton, false);
 styleMajMinButton(flatMajorButton, false);
 styleMajMinButton(flatMinorButton, false);
 
+// Also remove any Webflow default active classes
+const allWrappers = keyAccordion.querySelectorAll('.maj-wrapper, .min-wrapper');
+allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
+
 console.log('✅ Key Filter System initialized');
+}
   
   /**
    * Initial state: Show Major keys by default in both sections
