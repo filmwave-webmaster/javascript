@@ -1869,10 +1869,18 @@ function initKeyFilterSystem() {
   function styleMajMinButton(button, isActive) {
     if (!button) return;
     
+    // The button is the input element, but we need to style its parent wrapper
+    const wrapper = button.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+    
+    if (!wrapper) {
+      console.warn('No wrapper found for button:', button);
+      return;
+    }
+    
     if (isActive) {
-      button.classList.add('is-active');
+      wrapper.classList.add('is-active');
     } else {
-      button.classList.remove('is-active');
+      wrapper.classList.remove('is-active');
     }
   }
   
