@@ -2185,6 +2185,7 @@ function initKeyFilterSystem() {
    * Initial state: Show Major keys by default in Sharp section
    */
   showMajorMinor('major', 'sharp');
+  showMajorMinor('major', 'flat');
   
   console.log('✅ Key Filter System initialized');
 }
