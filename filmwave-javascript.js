@@ -2409,6 +2409,7 @@ const allWrappers = keyAccordion.querySelectorAll('.maj-wrapper, .min-wrapper');
 allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 
 console.log('✅ Key Filter System initialized');
+window.keyFilterSystemReady = true;
 }
   
 function toggleClearButton() {
@@ -3580,42 +3581,71 @@ function restoreKeyFilterState(keyState) {
   
   console.log('🎹 Restoring Key filter state:', keyState);
   
-  const keyAccordion = document.querySelector('.filter-category');
-  if (!keyAccordion || !keyAccordion.querySelector('.sharp-flat-toggle-wrapper')) return;
-  
-  // Get Sharp/Flat buttons
-  const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
-  const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
-  const sharpButton = buttons[0];
-  const flatButton = buttons[1];
-  
-  // Restore Sharp/Flat selection
-  if (keyState.sharpFlat === 'flat' && flatButton) {
-    flatButton.click();
-  } else if (sharpButton) {
-    sharpButton.click();
+  // Wait for Key Filter System to be ready
+  function attemptRestore(attempts = 0) {
+    if (window.keyFilterSystemReady) {
+      console.log('✅ Key Filter System ready, restoring now');
+      doRestore();
+    } else if (attempts < 20) {
+      console.log(`⏳ Waiting for Key Filter System... attempt ${attempts + 1}`);
+      setTimeout(() => attemptRestore(attempts + 1), 100);
+    } else {
+      console.error('❌ Timeout waiting for Key Filter System');
+    }
   }
   
-  // Wait for Sharp/Flat to render, then restore Major/Minor
-  setTimeout(() => {
-    // Restore Sharp section Major/Minor - click the actual INPUT
-    if (keyState.sharpMajMin === 'major') {
-      const sharpMajorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="major"]');
-      if (sharpMajorInput) sharpMajorInput.click();
-    } else if (keyState.sharpMajMin === 'minor') {
-      const sharpMinorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="minor"]');
-      if (sharpMinorInput) sharpMinorInput.click();
+  function doRestore() {
+    const keyAccordion = document.querySelector('.filter-category');
+    if (!keyAccordion || !keyAccordion.querySelector('.sharp-flat-toggle-wrapper')) return;
+    
+    // Get Sharp/Flat buttons
+    const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
+    const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
+    const sharpButton = buttons[0];
+    const flatButton = buttons[1];
+    
+    // Restore Sharp/Flat selection
+    if (keyState.sharpFlat === 'flat' && flatButton) {
+      flatButton.click();
+    } else if (sharpButton) {
+      sharpButton.click();
     }
     
-    // Restore Flat section Major/Minor - click the actual INPUT
-    if (keyState.flatMajMin === 'major') {
-      const flatMajorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="major"]');
-      if (flatMajorInput) flatMajorInput.click();
-    } else if (keyState.flatMajMin === 'minor') {
-      const flatMinorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="minor"]');
-      if (flatMinorInput) flatMinorInput.click();
-    }
-  }, 100);
+    // Wait for Sharp/Flat to render, then restore Major/Minor
+    setTimeout(() => {
+      // Restore Sharp section Major/Minor - click the actual INPUT
+      if (keyState.sharpMajMin === 'major') {
+        const sharpMajorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="major"]');
+        if (sharpMajorInput) {
+          console.log('🎯 Clicking Sharp Major input');
+          sharpMajorInput.click();
+        }
+      } else if (keyState.sharpMajMin === 'minor') {
+        const sharpMinorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="minor"]');
+        if (sharpMinorInput) {
+          console.log('🎯 Clicking Sharp Minor input');
+          sharpMinorInput.click();
+        }
+      }
+      
+      // Restore Flat section Major/Minor - click the actual INPUT
+      if (keyState.flatMajMin === 'major') {
+        const flatMajorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="major"]');
+        if (flatMajorInput) {
+          console.log('🎯 Clicking Flat Major input');
+          flatMajorInput.click();
+        }
+      } else if (keyState.flatMajMin === 'minor') {
+        const flatMinorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="minor"]');
+        if (flatMinorInput) {
+          console.log('🎯 Clicking Flat Minor input');
+          flatMinorInput.click();
+        }
+      }
+    }, 100);
+  }
+  
+  attemptRestore();
 }
 
 function clearFilterState() {
