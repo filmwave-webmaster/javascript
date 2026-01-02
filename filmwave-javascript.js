@@ -3635,15 +3635,16 @@ function doRestore() {
   function doActualRestore() {
   const keyAccordion = document.querySelector('[data-filter-type="key"]'); // Re-query here too!
   const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
-    const sharpButton = buttons[0];
-    const flatButton = buttons[1];
-    
-    // Restore Sharp/Flat selection
-    if (keyState.sharpFlat === 'flat' && flatButton) {
-      flatButton.click();
-    } else if (sharpButton) {
-      sharpButton.click();
-    }
+    const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
+const sharpButton = buttons[0];
+const flatButton = buttons[1];
+
+// Restore Sharp/Flat selection
+if (keyState.sharpFlat === 'flat' && flatButton) {
+  flatButton.click();
+} else if (sharpButton) {
+  sharpButton.click();
+}
     
     // Wait for Sharp/Flat to render, then restore Major/Minor
     setTimeout(() => {
