@@ -2186,15 +2186,9 @@ function initKeyFilterSystem() {
    * Initial state: Show Sharp section by default
    */
   showSharpFlat('sharp');
-  
-  /**
-   * Initial state: Show Major keys by default in Sharp section
-   */
   showMajorMinor('major', 'sharp');
   showMajorMinor('major', 'flat');
   
-  console.log('✅ Key Filter System initialized');
-}
 
 function toggleClearButton() {
   const clearBtn = document.querySelector('.circle-x');
