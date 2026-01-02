@@ -1712,19 +1712,37 @@ function initMutualExclusion() {
 function initKeyFilterSystem() {
   console.log('🎹 Initializing Key Filter System');
   
-  const keyAccordion = document.querySelector('.key');
+  // Look for the key filter accordion - try multiple selectors
+  let keyAccordion = document.querySelector('.filter-category.key, .filter-category');
+  
+  // If still not found, try to find it by looking for the sharp-flat-toggle-wrapper parent
+  if (!keyAccordion) {
+    const toggleWrapper = document.querySelector('.sharp-flat-toggle-wrapper');
+    if (toggleWrapper) {
+      // Walk up the DOM to find the filter accordion container
+      keyAccordion = toggleWrapper.closest('.filter-category, .filter-item, [class*="filter"], .accordion-item, .w-dropdown');
+      console.log('🔍 Found key accordion via toggle wrapper:', keyAccordion?.className);
+    }
+  }
+  
   if (!keyAccordion) {
     console.log('⚠️ Key accordion not found - skipping Key Filter System');
+    console.log('💡 Looking for: .filter-category OR parent of .sharp-flat-toggle-wrapper');
     return;
   }
   
+  console.log('✅ Key accordion found:', keyAccordion.className);
+  
   // Get all elements with detailed logging
   const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
+  console.log('🔍 Sharp-flat wrapper found:', !!sharpFlatWrapper, sharpFlatWrapper?.className);
+  
   let sharpButton = null;
   let flatButton = null;
   
   if (sharpFlatWrapper) {
     const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button, [role="button"], .sharp-button, .flat-button');
+    console.log('🔍 Buttons found in wrapper:', buttons.length);
     if (buttons.length >= 2) {
       sharpButton = buttons[0];  // First button is Sharp
       flatButton = buttons[1];   // Second button is Flat
@@ -1737,6 +1755,11 @@ function initKeyFilterSystem() {
   
   const sharpColumn = keyAccordion.querySelector('.sharp-key-column');
   const flatColumn = keyAccordion.querySelector('.flat-key-column');
+  
+  console.log('🔍 Columns found:', {
+    sharpColumn: !!sharpColumn,
+    flatColumn: !!flatColumn
+  });
   
   // Debug logging
   console.log('🔍 Element check:', {
