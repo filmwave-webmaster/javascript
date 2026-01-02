@@ -2008,6 +2008,10 @@ function initKeyFilterSystem() {
       styleSharpFlatButton(sharpButton, true);
       styleSharpFlatButton(flatButton, false);
 
+
+
+
+
       // Restore Major/Minor for Sharp section
       if (sharpMajMin === 'major') {
         showMajorMinor('major', 'sharp');
@@ -2194,11 +2198,91 @@ function initKeyFilterSystem() {
   if (flatMajorColumn)  attachKeyRadioListeners(flatMajorColumn,  'flat',  'major');
   if (flatMinorColumn)  attachKeyRadioListeners(flatMinorColumn,  'flat',  'minor');
 
+
+
+
+
+
+
+  /**
+   * ============================================================
+   * KEY FILTER API + DATASET SYNC (required for persistence restore)
+   * ============================================================
+   */
+
+  // Store state on the KEY accordion itself so saveFilterState() can read it reliably
+  function syncKeyDataset() {
+    // Prefer the real tracked variables (source of truth)
+    if (keyAccordion && keyAccordion.dataset) {
+      keyAccordion.dataset.keySharpFlat = currentSharpFlat || 'sharp';
+      keyAccordion.dataset.keySharpMajMin = sharpMajMin || '';
+      keyAccordion.dataset.keyFlatMajMin = flatMajMin || '';
+    }
+  }
+
+  // Wrap your existing functions to always sync dataset after UI changes
+  const _showSharpFlat = showSharpFlat;
+  showSharpFlat = function(which) {
+    _showSharpFlat(which);
+    syncKeyDataset();
+  };
+
+  const _showMajorMinor = showMajorMinor;
+  showMajorMinor = function(which, section) {
+    _showMajorMinor(which, section);
+    syncKeyDataset();
+  };
+
+  function hideMajorMinor(section) {
+    const isSharp = section === 'sharp';
+
+    if (isSharp) {
+      sharpMajMin = null;
+      if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
+      if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
+      styleMajMinButton(sharpMajorButton, false);
+      styleMajMinButton(sharpMinorButton, false);
+    } else {
+      flatMajMin = null;
+      if (flatMajorColumn) flatMajorColumn.style.display = 'none';
+      if (flatMinorColumn) flatMinorColumn.style.display = 'none';
+      styleMajMinButton(flatMajorButton, false);
+      styleMajMinButton(flatMinorButton, false);
+    }
+
+    syncKeyDataset();
+  }
+
+  // Expose a stable API so restoreKeyFilterState() can drive the UI reliably
+  if (window.musicPlayerPersistent) {
+    window.musicPlayerPersistent.keyFilterApi = {
+      showSharpFlat: (which) => showSharpFlat(which),
+      showMajorMinor: (which, section) => showMajorMinor(which, section),
+      hideMajorMinor: (section) => hideMajorMinor(section),
+      syncDataset: () => syncKeyDataset(),
+      getState: () => ({
+        sharpFlat: currentSharpFlat || 'sharp',
+        sharpMajMin: sharpMajMin || null,
+        flatMajMin: flatMajMin || null
+      })
+    };
+  }
+
+  // Ensure dataset starts correct on init
+  syncKeyDataset();
+
+
+
+
+
+
+
+  
   /**
    * Initial state
    */
   showSharpFlat('sharp');
-  showMajorMinor('major', 'sharp');
+  window.musicPlayerPersistent?.keyFilterApi?.hideMajorMinor('sharp');
 
   // Expose API for save/restore logic (optional but makes it robust)
   if (!window.musicPlayerPersistent) window.musicPlayerPersistent = {};
