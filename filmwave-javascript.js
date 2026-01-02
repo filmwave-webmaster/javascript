@@ -3542,15 +3542,15 @@ if (filterState.keyState) {
     console.log(`✅ Restored ${restoredCount} filters`);
     
     setTimeout(() => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-        musicList.style.transition = 'opacity 0.3s ease-in-out';
-      }
-      console.log('✨ Songs faded in');
-    }, 150);
+  const musicList = document.querySelector('.music-list-wrapper');
+  if (musicList) {
+    musicList.style.opacity = '1';
+    musicList.style.visibility = 'visible';
+    musicList.style.pointerEvents = 'auto';
+    musicList.style.transition = 'opacity 0.3s ease-in-out';
+  }
+  console.log('✨ Songs faded in');
+}, 800); // Increased from 150 to 800 to wait for filtering
     
     return true;
   } catch (error) {
@@ -3605,11 +3605,7 @@ function doRestore() {
     toggleClass: accordionToggle?.className
   });
   
-  // Click to open if accordion exists and has a toggle
-  if (accordionToggle) {
-    console.log('🔓 Opening Key accordion...');
-    accordionToggle.click();
-  }
+  // Don't auto-open - user can open manually if needed
   
   // Wait for wrapper to exist - re-query keyAccordion each time
   let attempts = 0;
