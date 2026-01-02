@@ -1714,19 +1714,33 @@ function initKeyFilterSystem() {
   
   const keyAccordion = document.querySelector('.key');
   if (!keyAccordion) {
-    console.log('⚠️ Key accordion not found');
+    console.log('⚠️ Key accordion not found - skipping Key Filter System');
     return;
   }
   
-  // Get all elements
+  // Get all elements with detailed logging
   const sharpButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:first-child, .sharp-flat-toggle-wrapper .radio-wrapper:first-child');
   const flatButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:last-child, .sharp-flat-toggle-wrapper .radio-wrapper:last-child');
   
   const sharpColumn = keyAccordion.querySelector('.sharp-key-column');
   const flatColumn = keyAccordion.querySelector('.flat-key-column');
   
+  // Debug logging
+  console.log('🔍 Element check:', {
+    sharpButton: !!sharpButton,
+    flatButton: !!flatButton,
+    sharpColumn: !!sharpColumn,
+    flatColumn: !!flatColumn
+  });
+  
   if (!sharpButton || !flatButton || !sharpColumn || !flatColumn) {
-    console.error('❌ Missing Sharp/Flat elements');
+    console.error('❌ Missing Sharp/Flat elements - Details:', {
+      sharpButton: sharpButton ? '✓' : '✗ MISSING',
+      flatButton: flatButton ? '✓' : '✗ MISSING',
+      sharpColumn: sharpColumn ? '✓' : '✗ MISSING',
+      flatColumn: flatColumn ? '✓' : '✗ MISSING'
+    });
+    console.log('💡 Make sure your Webflow structure has these elements with correct class names');
     return;
   }
   
@@ -1747,6 +1761,28 @@ function initKeyFilterSystem() {
   let currentSharpFlat = 'sharp'; // 'sharp' or 'flat'
   let sharpMajMin = null; // 'major', 'minor', or null
   let flatMajMin = null; // 'major', 'minor', or null
+  
+  /**
+   * Get currently selected generic key (using data-generic-key attribute)
+   */
+  function getCurrentlySelectedKey() {
+    const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
+    return checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
+  }
+  
+  /**
+   * Restore selected key after switching sections (using data-generic-key)
+   */
+  function restoreSelectedKey(genericKey, targetColumn) {
+    if (!genericKey || !targetColumn) return;
+    
+    const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
+    if (matchingRadio && !matchingRadio.checked) {
+      console.log(`🔄 Restoring key selection: ${genericKey}`);
+      matchingRadio.checked = true;
+      matchingRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
   
   /**
    * Style Sharp/Flat buttons
@@ -1783,6 +1819,9 @@ function initKeyFilterSystem() {
    * Show Sharp or Flat column
    */
   function showSharpFlat(which) {
+    // Save currently selected key before switching
+    const currentKey = getCurrentlySelectedKey();
+    
     // Add no-transitions class to prevent animation flash
     const keyButtonWrapper = keyAccordion.querySelector('.key-button-wrapper');
     if (keyButtonWrapper) {
@@ -1806,8 +1845,16 @@ function initKeyFilterSystem() {
       // Show the appropriate Major/Minor column in Sharp section
       if (sharpMajMin === 'major') {
         showMajorMinor('major', 'sharp');
+        // Restore key selection in the new column
+        if (currentKey && sharpMajorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+        }
       } else if (sharpMajMin === 'minor') {
         showMajorMinor('minor', 'sharp');
+        // Restore key selection in the new column
+        if (currentKey && sharpMinorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+        }
       } else {
         // No selection - hide both
         if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
@@ -1829,8 +1876,16 @@ function initKeyFilterSystem() {
       // Show the appropriate Major/Minor column in Flat section
       if (flatMajMin === 'major') {
         showMajorMinor('major', 'flat');
+        // Restore key selection in the new column
+        if (currentKey && flatMajorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+        }
       } else if (flatMajMin === 'minor') {
         showMajorMinor('minor', 'flat');
+        // Restore key selection in the new column
+        if (currentKey && flatMinorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+        }
       } else {
         // No selection - hide both
         if (flatMajorColumn) flatMajorColumn.style.display = 'none';
@@ -1850,6 +1905,9 @@ function initKeyFilterSystem() {
    * Show Major or Minor column (within current Sharp/Flat section)
    */
   function showMajorMinor(which, section) {
+    // Save currently selected key before switching
+    const currentKey = getCurrentlySelectedKey();
+    
     const isSharp = section === 'sharp';
     const majorColumn = isSharp ? sharpMajorColumn : flatMajorColumn;
     const minorColumn = isSharp ? sharpMinorColumn : flatMinorColumn;
@@ -1870,6 +1928,11 @@ function initKeyFilterSystem() {
       styleMajMinButton(majorButton, true);
       styleMajMinButton(minorButton, false);
       
+      // Restore key selection in the major column
+      if (currentKey) {
+        setTimeout(() => restoreSelectedKey(currentKey, majorColumn), 50);
+      }
+      
     } else { // minor
       minorColumn.style.display = 'flex';
       minorColumn.style.visibility = 'visible';
@@ -1881,6 +1944,11 @@ function initKeyFilterSystem() {
       
       styleMajMinButton(minorButton, true);
       styleMajMinButton(majorButton, false);
+      
+      // Restore key selection in the minor column
+      if (currentKey) {
+        setTimeout(() => restoreSelectedKey(currentKey, minorColumn), 50);
+      }
     }
   }
   
