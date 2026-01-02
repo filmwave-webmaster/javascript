@@ -3401,22 +3401,9 @@ function restoreFilterState() {
       console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
     }
     
-    setTimeout(() => {
-      filterState.filters.forEach(savedFilter => {
-        let selector = `[data-filter-group="${savedFilter.group}"]`;
-        
-        if (savedFilter.value) {
-          selector += `[data-filter-value="${savedFilter.value}"]`;
-        }
-        if (savedFilter.keyGroup) {
-          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
-        }
-        
-        const input = document.querySelector(selector);
-        if (input && input.checked) {
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
+    // Don't dispatch change events - we already created the tags manually
+// Dispatching would cause Webflow to create duplicate tags
+console.log('⏭️ Skipping change events to prevent duplicate tags');
       
       setTimeout(() => {
         if (tagsContainer) {
