@@ -1705,295 +1705,123 @@ function initMutualExclusion() {
 
 /**
  * ============================================================
- * KEY FILTER SYSTEM
- * Handles Sharp/Flat toggle, Major/Minor toggle, and key selection
+ * KEY FILTER SYSTEM (Webflow-radio safe)
+ * Sharp/Flat toggle + Major/Minor toggle + key selection restore
  * ============================================================
  */
 function initKeyFilterSystem() {
-  console.log('🎹 Initializing Key Filter System');
+  console.log('🎹 initKeyFilterSystem() fired');
 
-  // Find the KEY filter-category specifically (not Genre, Mood, etc.)
-  // Look for the one that contains the sharp-flat-toggle-wrapper
-  let keyAccordion = null;
-
-  // First, try to find the sharp-flat-toggle-wrapper
+  // 1) Find the KEY filter category (must contain sharp-flat-toggle-wrapper)
   const toggleWrapper = document.querySelector('.sharp-flat-toggle-wrapper');
-  if (toggleWrapper) {
-    // Walk up to find the parent filter-category
-    keyAccordion = toggleWrapper.closest('.filter-category');
-    console.log('🔍 Found KEY filter via toggle wrapper');
-  }
-
-  // Fallback: look for filter-category with specific class or attribute
-  if (!keyAccordion) {
-    keyAccordion = document.querySelector('.filter-category.key');
-  }
-
-  // Last resort: check all filter-categories to find the one with key elements
-  if (!keyAccordion) {
-    const allCategories = document.querySelectorAll('.filter-category');
-    console.log(`🔍 Checking ${allCategories.length} filter-category elements`);
-    for (const category of allCategories) {
-      if (category.querySelector('.sharp-flat-toggle-wrapper') ||
-          category.querySelector('.sharp-key-column')) {
-        keyAccordion = category;
-        console.log('🔍 Found KEY filter by checking children');
-        break;
-      }
-    }
-  }
+  const keyAccordion = toggleWrapper ? toggleWrapper.closest('.filter-category') : null;
 
   if (!keyAccordion) {
-    console.log('⚠️ Key filter-category not found - skipping Key Filter System');
-    console.log('💡 Looking for: .filter-category that contains .sharp-flat-toggle-wrapper');
+    console.warn('⚠️ Key filter-category not found (no .sharp-flat-toggle-wrapper in DOM yet).');
     return;
   }
 
-  console.log('✅ Key accordion found:', keyAccordion.className);
+  // 2) Helpers
+  const qs = (sel, root = keyAccordion) => root.querySelector(sel);
+  const qsa = (sel, root = keyAccordion) => Array.from(root.querySelectorAll(sel));
 
-  // Get all elements with detailed logging
-  const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
-  console.log('🔍 Sharp-flat wrapper found:', !!sharpFlatWrapper, sharpFlatWrapper?.className);
+  // 3) Elements
+  const sharpFlatWrap = qs('.sharp-flat-toggle-wrapper');
+  const sharpColumn = qs('.sharp-key-column');
+  const flatColumn  = qs('.flat-key-column');
 
-  let sharpButton = null;
-  let flatButton = null;
-
-  // IMPORTANT: support Webflow radio wrappers too
-  if (sharpFlatWrapper) {
-    const buttons = sharpFlatWrapper.querySelectorAll(
-      '.w-button, button, [role="button"], .sharp-button, .flat-button, .radio-wrapper, .w-radio'
-    );
-    console.log('🔍 Buttons found in wrapper:', buttons.length);
-
-    if (buttons.length >= 2) {
-      sharpButton = buttons[0];  // First is Sharp
-      flatButton  = buttons[1];  // Second is Flat
-    } else {
-      // Try looking for buttons with specific selectors
-      sharpButton = sharpFlatWrapper.querySelector('.sharp-button, [data-key-type="sharp"], .radio-wrapper:first-child, .w-radio:first-child');
-      flatButton  = sharpFlatWrapper.querySelector('.flat-button,  [data-key-type="flat"],  .radio-wrapper:last-child,  .w-radio:last-child');
-    }
-  }
-
-  const sharpColumn = keyAccordion.querySelector('.sharp-key-column');
-  const flatColumn  = keyAccordion.querySelector('.flat-key-column');
-
-  console.log('🔍 Columns found:', { sharpColumn: !!sharpColumn, flatColumn: !!flatColumn });
-
-  // Debug logging
-  console.log('🔍 Element check:', {
-    sharpButton: !!sharpButton,
-    flatButton: !!flatButton,
-    sharpColumn: !!sharpColumn,
-    flatColumn: !!flatColumn
-  });
-
-  if (!sharpButton || !flatButton || !sharpColumn || !flatColumn) {
-    console.error('❌ Missing Sharp/Flat elements - Details:', {
-      sharpButton: sharpButton ? '✓' : '✗ MISSING',
-      flatButton:  flatButton  ? '✓' : '✗ MISSING',
-      sharpColumn: sharpColumn ? '✓' : '✗ MISSING',
-      flatColumn:  flatColumn  ? '✓' : '✗ MISSING'
+  if (!sharpFlatWrap || !sharpColumn || !flatColumn) {
+    console.error('❌ Missing key elements:', {
+      sharpFlatWrap: !!sharpFlatWrap,
+      sharpColumn: !!sharpColumn,
+      flatColumn: !!flatColumn
     });
-    console.log('💡 Make sure your Webflow structure has these elements with correct class names');
     return;
   }
 
-  // Get Major/Minor elements for BOTH Sharp and Flat sections using data-key-group
-  const sharpMajorButton = sharpColumn.querySelector('[data-key-group="major"]');
-  const sharpMinorButton = sharpColumn.querySelector('[data-key-group="minor"]');
-  const sharpMajorColumn = sharpColumn.querySelector('.maj-key-column');
-  const sharpMinorColumn = sharpColumn.querySelector('.min-key-column');
+  // Sharp/Flat radios (Webflow = wrapper contains input + label)
+  const sharpFlatOptions = qsa('.w-radio, .radio-wrapper, .w-form-radio', sharpFlatWrap);
+  const sharpFlatInputs  = qsa('input[type="radio"]', sharpFlatWrap);
 
-  const flatMajorButton = flatColumn.querySelector('[data-key-group="major"]');
-  const flatMinorButton = flatColumn.querySelector('[data-key-group="minor"]');
-  const flatMajorColumn = flatColumn.querySelector('.maj-key-column');
-  const flatMinorColumn = flatColumn.querySelector('.min-key-column');
+  // We support either:
+  // - data-key-type="sharp|flat" on input or wrapper
+  // - OR "first = sharp, second = flat"
+  function findSharpFlat(which) {
+    const byData = sharpFlatInputs.find(i => (i.getAttribute('data-key-type') || '').toLowerCase() === which)
+      || sharpFlatOptions.find(w => ((w.getAttribute('data-key-type') || '').toLowerCase() === which));
+    if (byData) return byData.tagName === 'INPUT' ? byData : byData.querySelector('input[type="radio"]');
 
-  console.log('🔍 Major/Minor buttons check:', {
-    sharpMajor: !!sharpMajorButton,
-    sharpMinor: !!sharpMinorButton,
-    flatMajor:  !!flatMajorButton,
-    flatMinor:  !!flatMinorButton
-  });
+    // fallback to order
+    if (which === 'sharp') return sharpFlatInputs[0] || sharpFlatOptions[0]?.querySelector('input[type="radio"]');
+    return sharpFlatInputs[1] || sharpFlatOptions[1]?.querySelector('input[type="radio"]');
+  }
 
-  console.log('✅ Found all Key filter elements');
+  const sharpInput = findSharpFlat('sharp');
+  const flatInput  = findSharpFlat('flat');
 
-  // State tracking (independent per Sharp/Flat)
-  let currentSharpFlat = 'sharp'; // 'sharp' or 'flat'
+  if (!sharpInput || !flatInput) {
+    console.error('❌ Could not locate Sharp/Flat radio inputs.');
+    return;
+  }
+
+  // Major/Minor toggles are INSIDE each column.
+  // Your existing code expects [data-key-group="major|minor"] on the *toggle control*.
+  function getMajMinControls(sectionRoot) {
+    const majorCtl = sectionRoot.querySelector('[data-key-group="major"]') || sectionRoot.querySelector('.maj-wrapper input[type="radio"]') || sectionRoot.querySelector('.maj-wrapper');
+    const minorCtl = sectionRoot.querySelector('[data-key-group="minor"]') || sectionRoot.querySelector('.min-wrapper input[type="radio"]') || sectionRoot.querySelector('.min-wrapper');
+    const majorCol = sectionRoot.querySelector('.maj-key-column');
+    const minorCol = sectionRoot.querySelector('.min-key-column');
+    return { majorCtl, minorCtl, majorCol, minorCol };
+  }
+
+  const sharpMM = getMajMinControls(sharpColumn);
+  const flatMM  = getMajMinControls(flatColumn);
+
+  if (!sharpMM.majorCol || !sharpMM.minorCol || !flatMM.majorCol || !flatMM.minorCol) {
+    console.error('❌ Missing major/minor key columns:', {
+      sharpMajorCol: !!sharpMM.majorCol,
+      sharpMinorCol: !!sharpMM.minorCol,
+      flatMajorCol: !!flatMM.majorCol,
+      flatMinorCol: !!flatMM.minorCol
+    });
+    return;
+  }
+
+  // 4) State
+  let currentSharpFlat = 'sharp'; // 'sharp' | 'flat'
   let sharpMajMin = null;         // 'major' | 'minor' | null
   let flatMajMin  = null;         // 'major' | 'minor' | null
 
-  // Mirror state on the accordion dataset so save/restore can read it reliably
   function syncDataset() {
-    keyAccordion.dataset.keySharpFlat = currentSharpFlat;
+    keyAccordion.dataset.keySharpFlat = currentSharpFlat || 'sharp';
     keyAccordion.dataset.keySharpMajMin = sharpMajMin || '';
     keyAccordion.dataset.keyFlatMajMin = flatMajMin || '';
   }
 
-  /**
-   * Get currently selected generic key (using data-generic-key attribute)
-   */
-  function getCurrentlySelectedKey() {
-    const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
-    return checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
+  function setWrapperActive(controlEl, isActive) {
+    if (!controlEl) return;
+    const wrapper = controlEl.closest?.('.w-radio, .radio-wrapper, .w-form-radio, .maj-wrapper, .min-wrapper') || controlEl;
+    if (!wrapper) return;
+    wrapper.classList.toggle('is-active', !!isActive);
   }
 
-  /**
-   * Restore selected key after switching sections (using data-generic-key)
-   */
-  function restoreSelectedKey(genericKey, targetColumn) {
-    if (!genericKey || !targetColumn) return;
+  function getSelectedGenericKey() {
+    const checked = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
+    return checked ? checked.getAttribute('data-generic-key') : null;
+  }
 
-    const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
-    if (matchingRadio && !matchingRadio.checked) {
-      console.log(`🔄 Restoring key selection: ${genericKey}`);
-      matchingRadio.checked = true;
-      matchingRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  function restoreGenericKey(genericKey, root) {
+    if (!genericKey || !root) return;
+    const match = root.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
+    if (match && !match.checked) {
+      match.checked = true;
+      match.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }
 
-  /**
-   * Style Sharp/Flat buttons
-   * (Works whether your toggles are normal buttons or Webflow radio wrappers)
-   */
-  function styleSharpFlatButton(button, isActive) {
-    if (!button) return;
-
-    // If user clicked a wrapper (radio wrapper), prefer styling its label
-    const label =
-      button.querySelector?.('.radio-button-label') ||
-      button.closest?.('.radio-wrapper, .w-radio')?.querySelector?.('.radio-button-label');
-
-    const el = label || button;
-
-    if (isActive) {
-      el.style.color = '#191919';
-      el.style.borderBottom = '3px solid #191919';
-      el.style.backgroundColor = '';
-    } else {
-      el.style.color = '';
-      el.style.borderBottom = '';
-      el.style.backgroundColor = '';
-    }
-  }
-
-  /**
-   * Style Major/Minor buttons
-   */
-  function styleMajMinButton(button, isActive) {
-    if (!button) return;
-
-    // The button is commonly the wrapper/input; we style the wrapper that Webflow toggles
-    const wrapper = button.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
-
-    if (!wrapper) {
-      console.warn('No wrapper found for button:', button);
-      return;
-    }
-
-    if (isActive) wrapper.classList.add('is-active');
-    else wrapper.classList.remove('is-active');
-  }
-
-  /**
-   * Hide Major/Minor columns (and clear button active styling)
-   */
-  function hideMajorMinor(section) {
-    const isSharp = section === 'sharp';
-    const majorColumn = isSharp ? sharpMajorColumn : flatMajorColumn;
-    const minorColumn = isSharp ? sharpMinorColumn : flatMinorColumn;
-    const majorButton = isSharp ? sharpMajorButton : flatMajorButton;
-    const minorButton = isSharp ? sharpMinorButton : flatMinorButton;
-
-    if (majorColumn) {
-      majorColumn.style.display = 'none';
-      majorColumn.style.visibility = 'hidden';
-      majorColumn.style.opacity = '0';
-    }
-    if (minorColumn) {
-      minorColumn.style.display = 'none';
-      minorColumn.style.visibility = 'hidden';
-      minorColumn.style.opacity = '0';
-    }
-
-    styleMajMinButton(majorButton, false);
-    styleMajMinButton(minorButton, false);
-
-    if (isSharp) sharpMajMin = null;
-    else flatMajMin = null;
-
-    syncDataset();
-  }
-
-  /**
-   * Show Major or Minor column (within current Sharp/Flat section)
-   */
-  function showMajorMinor(which, section) {
-    // Save currently selected key before switching
-    const currentKey = getCurrentlySelectedKey();
-
-    const isSharp = section === 'sharp';
-    const majorColumn = isSharp ? sharpMajorColumn : flatMajorColumn;
-    const minorColumn = isSharp ? sharpMinorColumn : flatMinorColumn;
-    const majorButton = isSharp ? sharpMajorButton : flatMajorButton;
-    const minorButton = isSharp ? sharpMinorButton : flatMinorButton;
-
-    if (!majorColumn || !minorColumn) return;
-
-    if (which === 'major') {
-      majorColumn.style.display = 'flex';
-      majorColumn.style.visibility = 'visible';
-      majorColumn.style.opacity = '1';
-
-      minorColumn.style.display = 'none';
-      minorColumn.style.visibility = 'hidden';
-      minorColumn.style.opacity = '0';
-
-      styleMajMinButton(majorButton, true);
-      styleMajMinButton(minorButton, false);
-
-      if (isSharp) sharpMajMin = 'major';
-      else flatMajMin = 'major';
-
-      // Restore key selection in the major column
-      if (currentKey) setTimeout(() => restoreSelectedKey(currentKey, majorColumn), 50);
-
-    } else { // minor
-      minorColumn.style.display = 'flex';
-      minorColumn.style.visibility = 'visible';
-      minorColumn.style.opacity = '1';
-
-      majorColumn.style.display = 'none';
-      majorColumn.style.visibility = 'hidden';
-      majorColumn.style.opacity = '0';
-
-      styleMajMinButton(minorButton, true);
-      styleMajMinButton(majorButton, false);
-
-      if (isSharp) sharpMajMin = 'minor';
-      else flatMajMin = 'minor';
-
-      // Restore key selection in the minor column
-      if (currentKey) setTimeout(() => restoreSelectedKey(currentKey, minorColumn), 50);
-    }
-
-    syncDataset();
-  }
-
-  /**
-   * Show Sharp or Flat column
-   * - preserves whichever Major/Minor was last chosen per section
-   * - preserves the currently selected key using data-generic-key
-   */
+  // 5) UI switching (matches your CSS expectations: display none/block + opacity/visibility)
   function showSharpFlat(which) {
-    // Save currently selected key before switching
-    const currentKey = getCurrentlySelectedKey();
-
-    // Add no-transitions class to prevent animation flash
-    const keyButtonWrapper = keyAccordion.querySelector('.key-button-wrapper');
-    if (keyButtonWrapper) keyButtonWrapper.classList.add('no-key-transitions');
-
+    const currentKey = getSelectedGenericKey();
     currentSharpFlat = which;
 
     if (which === 'sharp') {
@@ -2005,28 +1833,23 @@ function initKeyFilterSystem() {
       flatColumn.style.visibility = 'hidden';
       flatColumn.style.opacity = '0';
 
-      styleSharpFlatButton(sharpButton, true);
-      styleSharpFlatButton(flatButton, false);
+      // reflect radio
+      if (!sharpInput.checked) sharpInput.checked = true;
+      setWrapperActive(sharpInput, true);
+      setWrapperActive(flatInput, false);
 
-
-
-
-
-      // Restore Major/Minor for Sharp section
+      // restore maj/min + key
       if (sharpMajMin === 'major') {
         showMajorMinor('major', 'sharp');
-        if (currentKey && sharpMajorColumn) setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+        restoreGenericKey(currentKey, sharpMM.majorCol);
       } else if (sharpMajMin === 'minor') {
         showMajorMinor('minor', 'sharp');
-        if (currentKey && sharpMinorColumn) setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+        restoreGenericKey(currentKey, sharpMM.minorCol);
       } else {
-        if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
-        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
-        styleMajMinButton(sharpMajorButton, false);
-        styleMajMinButton(sharpMinorButton, false);
+        sharpMM.majorCol.style.display = 'none';
+        sharpMM.minorCol.style.display = 'none';
       }
-
-    } else { // flat
+    } else {
       flatColumn.style.display = 'block';
       flatColumn.style.visibility = 'visible';
       flatColumn.style.opacity = '1';
@@ -2035,172 +1858,144 @@ function initKeyFilterSystem() {
       sharpColumn.style.visibility = 'hidden';
       sharpColumn.style.opacity = '0';
 
-      styleSharpFlatButton(flatButton, true);
-      styleSharpFlatButton(sharpButton, false);
+      if (!flatInput.checked) flatInput.checked = true;
+      setWrapperActive(flatInput, true);
+      setWrapperActive(sharpInput, false);
 
-      // Restore Major/Minor for Flat section
       if (flatMajMin === 'major') {
         showMajorMinor('major', 'flat');
-        if (currentKey && flatMajorColumn) setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+        restoreGenericKey(currentKey, flatMM.majorCol);
       } else if (flatMajMin === 'minor') {
         showMajorMinor('minor', 'flat');
-        if (currentKey && flatMinorColumn) setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+        restoreGenericKey(currentKey, flatMM.minorCol);
       } else {
-        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
-        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
-        styleMajMinButton(flatMajorButton, false);
-        styleMajMinButton(flatMinorButton, false);
+        flatMM.majorCol.style.display = 'none';
+        flatMM.minorCol.style.display = 'none';
       }
     }
 
     syncDataset();
-
-    // Remove no-transitions after a brief delay
-    setTimeout(() => {
-      if (keyButtonWrapper) keyButtonWrapper.classList.remove('no-key-transitions');
-    }, 50);
   }
 
-  /**
-   * Sharp/Flat button click handlers - using capture phase to prevent blocking
-   */
-  sharpButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    showSharpFlat('sharp');
-  }, true);
+  function showMajorMinor(which, section) {
+    const currentKey = getSelectedGenericKey();
 
-  flatButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    showSharpFlat('flat');
-  }, true);
+    const mm = section === 'sharp' ? sharpMM : flatMM;
 
-  /**
-   * Major/Minor button click handlers (Sharp section)
-   * - Toggle OFF when clicking the already-active one
-   * - When toggling OFF, clear checked radios in that column
-   */
-  if (sharpMajorButton) {
-    sharpMajorButton.addEventListener('click', (e) => {
+    if (which === 'major') {
+      mm.majorCol.style.display = 'flex';
+      mm.majorCol.style.visibility = 'visible';
+      mm.majorCol.style.opacity = '1';
+
+      mm.minorCol.style.display = 'none';
+      mm.minorCol.style.visibility = 'hidden';
+      mm.minorCol.style.opacity = '0';
+
+      setWrapperActive(mm.majorCtl, true);
+      setWrapperActive(mm.minorCtl, false);
+
+      if (section === 'sharp') sharpMajMin = 'major';
+      else flatMajMin = 'major';
+
+      restoreGenericKey(currentKey, mm.majorCol);
+    } else {
+      mm.minorCol.style.display = 'flex';
+      mm.minorCol.style.visibility = 'visible';
+      mm.minorCol.style.opacity = '1';
+
+      mm.majorCol.style.display = 'none';
+      mm.majorCol.style.visibility = 'hidden';
+      mm.majorCol.style.opacity = '0';
+
+      setWrapperActive(mm.minorCtl, true);
+      setWrapperActive(mm.majorCtl, false);
+
+      if (section === 'sharp') sharpMajMin = 'minor';
+      else flatMajMin = 'minor';
+
+      restoreGenericKey(currentKey, mm.minorCol);
+    }
+
+    syncDataset();
+  }
+
+  function hideMajorMinor(section) {
+    const mm = section === 'sharp' ? sharpMM : flatMM;
+
+    mm.majorCol.style.display = 'none';
+    mm.minorCol.style.display = 'none';
+    setWrapperActive(mm.majorCtl, false);
+    setWrapperActive(mm.minorCtl, false);
+
+    if (section === 'sharp') sharpMajMin = null;
+    else flatMajMin = null;
+
+    syncDataset();
+  }
+
+  // 6) Event wiring — IMPORTANT: bind to wrapper clicks so labels work in Webflow
+  function bindWrapperClick(wrapperOrInput, fn) {
+    if (!wrapperOrInput) return;
+    const wrapper = wrapperOrInput.closest?.('.w-radio, .radio-wrapper, .w-form-radio') || wrapperOrInput;
+    wrapper.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-
-      if (sharpMajMin === 'major') {
-        hideMajorMinor('sharp');
-
-        if (sharpMajorColumn) {
-          sharpMajorColumn.querySelectorAll('input[type="radio"]').forEach(radio => {
-            if (radio.checked) {
-              radio.checked = false;
-              radio.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          });
-        }
-      } else {
-        showMajorMinor('major', 'sharp');
-      }
+      fn();
     }, true);
   }
 
-  if (sharpMinorButton) {
-    sharpMinorButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  bindWrapperClick(sharpInput, () => showSharpFlat('sharp'));
+  bindWrapperClick(flatInput,  () => showSharpFlat('flat'));
 
-      if (sharpMajMin === 'minor') {
-        hideMajorMinor('sharp');
+  // Major/Minor controls: wrapper clicks (supports either input or wrapper)
+  bindWrapperClick(sharpMM.majorCtl, () => (sharpMajMin === 'major' ? hideMajorMinor('sharp') : showMajorMinor('major', 'sharp')));
+  bindWrapperClick(sharpMM.minorCtl, () => (sharpMajMin === 'minor' ? hideMajorMinor('sharp') : showMajorMinor('minor', 'sharp')));
 
-        if (sharpMinorColumn) {
-          sharpMinorColumn.querySelectorAll('input[type="radio"]').forEach(radio => {
-            if (radio.checked) {
-              radio.checked = false;
-              radio.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          });
-        }
-      } else {
-        showMajorMinor('minor', 'sharp');
-      }
-    }, true);
-  }
+  bindWrapperClick(flatMM.majorCtl,  () => (flatMajMin === 'major' ? hideMajorMinor('flat')  : showMajorMinor('major', 'flat')));
+  bindWrapperClick(flatMM.minorCtl,  () => (flatMajMin === 'minor' ? hideMajorMinor('flat')  : showMajorMinor('minor', 'flat')));
 
-  /**
-   * Major/Minor button click handlers (Flat section)
-   */
-  if (flatMajorButton) {
-    flatMajorButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (flatMajMin === 'major') {
-        hideMajorMinor('flat');
-
-        if (flatMajorColumn) {
-          flatMajorColumn.querySelectorAll('input[type="radio"]').forEach(radio => {
-            if (radio.checked) {
-              radio.checked = false;
-              radio.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          });
-        }
-      } else {
-        showMajorMinor('major', 'flat');
-      }
-    }, true);
-  }
-
-  if (flatMinorButton) {
-    flatMinorButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (flatMajMin === 'minor') {
-        hideMajorMinor('flat');
-
-        if (flatMinorColumn) {
-          flatMinorColumn.querySelectorAll('input[type="radio"]').forEach(radio => {
-            if (radio.checked) {
-              radio.checked = false;
-              radio.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-          });
-        }
-      } else {
-        showMajorMinor('minor', 'flat');
-      }
-    }, true);
-  }
-
-  /**
-   * If a key radio becomes checked (user click OR programmatic restore),
-   * force the UI to reveal the correct Sharp/Flat + Maj/Min section.
-   */
-  function attachKeyRadioListeners(column, section, majMin) {
-    if (!column) return;
-
-    const radios = column.querySelectorAll('input[type="radio"]');
-    radios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (!radio.checked) return;
-
-        // Ensure correct visibility
-        showSharpFlat(section);
-        showMajorMinor(majMin, section);
-
+  // When a key is selected, keep Maj/Min “active” state consistent
+  function attachKeyColumnListeners(colRoot, section, majMin) {
+    qsa('input[type="radio"][data-generic-key]', colRoot).forEach(r => {
+      r.addEventListener('change', () => {
+        if (!r.checked) return;
+        if (section === 'sharp') sharpMajMin = majMin;
+        else flatMajMin = majMin;
         syncDataset();
       });
     });
   }
 
-  if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
-  if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
-  if (flatMajorColumn)  attachKeyRadioListeners(flatMajorColumn,  'flat',  'major');
-  if (flatMinorColumn)  attachKeyRadioListeners(flatMinorColumn,  'flat',  'minor');
+  attachKeyColumnListeners(sharpMM.majorCol, 'sharp', 'major');
+  attachKeyColumnListeners(sharpMM.minorCol, 'sharp', 'minor');
+  attachKeyColumnListeners(flatMM.majorCol,  'flat',  'major');
+  attachKeyColumnListeners(flatMM.minorCol,  'flat',  'minor');
 
+  // 7) Expose API for restore
+  window.musicPlayerPersistent = window.musicPlayerPersistent || {};
+  window.musicPlayerPersistent.keyFilterApi = {
+    showSharpFlat,
+    showMajorMinor,
+    hideMajorMinor,
+    getState: () => ({
+      sharpFlat: currentSharpFlat,
+      sharpMajMin,
+      flatMajMin
+    }),
+    syncDataset
+  };
 
+  // 8) Initial UI state (CHOOSE ONE)
+  // If you want NO default Maj/Min (recommended):
+  showSharpFlat('sharp');
+  hideMajorMinor('sharp');
 
+  // If you actually want default Major instead, swap the two lines above for:
+  // showSharpFlat('sharp');
+  // showMajorMinor('major', 'sharp');
 
+  console.log('✅ Key Filter System wired (Webflow radio safe)');
+}
 
 
 
