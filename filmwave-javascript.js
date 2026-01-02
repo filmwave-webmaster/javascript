@@ -171,6 +171,312 @@ function updateMasterPlayerVisibility() {
   }
 }
 
+
+
+
+
+
+
+
+
+
+/**
+ * ============================================================
+ * BPM FILTER SYSTEM (Exact + Range UI, sliders + inputs)
+ * ============================================================
+ */
+
+function initBpmFilterSystem() {
+  const g = window.musicPlayerPersistent;
+
+  // Scope the BPM section so duplicate class names elsewhere don't collide
+  const bpmSection =
+    document.querySelector('[data-filter-type="bpm"]') ||
+    document.querySelector('.bpm');
+
+  if (!bpmSection) {
+    console.log('⚠️ BPM section not found - skipping BPM filter init');
+    return;
+  }
+
+  // Elements (toggles)
+  const exactToggle = bpmSection.querySelector('.exact');
+  const rangeToggle = bpmSection.querySelector('.range');
+
+  // Inputs
+  const exactInput = bpmSection.querySelector('input.bpm-input-field, .bpm-input-field input');
+  const lowInput = bpmSection.querySelector('input.bpm-input-field-low, .bpm-input-field-low input');
+  const highInput = bpmSection.querySelector('input.bpm-input-field-high, .bpm-input-field-high input');
+
+  // Wrappers that swap visibility
+  const exactFieldWrapper = bpmSection.querySelector('.bpm-field-wrapper'); // contains .bpm-input-field
+  const rangeFieldWrapper = bpmSection.querySelector('.bpm-range-field-wrapper');
+
+  const rangeSliderWrapper = bpmSection.querySelector('.slider-range-wrapper');
+  const exactSliderWrapper = bpmSection.querySelector('.slider-exact-wrapper');
+
+  // Slider parts (RANGE)
+  const rangeTrack = rangeSliderWrapper ? rangeSliderWrapper.querySelector('.slider-track') : null;
+  const rangeHandleLow = rangeSliderWrapper ? rangeSliderWrapper.querySelector('.slider-handle-low') : null;
+  const rangeHandleHigh = rangeSliderWrapper ? rangeSliderWrapper.querySelector('.slider-handle-high') : null;
+
+  // Slider parts (EXACT)
+  const exactTrack = exactSliderWrapper ? exactSliderWrapper.querySelector('.slider-track') : null;
+  const exactHandle = exactSliderWrapper ? exactSliderWrapper.querySelector('.slider-handle-exact') : null;
+
+  // Clear
+  const clearBtn = bpmSection.querySelector('.bpm-clear');
+
+  // Guard
+  if (!rangeTrack || !rangeHandleLow || !rangeHandleHigh || !exactTrack || !exactHandle) {
+    console.warn('⚠️ Missing BPM slider elements. Check class names / structure.');
+    return;
+  }
+
+  // ---------- State (single source of truth) ----------
+  if (!g.bpmFilter) {
+    g.bpmFilter = {
+      mode: 'range', // 'range' or 'exact'
+      exact: null,   // number | null
+      low: null,     // number | null
+      high: null     // number | null
+    };
+  }
+
+  const BPM_MIN = 1;
+  const BPM_MAX = 300;
+
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const isNum = (v) => typeof v === 'number' && isFinite(v);
+
+  function getTrackWidth(trackEl) {
+    // Use actual DOM width (don’t hardcode 225 — safer if responsive)
+    return trackEl.getBoundingClientRect().width || 225;
+  }
+
+  function bpmToX(bpm, trackEl) {
+    const width = getTrackWidth(trackEl);
+    const pct = (clamp(bpm, BPM_MIN, BPM_MAX) - BPM_MIN) / (BPM_MAX - BPM_MIN);
+    return pct * width;
+  }
+
+  function xToBpm(x, trackEl) {
+    const width = getTrackWidth(trackEl);
+    const pct = width > 0 ? clamp(x, 0, width) / width : 0;
+    const bpm = BPM_MIN + pct * (BPM_MAX - BPM_MIN);
+    return Math.round(bpm);
+  }
+
+  function setHandleX(handleEl, x) {
+    handleEl.style.left = `${x}px`;
+  }
+
+  function pointerX(e, trackEl) {
+    const rect = trackEl.getBoundingClientRect();
+    const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+    return clientX - rect.left;
+  }
+
+  // ---------- UI mode switching ----------
+  function setMode(mode) {
+    g.bpmFilter.mode = mode;
+
+    // Visual toggle state (simple "active" underline; customize as you like)
+    if (exactToggle) exactToggle.style.textDecoration = mode === 'exact' ? 'underline' : '';
+    if (rangeToggle) rangeToggle.style.textDecoration = mode === 'range' ? 'underline' : '';
+
+    // Swap input wrappers
+    if (exactFieldWrapper) exactFieldWrapper.style.display = mode === 'exact' ? 'block' : 'none';
+    if (rangeFieldWrapper) rangeFieldWrapper.style.display = mode === 'range' ? 'flex' : 'none';
+
+    // Swap slider wrappers
+    if (exactSliderWrapper) exactSliderWrapper.style.display = mode === 'exact' ? 'block' : 'none';
+    if (rangeSliderWrapper) rangeSliderWrapper.style.display = mode === 'range' ? 'block' : 'none';
+
+    syncUIFromState();
+    applyFilters(); // hook into your existing filter pipeline
+  }
+
+  // ---------- Sync UI from state ----------
+  function syncUIFromState() {
+    // EXACT
+    if (exactInput) exactInput.value = isNum(g.bpmFilter.exact) ? String(g.bpmFilter.exact) : '';
+    const exactVal = isNum(g.bpmFilter.exact) ? g.bpmFilter.exact : BPM_MIN;
+    setHandleX(exactHandle, bpmToX(exactVal, exactTrack));
+
+    // RANGE
+    if (lowInput) lowInput.value = isNum(g.bpmFilter.low) ? String(g.bpmFilter.low) : '';
+    if (highInput) highInput.value = isNum(g.bpmFilter.high) ? String(g.bpmFilter.high) : '';
+
+    const lowVal = isNum(g.bpmFilter.low) ? g.bpmFilter.low : BPM_MIN;
+    const highVal = isNum(g.bpmFilter.high) ? g.bpmFilter.high : BPM_MAX;
+
+    // Ensure ordering when drawing
+    const lo = Math.min(lowVal, highVal);
+    const hi = Math.max(lowVal, highVal);
+
+    setHandleX(rangeHandleLow, bpmToX(lo, rangeTrack));
+    setHandleX(rangeHandleHigh, bpmToX(hi, rangeTrack));
+  }
+
+  // ---------- Update state + apply ----------
+  function setExactValue(bpm) {
+    g.bpmFilter.exact = isNum(bpm) ? clamp(bpm, BPM_MIN, BPM_MAX) : null;
+    syncUIFromState();
+    applyFilters();
+  }
+
+  function setRangeValues(low, high) {
+    g.bpmFilter.low = isNum(low) ? clamp(low, BPM_MIN, BPM_MAX) : null;
+    g.bpmFilter.high = isNum(high) ? clamp(high, BPM_MIN, BPM_MAX) : null;
+
+    // If both exist, enforce order in state
+    if (isNum(g.bpmFilter.low) && isNum(g.bpmFilter.high)) {
+      const lo = Math.min(g.bpmFilter.low, g.bpmFilter.high);
+      const hi = Math.max(g.bpmFilter.low, g.bpmFilter.high);
+      g.bpmFilter.low = lo;
+      g.bpmFilter.high = hi;
+    }
+
+    syncUIFromState();
+    applyFilters();
+  }
+
+  // ---------- Slider dragging ----------
+  function makeDraggable(handleEl, trackEl, onMoveBpm) {
+    let dragging = false;
+
+    const move = (e) => {
+      if (!dragging) return;
+      const x = pointerX(e, trackEl);
+      const bpm = xToBpm(x, trackEl);
+      onMoveBpm(bpm, x);
+      e.preventDefault();
+    };
+
+    const up = () => {
+      if (!dragging) return;
+      dragging = false;
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      document.removeEventListener('touchmove', move, { passive: false });
+      document.removeEventListener('touchend', up);
+    };
+
+    const down = (e) => {
+      dragging = true;
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+      document.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('touchend', up);
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    handleEl.addEventListener('mousedown', down);
+    handleEl.addEventListener('touchstart', down, { passive: false });
+  }
+
+  // RANGE drag behaviors
+  makeDraggable(rangeHandleLow, rangeTrack, (bpm) => {
+    const currentHigh = isNum(g.bpmFilter.high) ? g.bpmFilter.high : BPM_MAX;
+    setRangeValues(Math.min(bpm, currentHigh), currentHigh);
+  });
+
+  makeDraggable(rangeHandleHigh, rangeTrack, (bpm) => {
+    const currentLow = isNum(g.bpmFilter.low) ? g.bpmFilter.low : BPM_MIN;
+    setRangeValues(currentLow, Math.max(bpm, currentLow));
+  });
+
+  // EXACT drag behavior
+  makeDraggable(exactHandle, exactTrack, (bpm) => {
+    setExactValue(bpm);
+  });
+
+  // Track click = move nearest handle (range) / move handle (exact)
+  rangeTrack.addEventListener('click', (e) => {
+    const bpm = xToBpm(pointerX(e, rangeTrack), rangeTrack);
+
+    const lo = isNum(g.bpmFilter.low) ? g.bpmFilter.low : BPM_MIN;
+    const hi = isNum(g.bpmFilter.high) ? g.bpmFilter.high : BPM_MAX;
+
+    // Move whichever handle is closer
+    if (Math.abs(bpm - lo) <= Math.abs(bpm - hi)) {
+      setRangeValues(Math.min(bpm, hi), hi);
+    } else {
+      setRangeValues(lo, Math.max(bpm, lo));
+    }
+  });
+
+  exactTrack.addEventListener('click', (e) => {
+    const bpm = xToBpm(pointerX(e, exactTrack), exactTrack);
+    setExactValue(bpm);
+  });
+
+  // ---------- Input typing behaviors (on blur to avoid fighting) ----------
+  function parseInput(el) {
+    if (!el) return null;
+    const v = String(el.value || '').trim();
+    if (!v) return null;
+    const n = parseInt(v, 10);
+    return isFinite(n) ? n : null;
+  }
+
+  if (exactInput) {
+    exactInput.addEventListener('blur', () => {
+      const n = parseInput(exactInput);
+      setExactValue(isNum(n) ? n : null);
+    });
+  }
+
+  if (lowInput) {
+    lowInput.addEventListener('blur', () => {
+      const low = parseInput(lowInput);
+      const high = isNum(g.bpmFilter.high) ? g.bpmFilter.high : null;
+      setRangeValues(isNum(low) ? low : null, high);
+    });
+  }
+
+  if (highInput) {
+    highInput.addEventListener('blur', () => {
+      const high = parseInput(highInput);
+      const low = isNum(g.bpmFilter.low) ? g.bpmFilter.low : null;
+      setRangeValues(low, isNum(high) ? high : null);
+    });
+  }
+
+  // ---------- Toggles ----------
+  if (exactToggle) exactToggle.addEventListener('click', () => setMode('exact'));
+  if (rangeToggle) rangeToggle.addEventListener('click', () => setMode('range'));
+
+  // ---------- Clear ----------
+  function clearBpm() {
+    g.bpmFilter.exact = null;
+    g.bpmFilter.low = null;
+    g.bpmFilter.high = null;
+    syncUIFromState();
+    applyFilters();
+  }
+
+  if (clearBtn) clearBtn.addEventListener('click', clearBpm);
+
+  // ---------- Initial paint ----------
+  // Default mode to 'range' visually (does NOT force values)
+  setMode(g.bpmFilter.mode || 'range');
+
+  console.log('✅ BPM Filter System initialized');
+}
+
+
+
+
+
+
+
+
+
+
+
 /**
  * ============================================================
  * MAIN INITIALIZATION
@@ -207,6 +513,7 @@ async function initMusicPage() {
       initDynamicTagging();
       initMutualExclusion();
       initKeyFilterSystem();
+      initBpmFilterSystem();
       initSearchAndFilters();
       g.filtersInitialized = true;
     }
@@ -2463,6 +2770,42 @@ function initSearchAndFilters() {
     searchQuery: ''
   }));
 
+
+
+
+
+
+
+
+
+   // ✅ ALSO CLEAR BPM FILTER STATE
+if (g.bpmFilter) {
+  g.bpmFilter.exact = null;
+  g.bpmFilter.low = null;
+  g.bpmFilter.high = null;
+}
+
+    // ✅ FORCE BPM UI TO RE-SYNC (OPTIONAL)
+  if (typeof initBpmFilterSystem === 'function') {
+    const bpmSection =
+      document.querySelector('[data-filter-type="bpm"]') ||
+      document.querySelector('.bpm');
+
+    if (bpmSection) {
+      window.dispatchEvent(new Event('resize'));
+    }
+  }
+
+
+
+
+
+
+
+
+
+    
+
   toggleClearButton();
   applyFilters();
 }
@@ -2513,8 +2856,49 @@ function initSearchAndFilters() {
       
       return false;
     });
+
+
+
+
+
+
+
+
+
     
-    return matchesSearch && matchesAttributes;
+  // BPM filtering (exact OR range)
+const bpmState = g.bpmFilter || { mode: 'range', exact: null, low: null, high: null };
+const bpmValue = parseFloat(fields['BPM']);
+
+let matchesBpm = true;
+
+if (isFinite(bpmValue)) {
+  if (bpmState.mode === 'exact' && bpmState.exact !== null) {
+    matchesBpm = bpmValue === bpmState.exact;
+  } else if (bpmState.mode === 'range' && (bpmState.low !== null || bpmState.high !== null)) {
+    const low = bpmState.low !== null ? bpmState.low : 1;
+    const high = bpmState.high !== null ? bpmState.high : 300;
+    matchesBpm = bpmValue >= low && bpmValue <= high;
+  }
+} else {
+  // If a BPM filter is active, songs without BPM should fail
+  const bpmFilterActive =
+    (bpmState.mode === 'exact' && bpmState.exact !== null) ||
+    (bpmState.mode === 'range' && (bpmState.low !== null || bpmState.high !== null));
+  if (bpmFilterActive) matchesBpm = false;
+}
+
+
+
+
+
+
+
+
+
+
+    
+    return matchesSearch && matchesAttributes && matchesBpm;
   }).map(r => r.id);
   
   // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
