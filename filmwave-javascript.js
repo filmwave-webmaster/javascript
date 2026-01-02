@@ -3594,17 +3594,16 @@ function restoreKeyFilterState(keyState) {
     }
   }
   
- function doRestore() {
-  const keyAccordion = document.querySelector('.filter-category');
-  console.log('🔍 doRestore check:', {
-    keyAccordion: !!keyAccordion,
-    hasWrapper: !!keyAccordion?.querySelector('.sharp-flat-toggle-wrapper')
-  });
-  
-  // Wait for wrapper to exist
+function doRestore() {
+  // Wait for wrapper to exist - re-query keyAccordion each time
   let attempts = 0;
   function waitForWrapper() {
+    const keyAccordion = document.querySelector('.filter-category'); // Re-query each time!
     const wrapper = keyAccordion?.querySelector('.sharp-flat-toggle-wrapper');
+    console.log(`🔍 Attempt ${attempts + 1}:`, {
+      keyAccordion: !!keyAccordion,
+      wrapper: !!wrapper
+    });
     if (wrapper) {
       console.log('✅ Wrapper found, continuing restore...');
       doActualRestore();
@@ -3618,8 +3617,8 @@ function restoreKeyFilterState(keyState) {
   }
   
   function doActualRestore() {
-    const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
-    const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
+  const keyAccordion = document.querySelector('.filter-category'); // Re-query here too!
+  const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
     const sharpButton = buttons[0];
     const flatButton = buttons[1];
     
