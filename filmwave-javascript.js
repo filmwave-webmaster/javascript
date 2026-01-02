@@ -2335,6 +2335,39 @@ function showSharpFlat(which) {
   if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
   if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
+
+// Attach listeners to all key radio buttons
+if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
+if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
+if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
+if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
+
+// Remove old key tags when new key selected
+document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    if (radio.checked) {
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      if (tagsContainer) {
+        const allKeyTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        allKeyTags.forEach(tag => {
+          const tagText = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
+          const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
+          const currentKeyText = matchingLabel?.textContent.trim();
+          
+          if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
+            tag.remove();
+          }
+        });
+      }
+    }
+  });
+});
+
+/**
+ * Initial state: Show Sharp section with major keys visible (but not filtered)
+ */
+showSharpFlat('sharp');
   
 /**
  * Initial state: Show Sharp section with major keys visible (but not filtered)
@@ -3450,12 +3483,54 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
       }
     }
     
-    // Restore Key filter UI state
-    if (filterState.keyState) {
-      setTimeout(() => {
-        restoreKeyFilterState(filterState.keyState);
-      }, 200);
-    }
+   // Restore Key filter UI state
+if (filterState.keyState) {
+  setTimeout(() => {
+    restoreKeyFilterState(filterState.keyState);
+    
+    // Manually create major/minor tags if they're active (since we don't save their radios)
+    setTimeout(() => {
+      const hasSpecificKey = filterState.filters.some(f => f.group === 'Key' && f.value);
+      
+      if (hasSpecificKey && tagsContainer) {
+        // Check if major is active
+        const sharpMajorActive = document.querySelector('.sharp-key-column .maj-wrapper.is-active');
+        const flatMajorActive = document.querySelector('.flat-key-column .maj-wrapper.is-active');
+        if (sharpMajorActive || flatMajorActive) {
+          createMajorMinorTag('Major', tagsContainer);
+        }
+        
+        // Check if minor is active
+        const sharpMinorActive = document.querySelector('.sharp-key-column .min-wrapper.is-active');
+        const flatMinorActive = document.querySelector('.flat-key-column .min-wrapper.is-active');
+        if (sharpMinorActive || flatMinorActive) {
+          createMajorMinorTag('Minor', tagsContainer);
+        }
+      }
+    }, 300);
+  }, 200);
+}
+
+// Helper function to create major/minor tags
+function createMajorMinorTag(type, container) {
+  const tag = document.createElement('div');
+  tag.className = 'filter-tag';
+  tag.innerHTML = `
+    <span class="filter-tag-text">${type}</span>
+    <span class="filter-tag-remove x-button-style">×</span>
+  `;
+  
+  tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+    // Find and click the appropriate major/minor button to deselect
+    const button = document.querySelector(type === 'Major' 
+      ? '.maj-wrapper.is-active [data-key-group="major"]'
+      : '.min-wrapper.is-active [data-key-group="minor"]');
+    if (button) button.click();
+    tag.remove();
+  });
+  
+  container.appendChild(tag);
+}
     
     // Ensure clear button state is correct after restore
     setTimeout(() => {
