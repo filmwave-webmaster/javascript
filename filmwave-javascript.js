@@ -2057,6 +2057,8 @@ function showSharpFlat(which) {
     e.stopPropagation();
     showSharpFlat('flat');
   }, true); // Use capture phase
+
+// SHARP/FLAT MAJOR/MINORCLICK HANDLERS
   
   if (sharpMajorButton) {
   sharpMajorButton.addEventListener('click', (e) => {
@@ -2088,6 +2090,12 @@ function showSharpFlat(which) {
       // Check the radio to trigger filter
       sharpMajorButton.checked = true;
       sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      
+      // Restore any previously selected key
+      const currentKey = getCurrentlySelectedKey();
+      if (currentKey && sharpMajorColumn) {
+        setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+      }
     }
   }, true);
 }
@@ -2122,6 +2130,12 @@ function showSharpFlat(which) {
       // Check the radio to trigger filter
       sharpMinorButton.checked = true;
       sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      
+      // Restore any previously selected key
+      const currentKey = getCurrentlySelectedKey();
+      if (currentKey && sharpMinorColumn) {
+        setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+      }
     }
   }, true);
 }
@@ -2159,6 +2173,12 @@ function showSharpFlat(which) {
       // Check the radio to trigger filter
       flatMajorButton.checked = true;
       flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      
+      // Restore any previously selected key
+      const currentKey = getCurrentlySelectedKey();
+      if (currentKey && flatMajorColumn) {
+        setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+      }
     }
   }, true);
 }
@@ -2193,6 +2213,12 @@ function showSharpFlat(which) {
       // Check the radio to trigger filter
       flatMinorButton.checked = true;
       flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      
+      // Restore any previously selected key
+      const currentKey = getCurrentlySelectedKey();
+      if (currentKey && flatMinorColumn) {
+        setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+      }
     }
   }, true);
 }
