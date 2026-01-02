@@ -2219,7 +2219,7 @@ function initKeyFilterSystem() {
   if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
   
- /**
+/**
  * Initial state: Show Sharp section with major keys visible (but not filtered)
  */
 showSharpFlat('sharp');
@@ -2242,6 +2242,12 @@ if (flatMajorColumn) {
 if (flatMinorColumn) {
   flatMinorColumn.style.display = 'none';
 }
+
+// Ensure no buttons are styled as active on load
+styleMajMinButton(sharpMajorButton, false);
+styleMajMinButton(sharpMinorButton, false);
+styleMajMinButton(flatMajorButton, false);
+styleMajMinButton(flatMinorButton, false);
 
 console.log('✅ Key Filter System initialized');
   
