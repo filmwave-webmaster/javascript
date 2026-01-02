@@ -2071,14 +2071,15 @@ function showSharpFlat(which) {
     }
   }
 }
-  
-  // Remove no-transitions after a brief delay
-  setTimeout(() => {
-    if (keyButtonWrapper) {
-      keyButtonWrapper.classList.remove('no-key-transitions');
-    }
-  }, 50);
-}
+    
+// Remove no-transitions after a brief delay (ALWAYS runs after switching)
+setTimeout(() => {
+  if (keyButtonWrapper) {
+    keyButtonWrapper.classList.remove('no-key-transitions');
+  }
+}, 50);
+
+} // ✅ closes showSharpFlat(which)
   
   /**
    * Show Major or Minor column (within current Sharp/Flat section)
