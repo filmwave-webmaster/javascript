@@ -3207,16 +3207,29 @@ function saveFilterState() {
     }
   };
   
-  // Save all checked filters
-  document.querySelectorAll('[data-filter-group]').forEach(input => {
-    if (input.checked) {
-      filterState.filters.push({
-        group: input.getAttribute('data-filter-group'),
-        value: input.getAttribute('data-filter-value'),
-        keyGroup: input.getAttribute('data-key-group')
-      });
+ // Check if specific keys are selected
+const hasSpecificKeySelected = !!document.querySelector('[data-filter-group="Key"][data-filter-value]:checked');
+
+// Save all checked filters
+document.querySelectorAll('[data-filter-group]').forEach(input => {
+  if (input.checked) {
+    const isKeyGroup = input.getAttribute('data-filter-group') === 'Key';
+    const hasKeyGroupAttr = input.hasAttribute('data-key-group');
+    const hasFilterValue = input.hasAttribute('data-filter-value');
+    
+    // Skip major/minor radios if a specific key is selected
+    if (isKeyGroup && hasKeyGroupAttr && !hasFilterValue && hasSpecificKeySelected) {
+      console.log('⏭️ Skipping major/minor radio (specific key selected)');
+      return; // Skip this radio
     }
-  });
+    
+    filterState.filters.push({
+      group: input.getAttribute('data-filter-group'),
+      value: input.getAttribute('data-filter-value'),
+      keyGroup: input.getAttribute('data-key-group')
+    });
+  }
+});
   
   // Save search query
   const searchBar = document.querySelector('[data-filter-search="true"]');
