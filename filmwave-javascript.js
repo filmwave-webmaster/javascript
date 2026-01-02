@@ -1705,441 +1705,620 @@ function initMutualExclusion() {
 
 /**
  * ============================================================
- * KEY FILTER SYSTEM (BUTTON-BASED)
- * Sharp/Flat are Webflow buttons, not radios
+ * KEY FILTER SYSTEM
+ * Handles Sharp/Flat toggle, Major/Minor toggle, and key selection
  * ============================================================
  */
 function initKeyFilterSystem() {
-  console.log('🎹 initKeyFilterSystem() fired');
-
-  const keyAccordion =
-    document.querySelector('.filter-category.key') ||
-    document.querySelector('.sharp-flat-toggle-wrapper')?.closest('.filter-category');
-
+  console.log('🎹 Initializing Key Filter System');
+  
+  // Find the KEY filter-category specifically (not Genre, Mood, etc.)
+  // Look for the one that contains the sharp-flat-toggle-wrapper
+  let keyAccordion = null;
+  
+  // First, try to find the sharp-flat-toggle-wrapper
+  const toggleWrapper = document.querySelector('.sharp-flat-toggle-wrapper');
+  if (toggleWrapper) {
+    // Walk up to find the parent filter-category
+    keyAccordion = toggleWrapper.closest('.filter-category');
+    console.log('🔍 Found KEY filter via toggle wrapper');
+  }
+  
+  // Fallback: look for filter-category with specific class or attribute
   if (!keyAccordion) {
-    console.warn('⚠️ Key filter-category not found.');
+    keyAccordion = document.querySelector('.filter-category.key');
+  }
+  
+  // Last resort: check all filter-categories to find the one with key elements
+  if (!keyAccordion) {
+    const allCategories = document.querySelectorAll('.filter-category');
+    console.log(`🔍 Checking ${allCategories.length} filter-category elements`);
+    for (const category of allCategories) {
+      if (category.querySelector('.sharp-flat-toggle-wrapper') || 
+          category.querySelector('.sharp-key-column')) {
+        keyAccordion = category;
+        console.log('🔍 Found KEY filter by checking children');
+        break;
+      }
+    }
+  }
+  
+  if (!keyAccordion) {
+    console.log('⚠️ Key filter-category not found - skipping Key Filter System');
+    console.log('💡 Looking for: .filter-category that contains .sharp-flat-toggle-wrapper');
     return;
   }
-
-  const sharpFlatWrap = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
+  
+  console.log('✅ Key accordion found:', keyAccordion.className);
+  
+  // Get all elements with detailed logging
+  const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
+  console.log('🔍 Sharp-flat wrapper found:', !!sharpFlatWrapper, sharpFlatWrapper?.className);
+  
+  let sharpButton = null;
+  let flatButton = null;
+  
+  if (sharpFlatWrapper) {
+    const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button, [role="button"], .sharp-button, .flat-button');
+    console.log('🔍 Buttons found in wrapper:', buttons.length);
+    if (buttons.length >= 2) {
+      sharpButton = buttons[0];  // First button is Sharp
+      flatButton = buttons[1];   // Second button is Flat
+    } else {
+      // Try looking for buttons with specific classes
+      sharpButton = sharpFlatWrapper.querySelector('.sharp-button, [data-key-type="sharp"]');
+      flatButton = sharpFlatWrapper.querySelector('.flat-button, [data-key-type="flat"]');
+    }
+  }
+  
   const sharpColumn = keyAccordion.querySelector('.sharp-key-column');
-  const flatColumn  = keyAccordion.querySelector('.flat-key-column');
-
-  if (!sharpFlatWrap || !sharpColumn || !flatColumn) {
-    console.error('❌ Missing key elements:', {
-      sharpFlatWrap: !!sharpFlatWrap,
-      sharpColumn: !!sharpColumn,
-      flatColumn: !!flatColumn
+  const flatColumn = keyAccordion.querySelector('.flat-key-column');
+  
+  console.log('🔍 Columns found:', {
+    sharpColumn: !!sharpColumn,
+    flatColumn: !!flatColumn
+  });
+  
+  // Debug logging
+  console.log('🔍 Element check:', {
+    sharpButton: !!sharpButton,
+    flatButton: !!flatButton,
+    sharpColumn: !!sharpColumn,
+    flatColumn: !!flatColumn
+  });
+  
+  if (!sharpButton || !flatButton || !sharpColumn || !flatColumn) {
+    console.error('❌ Missing Sharp/Flat elements - Details:', {
+      sharpButton: sharpButton ? '✓' : '✗ MISSING',
+      flatButton: flatButton ? '✓' : '✗ MISSING',
+      sharpColumn: sharpColumn ? '✓' : '✗ MISSING',
+      flatColumn: flatColumn ? '✓' : '✗ MISSING'
     });
+    console.log('💡 Make sure your Webflow structure has these elements with correct class names');
     return;
   }
-
-  // Treat Sharp/Flat as BUTTONS:
-  // You MUST make these selectors match your Webflow buttons.
-  // (Common patterns: first/last child, or data attributes, or specific classes)
-  const sharpBtn =
-    sharpFlatWrap.querySelector('[data-key-type="sharp"]') ||
-    sharpFlatWrap.querySelector('.sharp-button') ||
-    sharpFlatWrap.children[0];
-
-  const flatBtn =
-    sharpFlatWrap.querySelector('[data-key-type="flat"]') ||
-    sharpFlatWrap.querySelector('.flat-button') ||
-    sharpFlatWrap.children[1];
-
-  if (!sharpBtn || !flatBtn) {
-    console.error('❌ Could not locate Sharp/Flat buttons.');
-    return;
+  
+  // Get Major/Minor elements for BOTH Sharp and Flat sections using data-key-group
+  const sharpMajorButton = sharpColumn.querySelector('[data-key-group="major"]');
+  const sharpMinorButton = sharpColumn.querySelector('[data-key-group="minor"]');
+  const sharpMajorColumn = sharpColumn.querySelector('.maj-key-column');
+  const sharpMinorColumn = sharpColumn.querySelector('.min-key-column');
+  
+  const flatMajorButton = flatColumn.querySelector('[data-key-group="major"]');
+  const flatMinorButton = flatColumn.querySelector('[data-key-group="minor"]');
+  const flatMajorColumn = flatColumn.querySelector('.maj-key-column');
+  const flatMinorColumn = flatColumn.querySelector('.min-key-column');
+  
+  console.log('🔍 Major/Minor buttons check:', {
+    sharpMajor: !!sharpMajorButton,
+    sharpMinor: !!sharpMinorButton,
+    flatMajor: !!flatMajorButton,
+    flatMinor: !!flatMinorButton
+  });
+  
+  console.log('✅ Found all Key filter elements');
+  
+  // State tracking
+  let currentSharpFlat = 'sharp'; // 'sharp' or 'flat'
+  let sharpMajMin = null; // 'major', 'minor', or null
+  let flatMajMin = null; // 'major', 'minor', or null
+  
+  /**
+   * Get currently selected generic key (using data-generic-key attribute)
+   */
+  function getCurrentlySelectedKey() {
+    const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
+    return checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
   }
-
-  // Major/Minor toggle controls (inside each column)
-  function getMajMin(sectionRoot) {
-    const majorCtl =
-      sectionRoot.querySelector('[data-key-group="major"]') ||
-      sectionRoot.querySelector('.maj-wrapper') ||
-      sectionRoot.querySelector('.maj-wrapper .w-radio') ||
-      sectionRoot.querySelector('.maj-wrapper input');
-
-    const minorCtl =
-      sectionRoot.querySelector('[data-key-group="minor"]') ||
-      sectionRoot.querySelector('.min-wrapper') ||
-      sectionRoot.querySelector('.min-wrapper .w-radio') ||
-      sectionRoot.querySelector('.min-wrapper input');
-
-    const majorCol = sectionRoot.querySelector('.maj-key-column');
-    const minorCol = sectionRoot.querySelector('.min-key-column');
-    return { majorCtl, minorCtl, majorCol, minorCol };
+  
+  /**
+   * Restore selected key after switching sections (using data-generic-key)
+   */
+  function restoreSelectedKey(genericKey, targetColumn) {
+    if (!genericKey || !targetColumn) return;
+    
+    const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
+    if (matchingRadio && !matchingRadio.checked) {
+      console.log(`🔄 Restoring key selection: ${genericKey}`);
+      matchingRadio.checked = true;
+      matchingRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   }
-
-  const sharpMM = getMajMin(sharpColumn);
-  const flatMM  = getMajMin(flatColumn);
-
-  if (!sharpMM.majorCol || !sharpMM.minorCol || !flatMM.majorCol || !flatMM.minorCol) {
-    console.error('❌ Missing maj/min columns.');
-    return;
+  
+  /**
+   * Style Sharp/Flat buttons
+   */
+  function styleSharpFlatButton(button, isActive) {
+    if (!button) return;
+    
+    // For standard buttons, style the button element directly
+    if (isActive) {
+      button.style.color = '#191919';
+      button.style.borderBottom = '3px solid #191919';
+      button.style.backgroundColor = ''; // Remove any background
+    } else {
+      button.style.color = '';
+      button.style.borderBottom = '';
+      button.style.backgroundColor = '';
+    }
   }
-
-  // State
-  let currentSharpFlat = 'sharp'; // 'sharp' | 'flat'
-  let sharpMajMin = null;         // 'major' | 'minor' | null
-  let flatMajMin  = null;         // 'major' | 'minor' | null
-
-  function syncDataset() {
-    keyAccordion.dataset.keySharpFlat = currentSharpFlat || 'sharp';
-    keyAccordion.dataset.keySharpMajMin = sharpMajMin || '';
-    keyAccordion.dataset.keyFlatMajMin = flatMajMin || '';
+  
+  /**
+   * Style Major/Minor buttons
+   */
+  function styleMajMinButton(button, isActive) {
+    if (!button) return;
+    
+    // The button is the input element, but we need to style its parent wrapper
+    const wrapper = button.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+    
+    if (!wrapper) {
+      console.warn('No wrapper found for button:', button);
+      return;
+    }
+    
+    if (isActive) {
+      wrapper.classList.add('is-active');
+    } else {
+      wrapper.classList.remove('is-active');
+    }
   }
-
-  function setActive(el, on) {
-    if (!el) return;
-    el.classList.toggle('is-active', !!on);
-    el.setAttribute?.('aria-pressed', on ? 'true' : 'false');
-  }
-
+  
+  /**
+   * Show Sharp or Flat column
+   */
   function showSharpFlat(which) {
+    // Save currently selected key before switching
+    const currentKey = getCurrentlySelectedKey();
+    
+    // Add no-transitions class to prevent animation flash
+    const keyButtonWrapper = keyAccordion.querySelector('.key-button-wrapper');
+    if (keyButtonWrapper) {
+      keyButtonWrapper.classList.add('no-key-transitions');
+    }
+    
     currentSharpFlat = which;
-
+    
     if (which === 'sharp') {
       sharpColumn.style.display = 'block';
       sharpColumn.style.visibility = 'visible';
       sharpColumn.style.opacity = '1';
-
+      
       flatColumn.style.display = 'none';
       flatColumn.style.visibility = 'hidden';
       flatColumn.style.opacity = '0';
-
-      setActive(sharpBtn, true);
-      setActive(flatBtn, false);
-
-      // restore maj/min visibility
-      if (sharpMajMin === 'major') showMajorMinor('major', 'sharp');
-      else if (sharpMajMin === 'minor') showMajorMinor('minor', 'sharp');
-      else {
-        sharpMM.majorCol.style.display = 'none';
-        sharpMM.minorCol.style.display = 'none';
+      
+      styleSharpFlatButton(sharpButton, true);
+      styleSharpFlatButton(flatButton, false);
+      
+      // Show the appropriate Major/Minor column in Sharp section
+      if (sharpMajMin === 'major') {
+        showMajorMinor('major', 'sharp');
+        // Restore key selection in the new column
+        if (currentKey && sharpMajorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+        }
+      } else if (sharpMajMin === 'minor') {
+        showMajorMinor('minor', 'sharp');
+        // Restore key selection in the new column
+        if (currentKey && sharpMinorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+        }
+      } else {
+        // No selection - hide both
+        if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
+        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
       }
-    } else {
+      
+    } else { // flat
       flatColumn.style.display = 'block';
       flatColumn.style.visibility = 'visible';
       flatColumn.style.opacity = '1';
-
+      
       sharpColumn.style.display = 'none';
       sharpColumn.style.visibility = 'hidden';
       sharpColumn.style.opacity = '0';
-
-      setActive(flatBtn, true);
-      setActive(sharpBtn, false);
-
-      if (flatMajMin === 'major') showMajorMinor('major', 'flat');
-      else if (flatMajMin === 'minor') showMajorMinor('minor', 'flat');
-      else {
-        flatMM.majorCol.style.display = 'none';
-        flatMM.minorCol.style.display = 'none';
+      
+      styleSharpFlatButton(flatButton, true);
+      styleSharpFlatButton(sharpButton, false);
+      
+      // Show the appropriate Major/Minor column in Flat section
+      if (flatMajMin === 'major') {
+        showMajorMinor('major', 'flat');
+        // Restore key selection in the new column
+        if (currentKey && flatMajorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+        }
+      } else if (flatMajMin === 'minor') {
+        showMajorMinor('minor', 'flat');
+        // Restore key selection in the new column
+        if (currentKey && flatMinorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+        }
+      } else {
+        // No selection - hide both
+        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
+        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
       }
     }
-
-    syncDataset();
+    
+    // Remove no-transitions after a brief delay
+    setTimeout(() => {
+      if (keyButtonWrapper) {
+        keyButtonWrapper.classList.remove('no-key-transitions');
+      }
+    }, 50);
   }
-
+  
+  /**
+   * Show Major or Minor column (within current Sharp/Flat section)
+   */
   function showMajorMinor(which, section) {
-    const mm = section === 'sharp' ? sharpMM : flatMM;
-
+    // Save currently selected key before switching
+    const currentKey = getCurrentlySelectedKey();
+    
+    const isSharp = section === 'sharp';
+    const majorColumn = isSharp ? sharpMajorColumn : flatMajorColumn;
+    const minorColumn = isSharp ? sharpMinorColumn : flatMinorColumn;
+    const majorButton = isSharp ? sharpMajorButton : flatMajorButton;
+    const minorButton = isSharp ? sharpMinorButton : flatMinorButton;
+    
+    if (!majorColumn || !minorColumn) return;
+    
     if (which === 'major') {
-      mm.majorCol.style.display = 'flex';
-      mm.majorCol.style.visibility = 'visible';
-      mm.majorCol.style.opacity = '1';
-
-      mm.minorCol.style.display = 'none';
-      mm.minorCol.style.visibility = 'hidden';
-      mm.minorCol.style.opacity = '0';
-
-      setActive(mm.majorCtl, true);
-      setActive(mm.minorCtl, false);
-
-      if (section === 'sharp') sharpMajMin = 'major';
-      else flatMajMin = 'major';
-    } else {
-      mm.minorCol.style.display = 'flex';
-      mm.minorCol.style.visibility = 'visible';
-      mm.minorCol.style.opacity = '1';
-
-      mm.majorCol.style.display = 'none';
-      mm.majorCol.style.visibility = 'hidden';
-      mm.majorCol.style.opacity = '0';
-
-      setActive(mm.minorCtl, true);
-      setActive(mm.majorCtl, false);
-
-      if (section === 'sharp') sharpMajMin = 'minor';
-      else flatMajMin = 'minor';
+      majorColumn.style.display = 'flex';
+      majorColumn.style.visibility = 'visible';
+      majorColumn.style.opacity = '1';
+      
+      minorColumn.style.display = 'none';
+      minorColumn.style.visibility = 'hidden';
+      minorColumn.style.opacity = '0';
+      
+      styleMajMinButton(majorButton, true);
+      styleMajMinButton(minorButton, false);
+      
+      // Restore key selection in the major column
+      if (currentKey) {
+        setTimeout(() => restoreSelectedKey(currentKey, majorColumn), 50);
+      }
+      
+    } else { // minor
+      minorColumn.style.display = 'flex';
+      minorColumn.style.visibility = 'visible';
+      minorColumn.style.opacity = '1';
+      
+      majorColumn.style.display = 'none';
+      majorColumn.style.visibility = 'hidden';
+      majorColumn.style.opacity = '0';
+      
+      styleMajMinButton(minorButton, true);
+      styleMajMinButton(majorButton, false);
+      
+      // Restore key selection in the minor column
+      if (currentKey) {
+        setTimeout(() => restoreSelectedKey(currentKey, minorColumn), 50);
+      }
     }
-
-    syncDataset();
   }
-
-  function hideMajorMinor(section) {
-    const mm = section === 'sharp' ? sharpMM : flatMM;
-
-    mm.majorCol.style.display = 'none';
-    mm.minorCol.style.display = 'none';
-    setActive(mm.majorCtl, false);
-    setActive(mm.minorCtl, false);
-
-    if (section === 'sharp') sharpMajMin = null;
-    else flatMajMin = null;
-
-    syncDataset();
-  }
-
-  // Bind button clicks
-  sharpBtn.addEventListener('click', (e) => {
+  
+  /**
+   * Sharp/Flat button click handlers - using capture phase to prevent blocking
+   */
+  sharpButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     showSharpFlat('sharp');
-  }, true);
-
-  flatBtn.addEventListener('click', (e) => {
+  }, true); // Use capture phase
+  
+  flatButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     showSharpFlat('flat');
-  }, true);
-
-  // Bind maj/min toggles
-  if (sharpMM.majorCtl) sharpMM.majorCtl.addEventListener('click', (e) => {
-    e.preventDefault(); e.stopPropagation();
-    sharpMajMin === 'major' ? hideMajorMinor('sharp') : showMajorMinor('major', 'sharp');
-  }, true);
-
-  if (sharpMM.minorCtl) sharpMM.minorCtl.addEventListener('click', (e) => {
-    e.preventDefault(); e.stopPropagation();
-    sharpMajMin === 'minor' ? hideMajorMinor('sharp') : showMajorMinor('minor', 'sharp');
-  }, true);
-
-  if (flatMM.majorCtl) flatMM.majorCtl.addEventListener('click', (e) => {
-    e.preventDefault(); e.stopPropagation();
-    flatMajMin === 'major' ? hideMajorMinor('flat') : showMajorMinor('major', 'flat');
-  }, true);
-
-  if (flatMM.minorCtl) flatMM.minorCtl.addEventListener('click', (e) => {
-    e.preventDefault(); e.stopPropagation();
-    flatMajMin === 'minor' ? hideMajorMinor('flat') : showMajorMinor('minor', 'flat');
-  }, true);
-
-  // Expose API for persistence restore
-  window.musicPlayerPersistent.keyFilterApi = {
-    showSharpFlat,
-    showMajorMinor,
-    hideMajorMinor,
-    syncDataset,
-    getState: () => ({ sharpFlat: currentSharpFlat, sharpMajMin, flatMajMin })
-  };
-
-  // Initial state
+  }, true); // Use capture phase
+  
+  /**
+   * Major/Minor button click handlers (Sharp section)
+   */
+  if (sharpMajorButton) {
+    sharpMajorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Toggle logic: if already major, turn off; otherwise turn on
+      if (sharpMajMin === 'major') {
+        sharpMajMin = null;
+        styleMajMinButton(sharpMajorButton, false);
+        if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
+        
+        // Uncheck all radio buttons in the major column
+        const radios = sharpMajorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        sharpMajMin = 'major';
+        showMajorMinor('major', 'sharp');
+      }
+    }, true); // Use capture phase
+  }
+  
+  if (sharpMinorButton) {
+    sharpMinorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (sharpMajMin === 'minor') {
+        sharpMajMin = null;
+        styleMajMinButton(sharpMinorButton, false);
+        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
+        
+        // Uncheck all radio buttons in the minor column
+        const radios = sharpMinorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        sharpMajMin = 'minor';
+        showMajorMinor('minor', 'sharp');
+      }
+    }, true); // Use capture phase
+  }
+  
+  /**
+   * Major/Minor button click handlers (Flat section)
+   */
+  if (flatMajorButton) {
+    flatMajorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (flatMajMin === 'major') {
+        flatMajMin = null;
+        styleMajMinButton(flatMajorButton, false);
+        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
+        
+        const radios = flatMajorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        flatMajMin = 'major';
+        showMajorMinor('major', 'flat');
+      }
+    }, true); // Use capture phase
+  }
+  
+  if (flatMinorButton) {
+    flatMinorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (flatMajMin === 'minor') {
+        flatMajMin = null;
+        styleMajMinButton(flatMinorButton, false);
+        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
+        
+        const radios = flatMinorColumn.querySelectorAll('input[type="radio"]');
+        radios.forEach(radio => {
+          if (radio.checked) {
+            radio.checked = false;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      } else {
+        flatMajMin = 'minor';
+        showMajorMinor('minor', 'flat');
+      }
+    }, true); // Use capture phase
+  }
+  
+  /**
+   * Listen for key radio button clicks to maintain Major/Minor active state
+   */
+  function attachKeyRadioListeners(column, section, majMin) {
+    const radios = column.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.checked) {
+          // Keep the Major/Minor button active
+          if (section === 'sharp') {
+            sharpMajMin = majMin;
+            if (majMin === 'major') {
+              styleMajMinButton(sharpMajorButton, true);
+            } else {
+              styleMajMinButton(sharpMinorButton, true);
+            }
+          } else {
+            flatMajMin = majMin;
+            if (majMin === 'major') {
+              styleMajMinButton(flatMajorButton, true);
+            } else {
+              styleMajMinButton(flatMinorButton, true);
+            }
+          }
+        }
+      });
+    });
+  }
+  
+  // Attach listeners to all key radio buttons
+  if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
+  if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
+  if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
+  if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
+  
+  /**
+   * Initial state: Show Sharp section by default
+   */
   showSharpFlat('sharp');
-  hideMajorMinor('sharp');
-
-  console.log('✅ Key Filter System initialized (button-based)');
+  
+  /**
+   * Initial state: Show Major keys by default in Sharp section
+   */
+  showMajorMinor('major', 'sharp');
+  
+  console.log('✅ Key Filter System initialized');
 }
 
+function toggleClearButton() {
+  const clearBtn = document.querySelector('.circle-x');
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (!clearBtn) return;
 
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
 
-    // ───────────────────────────────────────────────────────────
-  // Sharp/Flat controls (supports Webflow "buttons" OR radios)
-  // ───────────────────────────────────────────────────────────
+  clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+}
 
-  // Candidates inside the toggle wrapper that behave like buttons:
-  // (Webflow often uses <a>, <div>, or <button> with classes)
-  const sharpFlatBtnCandidates = qsa(
-    '[data-key-type], .sharp-toggle, .flat-toggle, .is-sharp, .is-flat, a, button, div',
-    sharpFlatWrap
-  ).filter(el => {
-    // Filter out containers that are obviously wrappers
-    if (el === sharpFlatWrap) return false;
-    // Keep anything clickable or anything with identifying class/attr
-    const hasKeyType = !!el.getAttribute('data-key-type');
-    const cls = (el.className || '').toString().toLowerCase();
-    const looksLikeButton =
-      el.tagName === 'A' ||
-      el.tagName === 'BUTTON' ||
-      el.getAttribute('role') === 'button' ||
-      el.onclick ||
-      cls.includes('button') ||
-      cls.includes('toggle') ||
-      cls.includes('radio') ||
-      cls.includes('tab');
-    return hasKeyType || looksLikeButton;
-  });
+function initSearchAndFilters() {
+  const g = window.musicPlayerPersistent;
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const clearBtn = document.querySelector('.circle-x');
+  
+  function clearAllFilters() {
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
 
-  // Also allow radio inputs if they exist
-  const sharpFlatRadioInputs = qsa('input[type="radio"]', sharpFlatWrap);
-
-  function resolveSharpFlatControl(which) {
-    const w = which.toLowerCase();
-
-    // 1) data-key-type on radio input
-    const byRadioData = sharpFlatRadioInputs.find(i => (i.getAttribute('data-key-type') || '').toLowerCase() === w);
-    if (byRadioData) return { type: 'radio', el: byRadioData };
-
-    // 2) data-key-type on button-like element
-    const byBtnData = sharpFlatBtnCandidates.find(b => (b.getAttribute('data-key-type') || '').toLowerCase() === w);
-    if (byBtnData) return { type: 'button', el: byBtnData };
-
-    // 3) class name hints
-    const byClass = sharpFlatBtnCandidates.find(b => {
-      const cls = (b.className || '').toString().toLowerCase();
-      return cls.includes(w); // contains "sharp" or "flat"
-    });
-    if (byClass) return { type: 'button', el: byClass };
-
-    // 4) fallback to order: first=sharp, second=flat (only among candidates)
-    if (sharpFlatBtnCandidates.length >= 2) {
-      return w === 'sharp'
-        ? { type: 'button', el: sharpFlatBtnCandidates[0] }
-        : { type: 'button', el: sharpFlatBtnCandidates[1] };
-    }
-
-    // 5) fallback to order among radios
-    if (sharpFlatRadioInputs.length >= 2) {
-      return w === 'sharp'
-        ? { type: 'radio', el: sharpFlatRadioInputs[0] }
-        : { type: 'radio', el: sharpFlatRadioInputs[1] };
-    }
-
-    return null;
-  }
-
-  const sharpCtl = resolveSharpFlatControl('sharp');
-  const flatCtl  = resolveSharpFlatControl('flat');
-
-  if (!sharpCtl || !flatCtl) {
-    console.error('❌ Could not locate Sharp/Flat controls (buttons or radios).', {
-      buttonCandidates: sharpFlatBtnCandidates.length,
-      radioInputs: sharpFlatRadioInputs.length
-    });
+  if (!hasSearch && !hasFilters) {
     return;
   }
 
-  function setSharpFlatActiveUI(which) {
-    // Remove active class from both
-    [sharpCtl.el, flatCtl.el].forEach(el => {
-      if (!el) return;
-      el.classList.remove('is-active');
-      el.classList.remove('w--current');
-      el.setAttribute('aria-pressed', 'false');
-    });
-
-    const activeEl = which === 'flat' ? flatCtl.el : sharpCtl.el;
-    if (activeEl) {
-      activeEl.classList.add('is-active');
-      activeEl.setAttribute('aria-pressed', 'true');
-    }
+  if (searchBar && hasSearch) {
+    searchBar.value = '';
+    // Optional: dispatch input to trigger applyFilters early
+    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  function activateSharpFlat(which) {
-    currentSharpFlat = which;
-
-    // If it's a radio, check it. If it's a button, click it (if safe) and/or style it.
-    if (which === 'sharp') {
-      if (sharpCtl.type === 'radio') sharpCtl.el.checked = true;
-      else setSharpFlatActiveUI('sharp');
-    } else {
-      if (flatCtl.type === 'radio') flatCtl.el.checked = true;
-      else setSharpFlatActiveUI('flat');
-    }
-  }
-
-  // Bind clicks to whichever elements exist
-  function bindSharpFlat(control, which) {
-    if (!control || !control.el) return;
-    control.el.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      showSharpFlat(which);
-    }, true);
-  }
-
-  bindSharpFlat(sharpCtl, 'sharp');
-  bindSharpFlat(flatCtl, 'flat');
-
-    toggleClearButton();
-    applyFilters();
-  }
-
-  function applyFilters() {
-    const g = window.musicPlayerPersistent;
-    const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
-    const keywords = query.split(/\s+/).filter(k => k.length > 0);
-    const filterInputs = document.querySelectorAll('[data-filter-group]');
-    const selectedFilters = [];
-
-    filterInputs.forEach(input => {
+  // Clear checkbox filters
+  const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+  if (tagRemoveButtons.length > 0) {
+    tagRemoveButtons.forEach((btn) => btn.click());
+  } else {
+    document.querySelectorAll('[data-filter-group]').forEach(input => {
       if (input.checked) {
-        const group = input.getAttribute('data-filter-group');
-        const value = input.getAttribute('data-filter-value');
-        const keyGroup = input.getAttribute('data-key-group');
-
-        selectedFilters.push({
-          group: group,
-          value: value ? value.toLowerCase() : null,
-          keyGroup: keyGroup ? keyGroup.toLowerCase() : null
-        });
+        input.checked = false;
+        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+        if (wrapper) wrapper.classList.remove('is-active');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
+  }
 
-    const visibleIds = g.MASTER_DATA.filter(record => {
-      const fields = record.fields;
-      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-      const matchesSearch = keywords.every(k => allText.includes(k));
+  // Save empty state so restoration knows it was intentionally cleared
+  localStorage.setItem('musicFilters', JSON.stringify({
+    filters: [],
+    searchQuery: ''
+  }));
 
-      const matchesAttributes = selectedFilters.every(filter => {
-        let recVal = fields[filter.group];
-        if (recVal === undefined || recVal === null) return false;
-
-        if (filter.keyGroup) {
-          if (filter.keyGroup === 'major') {
-            return String(recVal).toLowerCase().endsWith('maj');
-          }
-          if (filter.keyGroup === 'minor') {
-            return String(recVal).toLowerCase().endsWith('min');
-          }
-        }
-
-        if (filter.value) {
-          if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
-          return String(recVal).toLowerCase() === filter.value;
-        }
-
-        return false;
+  toggleClearButton();
+  applyFilters();
+}
+  
+ function applyFilters() {
+  const g = window.musicPlayerPersistent;
+  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+  const keywords = query.split(/\s+/).filter(k => k.length > 0);
+  const filterInputs = document.querySelectorAll('[data-filter-group]');
+  const selectedFilters = [];
+  
+  filterInputs.forEach(input => {
+    if (input.checked) {
+      const group = input.getAttribute('data-filter-group');
+      const value = input.getAttribute('data-filter-value');
+      const keyGroup = input.getAttribute('data-key-group');
+      
+      selectedFilters.push({
+        group: group,
+        value: value ? value.toLowerCase() : null,
+        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
       });
-
-      return matchesSearch && matchesAttributes;
-    }).map(r => r.id);
-
-    // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
-    const isMusicPage = !!document.querySelector('.music-list-wrapper');
-    if (isMusicPage) {
-      g.filteredSongIds = visibleIds;
-      console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
     }
-
-    document.querySelectorAll('.song-wrapper').forEach(card => {
-      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+  });
+  
+  const visibleIds = g.MASTER_DATA.filter(record => {
+    const fields = record.fields;
+    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+    const matchesSearch = keywords.every(k => allText.includes(k));
+    
+    const matchesAttributes = selectedFilters.every(filter => {
+      let recVal = fields[filter.group];
+      if (recVal === undefined || recVal === null) return false;
+      
+      if (filter.keyGroup) {
+        if (filter.keyGroup === 'major') {
+          return String(recVal).toLowerCase().endsWith('maj');
+        }
+        if (filter.keyGroup === 'minor') {
+          return String(recVal).toLowerCase().endsWith('min');
+        }
+      }
+      
+      if (filter.value) {
+        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+        return String(recVal).toLowerCase() === filter.value;
+      }
+      
+      return false;
     });
-
-    toggleClearButton();
+    
+    return matchesSearch && matchesAttributes;
+  }).map(r => r.id);
+  
+  // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (isMusicPage) {
+    g.filteredSongIds = visibleIds;
+    console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
   }
-
+  
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+  });
+  
+  toggleClearButton();
+}
+  
   if (clearBtn) {
-    // Start hidden — will only show after restoration (if needed)
-    clearBtn.style.display = 'none';
-    clearBtn.addEventListener('click', clearAllFilters);
+  // Start hidden — will only show after restoration (if needed)
+  clearBtn.style.display = 'none';
+  clearBtn.addEventListener('click', clearAllFilters);
 
-    // Safety: update visibility after a delay in case restoration takes time
-    setTimeout(() => {
-      toggleClearButton();
-    }, 800);
-  }
-
+  // Safety: update visibility after a delay in case restoration takes time
+  setTimeout(() => {
+    toggleClearButton();
+  }, 800);
+}
+  
   if (searchBar) {
     searchBar.addEventListener('input', () => {
       clearTimeout(searchTimeout);
@@ -2147,7 +2326,7 @@ function initKeyFilterSystem() {
       searchTimeout = setTimeout(applyFilters, 400);
     });
   }
-
+  
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     input.addEventListener('change', () => {
       applyFilters();
@@ -2828,23 +3007,12 @@ let searchSaveTimeout;
  * ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT
  * ============================================================
  */
-
-/**
- * NOTE (outside this block):
- * - This section assumes these globals exist somewhere above:
- *   let filtersRestored = false;
- *   let isClearing = false;
- *   let searchSaveTimeout = null;
- * - It also assumes initKeyFilterSystem() runs before restore attempts, OR that
- *   keyFilterApi exists by the time restoreKeyFilterState runs.
- */
-
 function saveFilterState() {
   if (isClearing) {
     console.log('⏸️ Skipping save - clearing in progress');
     return;
   }
-
+  
   const filterState = {
     filters: [],
     searchQuery: '',
@@ -2854,7 +3022,7 @@ function saveFilterState() {
       flatMajMin: null
     }
   };
-
+  
   // Save all checked filters
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     if (input.checked) {
@@ -2865,56 +3033,42 @@ function saveFilterState() {
       });
     }
   });
-
+  
   // Save search query
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar && searchBar.value) {
     filterState.searchQuery = searchBar.value;
   }
-
-  /**
-   * Save Key filter UI state robustly
-   * Prefer the API (set by initKeyFilterSystem), else fall back to DOM reads.
-   */
-  const api = window.musicPlayerPersistent?.keyFilterApi;
-
-  if (api && typeof api.getState === 'function') {
-    const s = api.getState();
-    filterState.keyState.sharpFlat = s.sharpFlat || 'sharp';
-    filterState.keyState.sharpMajMin = s.sharpMajMin || null;
-    filterState.keyState.flatMajMin = s.flatMajMin || null;
-  } else {
-    // Fallback: dataset if present
-    const keyAccordion =
-      document.querySelector('.filter-category.key') ||
-      document.querySelector('.filter-category .sharp-flat-toggle-wrapper')?.closest('.filter-category') ||
-      document.querySelector('.filter-category');
-
-    if (keyAccordion && keyAccordion.dataset) {
-      if (keyAccordion.dataset.keySharpFlat) {
-        filterState.keyState.sharpFlat = keyAccordion.dataset.keySharpFlat;
-      }
-      filterState.keyState.sharpMajMin = keyAccordion.dataset.keySharpMajMin || null;
-      filterState.keyState.flatMajMin = keyAccordion.dataset.keyFlatMajMin || null;
-    } else {
-      // Last resort: style reads (less reliable)
-      const flatColumn = document.querySelector('.flat-key-column');
-      if (flatColumn && (flatColumn.style.display === 'block' || getComputedStyle(flatColumn).display === 'block')) {
-        filterState.keyState.sharpFlat = 'flat';
-      }
-
-      const sharpMajorActive = document.querySelector('.sharp-key-column .maj-wrapper.is-active, .sharp-key-column .w-radio.is-active');
-      const sharpMinorActive = document.querySelector('.sharp-key-column .min-wrapper.is-active, .sharp-key-column .w-radio.is-active');
-      if (sharpMajorActive) filterState.keyState.sharpMajMin = 'major';
-      else if (sharpMinorActive) filterState.keyState.sharpMajMin = 'minor';
-
-      const flatMajorActive = document.querySelector('.flat-key-column .maj-wrapper.is-active, .flat-key-column .w-radio.is-active');
-      const flatMinorActive = document.querySelector('.flat-key-column .min-wrapper.is-active, .flat-key-column .w-radio.is-active');
-      if (flatMajorActive) filterState.keyState.flatMajMin = 'major';
-      else if (flatMinorActive) filterState.keyState.flatMajMin = 'minor';
-    }
+  
+  // Save Key filter UI state (Sharp/Flat, Major/Minor)
+  const sharpColumn = document.querySelector('.sharp-key-column');
+  const flatColumn = document.querySelector('.flat-key-column');
+  
+  // Detect which Sharp/Flat is active
+  if (flatColumn && flatColumn.style.display === 'block') {
+    filterState.keyState.sharpFlat = 'flat';
   }
-
+  
+  // Detect Sharp section Major/Minor state
+  const sharpMajorButton = document.querySelector('.sharp-key-column .maj-wrapper .radio-wrapper.is-active, .sharp-key-column .maj-wrapper .w-radio.is-active');
+  const sharpMinorButton = document.querySelector('.sharp-key-column .min-wrapper .radio-wrapper.is-active, .sharp-key-column .min-wrapper .w-radio.is-active');
+  
+  if (sharpMajorButton) {
+    filterState.keyState.sharpMajMin = 'major';
+  } else if (sharpMinorButton) {
+    filterState.keyState.sharpMajMin = 'minor';
+  }
+  
+  // Detect Flat section Major/Minor state
+  const flatMajorButton = document.querySelector('.flat-key-column .maj-wrapper .radio-wrapper.is-active, .flat-key-column .maj-wrapper .w-radio.is-active');
+  const flatMinorButton = document.querySelector('.flat-key-column .min-wrapper .radio-wrapper.is-active, .flat-key-column .min-wrapper .w-radio.is-active');
+  
+  if (flatMajorButton) {
+    filterState.keyState.flatMajMin = 'major';
+  } else if (flatMinorButton) {
+    filterState.keyState.flatMajMin = 'minor';
+  }
+  
   localStorage.setItem('musicFilters', JSON.stringify(filterState));
   console.log('💾 Saved filter state (with Key state):', filterState);
 }
@@ -2930,19 +3084,19 @@ function restoreFilterState() {
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
-
+   
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     if (tagsContainer) tagsContainer.style.opacity = '1';
     if (clearButton) clearButton.style.opacity = '1';
-
+   
     return false;
   }
-
+  
   try {
     const filterState = JSON.parse(savedState);
-
-    const hasActiveFilters = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
+    
+    const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
     if (!hasActiveFilters) {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
@@ -2950,21 +3104,20 @@ function restoreFilterState() {
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
       }
-
+      
       const tagsContainer = document.querySelector('.filter-tags-container');
       const clearButton = document.querySelector('.circle-x');
       if (tagsContainer) tagsContainer.style.opacity = '1';
       if (clearButton) clearButton.style.opacity = '1';
-
+      
       return false;
     }
-
+    
     console.log('📂 Restoring filter state:', filterState);
-
+    
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
-
-    // Hide tags + clear until we've rebuilt them to prevent flash
+    
     if (tagsContainer) {
       tagsContainer.style.opacity = '0';
       tagsContainer.style.transition = 'none';
@@ -2973,132 +3126,162 @@ function restoreFilterState() {
       clearButton.style.opacity = '0';
       clearButton.style.transition = 'none';
     }
-
+    
     let restoredCount = 0;
-
-    // 1) Re-check inputs
-    (filterState.filters || []).forEach(savedFilter => {
+    
+    filterState.filters.forEach(savedFilter => {
       let selector = `[data-filter-group="${savedFilter.group}"]`;
-
-      if (savedFilter.value) selector += `[data-filter-value="${savedFilter.value}"]`;
-      if (savedFilter.keyGroup) selector += `[data-key-group="${savedFilter.keyGroup}"]`;
-
+      
+      if (savedFilter.value) {
+        selector += `[data-filter-value="${savedFilter.value}"]`;
+      }
+      if (savedFilter.keyGroup) {
+        selector += `[data-key-group="${savedFilter.keyGroup}"]`;
+      }
+      
       const input = document.querySelector(selector);
       if (input && !input.checked) {
         input.checked = true;
-
+        
         const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
-        if (wrapper) wrapper.classList.add('is-active');
-
+        if (wrapper) {
+          wrapper.classList.add('is-active');
+        }
+        
         restoredCount++;
       }
     });
-
-    // 2) Restore search
-    if (filterState.searchQuery) {
-      const searchBar = document.querySelector('[data-filter-search="true"]');
-      if (searchBar) {
-        searchBar.value = filterState.searchQuery;
-        // Let existing listeners run applyFilters debounce behavior
-        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }
-
-    // 3) Restore Key UI state (do this BEFORE we dispatch filter change events)
-    if (filterState.keyState) {
-      setTimeout(() => {
-        restoreKeyFilterState(filterState.keyState);
-      }, 50);
-    }
-
-    // 4) Build tags from checked inputs (single source of truth = DOM)
+    
     if (tagsContainer) {
       tagsContainer.innerHTML = '';
-
-      const checkedInputs = Array.from(document.querySelectorAll('[data-filter-group]')).filter(i => i.checked);
-
-      checkedInputs.forEach(input => {
-        const tag = document.createElement('div');
-        tag.className = 'filter-tag';
-
-        // Best-effort label text
-        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
-        const label =
-          wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]') ||
-          input.closest('label');
-
-        const group = input.getAttribute('data-filter-group') || '';
-        const val = input.getAttribute('data-filter-value');
-        const tagText = (label && label.textContent.trim())
-          ? label.textContent.trim()
-          : (val && val !== 'true' && val !== 'false')
-            ? val
-            : group;
-
-        tag.innerHTML = `
-          <span class="filter-tag-text">${tagText}</span>
-          <span class="filter-tag-remove x-button-style">×</span>
-        `;
-
-        tag.querySelector('.filter-tag-remove').addEventListener('click', function () {
-          input.checked = false;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-          tag.remove();
-          saveFilterState();
-        });
-
-        tagsContainer.appendChild(tag);
+      
+      filterState.filters.forEach(savedFilter => {
+        let selector = `[data-filter-group="${savedFilter.group}"]`;
+        
+        if (savedFilter.value) {
+          selector += `[data-filter-value="${savedFilter.value}"]`;
+        }
+        if (savedFilter.keyGroup) {
+          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
+        }
+        
+        const input = document.querySelector(selector);
+        if (input && input.checked) {
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          
+          let tagText;
+          
+          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
+          const label = wrapper?.querySelector('label, .w-form-label, .filter-item-text, [class*="label"]');
+          
+          if (label && label.textContent.trim()) {
+            tagText = label.textContent.trim();
+          } 
+          else if (savedFilter.value && savedFilter.value !== 'true' && savedFilter.value !== 'false') {
+            tagText = savedFilter.value;
+          }
+          else {
+            tagText = savedFilter.group;
+          }
+          
+          tag.innerHTML = `
+            <span class="filter-tag-text">${tagText}</span>
+            <span class="filter-tag-remove x-button-style">×</span>
+          `;
+          
+          tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+            input.checked = false;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            tag.remove();
+            saveFilterState();
+          });
+          
+          tagsContainer.appendChild(tag);
+        }
       });
-
-      // Deduplicate tags by text (prevents rare double-add)
-      const seen = new Set();
-      Array.from(tagsContainer.querySelectorAll('.filter-tag')).forEach(t => {
-        const text = t.querySelector('.filter-tag-text')?.textContent.trim();
-        if (!text) return;
-        if (seen.has(text)) t.remove();
-        else seen.add(text);
-      });
-
+      
       console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
     }
-
-    // 5) Now dispatch change events so your existing filtering system recomputes
+    
     setTimeout(() => {
-      (filterState.filters || []).forEach(savedFilter => {
+      filterState.filters.forEach(savedFilter => {
         let selector = `[data-filter-group="${savedFilter.group}"]`;
-        if (savedFilter.value) selector += `[data-filter-value="${savedFilter.value}"]`;
-        if (savedFilter.keyGroup) selector += `[data-key-group="${savedFilter.keyGroup}"]`;
-
+        
+        if (savedFilter.value) {
+          selector += `[data-filter-value="${savedFilter.value}"]`;
+        }
+        if (savedFilter.keyGroup) {
+          selector += `[data-key-group="${savedFilter.keyGroup}"]`;
+        }
+        
         const input = document.querySelector(selector);
         if (input && input.checked) {
           input.dispatchEvent(new Event('change', { bubbles: true }));
         }
       });
-
-      // Fade tags + clear in after everything is stable
+      
       setTimeout(() => {
         if (tagsContainer) {
-          tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
-          tagsContainer.style.opacity = '1';
+          const seen = new Set();
+          const tagsToRemove = [];
+          
+          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
+            const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+            if (text) {
+              if (seen.has(text)) {
+                tagsToRemove.push(tag);
+              } else {
+                seen.add(text);
+              }
+            }
+          });
+          
+          tagsToRemove.forEach(tag => tag.remove());
+          
+          if (tagsToRemove.length > 0) {
+            console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
+          }
+          
+          setTimeout(() => {
+            if (tagsContainer) {
+              tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
+              tagsContainer.style.opacity = '1';
+            }
+            if (clearButton) {
+              clearButton.style.transition = 'opacity 0.3s ease-in-out';
+              clearButton.style.opacity = '1';
+            }
+            console.log('✨ Tags and clear button faded in');
+          }, 10);
         }
-        if (clearButton) {
-          clearButton.style.transition = 'opacity 0.3s ease-in-out';
-          clearButton.style.opacity = '1';
-        }
-        console.log('✨ Tags and clear button faded in');
-      }, 80);
-    }, 80);
-
+      }, 100);
+    }, 50);
+    
+    if (filterState.searchQuery) {
+      const searchBar = document.querySelector('[data-filter-search="true"]');
+      if (searchBar) {
+        searchBar.value = filterState.searchQuery;
+        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+    
+    // Restore Key filter UI state
+    if (filterState.keyState) {
+      setTimeout(() => {
+        restoreKeyFilterState(filterState.keyState);
+      }, 200);
+    }
+    
     // Ensure clear button state is correct after restore
     setTimeout(() => {
       toggleClearButton();
-    }, 120);
+    }, 100);
 
-    toggleClearButton();
-
+    toggleClearButton(); // Make sure button visibility is correct after restore
+    
     console.log(`✅ Restored ${restoredCount} filters`);
-
-    // Reveal songs after restore
+    
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList) {
@@ -3109,23 +3292,23 @@ function restoreFilterState() {
       }
       console.log('✨ Songs faded in');
     }, 150);
-
+    
     return true;
   } catch (error) {
     console.error('Error restoring filters:', error);
-
+    
     const musicList = document.querySelector('.music-list-wrapper');
     if (musicList) {
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
     }
-
+    
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     if (tagsContainer) tagsContainer.style.opacity = '1';
     if (clearButton) clearButton.style.opacity = '1';
-
+    
     return false;
   }
 }
@@ -3136,69 +3319,41 @@ function restoreFilterState() {
  */
 function restoreKeyFilterState(keyState) {
   if (!keyState) return;
-
+  
   console.log('🎹 Restoring Key filter state:', keyState);
-
-  // Prefer the Key Filter API created by initKeyFilterSystem()
-  const api = window.musicPlayerPersistent?.keyFilterApi;
-
-  // If API exists, this is the most reliable + avoids brittle DOM selectors
-  if (api && typeof api.showSharpFlat === 'function') {
-    const targetSharpFlat = keyState.sharpFlat === 'flat' ? 'flat' : 'sharp';
-
-    api.showSharpFlat(targetSharpFlat);
-
-    // Restore the correct Major/Minor for the active section
-    setTimeout(() => {
-      if (targetSharpFlat === 'sharp') {
-        if (keyState.sharpMajMin === 'major') api.showMajorMinor('major', 'sharp');
-        else if (keyState.sharpMajMin === 'minor') api.showMajorMinor('minor', 'sharp');
-        else api.hideMajorMinor('sharp');
-      } else {
-        if (keyState.flatMajMin === 'major') api.showMajorMinor('major', 'flat');
-        else if (keyState.flatMajMin === 'minor') api.showMajorMinor('minor', 'flat');
-        else api.hideMajorMinor('flat');
-      }
-
-      if (typeof api.syncDataset === 'function') api.syncDataset();
-    }, 60);
-
-    return;
-  }
-
-  /**
-   * Fallback DOM method (if API not available yet)
-   * (kept compatible with your markup)
-   */
-  const keyAccordion =
-    document.querySelector('.filter-category.key') ||
-    document.querySelector('.sharp-flat-toggle-wrapper')?.closest('.filter-category');
-
+  
+  const keyAccordion = document.querySelector('.key');
   if (!keyAccordion) return;
-
-  const sharpButton =
-    keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:first-child, .sharp-flat-toggle-wrapper .radio-wrapper:first-child');
-  const flatButton =
-    keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:last-child, .sharp-flat-toggle-wrapper .radio-wrapper:last-child');
-
-  if (keyState.sharpFlat === 'flat' && flatButton) flatButton.click();
-  else if (sharpButton) sharpButton.click();
-
+  
+  // Get elements
+  const sharpButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:first-child, .sharp-flat-toggle-wrapper .radio-wrapper:first-child');
+  const flatButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:last-child, .sharp-flat-toggle-wrapper .radio-wrapper:last-child');
+  
+  // Restore Sharp/Flat selection
+  if (keyState.sharpFlat === 'flat' && flatButton) {
+    flatButton.click();
+  } else if (sharpButton) {
+    sharpButton.click();
+  }
+  
+  // Wait for Sharp/Flat to render, then restore Major/Minor
   setTimeout(() => {
+    // Restore Sharp section Major/Minor
     if (keyState.sharpMajMin === 'major') {
-      const btn = keyAccordion.querySelector('.sharp-key-column .maj-wrapper .w-radio, .sharp-key-column .maj-wrapper .radio-wrapper');
-      if (btn) btn.click();
+      const sharpMajorButton = keyAccordion.querySelector('.sharp-key-column .maj-wrapper .w-radio, .sharp-key-column .maj-wrapper .radio-wrapper');
+      if (sharpMajorButton) sharpMajorButton.click();
     } else if (keyState.sharpMajMin === 'minor') {
-      const btn = keyAccordion.querySelector('.sharp-key-column .min-wrapper .w-radio, .sharp-key-column .min-wrapper .radio-wrapper');
-      if (btn) btn.click();
+      const sharpMinorButton = keyAccordion.querySelector('.sharp-key-column .min-wrapper .w-radio, .sharp-key-column .min-wrapper .radio-wrapper');
+      if (sharpMinorButton) sharpMinorButton.click();
     }
-
+    
+    // Restore Flat section Major/Minor
     if (keyState.flatMajMin === 'major') {
-      const btn = keyAccordion.querySelector('.flat-key-column .maj-wrapper .w-radio, .flat-key-column .maj-wrapper .radio-wrapper');
-      if (btn) btn.click();
+      const flatMajorButton = keyAccordion.querySelector('.flat-key-column .maj-wrapper .w-radio, .flat-key-column .maj-wrapper .radio-wrapper');
+      if (flatMajorButton) flatMajorButton.click();
     } else if (keyState.flatMajMin === 'minor') {
-      const btn = keyAccordion.querySelector('.flat-key-column .min-wrapper .w-radio, .flat-key-column .min-wrapper .radio-wrapper');
-      if (btn) btn.click();
+      const flatMinorButton = keyAccordion.querySelector('.flat-key-column .min-wrapper .w-radio, .flat-key-column .min-wrapper .radio-wrapper');
+      if (flatMinorButton) flatMinorButton.click();
     }
   }, 100);
 }
@@ -3207,15 +3362,10 @@ function clearFilterState() {
   // Save an EMPTY state instead of removing the item
   localStorage.setItem('musicFilters', JSON.stringify({
     filters: [],
-    searchQuery: '',
-    keyState: {
-      sharpFlat: 'sharp',
-      sharpMajMin: null,
-      flatMajMin: null
-    }
+    searchQuery: ''
   }));
   console.log('💾 Saved empty filter state after clear');
-
+ 
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
     musicList.style.opacity = '1';
@@ -3224,13 +3374,13 @@ function clearFilterState() {
   }
 }
 
-document.addEventListener('change', function (e) {
+document.addEventListener('change', function(e) {
   if (e.target.matches('[data-filter-group]')) {
     saveFilterState();
   }
 });
 
-document.addEventListener('input', function (e) {
+document.addEventListener('input', function(e) {
   if (e.target.matches('[data-filter-search="true"]')) {
     clearTimeout(searchSaveTimeout);
     searchSaveTimeout = setTimeout(saveFilterState, 500);
@@ -3239,16 +3389,16 @@ document.addEventListener('input', function (e) {
 
 function attemptRestore() {
   console.log('attemptRestore called, filtersRestored:', filtersRestored);
-
+  
   if (filtersRestored) return true;
-
+  
   const hasFilters = document.querySelectorAll('[data-filter-group]').length > 0;
   console.log('Filters found on page:', hasFilters);
-
+  
   if (hasFilters) {
     const success = restoreFilterState();
     console.log('restoreFilterState returned:', success);
-
+    
     if (success) {
       filtersRestored = true;
     } else {
@@ -3259,7 +3409,7 @@ function attemptRestore() {
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
       }
-
+      
       const tagsContainer = document.querySelector('.filter-tags-container');
       const clearButton = document.querySelector('.circle-x');
       if (tagsContainer) tagsContainer.style.opacity = '1';
@@ -3267,7 +3417,7 @@ function attemptRestore() {
     }
     return success;
   }
-
+  
   console.log('No filters on page - showing songs immediately');
   const musicList = document.querySelector('.music-list-wrapper');
   if (musicList) {
@@ -3275,14 +3425,14 @@ function attemptRestore() {
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
   }
-
+  
   return false;
 }
 
-window.addEventListener('load', function () {
+window.addEventListener('load', function() {
   console.log('🔄 Page load event fired');
   filtersRestored = false;
-
+  
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
     console.log('Checking music list on page load:', musicList ? 'found' : 'not found');
@@ -3296,7 +3446,7 @@ window.addEventListener('load', function () {
       }
     }
   }, 100);
-
+  
   setTimeout(() => {
     const musicList = document.querySelector('.music-list-wrapper');
     if (musicList && (musicList.style.opacity === '0' || musicList.style.visibility === 'hidden')) {
@@ -3304,18 +3454,18 @@ window.addEventListener('load', function () {
       musicList.style.opacity = '1';
       musicList.style.visibility = 'visible';
       musicList.style.pointerEvents = 'auto';
-
+      
       const tagsContainer = document.querySelector('.filter-tags-container');
       const clearButton = document.querySelector('.circle-x');
       if (tagsContainer) tagsContainer.style.opacity = '1';
       if (clearButton) clearButton.style.opacity = '1';
     }
   }, 2000);
-
+  
   setTimeout(() => {
     console.log('Starting filter restoration attempts');
     if (!attemptRestore()) {
-      setTimeout(() => {
+      setTimeout(() => { 
         if (!attemptRestore()) {
           setTimeout(attemptRestore, 200);
         }
@@ -3329,18 +3479,18 @@ if (typeof barba !== 'undefined') {
     sessionStorage.setItem('isBarbaNavigation', 'true');
     console.log('🚀 Barba navigation starting');
   });
-
+  
   barba.hooks.beforeEnter((data) => {
     console.log('📥 Barba beforeEnter hook');
     const savedState = localStorage.getItem('musicFilters');
     console.log('Saved filters:', savedState);
-
+    
     if (savedState) {
       try {
         const filterState = JSON.parse(savedState);
-        const hasActiveFilters = (filterState.filters && filterState.filters.length > 0) || !!filterState.searchQuery;
+        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
         console.log('Has active filters:', hasActiveFilters);
-
+        
         if (hasActiveFilters) {
           const musicList = data.next.container.querySelector('.music-list-wrapper');
           if (musicList) {
@@ -3361,11 +3511,11 @@ if (typeof barba !== 'undefined') {
       console.log('✅ No saved state - songs will show normally');
     }
   });
-
+  
   barba.hooks.after((data) => {
     console.log('✅ Barba after hook');
     filtersRestored = false;
-
+    
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
       console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
@@ -3379,7 +3529,7 @@ if (typeof barba !== 'undefined') {
         }
       }
     }, 500);
-
+    
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
       if (musicList && (musicList.style.opacity === '0' || musicList.style.visibility === 'hidden')) {
@@ -3387,14 +3537,14 @@ if (typeof barba !== 'undefined') {
         musicList.style.opacity = '1';
         musicList.style.visibility = 'visible';
         musicList.style.pointerEvents = 'auto';
-
+        
         const tagsContainer = document.querySelector('.filter-tags-container');
         const clearButton = document.querySelector('.circle-x');
         if (tagsContainer) tagsContainer.style.opacity = '1';
         if (clearButton) clearButton.style.opacity = '1';
       }
     }, 2000);
-
+    
     setTimeout(() => {
       console.log('Attempting restore at 100ms');
       if (!attemptRestore()) {
@@ -3411,7 +3561,6 @@ if (typeof barba !== 'undefined') {
     }, 100);
   });
 }
-
 
 /**
  * ============================================================
