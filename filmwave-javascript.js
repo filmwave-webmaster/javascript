@@ -3596,7 +3596,7 @@ function restoreKeyFilterState(keyState) {
   
 function doRestore() {
   // First, open the Key accordion if it's closed
-  const keyAccordion = document.querySelector('.filter-category');
+  const keyAccordion = document.querySelector('[data-filter-type="key"]');
   const accordionToggle = keyAccordion?.querySelector('.filter-header, .accordion-header, [class*="toggle"], [class*="header"]');
   
   console.log('🔍 Accordion check:', {
@@ -3614,7 +3614,7 @@ function doRestore() {
   // Wait for wrapper to exist - re-query keyAccordion each time
   let attempts = 0;
   function waitForWrapper() {
-    const keyAccordion = document.querySelector('.filter-category');
+    const keyAccordion = document.querySelector('[data-filter-type="key"]');
     const wrapper = keyAccordion?.querySelector('.sharp-flat-toggle-wrapper');
     console.log(`🔍 Attempt ${attempts + 1}:`, {
       keyAccordion: !!keyAccordion,
@@ -3633,7 +3633,7 @@ function doRestore() {
   }
   
   function doActualRestore() {
-  const keyAccordion = document.querySelector('.filter-category'); // Re-query here too!
+  const keyAccordion = document.querySelector('[data-filter-type="key"]'); // Re-query here too!
   const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
     const sharpButton = buttons[0];
     const flatButton = buttons[1];
