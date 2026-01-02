@@ -1827,23 +1827,48 @@ function initKeyFilterSystem() {
    * Get currently selected generic key (using data-generic-key attribute)
    */
   function getCurrentlySelectedKey() {
-    const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
-    return checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
-  }
+  const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
+  const genericKey = checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
+  console.log('🔍 getCurrentlySelectedKey:', {
+    found: !!checkedRadio,
+    genericKey: genericKey,
+    element: checkedRadio
+  });
+  return genericKey;
+}
   
   /**
    * Restore selected key after switching sections (using data-generic-key)
    */
   function restoreSelectedKey(genericKey, targetColumn) {
-    if (!genericKey || !targetColumn) return;
-    
-    const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
-    if (matchingRadio && !matchingRadio.checked) {
-      console.log(`🔄 Restoring key selection: ${genericKey}`);
-      matchingRadio.checked = true;
-      matchingRadio.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+  console.log('🔄 restoreSelectedKey called:', {
+    genericKey: genericKey,
+    targetColumn: targetColumn?.className,
+    columnVisible: targetColumn ? getComputedStyle(targetColumn).display : 'n/a'
+  });
+  
+  if (!genericKey || !targetColumn) {
+    console.log('❌ Cannot restore - missing key or column');
+    return;
   }
+  
+  const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
+  console.log('🔍 Looking for radio with data-generic-key=' + genericKey + ':', {
+    found: !!matchingRadio,
+    alreadyChecked: matchingRadio?.checked,
+    element: matchingRadio
+  });
+  
+  if (matchingRadio && !matchingRadio.checked) {
+    console.log('✅ Checking radio:', matchingRadio);
+    matchingRadio.checked = true;
+    matchingRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  } else if (matchingRadio && matchingRadio.checked) {
+    console.log('ℹ️ Radio already checked');
+  } else {
+    console.log('❌ No matching radio found');
+  }
+}
   
   /**
    * Style Sharp/Flat buttons
