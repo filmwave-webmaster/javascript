@@ -3488,7 +3488,7 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
       }
     }
     
-   // Restore Key filter UI state
+   // Restore Key filter UI state - wait longer for Key Filter System to initialize
 if (filterState.keyState) {
   setTimeout(() => {
     restoreKeyFilterState(filterState.keyState);
@@ -3527,8 +3527,8 @@ if (filterState.keyState) {
           }
         }
       }
-    }, 400);
-  }, 200);
+    }, 600);
+  }, 500);
 }
     
     // Ensure clear button state is correct after restore
