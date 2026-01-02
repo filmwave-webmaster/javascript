@@ -2113,11 +2113,13 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && sharpMajorColumn) {
+        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, sharpMajorColumn);
           setTimeout(() => {
             sharpMajorButton.checked = true;
             sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+            sharpMinorColumn.classList.remove('no-key-transitions');
           }, 5);
         }, 10);
       } else {
@@ -2156,6 +2158,7 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && sharpMinorColumn) {
+        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, sharpMinorColumn);
           setTimeout(() => {
@@ -2166,6 +2169,7 @@ function showSharpFlat(which) {
       } else {
         sharpMinorButton.checked = true;
         sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+        sharpMinorColumn.classList.remove('no-key-transitions');
       }
     }
   }, true);
@@ -2199,6 +2203,7 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && flatMajorColumn) {
+        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, flatMajorColumn);
           setTimeout(() => {
@@ -2209,6 +2214,7 @@ function showSharpFlat(which) {
       } else {
         flatMajorButton.checked = true;
         flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+        sharpMinorColumn.classList.remove('no-key-transitions');
       }
     }
   }, true);
@@ -2242,6 +2248,7 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && flatMinorColumn) {
+        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, flatMinorColumn);
           setTimeout(() => {
@@ -2252,6 +2259,7 @@ function showSharpFlat(which) {
       } else {
         flatMinorButton.checked = true;
         flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+        sharpMinorColumn.classList.remove('no-key-transitions');
       }
     }
   }, true);
