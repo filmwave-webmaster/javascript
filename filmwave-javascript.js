@@ -1860,9 +1860,9 @@ function initKeyFilterSystem() {
   });
   
   if (matchingRadio && !matchingRadio.checked) {
-    console.log('✅ Checking radio:', matchingRadio);
-    matchingRadio.checked = true;
-    matchingRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    console.log('✅ Clicking radio (not just checking):', matchingRadio);
+    // Trigger actual click instead of just setting checked
+    matchingRadio.click();
   } else if (matchingRadio && matchingRadio.checked) {
     console.log('ℹ️ Radio already checked');
   } else {
