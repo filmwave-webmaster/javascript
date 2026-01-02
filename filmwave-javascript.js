@@ -3595,10 +3595,26 @@ function restoreKeyFilterState(keyState) {
   }
   
 function doRestore() {
+  // First, open the Key accordion if it's closed
+  const keyAccordion = document.querySelector('.filter-category');
+  const accordionToggle = keyAccordion?.querySelector('.filter-header, .accordion-header, [class*="toggle"], [class*="header"]');
+  
+  console.log('🔍 Accordion check:', {
+    keyAccordion: !!keyAccordion,
+    toggle: !!accordionToggle,
+    toggleClass: accordionToggle?.className
+  });
+  
+  // Click to open if accordion exists and has a toggle
+  if (accordionToggle) {
+    console.log('🔓 Opening Key accordion...');
+    accordionToggle.click();
+  }
+  
   // Wait for wrapper to exist - re-query keyAccordion each time
   let attempts = 0;
   function waitForWrapper() {
-    const keyAccordion = document.querySelector('.filter-category'); // Re-query each time!
+    const keyAccordion = document.querySelector('.filter-category');
     const wrapper = keyAccordion?.querySelector('.sharp-flat-toggle-wrapper');
     console.log(`🔍 Attempt ${attempts + 1}:`, {
       keyAccordion: !!keyAccordion,
