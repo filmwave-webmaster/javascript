@@ -1879,7 +1879,6 @@ function initKeyFilterSystem() {
 
   function showMajorMinor(which, section) {
     const currentKey = getSelectedGenericKey();
-
     const mm = section === 'sharp' ? sharpMM : flatMM;
 
     if (which === 'major') {
@@ -1933,7 +1932,7 @@ function initKeyFilterSystem() {
     syncDataset();
   }
 
-  // 6) Event wiring — IMPORTANT: bind to wrapper clicks so labels work in Webflow
+  // 6) Event wiring — bind to wrapper clicks so labels work in Webflow
   function bindWrapperClick(wrapperOrInput, fn) {
     if (!wrapperOrInput) return;
     const wrapper = wrapperOrInput.closest?.('.w-radio, .radio-wrapper, .w-form-radio') || wrapperOrInput;
@@ -1947,14 +1946,14 @@ function initKeyFilterSystem() {
   bindWrapperClick(sharpInput, () => showSharpFlat('sharp'));
   bindWrapperClick(flatInput,  () => showSharpFlat('flat'));
 
-  // Major/Minor controls: wrapper clicks (supports either input or wrapper)
+  // Major/Minor controls: supports either input or wrapper
   bindWrapperClick(sharpMM.majorCtl, () => (sharpMajMin === 'major' ? hideMajorMinor('sharp') : showMajorMinor('major', 'sharp')));
   bindWrapperClick(sharpMM.minorCtl, () => (sharpMajMin === 'minor' ? hideMajorMinor('sharp') : showMajorMinor('minor', 'sharp')));
 
   bindWrapperClick(flatMM.majorCtl,  () => (flatMajMin === 'major' ? hideMajorMinor('flat')  : showMajorMinor('major', 'flat')));
   bindWrapperClick(flatMM.minorCtl,  () => (flatMajMin === 'minor' ? hideMajorMinor('flat')  : showMajorMinor('minor', 'flat')));
 
-  // When a key is selected, keep Maj/Min “active” state consistent
+  // When a key is selected, keep Maj/Min state consistent
   function attachKeyColumnListeners(colRoot, section, majMin) {
     qsa('input[type="radio"][data-generic-key]', colRoot).forEach(r => {
       r.addEventListener('change', () => {
@@ -1971,7 +1970,7 @@ function initKeyFilterSystem() {
   attachKeyColumnListeners(flatMM.majorCol,  'flat',  'major');
   attachKeyColumnListeners(flatMM.minorCol,  'flat',  'minor');
 
-  // 7) Expose API for restore
+  // 7) Expose API for persistence restore
   window.musicPlayerPersistent = window.musicPlayerPersistent || {};
   window.musicPlayerPersistent.keyFilterApi = {
     showSharpFlat,
@@ -1985,18 +1984,12 @@ function initKeyFilterSystem() {
     syncDataset
   };
 
-  // 8) Initial UI state (CHOOSE ONE)
-  // If you want NO default Maj/Min (recommended):
+  // 8) Initial UI state (no default Maj/Min)
   showSharpFlat('sharp');
   hideMajorMinor('sharp');
 
-  // If you actually want default Major instead, swap the two lines above for:
-  // showSharpFlat('sharp');
-  // showMajorMinor('major', 'sharp');
-
   console.log('✅ Key Filter System wired (Webflow radio safe)');
 }
-
 
 
   /**
@@ -2005,97 +1998,6 @@ function initKeyFilterSystem() {
    * ============================================================
    */
 
-  // Store state on the KEY accordion itself so saveFilterState() can read it reliably
-  function syncKeyDataset() {
-    // Prefer the real tracked variables (source of truth)
-    if (keyAccordion && keyAccordion.dataset) {
-      keyAccordion.dataset.keySharpFlat = currentSharpFlat || 'sharp';
-      keyAccordion.dataset.keySharpMajMin = sharpMajMin || '';
-      keyAccordion.dataset.keyFlatMajMin = flatMajMin || '';
-    }
-  }
-
-  // Wrap your existing functions to always sync dataset after UI changes
-  const _showSharpFlat = showSharpFlat;
-  showSharpFlat = function(which) {
-    _showSharpFlat(which);
-    syncKeyDataset();
-  };
-
-  const _showMajorMinor = showMajorMinor;
-  showMajorMinor = function(which, section) {
-    _showMajorMinor(which, section);
-    syncKeyDataset();
-  };
-
-  function hideMajorMinor(section) {
-    const isSharp = section === 'sharp';
-
-    if (isSharp) {
-      sharpMajMin = null;
-      if (sharpMajorColumn) sharpMajorColumn.style.display = 'none';
-      if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
-      styleMajMinButton(sharpMajorButton, false);
-      styleMajMinButton(sharpMinorButton, false);
-    } else {
-      flatMajMin = null;
-      if (flatMajorColumn) flatMajorColumn.style.display = 'none';
-      if (flatMinorColumn) flatMinorColumn.style.display = 'none';
-      styleMajMinButton(flatMajorButton, false);
-      styleMajMinButton(flatMinorButton, false);
-    }
-
-    syncKeyDataset();
-  }
-
-  // Expose a stable API so restoreKeyFilterState() can drive the UI reliably
-  if (window.musicPlayerPersistent) {
-    window.musicPlayerPersistent.keyFilterApi = {
-      showSharpFlat: (which) => showSharpFlat(which),
-      showMajorMinor: (which, section) => showMajorMinor(which, section),
-      hideMajorMinor: (section) => hideMajorMinor(section),
-      syncDataset: () => syncKeyDataset(),
-      getState: () => ({
-        sharpFlat: currentSharpFlat || 'sharp',
-        sharpMajMin: sharpMajMin || null,
-        flatMajMin: flatMajMin || null
-      })
-    };
-  }
-
-  // Ensure dataset starts correct on init
-  syncKeyDataset();
-
-
-
-
-
-
-
-  
-  /**
-   * Initial state
-   */
-  showSharpFlat('sharp');
-  window.musicPlayerPersistent?.keyFilterApi?.hideMajorMinor('sharp');
-
-  // Expose API for save/restore logic (optional but makes it robust)
-  if (!window.musicPlayerPersistent) window.musicPlayerPersistent = {};
-  window.musicPlayerPersistent.keyFilterApi = {
-    showSharpFlat,
-    showMajorMinor,
-    hideMajorMinor,
-    syncDataset,
-    getCurrentlySelectedKey,
-    getState: () => ({
-      sharpFlat: currentSharpFlat,
-      sharpMajMin,
-      flatMajMin
-    })
-  };
-
-  console.log('✅ Key Filter System initialized');
-}
 
 function toggleClearButton() {
   const clearBtn = document.querySelector('.circle-x');
