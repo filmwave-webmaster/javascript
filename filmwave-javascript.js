@@ -3594,19 +3594,30 @@ function restoreKeyFilterState(keyState) {
     }
   }
   
-  function doRestore() {
+ function doRestore() {
   const keyAccordion = document.querySelector('.filter-category');
   console.log('🔍 doRestore check:', {
     keyAccordion: !!keyAccordion,
     hasWrapper: !!keyAccordion?.querySelector('.sharp-flat-toggle-wrapper')
   });
-  if (!keyAccordion || !keyAccordion.querySelector('.sharp-flat-toggle-wrapper')) {
-    console.log('❌ doRestore early return');
-    return;
+  
+  // Wait for wrapper to exist
+  let attempts = 0;
+  function waitForWrapper() {
+    const wrapper = keyAccordion?.querySelector('.sharp-flat-toggle-wrapper');
+    if (wrapper) {
+      console.log('✅ Wrapper found, continuing restore...');
+      doActualRestore();
+    } else if (attempts < 10) {
+      attempts++;
+      console.log(`⏳ Waiting for wrapper... attempt ${attempts}`);
+      setTimeout(waitForWrapper, 50);
+    } else {
+      console.log('❌ Timeout waiting for wrapper');
+    }
   }
-  console.log('✅ doRestore passed checks, continuing...');
-    
-    // Get Sharp/Flat buttons
+  
+  function doActualRestore() {
     const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
     const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
     const sharpButton = buttons[0];
@@ -3652,6 +3663,9 @@ function restoreKeyFilterState(keyState) {
       }
     }, 100);
   }
+  
+  waitForWrapper();
+}
   
   attemptRestore();
 }
