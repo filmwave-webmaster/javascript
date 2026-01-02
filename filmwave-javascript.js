@@ -3440,7 +3440,7 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
           }, 10);
         }
       }, 100);
-    }, 50);
+
     
     if (filterState.searchQuery) {
       const searchBar = document.querySelector('[data-filter-search="true"]');
