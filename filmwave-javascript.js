@@ -2292,39 +2292,44 @@ function showSharpFlat(which) {
   }, true);
 }
   
-  /**
-   * Listen for key radio button clicks to maintain Major/Minor active state
-   */
- function attachKeyRadioListeners(column, section, majMin) {
+ /**
+ * Listen for key radio button clicks to maintain Major/Minor active state
+ */
+function attachKeyRadioListeners(column, section, majMin) {
   const radios = column.querySelectorAll('input[type="radio"]');
   radios.forEach(radio => {
     radio.addEventListener('change', () => {
       if (radio.checked) {
-        // Update state tracking
-        if (section === 'sharp') {
-          sharpMajMin = majMin;
-        } else {
-          flatMajMin = majMin;
-        }
+        // Check if major/minor was ALREADY active before this key was clicked
+        const wasMajorActive = (section === 'sharp' ? sharpMajMin : flatMajMin) === 'major';
+        const wasMinorActive = (section === 'sharp' ? sharpMajMin : flatMajMin) === 'minor';
         
-        // Keep Major/Minor button visually active (setTimeout prevents Webflow from removing it)
-        setTimeout(() => {
-          if (majMin === 'major') {
-            const majorButton = section === 'sharp' ? sharpMajorButton : flatMajorButton;
-            styleMajMinButton(majorButton, true);
-            // Also ensure the Major/Minor radio stays checked
-            if (majorButton) {
-              majorButton.checked = true;
-            }
+        // Only keep major/minor active if it was already active
+        if (wasMajorActive || wasMinorActive) {
+          // Update state tracking
+          if (section === 'sharp') {
+            sharpMajMin = majMin;
           } else {
-            const minorButton = section === 'sharp' ? sharpMinorButton : flatMinorButton;
-            styleMajMinButton(minorButton, true);
-            // Also ensure the Major/Minor radio stays checked
-            if (minorButton) {
-              minorButton.checked = true;
-            }
+            flatMajMin = majMin;
           }
-        }, 10);
+          
+          // Keep Major/Minor button visually active
+          setTimeout(() => {
+            if (majMin === 'major') {
+              const majorButton = section === 'sharp' ? sharpMajorButton : flatMajorButton;
+              styleMajMinButton(majorButton, true);
+              if (majorButton) {
+                majorButton.checked = true;
+              }
+            } else {
+              const minorButton = section === 'sharp' ? sharpMinorButton : flatMinorButton;
+              styleMajMinButton(minorButton, true);
+              if (minorButton) {
+                minorButton.checked = true;
+              }
+            }
+          }, 10);
+        }
       }
     });
   });
