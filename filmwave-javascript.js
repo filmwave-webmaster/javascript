@@ -2278,15 +2278,6 @@ allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 console.log('✅ Key Filter System initialized');
 }
   
-  /**
-   * Initial state: Show Major keys by default in both sections
-   */
-  showMajorMinor('major', 'sharp');
-  showMajorMinor('major', 'flat');
-  
-  console.log('✅ Key Filter System initialized');
-}
-
 function toggleClearButton() {
   const clearBtn = document.querySelector('.circle-x');
   const searchBar = document.querySelector('[data-filter-search="true"]');
