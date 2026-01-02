@@ -2149,7 +2149,13 @@ function initKeyFilterSystem() {
     radios.forEach(radio => {
       radio.addEventListener('change', () => {
         if (radio.checked) {
-          // Keep the Major/Minor button active
+        // Keep Major/Minor button visually active
+        if (majMin === 'major') {
+          styleMajMinButton(section === 'sharp' ? sharpMajorButton : flatMajorButton, true);
+        } else {
+          styleMajMinButton(section === 'sharp' ? sharpMinorButton : flatMinorButton, true);
+          }
+          
           if (section === 'sharp') {
             sharpMajMin = majMin;
             if (majMin === 'major') {
