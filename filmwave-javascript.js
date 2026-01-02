@@ -36,15 +36,26 @@ const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
-// Force-clear saved search query on hard refresh so field starts empty
-window.addEventListener('load', () => {
-  // Only run on full refresh (not Barba)
-  if (!sessionStorage.getItem('isBarbaNavigation')) {
-    localStorage.removeItem('musicFilters'); // or set to empty
-    // Alternative: set to empty state
-    // localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
+// Force-clear filters/search on HARD refresh so the UI starts empty.
+// IMPORTANT: must run immediately (NOT on window.load), otherwise restoreFilterState()
+// may rebuild tags/search before we clear.
+(() => {
+  const isBarbaNav = !!sessionStorage.getItem('isBarbaNavigation');
+
+  if (!isBarbaNav) {
+    // choose ONE of these behaviors:
+
+    // Option A (recommended): explicitly set empty state so restore logic sees "empty"
+    localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
+
+    // Option B: fully remove it
+    // localStorage.removeItem('musicFilters');
   }
-});
+
+  // Clear the flag AFTER we've used it
+  sessionStorage.removeItem('isBarbaNavigation');
+})();
+
 
 /**
  * ============================================================
@@ -2687,7 +2698,6 @@ function saveFilterState() {
 }
 
 function restoreFilterState() {
-  sessionStorage.removeItem('isBarbaNavigation'); // Always clear the Barba flag
 
   const savedState = localStorage.getItem('musicFilters');
   if (!savedState) {
