@@ -2065,11 +2065,13 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Save current key BEFORE any changes
+    const currentKey = getCurrentlySelectedKey();
+    
     if (sharpMajMin === 'major') {
       // Deselect major
       sharpMajMin = null;
       styleMajMinButton(sharpMajorButton, false);
-      // Uncheck the radio to remove filter
       sharpMajorButton.checked = false;
       sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
@@ -2078,7 +2080,7 @@ function showSharpFlat(which) {
       styleMajMinButton(sharpMajorButton, true);
       styleMajMinButton(sharpMinorButton, false);
       sharpMinorButton.checked = false;
-      // Show major keys
+      
       if (sharpMajorColumn) {
         sharpMajorColumn.style.display = 'flex';
         sharpMajorColumn.style.visibility = 'visible';
@@ -2087,12 +2089,11 @@ function showSharpFlat(which) {
       if (sharpMinorColumn) {
         sharpMinorColumn.style.display = 'none';
       }
-      // Check the radio to trigger filter
+      
       sharpMajorButton.checked = true;
       sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
       
-      // Restore any previously selected key
-      const currentKey = getCurrentlySelectedKey();
+      // Restore key after column is visible
       if (currentKey && sharpMajorColumn) {
         setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
       }
@@ -2105,11 +2106,13 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Save current key BEFORE any changes
+    const currentKey = getCurrentlySelectedKey();
+    
     if (sharpMajMin === 'minor') {
       // Deselect minor
       sharpMajMin = null;
       styleMajMinButton(sharpMinorButton, false);
-      // Uncheck the radio to remove filter
       sharpMinorButton.checked = false;
       sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
@@ -2118,7 +2121,7 @@ function showSharpFlat(which) {
       styleMajMinButton(sharpMinorButton, true);
       styleMajMinButton(sharpMajorButton, false);
       sharpMajorButton.checked = false;
-      // Show minor keys
+      
       if (sharpMinorColumn) {
         sharpMinorColumn.style.display = 'flex';
         sharpMinorColumn.style.visibility = 'visible';
@@ -2127,12 +2130,11 @@ function showSharpFlat(which) {
       if (sharpMajorColumn) {
         sharpMajorColumn.style.display = 'none';
       }
-      // Check the radio to trigger filter
+      
       sharpMinorButton.checked = true;
       sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
       
-      // Restore any previously selected key
-      const currentKey = getCurrentlySelectedKey();
+      // Restore key after column is visible
       if (currentKey && sharpMinorColumn) {
         setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
       }
@@ -2140,19 +2142,18 @@ function showSharpFlat(which) {
   }, true);
 }
   
-  /**
-   * Major/Minor button click handlers (Flat section)
-   */
   if (flatMajorButton) {
   flatMajorButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Save current key BEFORE any changes
+    const currentKey = getCurrentlySelectedKey();
+    
     if (flatMajMin === 'major') {
       // Deselect major
       flatMajMin = null;
       styleMajMinButton(flatMajorButton, false);
-      // Uncheck the radio to remove filter
       flatMajorButton.checked = false;
       flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
@@ -2161,7 +2162,7 @@ function showSharpFlat(which) {
       styleMajMinButton(flatMajorButton, true);
       styleMajMinButton(flatMinorButton, false);
       flatMinorButton.checked = false;
-      // Show major keys
+      
       if (flatMajorColumn) {
         flatMajorColumn.style.display = 'flex';
         flatMajorColumn.style.visibility = 'visible';
@@ -2170,12 +2171,11 @@ function showSharpFlat(which) {
       if (flatMinorColumn) {
         flatMinorColumn.style.display = 'none';
       }
-      // Check the radio to trigger filter
+      
       flatMajorButton.checked = true;
       flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
       
-      // Restore any previously selected key
-      const currentKey = getCurrentlySelectedKey();
+      // Restore key after column is visible
       if (currentKey && flatMajorColumn) {
         setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
       }
@@ -2188,11 +2188,13 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Save current key BEFORE any changes
+    const currentKey = getCurrentlySelectedKey();
+    
     if (flatMajMin === 'minor') {
       // Deselect minor
       flatMajMin = null;
       styleMajMinButton(flatMinorButton, false);
-      // Uncheck the radio to remove filter
       flatMinorButton.checked = false;
       flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
@@ -2201,7 +2203,7 @@ function showSharpFlat(which) {
       styleMajMinButton(flatMinorButton, true);
       styleMajMinButton(flatMajorButton, false);
       flatMajorButton.checked = false;
-      // Show minor keys
+      
       if (flatMinorColumn) {
         flatMinorColumn.style.display = 'flex';
         flatMinorColumn.style.visibility = 'visible';
@@ -2210,12 +2212,11 @@ function showSharpFlat(which) {
       if (flatMajorColumn) {
         flatMajorColumn.style.display = 'none';
       }
-      // Check the radio to trigger filter
+      
       flatMinorButton.checked = true;
       flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
       
-      // Restore any previously selected key
-      const currentKey = getCurrentlySelectedKey();
+      // Restore key after column is visible
       if (currentKey && flatMinorColumn) {
         setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
       }
