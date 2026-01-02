@@ -36,26 +36,15 @@ const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
-// Force-clear filters/search on HARD refresh so the UI starts empty.
-// IMPORTANT: must run immediately (NOT on window.load), otherwise restoreFilterState()
-// may rebuild tags/search before we clear.
-(() => {
-  const isBarbaNav = !!sessionStorage.getItem('isBarbaNavigation');
-
-  if (!isBarbaNav) {
-    // choose ONE of these behaviors:
-
-    // Option A (recommended): explicitly set empty state so restore logic sees "empty"
-    localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
-
-    // Option B: fully remove it
-    // localStorage.removeItem('musicFilters');
+// Force-clear saved search query on hard refresh so field starts empty
+window.addEventListener('load', () => {
+  // Only run on full refresh (not Barba)
+  if (!sessionStorage.getItem('isBarbaNavigation')) {
+    localStorage.removeItem('musicFilters'); // or set to empty
+    // Alternative: set to empty state
+    // localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
   }
-
-  // Clear the flag AFTER we've used it
-  sessionStorage.removeItem('isBarbaNavigation');
-})();
-
+});
 
 /**
  * ============================================================
@@ -203,13 +192,10 @@ async function initMusicPage() {
       initFilterAccordions();
       initCheckboxTextColor();
       initFilterItemBackground();
-      initKeyRadios();
       initDynamicTagging();
       initMutualExclusion();
       initSearchAndFilters();
-      initSharpFlatToggle();
-      initKeyColumnToggle();
-     g.filtersInitialized = true;
+      g.filtersInitialized = true;
     }
     
     const songs = await fetchSongs();
@@ -1513,35 +1499,25 @@ document.addEventListener('keydown', function (e) {
 
 /**
  * ============================================================
- * FILTER HELPERS (CLEAN + ORGANIZED)
+ * FILTER HELPERS
  * ============================================================
  */
-
-/* ============================================================
-   SHARED SELECTORS (ONE SOURCE OF TRUTH)
-   ============================================================ */
-
-const KEY_WRAP_SEL = '.radio-wrapper, .w-radio, .maj-wrapper, .min-wrapper, .maj-min-wrapper, label';
-
-/* ============================================================
-   ACCORDIONS
-   ============================================================ */
-
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    header.addEventListener('click', function () {
+    header.addEventListener('click', function() {
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
-
+      
       document.querySelectorAll('.filter-list').forEach(list => {
         list.style.maxHeight = '0px';
         list.classList.remove('open');
       });
+      
       document.querySelectorAll('.arrow-icon').forEach(arr => {
         arr.style.transform = 'rotate(0deg)';
       });
-
+      
       if (!isOpen) {
         const actualHeight = Math.min(content.scrollHeight, 300);
         content.style.maxHeight = actualHeight + 'px';
@@ -1552,454 +1528,312 @@ function initFilterAccordions() {
   });
 }
 
-/* ============================================================
-   CHECKBOX UI
-   ============================================================ */
-
 function initCheckboxTextColor() {
-  document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', function () {
+  document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
-      if (label) label.style.color = this.checked ? '#191919' : '';
+      if (label) {
+        label.style.color = this.checked ? '#191919' : '';
+      }
     });
   });
 }
 
 function initFilterItemBackground() {
-  setTimeout(() => {
+  setTimeout(function() {
     let checkboxes = document.querySelectorAll('.checkbox-wrapper input[type="checkbox"]');
-    if (!checkboxes.length) checkboxes = document.querySelectorAll('.checkbox-include input');
-    if (!checkboxes.length) checkboxes = document.querySelectorAll('input[type="checkbox"]');
-
-    checkboxes.forEach(cb => {
-      cb.addEventListener('change', function () {
-        const item = this.closest('.filter-item');
-        if (!item) return;
-        item.classList.toggle('is-selected', this.checked);
+    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('.checkbox-include input');
+    if (checkboxes.length === 0) checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const filterItem = this.closest('.filter-item');
+        if (filterItem) {
+          if (this.checked) {
+            filterItem.classList.add('is-selected');
+          } else {
+            filterItem.classList.remove('is-selected');
+          }
+        }
       });
     });
   }, 100);
 }
 
-/* ============================================================
-   TAGGING (GLOBAL HELPERS)
-   ============================================================ */
-
-function getRadioLabelText(radio) {
-  const w = radio?.closest(KEY_WRAP_SEL);
-  const labelEl = w?.querySelector('.radio-button-label') || w?.querySelector('.w-form-label') || w?.querySelector('.filter-text');
-  const t = (labelEl?.innerText || labelEl?.textContent || '').trim();
-  return t || (radio?.getAttribute('data-filter-value') || 'Filter');
-}
-
-function getCheckboxLabelText(checkbox) {
-  const single = checkbox.closest('.checkbox-single-select-wrapper');
-  if (single) {
-    const el = single.querySelector('.filter-single-select-text');
-    const t = (el?.innerText || el?.textContent || '').trim();
-    return t || 'Filter';
-  }
-  const w = checkbox.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
-  const el = w?.querySelector('.w-form-label, .filter-text');
-  const t = (el?.innerText || el?.textContent || '').trim();
-  return t || 'Filter';
-}
-
-function clearAllTags() {
-  const tagsContainer = document.querySelector('.filter-tags-container');
-  if (!tagsContainer) return;
-  tagsContainer.innerHTML = '';
-}
-
-function removeTagByRadioName(radioName) {
-  const tagsContainer = document.querySelector('.filter-tags-container');
-  if (!tagsContainer) return;
-  tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-    if (tag.dataset.radioName === radioName) tag.remove();
-  });
-}
-
-function createTag({ input, labelText, radioName = null }) {
-  const tagsContainer = document.querySelector('.filter-tags-container');
-  if (!tagsContainer || !input) return null;
-
-  const text = (labelText || '').trim() || 'Filter';
-  const tag = document.createElement('div');
-  tag.className = 'filter-tag';
-  if (radioName) tag.dataset.radioName = radioName;
-
-  // keep filter-value on tag when it comes from a radio
-  if (input.type === 'radio' && input.getAttribute('data-filter-value')) {
-    tag.setAttribute('data-filter-value', input.getAttribute('data-filter-value'));
-  }
-
-  tag.innerHTML = `<span class="filter-tag-text">${text}</span><span class="filter-tag-remove x-button-style">×</span>`;
-
-  tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
-    input.checked = false;
-    const w = input.closest('.checkbox-single-select-wrapper, .w-checkbox, ' + KEY_WRAP_SEL);
-    if (w) w.classList.remove('is-active');
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    tag.remove();
-  });
-
-  tagsContainer.appendChild(tag);
-  return tag;
-}
-
-function rebuildTags({ skipKey = true } = {}) {
-  const tagsContainer = document.querySelector('.filter-tags-container');
-  if (!tagsContainer) return;
-
-  clearAllTags();
-
-  // checkboxes
-  document.querySelectorAll('.filter-list input[type="checkbox"]:checked, .checkbox-single-select-wrapper input[type="checkbox"]:checked').forEach(cb => {
-    if (cb.disabled) return;
-    createTag({ input: cb, labelText: getCheckboxLabelText(cb) });
-    const w = cb.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
-    if (w) w.classList.add('is-active');
-  });
-
-  // radios (non-key only)
-  document.querySelectorAll('.filter-list input[type="radio"]:checked').forEach(r => {
-    if (r.disabled) return;
-
-    const isKeyRadio =
-      !!r.getAttribute('data-generic-key') ||
-      !!r.getAttribute('data-key-group') ||
-      ((r.getAttribute('data-filter-group') || '').toLowerCase() === 'key');
-
-    if (skipKey && isKeyRadio) return;
-
-    createTag({ input: r, labelText: getRadioLabelText(r), radioName: r.name });
-    const w = r.closest(KEY_WRAP_SEL);
-    if (w) w.classList.add('is-active');
-  });
-}
-
-/* ============================================================
-   KEY STATE (ONE SOURCE OF TRUTH)
-   ============================================================ */
-
-const KEY_STATE_STORAGE = 'fw_key_state_v2';
-
-function getKeyState() {
-  try {
-    return JSON.parse(localStorage.getItem(KEY_STATE_STORAGE)) || { accidental: 'sharp', mode: 'maj', generic: null };
-  } catch (e) {
-    return { accidental: 'sharp', mode: 'maj', generic: null };
-  }
-}
-
-function setKeyState(patch) {
-  const next = { ...getKeyState(), ...patch };
-  localStorage.setItem(KEY_STATE_STORAGE, JSON.stringify(next));
-  return next;
-}
-
-function suffixFromFilterValue(filterValue) {
-  const fv = (filterValue || '').toLowerCase();
-  if (fv.endsWith('maj')) return 'maj';
-  if (fv.endsWith('min')) return 'min';
-  return null;
-}
-
-function isSpecificKeyRadio(radio) {
-  return !!(radio && radio.matches('input[type="radio"][data-filter-value][data-generic-key]'));
-}
-
-function getKeyColumns() {
-  return {
-    sharpCol: document.querySelector('.sharp-key-column'),
-    flatCol: document.querySelector('.flat-key-column')
-  };
-}
-
-function setWrapperActive(radio, active) {
-  const w = radio?.closest(KEY_WRAP_SEL);
-  if (!w) return;
-  w.classList.toggle('is-active', !!active);
-}
-
-function clearAllKeyRadios() {
-  const all = document.querySelectorAll(
-    '.sharp-key-column input[type="radio"], .flat-key-column input[type="radio"], .filter-list input[type="radio"][data-key-group]'
-  );
-  all.forEach(r => {
-    r.checked = false;
-    const w = r.closest(KEY_WRAP_SEL);
-    if (w) w.classList.remove('is-active');
-  });
-}
-
-function findSpecificKeyRadio({ accidental, mode, generic }) {
-  if (!generic) return null;
-
-  const col = document.querySelector(accidental === 'flat' ? '.flat-key-column' : '.sharp-key-column');
-  if (!col) return null;
-
-  const candidates = Array.from(col.querySelectorAll(`input[type="radio"][data-generic-key="${CSS.escape(generic)}"][data-filter-value]`));
-  return candidates.find(r => suffixFromFilterValue(r.getAttribute('data-filter-value')) === mode) || candidates[0] || null;
-}
-
-function applyKeyState() {
-  const st = getKeyState();
-
-  // 1) Hard clear (prevents ghost/overlap + double-click-to-off)
-  clearAllKeyRadios();
-
-  // 2) Ensure accidental columns match state
-  const { sharpCol, flatCol } = getKeyColumns();
-  if (sharpCol && flatCol) {
-    const shouldSharp = st.accidental !== 'flat';
-    sharpCol.style.display = shouldSharp ? 'block' : 'none';
-    flatCol.style.display = shouldSharp ? 'none' : 'block';
-    sharpCol.querySelectorAll('input').forEach(i => (i.disabled = !shouldSharp));
-    flatCol.querySelectorAll('input').forEach(i => (i.disabled = shouldSharp));
-  }
-
-  // 3) Re-check mode radio
-  const modeGroup = st.mode === 'maj' ? 'major' : 'minor';
-  const modeRadio = document.querySelector(`.filter-list input[type="radio"][data-key-group="${modeGroup}"]`);
-  if (modeRadio) {
-    modeRadio.checked = true;
-    setWrapperActive(modeRadio, true);
-    modeRadio.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-  // 4) Re-check specific key (if any)
-  const target = findSpecificKeyRadio(st);
-  if (target) {
-    target.checked = true;
-    setWrapperActive(target, true);
-    target.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-  // 5) Tags: rebuild non-key, then add canonical key tags
-  rebuildTags({ skipKey: true });
-
-  if (modeRadio) createTag({ input: modeRadio, labelText: getRadioLabelText(modeRadio), radioName: modeRadio.name });
-  if (target) createTag({ input: target, labelText: getRadioLabelText(target), radioName: target.name });
-}
-
-/* ============================================================
-   SHARP / FLAT (ACCIDENTAL) COLUMNS + TOGGLE
-   ============================================================ */
-
-function setAccidentalColumns(mode) {
-  const { sharpCol, flatCol } = getKeyColumns();
-  if (!sharpCol || !flatCol) return;
-
-  setKeyState({ accidental: mode });
-
-  if (mode === 'sharp') {
-    sharpCol.style.display = 'block';
-    flatCol.style.display = 'none';
-    flatCol.querySelectorAll('input').forEach(i => (i.disabled = true));
-    sharpCol.querySelectorAll('input').forEach(i => (i.disabled = false));
-  } else {
-    sharpCol.style.display = 'none';
-    flatCol.style.display = 'block';
-    sharpCol.querySelectorAll('input').forEach(i => (i.disabled = true));
-    flatCol.querySelectorAll('input').forEach(i => (i.disabled = false));
-  }
-
-  // Critical: re-apply canonical selection after changing columns
-  applyKeyState();
-}
-
-function initSharpFlatToggle() {
-  const toggles = document.querySelectorAll('.sharp-flat-toggle');
-  if (toggles.length < 2) return;
-
-  toggles[0].addEventListener('click', () => setAccidentalColumns('sharp'));
-  toggles[1].addEventListener('click', () => setAccidentalColumns('flat'));
-
-  setAccidentalColumns(getKeyState().accidental || 'sharp');
-}
-
-/* ============================================================
-   KEY RADIO WIRING (OWNED HERE — initDynamicTagging SKIPS KEYS)
-   ============================================================ */
-
-function initKeyRadios() {
-  // Detach mode radios so specific keys never uncheck them (and vice versa)
-  const modeRadios = Array.from(
-    document.querySelectorAll('.filter-list input[type="radio"][data-key-group="major"], .filter-list input[type="radio"][data-key-group="minor"]')
-  );
-
-  modeRadios.forEach((r, i) => {
-    if (r.dataset.detachedFromGroup) return;
-    r.dataset.detachedFromGroup = '1';
-    r.dataset.originalRadioName = r.name || '';
-    r.name = `__keymode_${r.getAttribute('data-key-group')}_${Date.now()}_${i}`;
-  });
-
-  // Click handlers for mode wrappers (major/minor pills)
-  modeRadios.forEach(r => {
-    const wrap = r.closest(KEY_WRAP_SEL);
-    if (!wrap) return;
-    wrap.addEventListener('mousedown', () => (wrap.dataset.wasChecked = r.checked));
-    wrap.addEventListener('click', () => {
-      // Toggle off support
-      if (wrap.dataset.wasChecked === 'true') {
-        r.checked = false;
-        setWrapperActive(r, false);
-        removeTagByRadioName(r.name);
-        r.dispatchEvent(new Event('change', { bubbles: true }));
-        return;
-      }
-      const nextMode = r.getAttribute('data-key-group') === 'major' ? 'maj' : 'min';
-      setKeyState({ mode: nextMode });
-      applyKeyState();
-    });
-  });
-
-  // Specific key radios (both columns)
-  const specificRadios = document.querySelectorAll(
-    '.sharp-key-column input[type="radio"][data-filter-value][data-generic-key], .flat-key-column input[type="radio"][data-filter-value][data-generic-key]'
-  );
-
-  specificRadios.forEach(r => {
-    const wrap = r.closest(KEY_WRAP_SEL);
-    if (!wrap) return;
-
-    wrap.addEventListener('mousedown', () => (wrap.dataset.wasChecked = r.checked));
-    wrap.addEventListener('click', () => {
-      if (r.disabled) return;
-
-      // Toggle off support
-      if (wrap.dataset.wasChecked === 'true') {
-        r.checked = false;
-        setWrapperActive(r, false);
-        removeTagByRadioName(r.name);
-        r.dispatchEvent(new Event('change', { bubbles: true }));
-        // clear generic in state if this was the active one
-        const st = getKeyState();
-        if (st.generic && r.getAttribute('data-generic-key') === st.generic) setKeyState({ generic: null });
-        applyKeyState();
-        return;
-      }
-
-      const fv = r.getAttribute('data-filter-value');
-      const generic = r.getAttribute('data-generic-key');
-      const mode = suffixFromFilterValue(fv) || getKeyState().mode;
-      const accidental = r.closest('.flat-key-column') ? 'flat' : 'sharp';
-
-      setKeyState({ accidental, mode, generic });
-      applyKeyState();
-    });
-  });
-
-  // Apply once on init
-  applyKeyState();
-}
-
-/* ============================================================
-   DYNAMIC TAGGING (GENERAL FILTERS ONLY — SKIPS KEY RADIOS)
-   ============================================================ */
-
 function initDynamicTagging() {
-  if (window.__fwDynamicTaggingInit) return;
-  window.__fwDynamicTaggingInit = true;
-
-  const tagsContainer = document.querySelector('.filter-tags-container');
-  if (!tagsContainer) return;
-
-  const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
-  const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
-
-  // Fix: clear any “remembered” / leftover DOM tags on load
-  clearAllTags();
-
-  // CHECKBOX → TAG
-  checkboxes.forEach(cb => {
-    cb.addEventListener('change', () => {
-      if (cb.disabled) return;
-
-      const text = getCheckboxLabelText(cb);
-      const wrapper = cb.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
-
-      if (cb.checked) {
-        if (wrapper) wrapper.classList.add('is-active');
-        createTag({ input: cb, labelText: text });
-      } else {
+  setTimeout(function() {
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (!tagsContainer) return;
+    
+    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
+    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
+    
+    function createTag(input, labelText, radioName = null) {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      if (radioName) tag.dataset.radioName = radioName;
+      
+      tag.innerHTML = `
+        <span class="filter-tag-text">${labelText}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
+      
+      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+        input.checked = false;
+        const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
         if (wrapper) wrapper.classList.remove('is-active');
-        tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-          if (tag.querySelector('.filter-tag-text')?.textContent === text) tag.remove();
-        });
-      }
-    });
-  });
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        tag.remove();
+      });
+      
+      return tag;
+    }
 
-  // RADIO: remember previous state (for toggle-off)
-  radioWrappers.forEach(wrap => {
-    wrap.addEventListener('mousedown', () => {
-      const radio = wrap.querySelector('input[type="radio"]');
-      if (radio) wrap.dataset.wasChecked = radio.checked;
-    });
-  });
-
-  // RADIO → TAG (NON-KEY ONLY)
-  radioWrappers.forEach(wrap => {
-    wrap.addEventListener('click', () => {
-      const radio = wrap.querySelector('input[type="radio"]');
-      if (!radio) return;
-
-      // Skip ALL key UI here (prevents “major switches to minor” + double listeners)
-      const isKeyish =
-        isSpecificKeyRadio(radio) ||
-        radio.hasAttribute('data-key-group') ||
-        ((radio.getAttribute('data-filter-group') || '').toLowerCase() === 'key');
-
-      if (isKeyish) return;
-
-      const wasChecked = wrap.dataset.wasChecked === 'true';
-      const radioName = radio.name;
-      const labelText = getRadioLabelText(radio);
-
-      setTimeout(() => {
-        // toggle off
-        if (wasChecked) {
-          radio.checked = false;
-          wrap.classList.remove('is-active');
-          removeTagByRadioName(radioName);
-          radio.dispatchEvent(new Event('change', { bubbles: true }));
-          return;
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        let label;
+        const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
+        
+        if (this.closest('.checkbox-single-select-wrapper')) {
+          label = this.closest('.checkbox-single-select-wrapper').querySelector('.filter-single-select-text');
+        } else {
+          label = wrapper?.querySelector('.w-form-label, .filter-text');
         }
-
-        // normal single-select behavior for that name
-        document.querySelectorAll(`input[name="${CSS.escape(radioName)}"]`).forEach(other => {
-          const ow = other.closest(KEY_WRAP_SEL);
-          if (ow) ow.classList.remove('is-active');
-        });
-
-        wrap.classList.add('is-active');
-        removeTagByRadioName(radioName);
-        createTag({ input: radio, labelText, radioName });
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-      }, 30);
+        
+        const labelText = label ? label.textContent.trim() : 'Filter';
+        
+        if (this.checked) {
+          if (wrapper) wrapper.classList.add('is-active');
+          const tag = createTag(this, labelText);
+          tagsContainer.appendChild(tag);
+        } else {
+          if (wrapper) wrapper.classList.remove('is-active');
+          const tags = tagsContainer.querySelectorAll('.filter-tag');
+          tags.forEach(tag => {
+            if (tag.querySelector('.filter-tag-text').textContent === labelText) {
+              tag.remove();
+            }
+          });
+        }
+      });
     });
-  });
 
-  // Rebuild tags from currently-checked (non-key), then apply key tags from canonical state
-  rebuildTags({ skipKey: true });
-  applyKeyState();
+    radioWrappers.forEach(wrapper => {
+      wrapper.addEventListener('mousedown', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) this.dataset.wasChecked = radio.checked;
+      });
+
+      wrapper.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        const label = this.querySelector('.radio-button-label');
+        if (!radio || !label) return;
+        
+        const labelText = label.innerText.trim();
+        const radioName = radio.name;
+
+        setTimeout(() => {
+          if (this.dataset.wasChecked === "true") {
+            radio.checked = false;
+            this.classList.remove('is-active');
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => { 
+              if (tag.dataset.radioName === radioName) tag.remove(); 
+            });
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
+              const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+              if (otherWrapper) otherWrapper.classList.remove('is-active');
+            });
+            
+            this.classList.add('is-active');
+            
+            const tags = tagsContainer.querySelectorAll('.filter-tag');
+            tags.forEach(tag => { 
+              if (tag.dataset.radioName === radioName) tag.remove(); 
+            });
+            
+            const tag = createTag(radio, labelText);
+            tag.dataset.radioName = radioName;
+            tagsContainer.appendChild(tag);
+          }
+        }, 50);
+      });
+    });
+  }, 1000);
 }
 
-/* ============================================================
-   BOOTSTRAP (CALL THESE WHERE YOU INIT FILTERS)
-   ============================================================ */
+function initMutualExclusion() {
+  const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
+  const acapWrapper = document.querySelector('[data-exclusive="acapella"]');
+  const instInput = instWrapper ? instWrapper.querySelector('input[type="checkbox"]') : null;
+  const acapInput = acapWrapper ? acapWrapper.querySelector('input[type="checkbox"]') : null;
 
-// Call these in your init flow (order matters):
-// initFilterAccordions();
-// initCheckboxTextColor();
-// initFilterItemBackground();
-// initSharpFlatToggle();
-// initKeyRadios();        // MUST be before initDynamicTagging()
-// initDynamicTagging();
+  if (instInput && acapInput) {
+    function clearOther(otherInput, otherWrapper) {
+      if (otherInput.checked) {
+        otherInput.checked = false;
+        if (otherWrapper) otherWrapper.classList.remove('is-active');
+        otherInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+    
+    instInput.addEventListener('change', function() {
+      if (this.checked) clearOther(acapInput, acapWrapper); 
+    });
+    
+    acapInput.addEventListener('change', function() {
+      if (this.checked) clearOther(instInput, instWrapper); 
+    });
+  }
+}
 
+function toggleClearButton() {
+  const clearBtn = document.querySelector('.circle-x');
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (!clearBtn) return;
+
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+
+  clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+}
+
+function initSearchAndFilters() {
+  const g = window.musicPlayerPersistent;
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const clearBtn = document.querySelector('.circle-x');
+  
+  function clearAllFilters() {
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+
+  if (!hasSearch && !hasFilters) {
+    return;
+  }
+
+  if (searchBar && hasSearch) {
+    searchBar.value = '';
+    // Optional: dispatch input to trigger applyFilters early
+    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // Clear checkbox filters
+  const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+  if (tagRemoveButtons.length > 0) {
+    tagRemoveButtons.forEach((btn) => btn.click());
+  } else {
+    document.querySelectorAll('[data-filter-group]').forEach(input => {
+      if (input.checked) {
+        input.checked = false;
+        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+        if (wrapper) wrapper.classList.remove('is-active');
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+  }
+
+  // Save empty state so restoration knows it was intentionally cleared
+  localStorage.setItem('musicFilters', JSON.stringify({
+    filters: [],
+    searchQuery: ''
+  }));
+
+  toggleClearButton();
+  applyFilters();
+}
+  
+ function applyFilters() {
+  const g = window.musicPlayerPersistent;
+  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+  const keywords = query.split(/\s+/).filter(k => k.length > 0);
+  const filterInputs = document.querySelectorAll('[data-filter-group]');
+  const selectedFilters = [];
+  
+  filterInputs.forEach(input => {
+    if (input.checked) {
+      const group = input.getAttribute('data-filter-group');
+      const value = input.getAttribute('data-filter-value');
+      const keyGroup = input.getAttribute('data-key-group');
+      
+      selectedFilters.push({
+        group: group,
+        value: value ? value.toLowerCase() : null,
+        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+      });
+    }
+  });
+  
+  const visibleIds = g.MASTER_DATA.filter(record => {
+    const fields = record.fields;
+    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+    const matchesSearch = keywords.every(k => allText.includes(k));
+    
+    const matchesAttributes = selectedFilters.every(filter => {
+      let recVal = fields[filter.group];
+      if (recVal === undefined || recVal === null) return false;
+      
+      if (filter.keyGroup) {
+        if (filter.keyGroup === 'major') {
+          return String(recVal).toLowerCase().endsWith('maj');
+        }
+        if (filter.keyGroup === 'minor') {
+          return String(recVal).toLowerCase().endsWith('min');
+        }
+      }
+      
+      if (filter.value) {
+        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+        return String(recVal).toLowerCase() === filter.value;
+      }
+      
+      return false;
+    });
+    
+    return matchesSearch && matchesAttributes;
+  }).map(r => r.id);
+  
+  // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (isMusicPage) {
+    g.filteredSongIds = visibleIds;
+    console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
+  }
+  
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+  });
+  
+  toggleClearButton();
+}
+  
+  if (clearBtn) {
+  // Start hidden — will only show after restoration (if needed)
+  clearBtn.style.display = 'none';
+  clearBtn.addEventListener('click', clearAllFilters);
+
+  // Safety: update visibility after a delay in case restoration takes time
+  setTimeout(() => {
+    toggleClearButton();
+  }, 800);
+}
+  
+  if (searchBar) {
+    searchBar.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      toggleClearButton();
+      searchTimeout = setTimeout(applyFilters, 400);
+    });
+  }
+  
+  document.querySelectorAll('[data-filter-group]').forEach(input => {
+    input.addEventListener('change', () => {
+      applyFilters();
+      toggleClearButton();
+    });
+  });
+}
 
 /**
  * ============================================================
@@ -2698,6 +2532,7 @@ function saveFilterState() {
 }
 
 function restoreFilterState() {
+  sessionStorage.removeItem('isBarbaNavigation'); // Always clear the Barba flag
 
   const savedState = localStorage.getItem('musicFilters');
   if (!savedState) {
