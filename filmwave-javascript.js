@@ -2118,8 +2118,8 @@ function showSharpFlat(which) {
           setTimeout(() => {
             sharpMajorButton.checked = true;
             sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 20);
-        }, 50);
+          }, 5);
+        }, 10);
       } else {
         sharpMajorButton.checked = true;
         sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
@@ -2161,8 +2161,8 @@ function showSharpFlat(which) {
           setTimeout(() => {
             sharpMinorButton.checked = true;
             sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 20);
-        }, 50);
+          }, 5);
+        }, 10);
       } else {
         sharpMinorButton.checked = true;
         sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
@@ -2204,8 +2204,8 @@ function showSharpFlat(which) {
           setTimeout(() => {
             flatMajorButton.checked = true;
             flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 20);
-        }, 50);
+          }, 5);
+        }, 10);
       } else {
         flatMajorButton.checked = true;
         flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
@@ -2247,8 +2247,8 @@ function showSharpFlat(which) {
           setTimeout(() => {
             flatMinorButton.checked = true;
             flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 20);
-        }, 50);
+          }, 5);
+        }, 10);
       } else {
         flatMinorButton.checked = true;
         flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
