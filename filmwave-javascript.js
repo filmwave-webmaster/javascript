@@ -3493,48 +3493,42 @@ if (filterState.keyState) {
   setTimeout(() => {
     restoreKeyFilterState(filterState.keyState);
     
-    // Manually create major/minor tags if they're active (since we don't save their radios)
+    // Manually create major/minor tags after restore completes
     setTimeout(() => {
       const hasSpecificKey = filterState.filters.some(f => f.group === 'Key' && f.value);
       
-      if (hasSpecificKey && tagsContainer) {
-        // Check if major is active
-        const sharpMajorActive = document.querySelector('.sharp-key-column .maj-wrapper.is-active');
-        const flatMajorActive = document.querySelector('.flat-key-column .maj-wrapper.is-active');
-        if (sharpMajorActive || flatMajorActive) {
-          createMajorMinorTag('Major', tagsContainer);
+      if (hasSpecificKey && tagsContainer && filterState.keyState) {
+        // Check if major/minor INPUT is checked (not wrapper class)
+        if (filterState.keyState.sharpMajMin === 'major' || filterState.keyState.flatMajMin === 'major') {
+          const majorInput = document.querySelector('[data-key-group="major"]:checked');
+          if (majorInput) {
+            const tag = document.createElement('div');
+            tag.className = 'filter-tag';
+            tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
+            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+              majorInput.click();
+              tag.remove();
+            });
+            tagsContainer.appendChild(tag);
+          }
         }
         
-        // Check if minor is active
-        const sharpMinorActive = document.querySelector('.sharp-key-column .min-wrapper.is-active');
-        const flatMinorActive = document.querySelector('.flat-key-column .min-wrapper.is-active');
-        if (sharpMinorActive || flatMinorActive) {
-          createMajorMinorTag('Minor', tagsContainer);
+        if (filterState.keyState.sharpMajMin === 'minor' || filterState.keyState.flatMajMin === 'minor') {
+          const minorInput = document.querySelector('[data-key-group="minor"]:checked');
+          if (minorInput) {
+            const tag = document.createElement('div');
+            tag.className = 'filter-tag';
+            tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
+            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+              minorInput.click();
+              tag.remove();
+            });
+            tagsContainer.appendChild(tag);
+          }
         }
       }
-    }, 300);
+    }, 400);
   }, 200);
-}
-
-// Helper function to create major/minor tags
-function createMajorMinorTag(type, container) {
-  const tag = document.createElement('div');
-  tag.className = 'filter-tag';
-  tag.innerHTML = `
-    <span class="filter-tag-text">${type}</span>
-    <span class="filter-tag-remove x-button-style">×</span>
-  `;
-  
-  tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-    // Find and click the appropriate major/minor button to deselect
-    const button = document.querySelector(type === 'Major' 
-      ? '.maj-wrapper.is-active [data-key-group="major"]'
-      : '.min-wrapper.is-active [data-key-group="minor"]');
-    if (button) button.click();
-    tag.remove();
-  });
-  
-  container.appendChild(tag);
 }
     
     // Ensure clear button state is correct after restore
