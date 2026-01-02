@@ -1833,10 +1833,7 @@ function initKeyFilterSystem() {
       flatColumn.style.visibility = 'hidden';
       flatColumn.style.opacity = '0';
 
-      // reflect radio
-      if (!sharpInput.checked) sharpInput.checked = true;
-      setWrapperActive(sharpInput, true);
-      setWrapperActive(flatInput, false);
+      activateSharpFlat(which);
 
       // restore maj/min + key
       if (sharpMajMin === 'major') {
@@ -1992,63 +1989,123 @@ function initKeyFilterSystem() {
 }
 
 
-  /**
-   * ============================================================
-   * KEY FILTER API + DATASET SYNC (required for persistence restore)
-   * ============================================================
-   */
+    // ───────────────────────────────────────────────────────────
+  // Sharp/Flat controls (supports Webflow "buttons" OR radios)
+  // ───────────────────────────────────────────────────────────
 
+  // Candidates inside the toggle wrapper that behave like buttons:
+  // (Webflow often uses <a>, <div>, or <button> with classes)
+  const sharpFlatBtnCandidates = qsa(
+    '[data-key-type], .sharp-toggle, .flat-toggle, .is-sharp, .is-flat, a, button, div',
+    sharpFlatWrap
+  ).filter(el => {
+    // Filter out containers that are obviously wrappers
+    if (el === sharpFlatWrap) return false;
+    // Keep anything clickable or anything with identifying class/attr
+    const hasKeyType = !!el.getAttribute('data-key-type');
+    const cls = (el.className || '').toString().toLowerCase();
+    const looksLikeButton =
+      el.tagName === 'A' ||
+      el.tagName === 'BUTTON' ||
+      el.getAttribute('role') === 'button' ||
+      el.onclick ||
+      cls.includes('button') ||
+      cls.includes('toggle') ||
+      cls.includes('radio') ||
+      cls.includes('tab');
+    return hasKeyType || looksLikeButton;
+  });
 
-function toggleClearButton() {
-  const clearBtn = document.querySelector('.circle-x');
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  if (!clearBtn) return;
+  // Also allow radio inputs if they exist
+  const sharpFlatRadioInputs = qsa('input[type="radio"]', sharpFlatWrap);
 
-  const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+  function resolveSharpFlatControl(which) {
+    const w = which.toLowerCase();
 
-  clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
-}
+    // 1) data-key-type on radio input
+    const byRadioData = sharpFlatRadioInputs.find(i => (i.getAttribute('data-key-type') || '').toLowerCase() === w);
+    if (byRadioData) return { type: 'radio', el: byRadioData };
 
-function initSearchAndFilters() {
-  const g = window.musicPlayerPersistent;
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  const clearBtn = document.querySelector('.circle-x');
+    // 2) data-key-type on button-like element
+    const byBtnData = sharpFlatBtnCandidates.find(b => (b.getAttribute('data-key-type') || '').toLowerCase() === w);
+    if (byBtnData) return { type: 'button', el: byBtnData };
 
-  function clearAllFilters() {
-    const hasSearch = searchBar && searchBar.value.trim().length > 0;
-    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+    // 3) class name hints
+    const byClass = sharpFlatBtnCandidates.find(b => {
+      const cls = (b.className || '').toString().toLowerCase();
+      return cls.includes(w); // contains "sharp" or "flat"
+    });
+    if (byClass) return { type: 'button', el: byClass };
 
-    if (!hasSearch && !hasFilters) {
-      return;
+    // 4) fallback to order: first=sharp, second=flat (only among candidates)
+    if (sharpFlatBtnCandidates.length >= 2) {
+      return w === 'sharp'
+        ? { type: 'button', el: sharpFlatBtnCandidates[0] }
+        : { type: 'button', el: sharpFlatBtnCandidates[1] };
     }
 
-    if (searchBar && hasSearch) {
-      searchBar.value = '';
-      // Optional: dispatch input to trigger applyFilters early
-      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+    // 5) fallback to order among radios
+    if (sharpFlatRadioInputs.length >= 2) {
+      return w === 'sharp'
+        ? { type: 'radio', el: sharpFlatRadioInputs[0] }
+        : { type: 'radio', el: sharpFlatRadioInputs[1] };
     }
 
-    // Clear checkbox filters
-    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-    if (tagRemoveButtons.length > 0) {
-      tagRemoveButtons.forEach((btn) => btn.click());
+    return null;
+  }
+
+  const sharpCtl = resolveSharpFlatControl('sharp');
+  const flatCtl  = resolveSharpFlatControl('flat');
+
+  if (!sharpCtl || !flatCtl) {
+    console.error('❌ Could not locate Sharp/Flat controls (buttons or radios).', {
+      buttonCandidates: sharpFlatBtnCandidates.length,
+      radioInputs: sharpFlatRadioInputs.length
+    });
+    return;
+  }
+
+  function setSharpFlatActiveUI(which) {
+    // Remove active class from both
+    [sharpCtl.el, flatCtl.el].forEach(el => {
+      if (!el) return;
+      el.classList.remove('is-active');
+      el.classList.remove('w--current');
+      el.setAttribute('aria-pressed', 'false');
+    });
+
+    const activeEl = which === 'flat' ? flatCtl.el : sharpCtl.el;
+    if (activeEl) {
+      activeEl.classList.add('is-active');
+      activeEl.setAttribute('aria-pressed', 'true');
+    }
+  }
+
+  function activateSharpFlat(which) {
+    currentSharpFlat = which;
+
+    // If it's a radio, check it. If it's a button, click it (if safe) and/or style it.
+    if (which === 'sharp') {
+      if (sharpCtl.type === 'radio') sharpCtl.el.checked = true;
+      else setSharpFlatActiveUI('sharp');
     } else {
-      document.querySelectorAll('[data-filter-group]').forEach(input => {
-        if (input.checked) {
-          input.checked = false;
-          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-          if (wrapper) wrapper.classList.remove('is-active');
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
+      if (flatCtl.type === 'radio') flatCtl.el.checked = true;
+      else setSharpFlatActiveUI('flat');
     }
+  }
 
-    // Save empty state so restoration knows it was intentionally cleared
-    localStorage.setItem('musicFilters', JSON.stringify({
-      filters: [],
-      searchQuery: ''
-    }));
+  // Bind clicks to whichever elements exist
+  function bindSharpFlat(control, which) {
+    if (!control || !control.el) return;
+    control.el.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showSharpFlat(which);
+    }, true);
+  }
+
+  bindSharpFlat(sharpCtl, 'sharp');
+  bindSharpFlat(flatCtl, 'flat');
 
     toggleClearButton();
     applyFilters();
