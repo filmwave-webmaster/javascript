@@ -3284,25 +3284,25 @@ document.querySelectorAll('[data-filter-group]').forEach(input => {
     filterState.keyState.sharpFlat = 'flat';
   }
   
-  // Detect Sharp section Major/Minor state
-  const sharpMajorButton = document.querySelector('.sharp-key-column .maj-wrapper .radio-wrapper.is-active, .sharp-key-column .maj-wrapper .w-radio.is-active');
-  const sharpMinorButton = document.querySelector('.sharp-key-column .min-wrapper .radio-wrapper.is-active, .sharp-key-column .min-wrapper .w-radio.is-active');
-  
-  if (sharpMajorButton) {
-    filterState.keyState.sharpMajMin = 'major';
-  } else if (sharpMinorButton) {
-    filterState.keyState.sharpMajMin = 'minor';
-  }
-  
-  // Detect Flat section Major/Minor state
-  const flatMajorButton = document.querySelector('.flat-key-column .maj-wrapper .radio-wrapper.is-active, .flat-key-column .maj-wrapper .w-radio.is-active');
-  const flatMinorButton = document.querySelector('.flat-key-column .min-wrapper .radio-wrapper.is-active, .flat-key-column .min-wrapper .w-radio.is-active');
-  
-  if (flatMajorButton) {
-    filterState.keyState.flatMajMin = 'major';
-  } else if (flatMinorButton) {
-    filterState.keyState.flatMajMin = 'minor';
-  }
+  // Detect Sharp section Major/Minor state - check if INPUT is checked
+const sharpMajorInput = document.querySelector('.sharp-key-column [data-key-group="major"]');
+const sharpMinorInput = document.querySelector('.sharp-key-column [data-key-group="minor"]');
+
+if (sharpMajorInput?.checked) {
+  filterState.keyState.sharpMajMin = 'major';
+} else if (sharpMinorInput?.checked) {
+  filterState.keyState.sharpMajMin = 'minor';
+}
+
+// Detect Flat section Major/Minor state - check if INPUT is checked
+const flatMajorInput = document.querySelector('.flat-key-column [data-key-group="major"]');
+const flatMinorInput = document.querySelector('.flat-key-column [data-key-group="minor"]');
+
+if (flatMajorInput?.checked) {
+  filterState.keyState.flatMajMin = 'major';
+} else if (flatMinorInput?.checked) {
+  filterState.keyState.flatMajMin = 'minor';
+}
   
   localStorage.setItem('musicFilters', JSON.stringify(filterState));
   console.log('💾 Saved filter state (with Key state):', filterState);
