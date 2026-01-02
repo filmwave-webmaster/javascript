@@ -2022,19 +2022,19 @@ function initKeyFilterSystem() {
   }
   
   /**
-   * Sharp/Flat button click handlers
+   * Sharp/Flat button click handlers - using capture phase to prevent blocking
    */
   sharpButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     showSharpFlat('sharp');
-  });
+  }, true); // Use capture phase
   
   flatButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     showSharpFlat('flat');
-  });
+  }, true); // Use capture phase
   
   /**
    * Major/Minor button click handlers (Sharp section)
@@ -2062,7 +2062,7 @@ function initKeyFilterSystem() {
         sharpMajMin = 'major';
         showMajorMinor('major', 'sharp');
       }
-    });
+    }, true); // Use capture phase
   }
   
   if (sharpMinorButton) {
@@ -2087,7 +2087,7 @@ function initKeyFilterSystem() {
         sharpMajMin = 'minor';
         showMajorMinor('minor', 'sharp');
       }
-    });
+    }, true); // Use capture phase
   }
   
   /**
@@ -2114,7 +2114,7 @@ function initKeyFilterSystem() {
         flatMajMin = 'major';
         showMajorMinor('major', 'flat');
       }
-    });
+    }, true); // Use capture phase
   }
   
   if (flatMinorButton) {
@@ -2138,7 +2138,7 @@ function initKeyFilterSystem() {
         flatMajMin = 'minor';
         showMajorMinor('minor', 'flat');
       }
-    });
+    }, true); // Use capture phase
   }
   
   /**
