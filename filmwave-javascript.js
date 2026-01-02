@@ -2186,11 +2186,9 @@ function initKeyFilterSystem() {
    * Initial state: Show Sharp section by default
    */
   showSharpFlat('sharp');
-  showMajorMinor('major', 'sharp');
-  showMajorMinor('major', 'flat');
-
-    /**
-   * Initial state: Show Major keys by default in Sharp section
+  
+  /**
+   * Initial state: Show Major keys by default in both sections
    */
   showMajorMinor('major', 'sharp');
   showMajorMinor('major', 'flat');
