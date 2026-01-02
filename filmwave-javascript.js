@@ -2148,31 +2148,24 @@ function initKeyFilterSystem() {
     const radios = column.querySelectorAll('input[type="radio"]');
     radios.forEach(radio => {
       radio.addEventListener('change', () => {
-        if (radio.checked) {
-        // Keep Major/Minor button visually active
-        if (majMin === 'major') {
-          styleMajMinButton(section === 'sharp' ? sharpMajorButton : flatMajorButton, true);
-        } else {
-          styleMajMinButton(section === 'sharp' ? sharpMinorButton : flatMinorButton, true);
-          }
-          
-          if (section === 'sharp') {
-            sharpMajMin = majMin;
-            if (majMin === 'major') {
-              styleMajMinButton(sharpMajorButton, true);
-            } else {
-              styleMajMinButton(sharpMinorButton, true);
-            }
-          } else {
-            flatMajMin = majMin;
-            if (majMin === 'major') {
-              styleMajMinButton(flatMajorButton, true);
-            } else {
-              styleMajMinButton(flatMinorButton, true);
-            }
-          }
-        }
-      });
+  if (radio.checked) {
+    // Update state tracking
+    if (section === 'sharp') {
+      sharpMajMin = majMin;
+    } else {
+      flatMajMin = majMin;
+    }
+    
+    // Keep Major/Minor button visually active (setTimeout prevents Webflow from removing it)
+    setTimeout(() => {
+      if (majMin === 'major') {
+        styleMajMinButton(section === 'sharp' ? sharpMajorButton : flatMajorButton, true);
+      } else {
+        styleMajMinButton(section === 'sharp' ? sharpMinorButton : flatMinorButton, true);
+      }
+    }, 10);
+  }
+});
     });
   }
   
@@ -2182,14 +2175,16 @@ function initKeyFilterSystem() {
   if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
   
-  /**
+ /**
  * Initial state
  */
 showSharpFlat('sharp');
 showMajorMinor('major', 'sharp');
 
-// Set up flat section (even though hidden)
+// Set state variables so toggles work
+sharpMajMin = 'major';  // ← ADD THIS
 flatMajMin = 'major';
+
 if (flatMajorColumn) {
   flatMajorColumn.style.display = 'flex';
   flatMajorColumn.style.visibility = 'visible';
