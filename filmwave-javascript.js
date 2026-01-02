@@ -2064,80 +2064,85 @@ function initKeyFilterSystem() {
 }
   
   if (sharpMinorButton) {
-    sharpMinorButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  sharpMinorButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const hasSelectedKey = sharpMinorColumn?.querySelector('input[type="radio"]:checked');
+    
+    if (sharpMajMin === 'minor' && !hasSelectedKey) {
+      sharpMajMin = null;
+      styleMajMinButton(sharpMinorButton, false);
+      if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
       
-      if (sharpMajMin === 'minor') {
-        sharpMajMin = null;
-        styleMajMinButton(sharpMinorButton, false);
-        if (sharpMinorColumn) sharpMinorColumn.style.display = 'none';
-        
-        // Uncheck all radio buttons in the minor column
-        const radios = sharpMinorColumn.querySelectorAll('input[type="radio"]');
-        radios.forEach(radio => {
-          if (radio.checked) {
-            radio.checked = false;
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        });
-      } else {
-        sharpMajMin = 'minor';
-        showMajorMinor('minor', 'sharp');
-      }
-    }, true); // Use capture phase
-  }
+      const radios = sharpMinorColumn.querySelectorAll('input[type="radio"]');
+      radios.forEach(radio => {
+        if (radio.checked) {
+          radio.checked = false;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    } else {
+      sharpMajMin = 'minor';
+      showMajorMinor('minor', 'sharp');
+    }
+  }, true);
+}
   
   /**
    * Major/Minor button click handlers (Flat section)
    */
   if (flatMajorButton) {
-    flatMajorButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  flatMajorButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const hasSelectedKey = flatMajorColumn?.querySelector('input[type="radio"]:checked');
+    
+    if (flatMajMin === 'major' && !hasSelectedKey) {
+      flatMajMin = null;
+      styleMajMinButton(flatMajorButton, false);
+      if (flatMajorColumn) flatMajorColumn.style.display = 'none';
       
-      if (flatMajMin === 'major') {
-        flatMajMin = null;
-        styleMajMinButton(flatMajorButton, false);
-        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
-        
-        const radios = flatMajorColumn.querySelectorAll('input[type="radio"]');
-        radios.forEach(radio => {
-          if (radio.checked) {
-            radio.checked = false;
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        });
-      } else {
-        flatMajMin = 'major';
-        showMajorMinor('major', 'flat');
-      }
-    }, true); // Use capture phase
-  }
+      const radios = flatMajorColumn.querySelectorAll('input[type="radio"]');
+      radios.forEach(radio => {
+        if (radio.checked) {
+          radio.checked = false;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    } else {
+      flatMajMin = 'major';
+      showMajorMinor('major', 'flat');
+    }
+  }, true);
+}
   
   if (flatMinorButton) {
-    flatMinorButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  flatMinorButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const hasSelectedKey = flatMinorColumn?.querySelector('input[type="radio"]:checked');
+    
+    if (flatMajMin === 'minor' && !hasSelectedKey) {
+      flatMajMin = null;
+      styleMajMinButton(flatMinorButton, false);
+      if (flatMinorColumn) flatMinorColumn.style.display = 'none';
       
-      if (flatMajMin === 'minor') {
-        flatMajMin = null;
-        styleMajMinButton(flatMinorButton, false);
-        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
-        
-        const radios = flatMinorColumn.querySelectorAll('input[type="radio"]');
-        radios.forEach(radio => {
-          if (radio.checked) {
-            radio.checked = false;
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        });
-      } else {
-        flatMajMin = 'minor';
-        showMajorMinor('minor', 'flat');
-      }
-    }, true); // Use capture phase
-  }
+      const radios = flatMinorColumn.querySelectorAll('input[type="radio"]');
+      radios.forEach(radio => {
+        if (radio.checked) {
+          radio.checked = false;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    } else {
+      flatMajMin = 'minor';
+      showMajorMinor('minor', 'flat');
+    }
+  }, true);
+}
   
   /**
    * Listen for key radio button clicks to maintain Major/Minor active state
@@ -2174,14 +2179,19 @@ function initKeyFilterSystem() {
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
   
  /**
- * Initial state
+ * Initial state: Show Sharp section with major keys visible (but not filtered)
  */
 showSharpFlat('sharp');
-showMajorMinor('major', 'sharp');
 
-// Set state variables so toggles work
-sharpMajMin = 'major';  // ← ADD THIS
-flatMajMin = 'major';
+// Show major keys in both sections for user selection (not filtering yet)
+if (sharpMajorColumn) {
+  sharpMajorColumn.style.display = 'flex';
+  sharpMajorColumn.style.visibility = 'visible';
+  sharpMajorColumn.style.opacity = '1';
+}
+if (sharpMinorColumn) {
+  sharpMinorColumn.style.display = 'none';
+}
 
 if (flatMajorColumn) {
   flatMajorColumn.style.display = 'flex';
@@ -2191,8 +2201,6 @@ if (flatMajorColumn) {
 if (flatMinorColumn) {
   flatMinorColumn.style.display = 'none';
 }
-styleMajMinButton(flatMajorButton, true);
-styleMajMinButton(flatMinorButton, false);
 
 console.log('✅ Key Filter System initialized');
   
