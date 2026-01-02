@@ -1976,7 +1976,7 @@ function showSharpFlat(which) {
       setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
     }
   } else {
-    // No selection - show major keys by default
+  
     if (sharpMajorColumn) {
       sharpMajorColumn.style.display = 'flex';
       sharpMajorColumn.style.visibility = 'visible';
@@ -2037,10 +2037,11 @@ function showSharpFlat(which) {
     }
     if (flatMinorColumn) flatMinorColumn.style.display = 'none';
     styleMajMinButton(flatMajorButton, true);
-    flatMajorButton.checked = true;
+    if (flatMajorButton) flatMajorButton.checked = true;
     if (currentKey && flatMajorColumn) {
       setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
     }
+
   } else if (sharpMajMin === 'minor') {
     flatMajMin = 'minor';
     if (flatMinorColumn) {
@@ -2050,15 +2051,26 @@ function showSharpFlat(which) {
     }
     if (flatMajorColumn) flatMajorColumn.style.display = 'none';
     styleMajMinButton(flatMinorButton, true);
-    flatMinorButton.checked = true;
+    if (flatMinorButton) flatMinorButton.checked = true;
     if (currentKey && flatMinorColumn) {
       setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
     }
+
   } else {
     // No selection - show major keys by default
+    flatMajMin = null;
     if (flatMajorColumn) {
       flatMajorColumn.style.display = 'flex';
+      flatMajorColumn.style.visibility = 'visible';
+      flatMajorColumn.style.opacity = '1';
+    }
+    if (flatMinorColumn) {
+      flatMinorColumn.style.display = 'none';
+      flatMinorColumn.style.visibility = 'hidden';
+      flatMinorColumn.style.opacity = '0';
+    }
   }
+}
   
   // Remove no-transitions after a brief delay
   setTimeout(() => {
