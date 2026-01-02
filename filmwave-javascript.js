@@ -1931,44 +1931,56 @@ function initKeyFilterSystem() {
       }
       
     } else { // flat
-      flatColumn.style.display = 'block';
-      flatColumn.style.visibility = 'visible';
-      flatColumn.style.opacity = '1';
-      
-      sharpColumn.style.display = 'none';
-      sharpColumn.style.visibility = 'hidden';
-      sharpColumn.style.opacity = '0';
-      
-      styleSharpFlatButton(flatButton, true);
-      styleSharpFlatButton(sharpButton, false);
-      
-      // Show the appropriate Major/Minor column in Flat section
-      if (flatMajMin === 'major') {
-        showMajorMinor('major', 'flat');
-        // Restore key selection in the new column
-        if (currentKey && flatMajorColumn) {
-          setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
-        }
-      } else if (flatMajMin === 'minor') {
-        showMajorMinor('minor', 'flat');
-        // Restore key selection in the new column
-        if (currentKey && flatMinorColumn) {
-          setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
-        }
-      } else {
-        // No selection - hide both
-        if (flatMajorColumn) flatMajorColumn.style.display = 'none';
-        if (flatMinorColumn) flatMinorColumn.style.display = 'none';
-      }
+  flatColumn.style.display = 'block';
+  flatColumn.style.visibility = 'visible';
+  flatColumn.style.opacity = '1';
+  
+  sharpColumn.style.display = 'none';
+  sharpColumn.style.visibility = 'hidden';
+  sharpColumn.style.opacity = '0';
+  
+  styleSharpFlatButton(flatButton, true);
+  styleSharpFlatButton(sharpButton, false);
+  
+  // Show the appropriate Major/Minor column in Flat section
+  if (flatMajMin === 'major') {
+    if (flatMajorColumn) {
+      flatMajorColumn.style.display = 'flex';
+      flatMajorColumn.style.visibility = 'visible';
+      flatMajorColumn.style.opacity = '1';
     }
-    
-    // Remove no-transitions after a brief delay
-    setTimeout(() => {
-      if (keyButtonWrapper) {
-        keyButtonWrapper.classList.remove('no-key-transitions');
-      }
-    }, 50);
+    if (flatMinorColumn) {
+      flatMinorColumn.style.display = 'none';
+    }
+    // Restore key selection in the new column
+    if (currentKey && flatMajorColumn) {
+      setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+    }
+  } else if (flatMajMin === 'minor') {
+    if (flatMinorColumn) {
+      flatMinorColumn.style.display = 'flex';
+      flatMinorColumn.style.visibility = 'visible';
+      flatMinorColumn.style.opacity = '1';
+    }
+    if (flatMajorColumn) {
+      flatMajorColumn.style.display = 'none';
+    }
+    // Restore key selection in the new column
+    if (currentKey && flatMinorColumn) {
+      setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+    }
+  } else {
+    // No major/minor selected - show major keys by default
+    if (flatMajorColumn) {
+      flatMajorColumn.style.display = 'flex';
+      flatMajorColumn.style.visibility = 'visible';
+      flatMajorColumn.style.opacity = '1';
+    }
+    if (flatMinorColumn) {
+      flatMinorColumn.style.display = 'none';
+    }
   }
+}
   
   /**
    * Show Major or Minor column (within current Sharp/Flat section)
