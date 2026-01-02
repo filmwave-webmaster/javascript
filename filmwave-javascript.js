@@ -1712,22 +1712,40 @@ function initMutualExclusion() {
 function initKeyFilterSystem() {
   console.log('🎹 Initializing Key Filter System');
   
-  // Look for the key filter accordion - try multiple selectors
-  let keyAccordion = document.querySelector('.filter-category.key, .filter-category');
+  // Find the KEY filter-category specifically (not Genre, Mood, etc.)
+  // Look for the one that contains the sharp-flat-toggle-wrapper
+  let keyAccordion = null;
   
-  // If still not found, try to find it by looking for the sharp-flat-toggle-wrapper parent
+  // First, try to find the sharp-flat-toggle-wrapper
+  const toggleWrapper = document.querySelector('.sharp-flat-toggle-wrapper');
+  if (toggleWrapper) {
+    // Walk up to find the parent filter-category
+    keyAccordion = toggleWrapper.closest('.filter-category');
+    console.log('🔍 Found KEY filter via toggle wrapper');
+  }
+  
+  // Fallback: look for filter-category with specific class or attribute
   if (!keyAccordion) {
-    const toggleWrapper = document.querySelector('.sharp-flat-toggle-wrapper');
-    if (toggleWrapper) {
-      // Walk up the DOM to find the filter accordion container
-      keyAccordion = toggleWrapper.closest('.filter-category, .filter-item, [class*="filter"], .accordion-item, .w-dropdown');
-      console.log('🔍 Found key accordion via toggle wrapper:', keyAccordion?.className);
+    keyAccordion = document.querySelector('.filter-category.key');
+  }
+  
+  // Last resort: check all filter-categories to find the one with key elements
+  if (!keyAccordion) {
+    const allCategories = document.querySelectorAll('.filter-category');
+    console.log(`🔍 Checking ${allCategories.length} filter-category elements`);
+    for (const category of allCategories) {
+      if (category.querySelector('.sharp-flat-toggle-wrapper') || 
+          category.querySelector('.sharp-key-column')) {
+        keyAccordion = category;
+        console.log('🔍 Found KEY filter by checking children');
+        break;
+      }
     }
   }
   
   if (!keyAccordion) {
-    console.log('⚠️ Key accordion not found - skipping Key Filter System');
-    console.log('💡 Looking for: .filter-category OR parent of .sharp-flat-toggle-wrapper');
+    console.log('⚠️ Key filter-category not found - skipping Key Filter System');
+    console.log('💡 Looking for: .filter-category that contains .sharp-flat-toggle-wrapper');
     return;
   }
   
