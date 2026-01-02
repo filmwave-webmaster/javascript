@@ -1719,8 +1719,21 @@ function initKeyFilterSystem() {
   }
   
   // Get all elements with detailed logging
-  const sharpButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:first-child, .sharp-flat-toggle-wrapper .radio-wrapper:first-child');
-  const flatButton = keyAccordion.querySelector('.sharp-flat-toggle-wrapper .w-radio:last-child, .sharp-flat-toggle-wrapper .radio-wrapper:last-child');
+  const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
+  let sharpButton = null;
+  let flatButton = null;
+  
+  if (sharpFlatWrapper) {
+    const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button, [role="button"], .sharp-button, .flat-button');
+    if (buttons.length >= 2) {
+      sharpButton = buttons[0];  // First button is Sharp
+      flatButton = buttons[1];   // Second button is Flat
+    } else {
+      // Try looking for buttons with specific classes
+      sharpButton = sharpFlatWrapper.querySelector('.sharp-button, [data-key-type="sharp"]');
+      flatButton = sharpFlatWrapper.querySelector('.flat-button, [data-key-type="flat"]');
+    }
+  }
   
   const sharpColumn = keyAccordion.querySelector('.sharp-key-column');
   const flatColumn = keyAccordion.querySelector('.flat-key-column');
@@ -1745,13 +1758,13 @@ function initKeyFilterSystem() {
   }
   
   // Get Major/Minor elements for BOTH Sharp and Flat sections
-  const sharpMajorButton = sharpColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper');
-  const sharpMinorButton = sharpColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper');
+  const sharpMajorButton = sharpColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper, .maj-wrapper .w-button, .maj-wrapper button');
+  const sharpMinorButton = sharpColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper, .min-wrapper .w-button, .min-wrapper button');
   const sharpMajorColumn = sharpColumn.querySelector('.maj-key-column');
   const sharpMinorColumn = sharpColumn.querySelector('.min-key-column');
   
-  const flatMajorButton = flatColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper');
-  const flatMinorButton = flatColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper');
+  const flatMajorButton = flatColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper, .maj-wrapper .w-button, .maj-wrapper button');
+  const flatMinorButton = flatColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper, .min-wrapper .w-button, .min-wrapper button');
   const flatMajorColumn = flatColumn.querySelector('.maj-key-column');
   const flatMinorColumn = flatColumn.querySelector('.min-key-column');
   
@@ -1788,17 +1801,17 @@ function initKeyFilterSystem() {
    * Style Sharp/Flat buttons
    */
   function styleSharpFlatButton(button, isActive) {
-    const label = button.querySelector('.radio-button-label');
-    if (!label) return;
+    if (!button) return;
     
+    // For standard buttons, style the button element directly
     if (isActive) {
-      label.style.color = '#191919';
-      label.style.borderBottom = '3px solid #191919';
-      label.style.backgroundColor = ''; // Remove any background
+      button.style.color = '#191919';
+      button.style.borderBottom = '3px solid #191919';
+      button.style.backgroundColor = ''; // Remove any background
     } else {
-      label.style.color = '';
-      label.style.borderBottom = '';
-      label.style.backgroundColor = '';
+      button.style.color = '';
+      button.style.borderBottom = '';
+      button.style.backgroundColor = '';
     }
   }
   
