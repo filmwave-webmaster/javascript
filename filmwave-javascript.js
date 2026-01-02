@@ -1757,16 +1757,23 @@ function initKeyFilterSystem() {
     return;
   }
   
-  // Get Major/Minor elements for BOTH Sharp and Flat sections
-  const sharpMajorButton = sharpColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper, .maj-wrapper .w-button, .maj-wrapper button');
-  const sharpMinorButton = sharpColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper, .min-wrapper .w-button, .min-wrapper button');
+  // Get Major/Minor elements for BOTH Sharp and Flat sections using data-key-group
+  const sharpMajorButton = sharpColumn.querySelector('[data-key-group="major"]');
+  const sharpMinorButton = sharpColumn.querySelector('[data-key-group="minor"]');
   const sharpMajorColumn = sharpColumn.querySelector('.maj-key-column');
   const sharpMinorColumn = sharpColumn.querySelector('.min-key-column');
   
-  const flatMajorButton = flatColumn.querySelector('.maj-wrapper .w-radio, .maj-wrapper .radio-wrapper, .maj-wrapper .w-button, .maj-wrapper button');
-  const flatMinorButton = flatColumn.querySelector('.min-wrapper .w-radio, .min-wrapper .radio-wrapper, .min-wrapper .w-button, .min-wrapper button');
+  const flatMajorButton = flatColumn.querySelector('[data-key-group="major"]');
+  const flatMinorButton = flatColumn.querySelector('[data-key-group="minor"]');
   const flatMajorColumn = flatColumn.querySelector('.maj-key-column');
   const flatMinorColumn = flatColumn.querySelector('.min-key-column');
+  
+  console.log('🔍 Major/Minor buttons check:', {
+    sharpMajor: !!sharpMajorButton,
+    sharpMinor: !!sharpMinorButton,
+    flatMajor: !!flatMajorButton,
+    flatMinor: !!flatMinorButton
+  });
   
   console.log('✅ Found all Key filter elements');
   
