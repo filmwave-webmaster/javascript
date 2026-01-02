@@ -3595,8 +3595,16 @@ function restoreKeyFilterState(keyState) {
   }
   
   function doRestore() {
-    const keyAccordion = document.querySelector('.filter-category');
-    if (!keyAccordion || !keyAccordion.querySelector('.sharp-flat-toggle-wrapper')) return;
+  const keyAccordion = document.querySelector('.filter-category');
+  console.log('🔍 doRestore check:', {
+    keyAccordion: !!keyAccordion,
+    hasWrapper: !!keyAccordion?.querySelector('.sharp-flat-toggle-wrapper')
+  });
+  if (!keyAccordion || !keyAccordion.querySelector('.sharp-flat-toggle-wrapper')) {
+    console.log('❌ doRestore early return');
+    return;
+  }
+  console.log('✅ doRestore passed checks, continuing...');
     
     // Get Sharp/Flat buttons
     const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
