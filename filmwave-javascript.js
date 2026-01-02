@@ -2183,9 +2183,25 @@ function initKeyFilterSystem() {
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
   
   /**
-   * Initial state: Show Sharp section by default
-   */
-  showSharpFlat('sharp');
+ * Initial state
+ */
+showSharpFlat('sharp');
+showMajorMinor('major', 'sharp');
+
+// Set up flat section (even though hidden)
+flatMajMin = 'major';
+if (flatMajorColumn) {
+  flatMajorColumn.style.display = 'flex';
+  flatMajorColumn.style.visibility = 'visible';
+  flatMajorColumn.style.opacity = '1';
+}
+if (flatMinorColumn) {
+  flatMinorColumn.style.display = 'none';
+}
+styleMajMinButton(flatMajorButton, true);
+styleMajMinButton(flatMinorButton, false);
+
+console.log('✅ Key Filter System initialized');
   
   /**
    * Initial state: Show Major keys by default in both sections
