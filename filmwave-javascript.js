@@ -2065,17 +2065,14 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Save current key BEFORE any changes
     const currentKey = getCurrentlySelectedKey();
     
     if (sharpMajMin === 'major') {
-      // Deselect major
       sharpMajMin = null;
       styleMajMinButton(sharpMajorButton, false);
       sharpMajorButton.checked = false;
       sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-      // Select major
       sharpMajMin = 'major';
       styleMajMinButton(sharpMajorButton, true);
       styleMajMinButton(sharpMinorButton, false);
@@ -2090,12 +2087,17 @@ function showSharpFlat(which) {
         sharpMinorColumn.style.display = 'none';
       }
       
-      sharpMajorButton.checked = true;
-      sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // Restore key after column is visible
       if (currentKey && sharpMajorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+        setTimeout(() => {
+          restoreSelectedKey(currentKey, sharpMajorColumn);
+          setTimeout(() => {
+            sharpMajorButton.checked = true;
+            sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          }, 20);
+        }, 50);
+      } else {
+        sharpMajorButton.checked = true;
+        sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
   }, true);
@@ -2106,17 +2108,14 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Save current key BEFORE any changes
     const currentKey = getCurrentlySelectedKey();
     
     if (sharpMajMin === 'minor') {
-      // Deselect minor
       sharpMajMin = null;
       styleMajMinButton(sharpMinorButton, false);
       sharpMinorButton.checked = false;
       sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-      // Select minor
       sharpMajMin = 'minor';
       styleMajMinButton(sharpMinorButton, true);
       styleMajMinButton(sharpMajorButton, false);
@@ -2131,12 +2130,17 @@ function showSharpFlat(which) {
         sharpMajorColumn.style.display = 'none';
       }
       
-      sharpMinorButton.checked = true;
-      sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // Restore key after column is visible
       if (currentKey && sharpMinorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+        setTimeout(() => {
+          restoreSelectedKey(currentKey, sharpMinorColumn);
+          setTimeout(() => {
+            sharpMinorButton.checked = true;
+            sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          }, 20);
+        }, 50);
+      } else {
+        sharpMinorButton.checked = true;
+        sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
   }, true);
@@ -2147,17 +2151,14 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Save current key BEFORE any changes
     const currentKey = getCurrentlySelectedKey();
     
     if (flatMajMin === 'major') {
-      // Deselect major
       flatMajMin = null;
       styleMajMinButton(flatMajorButton, false);
       flatMajorButton.checked = false;
       flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-      // Select major
       flatMajMin = 'major';
       styleMajMinButton(flatMajorButton, true);
       styleMajMinButton(flatMinorButton, false);
@@ -2172,12 +2173,17 @@ function showSharpFlat(which) {
         flatMinorColumn.style.display = 'none';
       }
       
-      flatMajorButton.checked = true;
-      flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // Restore key after column is visible
       if (currentKey && flatMajorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+        setTimeout(() => {
+          restoreSelectedKey(currentKey, flatMajorColumn);
+          setTimeout(() => {
+            flatMajorButton.checked = true;
+            flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          }, 20);
+        }, 50);
+      } else {
+        flatMajorButton.checked = true;
+        flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
   }, true);
@@ -2188,17 +2194,14 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Save current key BEFORE any changes
     const currentKey = getCurrentlySelectedKey();
     
     if (flatMajMin === 'minor') {
-      // Deselect minor
       flatMajMin = null;
       styleMajMinButton(flatMinorButton, false);
       flatMinorButton.checked = false;
       flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-      // Select minor
       flatMajMin = 'minor';
       styleMajMinButton(flatMinorButton, true);
       styleMajMinButton(flatMajorButton, false);
@@ -2213,12 +2216,17 @@ function showSharpFlat(which) {
         flatMajorColumn.style.display = 'none';
       }
       
-      flatMinorButton.checked = true;
-      flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-      
-      // Restore key after column is visible
       if (currentKey && flatMinorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+        setTimeout(() => {
+          restoreSelectedKey(currentKey, flatMinorColumn);
+          setTimeout(() => {
+            flatMinorButton.checked = true;
+            flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          }, 20);
+        }, 50);
+      } else {
+        flatMinorButton.checked = true;
+        flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
   }, true);
