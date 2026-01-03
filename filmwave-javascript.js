@@ -2759,71 +2759,134 @@ function reinitializeTabs() {
 /**
  * ============================================================
  * BPM FILTER SYSTEM
- * Integrates with existing filter persistence and Finsweet CMS
+ * Global restore function - called during filter restoration
  * ============================================================
  */
-
-/**
-   * Restore BPM state from localStorage
-   */
-  function restoreBPMState() {
-    const savedFilters = localStorage.getItem('musicFilters');
-    if (!savedFilters) return;
+function restoreBPMState() {
+  const savedFilters = localStorage.getItem('musicFilters');
+  if (!savedFilters) return;
+  
+  try {
+    const filterState = JSON.parse(savedFilters);
+    if (!filterState.bpm) return;
     
-    try {
-      const filterState = JSON.parse(savedFilters);
-      if (!filterState.bpm) return;
+    const bpmState = filterState.bpm;
+    
+    // Re-query all DOM elements
+    const SLIDER_WIDTH = 225;
+    const MIN_BPM = 1;
+    const MAX_BPM = 300;
+    const BPM_RANGE = MAX_BPM - MIN_BPM;
+    
+    const exactToggle = document.querySelector('.bpm-toggle .exact');
+    const rangeToggle = document.querySelector('.bpm-toggle .range');
+    const exactInput = document.querySelector('.bpm-input-field');
+    const lowInput = document.querySelector('.bpm-input-field-low');
+    const highInput = document.querySelector('.bpm-input-field-high');
+    const sliderRangeWrapper = document.querySelector('.slider-range-wrapper');
+    const sliderExactWrapper = document.querySelector('.slider-exact-wrapper');
+    const sliderHandleLow = document.querySelector('.slider-handle-low');
+    const sliderHandleHigh = document.querySelector('.slider-handle-high');
+    const sliderHandleExact = document.querySelector('.slider-handle-exact');
+    
+    if (!exactToggle || !rangeToggle) return;
+    
+    // Helper: Update handle position
+    function updateHandlePosition(handle, bpm) {
+      if (!handle) return;
+      const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+      const ratio = (value - MIN_BPM) / BPM_RANGE;
+      const pixels = ratio * SLIDER_WIDTH;
       
-      const bpmState = filterState.bpm;
-      
-      // Restore mode (inline since setMode is not global)
-const mode = bpmState.mode || 'range';
-if (mode === 'exact') {
-  exactToggle.style.color = '#191919';
-  exactToggle.style.textDecoration = 'underline';
-  rangeToggle.style.color = '#9e9e9e';
-  rangeToggle.style.textDecoration = 'none';
-  
-  if (exactInput) exactInput.style.display = 'block';
-  if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
-  if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
-  if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
-} else {
-  rangeToggle.style.color = '#191919';
-  rangeToggle.style.textDecoration = 'underline';
-  exactToggle.style.color = '#9e9e9e';
-  exactToggle.style.textDecoration = 'none';
-  
-  if (exactInput) exactInput.style.display = 'none';
-  if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
-  if (sliderExactWrapper) sliderExactWrapper.style.display = 'none';
-  if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
-}
-      
-      // Restore values
-      if (bpmState.exact && exactInput && sliderHandleExact) {
-        exactInput.value = bpmState.exact;
-        updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact));
-      }
-      
-      if (bpmState.low && lowInput && sliderHandleLow) {
-        lowInput.value = bpmState.low;
-        updateHandlePosition(sliderHandleLow, parseInt(bpmState.low));
-      }
-      
-      if (bpmState.high && highInput && sliderHandleHigh) {
-        highInput.value = bpmState.high;
-        updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high));
-      }
-      
-      console.log('✅ BPM state restored:', bpmState);
-      applyBPMFilter();
-      
-    } catch (e) {
-      console.error('Error restoring BPM state:', e);
+      handle.style.position = 'absolute';
+      handle.style.left = `${pixels}px`;
+      handle.style.top = '50%';
+      handle.style.transform = 'translate(-50%, -50%)';
     }
+    
+    // Restore mode
+    const mode = bpmState.mode || 'range';
+    if (mode === 'exact') {
+      exactToggle.style.color = '#191919';
+      exactToggle.style.textDecoration = 'underline';
+      rangeToggle.style.color = '#9e9e9e';
+      rangeToggle.style.textDecoration = 'none';
+      
+      if (exactInput) exactInput.style.display = 'block';
+      if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
+      if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
+      if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
+    } else {
+      rangeToggle.style.color = '#191919';
+      rangeToggle.style.textDecoration = 'underline';
+      exactToggle.style.color = '#9e9e9e';
+      exactToggle.style.textDecoration = 'none';
+      
+      if (exactInput) exactInput.style.display = 'none';
+      if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
+      if (sliderExactWrapper) sliderExactWrapper.style.display = 'none';
+      if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
+    }
+    
+    // Restore values
+    if (bpmState.exact && exactInput && sliderHandleExact) {
+      exactInput.value = bpmState.exact;
+      updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact));
+    }
+    
+    if (bpmState.low && lowInput && sliderHandleLow) {
+      lowInput.value = bpmState.low;
+      updateHandlePosition(sliderHandleLow, parseInt(bpmState.low));
+    }
+    
+    if (bpmState.high && highInput && sliderHandleHigh) {
+      highInput.value = bpmState.high;
+      updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high));
+    }
+    
+    console.log('✅ BPM state restored:', bpmState);
+    
+    // Apply filter
+    let minBPM = null;
+    let maxBPM = null;
+    
+    if (mode === 'exact') {
+      const exact = parseInt(exactInput?.value);
+      if (!isNaN(exact)) {
+        minBPM = exact;
+        maxBPM = exact;
+      }
+    } else {
+      const low = parseInt(lowInput?.value);
+      const high = parseInt(highInput?.value);
+      if (!isNaN(low)) minBPM = low;
+      if (!isNaN(high)) maxBPM = high;
+    }
+    
+    if (minBPM !== null || maxBPM !== null) {
+      document.querySelectorAll('.song-wrapper').forEach(song => {
+        const bpmText = song.querySelector('.bpm')?.textContent || '';
+        const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+        
+        if (isNaN(songBPM)) {
+          song.style.display = 'none';
+          return;
+        }
+        
+        let shouldShow = true;
+        if (minBPM !== null && songBPM < minBPM) shouldShow = false;
+        if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+        
+        song.style.display = shouldShow ? '' : 'none';
+      });
+      
+      console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+    }
+    
+  } catch (e) {
+    console.error('Error restoring BPM state:', e);
   }
-
+}
 // START OF INIT BPM FILTER
 
 function initBPMFilter() {
