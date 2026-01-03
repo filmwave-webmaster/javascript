@@ -3068,19 +3068,20 @@ function initBPMFilter() {
   function stopDrag() {
   if (isDragging) {
     isDragging = false;
+    const lastHandle = activeHandle; // Save before nulling
     activeHandle = null;
     
     // Update input from slider and clear if at extremes
-    if (activeHandle === sliderHandleLow && lowInput) {
-      updateInputFromSlider(activeHandle, lowInput);
+    if (lastHandle === sliderHandleLow && lowInput) {
+      updateInputFromSlider(lastHandle, lowInput);
       // Clear if at minimum
       if (lowInput.value === '1') lowInput.value = '';
-    } else if (activeHandle === sliderHandleHigh && highInput) {
-      updateInputFromSlider(activeHandle, highInput);
+    } else if (lastHandle === sliderHandleHigh && highInput) {
+      updateInputFromSlider(lastHandle, highInput);
       // Clear if at maximum
       if (highInput.value === '300') highInput.value = '';
-    } else if (activeHandle === sliderHandleExact && exactInput) {
-      updateInputFromSlider(activeHandle, exactInput);
+    } else if (lastHandle === sliderHandleExact && exactInput) {
+      updateInputFromSlider(lastHandle, exactInput);
     }
     
     saveBPMState();
