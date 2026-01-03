@@ -2110,12 +2110,25 @@ function showSharpFlat(which) {
     showSharpFlat('flat');
   }, true); // Use capture phase
 
-// SHARP/FLAT MAJOR/MINORCLICK HANDLERS
+  
+// SHARP MAJOR
   
   if (sharpMajorButton) {
   sharpMajorButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Remove old Major/Minor tags before toggling
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (tagsContainer) {
+      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+      oldTags.forEach(tag => {
+        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+        if (text === 'Major' || text === 'Minor') {
+          tag.remove();
+        }
+      });
+    }
     
     const currentKey = getCurrentlySelectedKey();
     
@@ -2140,13 +2153,11 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && sharpMajorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, sharpMajorColumn);
           setTimeout(() => {
             sharpMajorButton.checked = true;
             sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-            sharpMinorColumn.classList.remove('no-key-transitions');
           }, 5);
         }, 10);
       } else {
@@ -2156,11 +2167,25 @@ function showSharpFlat(which) {
     }
   }, true);
 }
+
+// SHARP MINOR
   
   if (sharpMinorButton) {
   sharpMinorButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Remove old Major/Minor tags before toggling
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (tagsContainer) {
+      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+      oldTags.forEach(tag => {
+        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+        if (text === 'Major' || text === 'Minor') {
+          tag.remove();
+        }
+      });
+    }
     
     const currentKey = getCurrentlySelectedKey();
     
@@ -2191,21 +2216,35 @@ function showSharpFlat(which) {
           setTimeout(() => {
             sharpMinorButton.checked = true;
             sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+            sharpMinorColumn.classList.remove('no-key-transitions');
           }, 5);
         }, 10);
       } else {
         sharpMinorButton.checked = true;
         sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-        sharpMinorColumn.classList.remove('no-key-transitions');
       }
     }
   }, true);
 }
+
+// FLAT MAJOR
   
   if (flatMajorButton) {
   flatMajorButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Remove old Major/Minor tags before toggling
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (tagsContainer) {
+      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+      oldTags.forEach(tag => {
+        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+        if (text === 'Major' || text === 'Minor') {
+          tag.remove();
+        }
+      });
+    }
     
     const currentKey = getCurrentlySelectedKey();
     
@@ -2230,7 +2269,6 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && flatMajorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, flatMajorColumn);
           setTimeout(() => {
@@ -2241,16 +2279,29 @@ function showSharpFlat(which) {
       } else {
         flatMajorButton.checked = true;
         flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-        sharpMinorColumn.classList.remove('no-key-transitions');
       }
     }
   }, true);
 }
+
+// FLAT MINOR
   
   if (flatMinorButton) {
   flatMinorButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Remove old Major/Minor tags before toggling
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (tagsContainer) {
+      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+      oldTags.forEach(tag => {
+        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+        if (text === 'Major' || text === 'Minor') {
+          tag.remove();
+        }
+      });
+    }
     
     const currentKey = getCurrentlySelectedKey();
     
@@ -2275,7 +2326,6 @@ function showSharpFlat(which) {
       }
       
       if (currentKey && flatMinorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
         setTimeout(() => {
           restoreSelectedKey(currentKey, flatMinorColumn);
           setTimeout(() => {
@@ -2286,11 +2336,11 @@ function showSharpFlat(which) {
       } else {
         flatMinorButton.checked = true;
         flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-        sharpMinorColumn.classList.remove('no-key-transitions');
       }
     }
   }, true);
 }
+
   
  /**
  * Listen for key radio button clicks to maintain Major/Minor active state
@@ -2434,6 +2484,20 @@ document.addEventListener('click', (e) => {
       flatMajMin = null;
       
       console.log('✅ Cleared Key filter states');
+
+      // Also remove all Key-related tags from container
+const tagsContainer = document.querySelector('.filter-tags-container');
+if (tagsContainer) {
+  const allTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+  allTags.forEach(tag => {
+    const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+    // Remove any tag that looks like a key (single letter) or Major/Minor
+    if (text && (text.length <= 3 || text === 'Major' || text === 'Minor')) {
+      tag.remove();
+    }
+  });
+}
+      
     }, 100);
   }
 });
