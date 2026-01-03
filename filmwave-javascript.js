@@ -3132,11 +3132,6 @@ function stopDrag() {
     const lastHandle = activeHandle; // Save before nulling
     activeHandle = null;
     
-    // Clear all BPM marks before re-applying filter
-    document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
-      song.removeAttribute('data-hidden-by-bpm');
-    });
-    
     // Update input from slider and clear if at extremes
     if (lastHandle === sliderHandleLow && lowInput) {
       updateInputFromSlider(lastHandle, lowInput);
@@ -3158,7 +3153,6 @@ function stopDrag() {
     document.removeEventListener('mouseup', stopDrag);
   }
 }
-
 /**
  * Clear all BPM values
  */
@@ -3222,68 +3216,77 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
   }
   
   /**
-   * Apply BPM filter to songs
-   * This integrates with your existing Finsweet filter system
-   */
-  function applyBPMFilter() {
-    // Get current BPM values
-    let minBPM = null;
-    let maxBPM = null;
-    
-    if (currentMode === 'exact') {
-      const exact = parseInt(exactInput?.value);
-      if (!isNaN(exact)) {
-        minBPM = exact;
-        maxBPM = exact;
-      }
-    } else {
-      const low = parseInt(lowInput?.value);
-      const high = parseInt(highInput?.value);
-      if (!isNaN(low)) minBPM = low;
-      if (!isNaN(high)) maxBPM = high;
-    }
-    
-    // If no BPM filter active, show all songs
-    // If no BPM filter, unhide songs that were hidden by BPM
-if (minBPM === null && maxBPM === null) {
-  document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(song => {
-    song.removeAttribute('data-hidden-by-bpm');
-    song.style.display = '';
-  });
-  return;
-}
-
-// Apply filter to all songs
-document.querySelectorAll('.song-wrapper').forEach(song => {
-  const bpmText = song.querySelector('.bpm')?.textContent || '';
-  const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+ * Apply BPM filter to songs
+ * This integrates with your existing Finsweet filter system
+ */
+function applyBPMFilter() {
+  // Get current BPM values
+  let minBPM = null;
+  let maxBPM = null;
   
-  if (isNaN(songBPM)) {
-    song.style.display = 'none';
-    song.setAttribute('data-hidden-by-bpm', 'true');
+  if (currentMode === 'exact') {
+    const exact = parseInt(exactInput?.value);
+    if (!isNaN(exact)) {
+      minBPM = exact;
+      maxBPM = exact;
+    }
+  } else {
+    const low = parseInt(lowInput?.value);
+    const high = parseInt(highInput?.value);
+    if (!isNaN(low)) minBPM = low;
+    if (!isNaN(high)) maxBPM = high;
+  }
+  
+  // If no BPM filter, unhide songs that were hidden by BPM
+  if (minBPM === null && maxBPM === null) {
+    document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(song => {
+      song.removeAttribute('data-hidden-by-bpm');
+      song.style.display = '';
+    });
     return;
   }
   
-  let shouldShow = true;
-  if (minBPM !== null && songBPM < minBPM) shouldShow = false;
-  if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+  // Clear old marks before re-applying
+  document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
+    song.removeAttribute('data-hidden-by-bpm');
+  });
   
-  if (!shouldShow) {
-  song.style.display = 'none';
-  song.setAttribute('data-hidden-by-bpm', 'true');
-} else {
-  // Only unhide if currently hidden AND was hidden by BPM
-  if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
-    song.style.display = '';
-  }
-  song.removeAttribute('data-hidden-by-bpm');
-}
-});
+  // Apply filter to all songs
+  document.querySelectorAll('.song-wrapper').forEach(song => {
+    // Skip songs already hidden by other filters
+    if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') !== 'true') {
+      return; // Don't touch songs hidden by other filters
+    }
     
-    console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
-  }
+    const bpmText = song.querySelector('.bpm')?.textContent || '';
+    const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+    
+    if (isNaN(songBPM)) {
+      song.style.display = 'none';
+      song.setAttribute('data-hidden-by-bpm', 'true');
+      return;
+    }
+    
+    let shouldShow = true;
+    if (minBPM !== null && songBPM < minBPM) shouldShow = false;
+    if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+    
+    if (!shouldShow) {
+      song.style.display = 'none';
+      song.setAttribute('data-hidden-by-bpm', 'true');
+    } else {
+      // Only unhide if currently hidden AND was hidden by BPM
+      if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
+        song.style.display = '';
+      }
+      song.removeAttribute('data-hidden-by-bpm');
+    }
+  });
+  
+  console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+}
 
-  function updateBPMTag() {
+function updateBPMTag() {
   const tagsContainer = document.querySelector('.filter-tags-container');
   if (!tagsContainer) return;
   
@@ -3325,59 +3328,59 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
     clearButton.style.display = hasAnyFilters ? 'flex' : 'none';
   }
 }
-  
-  /**
-   * Initialize event listeners
-   */
-  function setupEventListeners() {
-    // Toggle buttons
-    exactToggle?.addEventListener('click', () => setMode('exact'));
-    rangeToggle?.addEventListener('click', () => setMode('range'));
-    
-    // Clear button
-    clearButton?.addEventListener('click', clearBPM);
 
-    // Clear all button (circle-x) also clears BPM
-    const mainClearButton = document.querySelector('.circle-x');
-    if (mainClearButton) {
+/**
+ * Initialize event listeners
+ */
+function setupEventListeners() {
+  // Toggle buttons
+  exactToggle?.addEventListener('click', () => setMode('exact'));
+  rangeToggle?.addEventListener('click', () => setMode('range'));
+  
+  // Clear button
+  clearButton?.addEventListener('click', clearBPM);
+
+  // Clear all button (circle-x) also clears BPM
+  const mainClearButton = document.querySelector('.circle-x');
+  if (mainClearButton) {
     mainClearButton.addEventListener('click', clearBPM);
-    }
-      
-    // Slider handles - mousedown events
-    sliderHandleLow?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleLow));
-    sliderHandleHigh?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleHigh));
-    sliderHandleExact?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleExact));
+  }
     
-    // Input fields - blur events (when user clicks out after typing)
-    exactInput?.addEventListener('blur', () => {
-      updateSliderFromInput(exactInput, sliderHandleExact);
-      saveBPMState();
-      applyBPMFilter();
-      updateBPMTag();
+  // Slider handles - mousedown events
+  sliderHandleLow?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleLow));
+  sliderHandleHigh?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleHigh));
+  sliderHandleExact?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleExact));
+  
+  // Input fields - blur events (when user clicks out after typing)
+  exactInput?.addEventListener('blur', () => {
+    updateSliderFromInput(exactInput, sliderHandleExact);
+    saveBPMState();
+    applyBPMFilter();
+    updateBPMTag();
+  });
+  
+  lowInput?.addEventListener('blur', () => {
+    updateSliderFromInput(lowInput, sliderHandleLow);
+    saveBPMState();
+    applyBPMFilter();
+    updateBPMTag();
+  });
+  
+  highInput?.addEventListener('blur', () => {
+    updateSliderFromInput(highInput, sliderHandleHigh);
+    saveBPMState();
+    applyBPMFilter();
+    updateBPMTag();
+  });
+  
+  // Input fields - Enter key
+  [exactInput, lowInput, highInput].forEach(input => {
+    input?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.target.blur(); // Trigger blur event
+      }
     });
-    
-    lowInput?.addEventListener('blur', () => {
-      updateSliderFromInput(lowInput, sliderHandleLow);
-      saveBPMState();
-      applyBPMFilter();
-      updateBPMTag();
-    });
-    
-    highInput?.addEventListener('blur', () => {
-      updateSliderFromInput(highInput, sliderHandleHigh);
-      saveBPMState();
-      applyBPMFilter();
-      updateBPMTag();
-    });
-    
-    // Input fields - Enter key
-    [exactInput, lowInput, highInput].forEach(input => {
-      input?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          e.target.blur(); // Trigger blur event
-        }
-      });
-    });
+  });
     
     // Only allow numbers in input fields
     [exactInput, lowInput, highInput].forEach(input => {
