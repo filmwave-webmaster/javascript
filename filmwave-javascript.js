@@ -3066,22 +3066,36 @@ function initBPMFilter() {
   }
   
   function stopDrag() {
-    if (isDragging) {
-      isDragging = false;
-      activeHandle = null;
-      saveBPMState();
-      applyBPMFilter();
-      updateBPMTag();
-      
-      document.removeEventListener('mousemove', onDrag);
-      document.removeEventListener('mouseup', stopDrag);
+  if (isDragging) {
+    isDragging = false;
+    activeHandle = null;
+    
+    // Update input from slider and clear if at extremes
+    if (activeHandle === sliderHandleLow && lowInput) {
+      updateInputFromSlider(activeHandle, lowInput);
+      // Clear if at minimum
+      if (lowInput.value === '1') lowInput.value = '';
+    } else if (activeHandle === sliderHandleHigh && highInput) {
+      updateInputFromSlider(activeHandle, highInput);
+      // Clear if at maximum
+      if (highInput.value === '300') highInput.value = '';
+    } else if (activeHandle === sliderHandleExact && exactInput) {
+      updateInputFromSlider(activeHandle, exactInput);
     }
+    
+    saveBPMState();
+    applyBPMFilter();
+    updateBPMTag();
+    
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
   }
-  
-  /**
-   * Clear all BPM values
-   */
- function clearBPM() {
+}
+
+/**
+ * Clear all BPM values
+ */
+function clearBPM() {
   // Reset inputs
   if (exactInput) exactInput.value = '';
   if (lowInput) lowInput.value = '';
@@ -3102,9 +3116,15 @@ function initBPMFilter() {
       song.style.display = '';
     }
   });
-
-   updateBPMTag();
-   
+  
+  updateBPMTag();
+  
+  // Update clear all button visibility
+  const mainClearButton = document.querySelector('.circle-x');
+  if (mainClearButton) {
+    const hasOtherFilters = document.querySelector('.filter-tags-container')?.querySelectorAll('.filter-tag:not([data-bpm-tag])').length > 0;
+    mainClearButton.style.display = hasOtherFilters ? 'flex' : 'none';
+  }
 }
   
   /**
