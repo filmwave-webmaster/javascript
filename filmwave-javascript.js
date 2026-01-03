@@ -2864,32 +2864,37 @@ setTimeout(() => {
     if (!isNaN(high)) maxBPM = high;
   }
   
-  if (minBPM !== null || maxBPM !== null) {
-    document.querySelectorAll('.song-wrapper').forEach(song => {
-      const bpmText = song.querySelector('.bpm')?.textContent || '';
-      const songBPM = parseInt(bpmText.replace(/\D/g, ''));
-      
-      if (isNaN(songBPM)) {
-        song.style.display = 'none';
-        song.setAttribute('data-hidden-by-bpm', 'true');
-        return;
+ if (minBPM !== null || maxBPM !== null) {
+  document.querySelectorAll('.song-wrapper').forEach(song => {
+    // Skip songs already hidden by other filters
+    if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') !== 'true') {
+      return; // Don't touch songs hidden by other filters
+    }
+    
+    const bpmText = song.querySelector('.bpm')?.textContent || '';
+    const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+    
+    if (isNaN(songBPM)) {
+      song.style.display = 'none';
+      song.setAttribute('data-hidden-by-bpm', 'true');
+      return;
+    }
+    
+    let shouldShow = true;
+    if (minBPM !== null && songBPM < minBPM) shouldShow = false;
+    if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+    
+    if (!shouldShow) {
+      song.style.display = 'none';
+      song.setAttribute('data-hidden-by-bpm', 'true');
+    } else {
+      // Only unhide if currently hidden AND was hidden by BPM
+      if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
+        song.style.display = '';
       }
-      
-      let shouldShow = true;
-      if (minBPM !== null && songBPM < minBPM) shouldShow = false;
-      if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
-      
-     if (!shouldShow) {
-  song.style.display = 'none';
-  song.setAttribute('data-hidden-by-bpm', 'true');
-} else {
-  // Only unhide if currently hidden AND was hidden by BPM
-  if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
-    song.style.display = '';
-  }
-  song.removeAttribute('data-hidden-by-bpm');
-}
-    });
+      song.removeAttribute('data-hidden-by-bpm');
+    }
+  });
     
     console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
   }
