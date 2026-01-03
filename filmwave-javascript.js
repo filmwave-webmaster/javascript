@@ -3177,6 +3177,9 @@ function initBPMFilter() {
   setTimeout(restoreBPMState, 100);
   
   console.log('✅ BPM Filter System initialized');
+
+  // Expose restore function globally
+  window.restoreBPMState = restoreBPMState;
 }
 
 // Call this function after your other filter initializations
