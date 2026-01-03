@@ -2880,14 +2880,18 @@ setTimeout(() => {
       if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
       
       if (!shouldShow) {
-        song.style.display = 'none';
-        song.setAttribute('data-hidden-by-bpm', 'true');
-      } else {
-        if (song.getAttribute('data-hidden-by-bpm') === 'true') {
-          song.style.display = '';
-          song.removeAttribute('data-hidden-by-bpm');
-        }
-      }
+  // Only mark as hidden by BPM if it wasn't already hidden
+  if (song.style.display !== 'none') {
+    song.setAttribute('data-hidden-by-bpm', 'true');
+  }
+  song.style.display = 'none';
+} else {
+  // Only unhide if it was specifically hidden by BPM
+  if (song.getAttribute('data-hidden-by-bpm') === 'true') {
+    song.style.display = '';
+    song.removeAttribute('data-hidden-by-bpm');
+  }
+}
     });
     
     console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
@@ -3258,10 +3262,13 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
   if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
   
   if (!shouldShow) {
+  // Only mark as hidden by BPM if it wasn't already hidden
+  if (song.style.display !== 'none') {
+    song.setAttribute('data-hidden-by-bpm', 'true');
+  }
   song.style.display = 'none';
-  song.setAttribute('data-hidden-by-bpm', 'true');
 } else {
-  // Unhide if it was hidden by BPM
+  // Only unhide if it was specifically hidden by BPM
   if (song.getAttribute('data-hidden-by-bpm') === 'true') {
     song.style.display = '';
     song.removeAttribute('data-hidden-by-bpm');
