@@ -3182,52 +3182,64 @@ function reinitializeTabs() {
     const allPanes = tabsComponent.querySelectorAll('.w-tab-pane');
     
     allLinks.forEach((link, linkIndex) => {
-      // Remove old listeners by cloning
-      const newLink = link.cloneNode(true);
-      link.parentNode.replaceChild(newLink, link);
-      
-      newLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        const clickedIndex = Array.from(allLinks).indexOf(link);
-        
-        // Update tab links
-        allLinks.forEach((l, i) => {
-          if (i === clickedIndex) {
-            l.classList.add('w--current');
-            l.setAttribute('aria-selected', 'true');
-            l.setAttribute('tabindex', '0');
-          } else {
-            l.classList.remove('w--current');
-            l.setAttribute('aria-selected', 'false');
-            l.setAttribute('tabindex', '-1');
-          }
-        });
-        
-        // Update tab panes
-        allPanes.forEach((p, i) => {
-          if (i === clickedIndex) {
-            p.classList.add('w--tab-active');
-            p.style.display = '';
-            p.style.opacity = '1';
-          } else {
-            p.classList.remove('w--tab-active');
-            p.style.display = 'none';
-            p.style.opacity = '0';
-          }
-        });
-        
-        console.log(`✅ Switched to tab ${clickedIndex + 1}`);
-        
-        // Sync pricing toggle state if on pricing page
-        if (typeof initPricingToggle === 'function') {
-          setTimeout(() => initPricingToggle(), 50);
-        }
-      });
+  // Remove old listeners by cloning
+  const newLink = link.cloneNode(true);
+  link.parentNode.replaceChild(newLink, link);
+
+  newLink.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    // ✅ Use the forEach-provided index (the old code breaks because `link` is the old node after cloning)
+    const clickedIndex = linkIndex;
+
+    // ✅ Re-query AFTER cloning so we update the *live* links/panes (not the stale NodeLists)
+    const liveLinks = tabsComponent.querySelectorAll('.w-tab-link');
+    const livePanes = tabsComponent.querySelectorAll('.w-tab-pane');
+
+    // Update tab links
+    liveLinks.forEach((l, i) => {
+      if (i === clickedIndex) {
+        l.classList.add('w--current');
+        l.setAttribute('aria-selected', 'true');
+        l.setAttribute('tabindex', '0');
+      } else {
+        l.classList.remove('w--current');
+        l.setAttribute('aria-selected', 'false');
+        l.setAttribute('tabindex', '-1');
+      }
     });
+
+    // Update tab panes
+    livePanes.forEach((p, i) => {
+      if (i === clickedIndex) {
+        p.classList.add('w--tab-active');
+        p.style.display = '';
+        p.style.opacity = '1';
+      } else {
+        p.classList.remove('w--tab-active');
+        p.style.display = 'none';
+        p.style.opacity = '0';
+      }
+    });
+
+    console.log(`✅ Switched to tab ${clickedIndex + 1}`);
+
+    // ✅ Re-init BPM UI (Exact/Range tabs + slider) after tab switch
+    if (typeof initBpmFilterSystem === 'function') {
+      setTimeout(() => initBpmFilterSystem(), 0);
+    }
+
+    // Sync pricing toggle state if on pricing page
+    if (typeof initPricingToggle === 'function') {
+      setTimeout(() => initPricingToggle(), 50);
+    }
   });
-  
-  console.log('✅ Tabs manually re-initialized');
+});
+});
+
+console.log('✅ Tabs manually re-initialized');
 }
+
 
 /**
  * ============================================================
