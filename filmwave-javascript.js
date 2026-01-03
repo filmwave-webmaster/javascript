@@ -3246,16 +3246,13 @@ function applyBPMFilter() {
     return;
   }
   
-  // Clear old marks before re-applying
-  document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
-    song.removeAttribute('data-hidden-by-bpm');
-  });
+  // DON'T clear marks here - process each song individually
   
   // Apply filter to all songs
   document.querySelectorAll('.song-wrapper').forEach(song => {
-    // Skip songs already hidden by other filters
+    // Skip songs hidden by other filters (not by BPM)
     if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') !== 'true') {
-      return; // Don't touch songs hidden by other filters
+      return;
     }
     
     const bpmText = song.querySelector('.bpm')?.textContent || '';
@@ -3275,8 +3272,8 @@ function applyBPMFilter() {
       song.style.display = 'none';
       song.setAttribute('data-hidden-by-bpm', 'true');
     } else {
-      // Only unhide if currently hidden AND was hidden by BPM
-      if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
+      // Song passes BPM filter - unhide if BPM hid it
+      if (song.getAttribute('data-hidden-by-bpm') === 'true') {
         song.style.display = '';
       }
       song.removeAttribute('data-hidden-by-bpm');
