@@ -4609,6 +4609,11 @@ function attemptRestore() {
 }
 
 window.addEventListener('load', function() {
+  // Hide all filter dots immediately
+  document.querySelectorAll('.filter-dot-active').forEach(dot => {
+    dot.style.display = 'none';
+  });
+  
   console.log('🔄 Page load event fired');
   filtersRestored = false;
   
