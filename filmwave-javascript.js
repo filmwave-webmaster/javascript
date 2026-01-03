@@ -2776,8 +2776,29 @@ function reinitializeTabs() {
       
       const bpmState = filterState.bpm;
       
-      // Restore mode
-      setMode(bpmState.mode || 'range');
+      // Restore mode (inline since setMode is not global)
+const mode = bpmState.mode || 'range';
+if (mode === 'exact') {
+  exactToggle.style.color = '#191919';
+  exactToggle.style.textDecoration = 'underline';
+  rangeToggle.style.color = '#9e9e9e';
+  rangeToggle.style.textDecoration = 'none';
+  
+  if (exactInput) exactInput.style.display = 'block';
+  if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
+  if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
+  if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
+} else {
+  rangeToggle.style.color = '#191919';
+  rangeToggle.style.textDecoration = 'underline';
+  exactToggle.style.color = '#9e9e9e';
+  exactToggle.style.textDecoration = 'none';
+  
+  if (exactInput) exactInput.style.display = 'none';
+  if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
+  if (sliderExactWrapper) sliderExactWrapper.style.display = 'none';
+  if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
+}
       
       // Restore values
       if (bpmState.exact && exactInput && sliderHandleExact) {
