@@ -2414,25 +2414,28 @@ window.keyFilterSystemReady = true;
 const clearButton = document.querySelector('.circle-x, [class*="clear"]');
 if (clearButton) {
   clearButton.addEventListener('click', () => {
-    // Uncheck all Key radios
-    const allKeyRadios = document.querySelectorAll('[data-filter-group="Key"]');
-    allKeyRadios.forEach(radio => {
-      radio.checked = false;
-    });
-    
-    // Remove all active states from Key wrappers
-    const keyAccordion = document.querySelector('[data-filter-type="key"]');
-    if (keyAccordion) {
-      keyAccordion.querySelectorAll('.is-active').forEach(el => {
-        el.classList.remove('is-active');
+    // Use setTimeout to run AFTER Webflow/Finsweet clear
+    setTimeout(() => {
+      // Uncheck all Key radios
+      const allKeyRadios = document.querySelectorAll('[data-filter-group="Key"]');
+      allKeyRadios.forEach(radio => {
+        radio.checked = false;
       });
-    }
-    
-    // Reset state variables
-    sharpMajMin = null;
-    flatMajMin = null;
-    
-    console.log('🧹 Cleared Key filter states');
+      
+      // Remove ALL active states from entire document
+      document.querySelectorAll('.is-active').forEach(el => {
+        // Only remove from Key-related elements
+        if (el.closest('[data-filter-type="key"]')) {
+          el.classList.remove('is-active');
+        }
+      });
+      
+      // Reset state variables
+      sharpMajMin = null;
+      flatMajMin = null;
+      
+      console.log('🧹 Cleared Key filter states');
+    }, 50);
   });
 }
 }
