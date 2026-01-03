@@ -2951,6 +2951,38 @@ setTimeout(() => {
   }
 }
 
+// START OF FILTER DOTS
+
+function updateFilterDots() {
+  document.querySelectorAll('[data-filter-type]').forEach(section => {
+    const filterType = section.getAttribute('data-filter-type');
+    const dot = section.querySelector('.filter-dot-active');
+    if (!dot) return;
+    
+    let isActive = false;
+    
+    // Check based on filter type
+    if (filterType === 'bpm') {
+      // Check if BPM has values
+      const lowInput = document.querySelector('.bpm-input-field-low');
+      const highInput = document.querySelector('.bpm-input-field-high');
+      const exactInput = document.querySelector('.bpm-input-field');
+      isActive = !!(lowInput?.value || highInput?.value || exactInput?.value);
+      
+    } else if (filterType === 'key') {
+      // Check if any key filter is checked
+      isActive = !!section.querySelector('[data-filter-group="Key"]:checked');
+      
+    } else {
+      // Check if any checkbox/radio in this section is checked
+      isActive = !!section.querySelector('[data-filter-group]:checked');
+    }
+    
+    // Show/hide dot
+    dot.style.display = isActive ? 'block' : 'none';
+  });
+}
+
 // START OF INIT BPM FILTER
 
 function initBPMFilter() {
@@ -3148,6 +3180,7 @@ function stopDrag() {
     saveBPMState();
     applyBPMFilter();
     updateBPMTag();
+    updateFilterDots();
     
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
@@ -3176,6 +3209,7 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
 });
   
   updateBPMTag();
+  updateFilterDots();
   
   // Update clear all button visibility
   const mainClearButton = document.querySelector('.circle-x');
@@ -3354,6 +3388,7 @@ function setupEventListeners() {
     saveBPMState();
     applyBPMFilter();
     updateBPMTag();
+    updateFilterDots();
   });
   
   lowInput?.addEventListener('blur', () => {
@@ -3361,6 +3396,7 @@ function setupEventListeners() {
     saveBPMState();
     applyBPMFilter();
     updateBPMTag();
+    updateFilterDots();
   });
   
   highInput?.addEventListener('blur', () => {
@@ -3368,6 +3404,7 @@ function setupEventListeners() {
     saveBPMState();
     applyBPMFilter();
     updateBPMTag();
+    updateFilterDots();
   });
   
   // Input fields - Enter key
@@ -3443,6 +3480,16 @@ console.log('✅ BPM Filter System initialized');
   
 // Expose restore function globally
 window.restoreBPMState = restoreBPMState;
+
+// Update filter dots when any filter changes
+document.addEventListener('change', function(e) {
+  if (e.target.matches('[data-filter-group]')) {
+    setTimeout(updateFilterDots, 50);
+  }
+});
+
+// Initial dot update
+setTimeout(updateFilterDots, 500);
 }
 
 // Call this function after your other filter initializations
@@ -4357,6 +4404,8 @@ if (filterState.keyState) {
 if (filterState.bpm && typeof restoreBPMState === 'function') {
   restoreBPMState();
 }
+
+    updateFilterDots();
     
     return true;
   } catch (error) {
