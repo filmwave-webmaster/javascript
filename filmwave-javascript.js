@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - VERSION 25
+ * FILMWAVE MUSIC PLATFORM - VERSION 26
  * Updated: January 1, 2026
  * 
  * NEW FEATURES IN THIS VERSION:
@@ -207,6 +207,7 @@ async function initMusicPage() {
       initDynamicTagging();
       initMutualExclusion();
       initKeyFilterSystem();
+      initBPMFilter();
       initSearchAndFilters();
       g.filtersInitialized = true;
     }
@@ -2754,6 +2755,405 @@ function reinitializeTabs() {
   
   console.log('✅ Tabs manually re-initialized');
 }
+
+/**
+ * ============================================================
+ * BPM FILTER SYSTEM
+ * Integrates with existing filter persistence and Finsweet CMS
+ * ============================================================
+ */
+
+function initBPMFilter() {
+  console.log('🎵 Initializing BPM Filter System');
+  
+  // Constants
+  const SLIDER_WIDTH = 225; // px
+  const MIN_BPM = 1;
+  const MAX_BPM = 300;
+  const BPM_RANGE = MAX_BPM - MIN_BPM;
+  
+  // Get all DOM elements
+  const exactToggle = document.querySelector('.bpm-toggle .exact');
+  const rangeToggle = document.querySelector('.bpm-toggle .range');
+  const exactInput = document.querySelector('.bpm-input-field');
+  const lowInput = document.querySelector('.bpm-input-field-low');
+  const highInput = document.querySelector('.bpm-input-field-high');
+  const sliderRangeWrapper = document.querySelector('.slider-range-wrapper');
+  const sliderExactWrapper = document.querySelector('.slider-exact-wrapper');
+  const sliderHandleLow = document.querySelector('.slider-handle-low');
+  const sliderHandleHigh = document.querySelector('.slider-handle-high');
+  const sliderHandleExact = document.querySelector('.slider-handle-exact');
+  const clearButton = document.querySelector('.bpm-clear');
+  
+  // Check if elements exist
+  if (!exactToggle || !rangeToggle) {
+    console.warn('⚠️ BPM toggle elements not found');
+    return;
+  }
+  
+  // State
+  let currentMode = 'range'; // 'exact' or 'range'
+  let isDragging = false;
+  let activeHandle = null;
+  
+  /**
+   * Convert pixel position to BPM value
+   */
+  function pixelToBPM(pixels) {
+    const ratio = Math.max(0, Math.min(1, pixels / SLIDER_WIDTH));
+    return Math.round(MIN_BPM + (ratio * BPM_RANGE));
+  }
+  
+  /**
+   * Convert BPM value to pixel position
+   */
+  function bpmToPixel(bpm) {
+    const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+    const ratio = (value - MIN_BPM) / BPM_RANGE;
+    return ratio * SLIDER_WIDTH;
+  }
+  
+  /**
+   * Update slider handle position
+   */
+  function updateHandlePosition(handle, bpm) {
+    if (!handle) return;
+    const pixels = bpmToPixel(bpm);
+    handle.style.left = `${pixels}px`;
+  }
+  
+  /**
+   * Toggle between Exact and Range modes
+   */
+  function setMode(mode) {
+    currentMode = mode;
+    
+    if (mode === 'exact') {
+      // Visual toggle
+      exactToggle.style.fontWeight = '600';
+      exactToggle.style.color = '#000000';
+      rangeToggle.style.fontWeight = '400';
+      rangeToggle.style.color = '#9e9e9e';
+      
+      // Show/hide appropriate sections
+      if (exactInput) exactInput.style.display = 'block';
+      if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
+      if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
+      if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
+      
+    } else { // range
+      // Visual toggle
+      rangeToggle.style.fontWeight = '600';
+      rangeToggle.style.color = '#000000';
+      exactToggle.style.fontWeight = '400';
+      exactToggle.style.color = '#9e9e9e';
+      
+      // Show/hide appropriate sections
+      if (exactInput) exactInput.style.display = 'none';
+      if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
+      if (sliderExactWrapper) sliderExactWrapper.style.display = 'none';
+      if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
+    }
+    
+    saveBPMState();
+  }
+  
+  /**
+   * Update input field from slider
+   */
+  function updateInputFromSlider(handle, input) {
+    if (!handle || !input) return;
+    const pixels = parseFloat(handle.style.left) || 0;
+    const bpm = pixelToBPM(pixels);
+    input.value = bpm;
+  }
+  
+  /**
+   * Update slider from input field
+   */
+  function updateSliderFromInput(input, handle) {
+    if (!input || !handle) return;
+    const bpm = parseInt(input.value) || MIN_BPM;
+    const clampedBPM = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+    input.value = clampedBPM;
+    updateHandlePosition(handle, clampedBPM);
+  }
+  
+  /**
+   * Handle slider dragging
+   */
+  function startDrag(e, handle) {
+    isDragging = true;
+    activeHandle = handle;
+    e.preventDefault();
+    
+    // Add global mouse listeners
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+  }
+  
+  function onDrag(e) {
+    if (!isDragging || !activeHandle) return;
+    
+    const sliderTrack = activeHandle.closest('.slider-range-wrapper, .slider-exact-wrapper')
+                                    ?.querySelector('.slider-track');
+    if (!sliderTrack) return;
+    
+    const rect = sliderTrack.getBoundingClientRect();
+    let newLeft = e.clientX - rect.left;
+    
+    // Clamp to slider bounds
+    newLeft = Math.max(0, Math.min(SLIDER_WIDTH, newLeft));
+    
+    // Prevent handles from crossing in range mode
+    if (currentMode === 'range') {
+      if (activeHandle === sliderHandleLow && sliderHandleHigh) {
+        const highPos = parseFloat(sliderHandleHigh.style.left) || SLIDER_WIDTH;
+        newLeft = Math.min(newLeft, highPos);
+      } else if (activeHandle === sliderHandleHigh && sliderHandleLow) {
+        const lowPos = parseFloat(sliderHandleLow.style.left) || 0;
+        newLeft = Math.max(newLeft, lowPos);
+      }
+    }
+    
+    activeHandle.style.left = `${newLeft}px`;
+    
+    // Update corresponding input
+    if (activeHandle === sliderHandleLow && lowInput) {
+      updateInputFromSlider(activeHandle, lowInput);
+    } else if (activeHandle === sliderHandleHigh && highInput) {
+      updateInputFromSlider(activeHandle, highInput);
+    } else if (activeHandle === sliderHandleExact && exactInput) {
+      updateInputFromSlider(activeHandle, exactInput);
+    }
+  }
+  
+  function stopDrag() {
+    if (isDragging) {
+      isDragging = false;
+      activeHandle = null;
+      saveBPMState();
+      applyBPMFilter();
+      
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    }
+  }
+  
+  /**
+   * Clear all BPM values
+   */
+  function clearBPM() {
+    // Reset inputs
+    if (exactInput) exactInput.value = '';
+    if (lowInput) lowInput.value = '';
+    if (highInput) highInput.value = '';
+    
+    // Reset slider positions
+    if (sliderHandleExact) sliderHandleExact.style.left = '0px';
+    if (sliderHandleLow) sliderHandleLow.style.left = '0px';
+    if (sliderHandleHigh) sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
+    
+    saveBPMState();
+    applyBPMFilter();
+  }
+  
+  /**
+   * Save BPM state to localStorage
+   */
+  function saveBPMState() {
+    const state = {
+      mode: currentMode,
+      exact: exactInput?.value || '',
+      low: lowInput?.value || '',
+      high: highInput?.value || ''
+    };
+    
+    // Get existing filters
+    const savedFilters = localStorage.getItem('musicFilters');
+    let filterState = { filters: [], searchQuery: '' };
+    
+    if (savedFilters) {
+      try {
+        filterState = JSON.parse(savedFilters);
+      } catch (e) {
+        console.error('Error parsing saved filters:', e);
+      }
+    }
+    
+    // Add or update BPM in filters
+    filterState.bpm = state;
+    
+    localStorage.setItem('musicFilters', JSON.stringify(filterState));
+    console.log('💾 BPM state saved:', state);
+  }
+  
+  /**
+   * Restore BPM state from localStorage
+   */
+  function restoreBPMState() {
+    const savedFilters = localStorage.getItem('musicFilters');
+    if (!savedFilters) return;
+    
+    try {
+      const filterState = JSON.parse(savedFilters);
+      if (!filterState.bpm) return;
+      
+      const bpmState = filterState.bpm;
+      
+      // Restore mode
+      setMode(bpmState.mode || 'range');
+      
+      // Restore values
+      if (bpmState.exact && exactInput && sliderHandleExact) {
+        exactInput.value = bpmState.exact;
+        updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact));
+      }
+      
+      if (bpmState.low && lowInput && sliderHandleLow) {
+        lowInput.value = bpmState.low;
+        updateHandlePosition(sliderHandleLow, parseInt(bpmState.low));
+      }
+      
+      if (bpmState.high && highInput && sliderHandleHigh) {
+        highInput.value = bpmState.high;
+        updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high));
+      }
+      
+      console.log('✅ BPM state restored:', bpmState);
+      applyBPMFilter();
+      
+    } catch (e) {
+      console.error('Error restoring BPM state:', e);
+    }
+  }
+  
+  /**
+   * Apply BPM filter to songs
+   * This integrates with your existing Finsweet filter system
+   */
+  function applyBPMFilter() {
+    // Get current BPM values
+    let minBPM = null;
+    let maxBPM = null;
+    
+    if (currentMode === 'exact') {
+      const exact = parseInt(exactInput?.value);
+      if (!isNaN(exact)) {
+        minBPM = exact;
+        maxBPM = exact;
+      }
+    } else {
+      const low = parseInt(lowInput?.value);
+      const high = parseInt(highInput?.value);
+      if (!isNaN(low)) minBPM = low;
+      if (!isNaN(high)) maxBPM = high;
+    }
+    
+    // If no BPM filter active, show all songs
+    if (minBPM === null && maxBPM === null) {
+      document.querySelectorAll('.song-wrapper').forEach(song => {
+        song.style.display = '';
+      });
+      return;
+    }
+    
+    // Apply filter to all songs
+    document.querySelectorAll('.song-wrapper').forEach(song => {
+      const bpmText = song.querySelector('.bpm')?.textContent || '';
+      const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+      
+      if (isNaN(songBPM)) {
+        song.style.display = 'none';
+        return;
+      }
+      
+      let shouldShow = true;
+      if (minBPM !== null && songBPM < minBPM) shouldShow = false;
+      if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+      
+      song.style.display = shouldShow ? '' : 'none';
+    });
+    
+    console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+  }
+  
+  /**
+   * Initialize event listeners
+   */
+  function setupEventListeners() {
+    // Toggle buttons
+    exactToggle?.addEventListener('click', () => setMode('exact'));
+    rangeToggle?.addEventListener('click', () => setMode('range'));
+    
+    // Clear button
+    clearButton?.addEventListener('click', clearBPM);
+    
+    // Slider handles - mousedown events
+    sliderHandleLow?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleLow));
+    sliderHandleHigh?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleHigh));
+    sliderHandleExact?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleExact));
+    
+    // Input fields - blur events (when user clicks out after typing)
+    exactInput?.addEventListener('blur', () => {
+      updateSliderFromInput(exactInput, sliderHandleExact);
+      saveBPMState();
+      applyBPMFilter();
+    });
+    
+    lowInput?.addEventListener('blur', () => {
+      updateSliderFromInput(lowInput, sliderHandleLow);
+      saveBPMState();
+      applyBPMFilter();
+    });
+    
+    highInput?.addEventListener('blur', () => {
+      updateSliderFromInput(highInput, sliderHandleHigh);
+      saveBPMState();
+      applyBPMFilter();
+    });
+    
+    // Input fields - Enter key
+    [exactInput, lowInput, highInput].forEach(input => {
+      input?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.target.blur(); // Trigger blur event
+        }
+      });
+    });
+    
+    // Only allow numbers in input fields
+    [exactInput, lowInput, highInput].forEach(input => {
+      input?.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    });
+  }
+  
+  /**
+   * Initialize slider handle positions
+   */
+  function initializeSliders() {
+    // Set default positions for range sliders
+    if (sliderHandleLow) sliderHandleLow.style.left = '0px';
+    if (sliderHandleHigh) sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
+    if (sliderHandleExact) sliderHandleExact.style.left = '0px';
+  }
+  
+  // Initialize
+  initializeSliders();
+  setupEventListeners();
+  setMode('range'); // Start in range mode
+  
+  // Restore saved state after a short delay to ensure DOM is ready
+  setTimeout(restoreBPMState, 100);
+  
+  console.log('✅ BPM Filter System initialized');
+}
+
+// Call this function after your other filter initializations
+// Add this line in your initMusicPage() function after initKeyFilterSystem();
+// initBPMFilter();
 
 /**
  * ============================================================
