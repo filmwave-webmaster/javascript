@@ -2557,6 +2557,7 @@ function initSearchAndFilters() {
 
   toggleClearButton();
   applyFilters();
+  updateFilterDots();
 }
   
  function applyFilters() {
