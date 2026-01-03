@@ -3187,8 +3187,6 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
     song.removeAttribute('data-hidden-by-bpm');
   }
 });
-// Don't set display = '' if shouldShow, let other filters control visibility
-    });
     
     console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
   }
