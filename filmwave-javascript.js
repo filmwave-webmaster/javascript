@@ -3257,9 +3257,6 @@ function initBPMFilter() {
   setupEventListeners();
   setMode('range'); // Start in range mode
   
-  // Restore saved state after a short delay to ensure DOM is ready
-  setTimeout(restoreBPMState, 100);
-  
   console.log('✅ BPM Filter System initialized');
 
   // Expose restore function globally
