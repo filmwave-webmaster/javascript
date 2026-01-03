@@ -2954,38 +2954,36 @@ function initBPMFilter() {
   /**
    * Toggle between Exact and Range modes
    */
-  function setMode(mode) {
-    currentMode = mode;
+  function setMode(mode, shouldSave = true) {
+  currentMode = mode;
+  
+  if (mode === 'exact') {
+    exactToggle.style.color = '#191919';
+    exactToggle.style.textDecoration = 'underline';
+    rangeToggle.style.color = '#9e9e9e';
+    rangeToggle.style.textDecoration = 'none';
     
-    if (mode === 'exact') {
-      // Visual toggle
-      exactToggle.style.color = '#191919';
-      exactToggle.style.textDecoration = 'underline';
-      rangeToggle.style.color = '#9e9e9e';
-      rangeToggle.style.textDecoration = 'none';
-      
-      // Show/hide appropriate sections
-      if (exactInput) exactInput.style.display = 'block';
-      if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
-      if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
-      if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
-      
-    } else { // range
-      // Visual toggle
-      rangeToggle.style.color = '#191919';
-      rangeToggle.style.textDecoration = 'underline';
-      exactToggle.style.color = '#9e9e9e';
-      exactToggle.style.textDecoration = 'none';
-      
-      // Show/hide appropriate sections
-      if (exactInput) exactInput.style.display = 'none';
-      if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
-      if (sliderExactWrapper) sliderExactWrapper.style.display = 'none';
-      if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
-    }
+    if (exactInput) exactInput.style.display = 'block';
+    if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
+    if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
+    if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
     
+  } else {
+    rangeToggle.style.color = '#191919';
+    rangeToggle.style.textDecoration = 'underline';
+    exactToggle.style.color = '#9e9e9e';
+    exactToggle.style.textDecoration = 'none';
+    
+    if (exactInput) exactInput.style.display = 'none';
+    if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
+    if (sliderExactWrapper) sliderExactWrapper.style.display = 'none';
+    if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
+  }
+  
+  if (shouldSave) {
     saveBPMState();
   }
+}
   
   /**
    * Update input field from slider
@@ -3255,7 +3253,7 @@ function initBPMFilter() {
   // Initialize
   initializeSliders();
   setupEventListeners();
-  setMode('range'); // Start in range mode
+  setMode('range', false); 
   
   console.log('✅ BPM Filter System initialized');
 
