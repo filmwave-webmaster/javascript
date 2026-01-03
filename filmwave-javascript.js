@@ -2819,7 +2819,10 @@ function initBPMFilter() {
   function updateHandlePosition(handle, bpm) {
     if (!handle) return;
     const pixels = bpmToPixel(bpm);
+    handle.style.position = 'absolute';
     handle.style.left = `${pixels}px`;
+    handle.style.top = '50%';
+    handle.style.transform = 'translate(-50%, -50%)';
   }
   
   /**
@@ -2830,10 +2833,10 @@ function initBPMFilter() {
     
     if (mode === 'exact') {
       // Visual toggle
-      exactToggle.style.fontWeight = '600';
-      exactToggle.style.color = '#000000';
-      rangeToggle.style.fontWeight = '400';
+      exactToggle.style.color = '#191919';
+      exactToggle.style.textDecoration = 'underline';
       rangeToggle.style.color = '#9e9e9e';
+      rangeToggle.style.textDecoration = 'none';
       
       // Show/hide appropriate sections
       if (exactInput) exactInput.style.display = 'block';
@@ -2843,10 +2846,10 @@ function initBPMFilter() {
       
     } else { // range
       // Visual toggle
-      rangeToggle.style.fontWeight = '600';
-      rangeToggle.style.color = '#000000';
-      exactToggle.style.fontWeight = '400';
+      rangeToggle.style.color = '#191919';
+      rangeToggle.style.textDecoration = 'underline';
       exactToggle.style.color = '#9e9e9e';
+      exactToggle.style.textDecoration = 'none';
       
       // Show/hide appropriate sections
       if (exactInput) exactInput.style.display = 'none';
@@ -2917,6 +2920,8 @@ function initBPMFilter() {
     }
     
     activeHandle.style.left = `${newLeft}px`;
+    activeHandle.style.top = '50%';
+    activeHandle.style.transform = 'translate(-50%, -50%)';
     
     // Update corresponding input
     if (activeHandle === sliderHandleLow && lowInput) {
@@ -3134,10 +3139,31 @@ function initBPMFilter() {
    * Initialize slider handle positions
    */
   function initializeSliders() {
+    // Ensure slider tracks have position relative
+    const sliderTracks = document.querySelectorAll('.slider-track');
+    sliderTracks.forEach(track => {
+      track.style.position = 'relative';
+    });
+    
     // Set default positions for range sliders
-    if (sliderHandleLow) sliderHandleLow.style.left = '0px';
-    if (sliderHandleHigh) sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
-    if (sliderHandleExact) sliderHandleExact.style.left = '0px';
+    if (sliderHandleLow) {
+      sliderHandleLow.style.position = 'absolute';
+      sliderHandleLow.style.left = '0px';
+      sliderHandleLow.style.top = '50%';
+      sliderHandleLow.style.transform = 'translate(-50%, -50%)';
+    }
+    if (sliderHandleHigh) {
+      sliderHandleHigh.style.position = 'absolute';
+      sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
+      sliderHandleHigh.style.top = '50%';
+      sliderHandleHigh.style.transform = 'translate(-50%, -50%)';
+    }
+    if (sliderHandleExact) {
+      sliderHandleExact.style.position = 'absolute';
+      sliderHandleExact.style.left = '0px';
+      sliderHandleExact.style.top = '50%';
+      sliderHandleExact.style.transform = 'translate(-50%, -50%)';
+    }
   }
   
   // Initialize
