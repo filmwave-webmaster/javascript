@@ -3144,11 +3144,8 @@ function initBPMFilter() {
     
     // If no BPM filter active, show all songs
     if (minBPM === null && maxBPM === null) {
-      document.querySelectorAll('.song-wrapper').forEach(song => {
-        song.style.display = '';
-      });
-      return;
-    }
+  return; // Don't touch display if no BPM filter active
+}
     
     // Apply filter to all songs
     document.querySelectorAll('.song-wrapper').forEach(song => {
