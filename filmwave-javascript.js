@@ -3156,27 +3156,37 @@ function initBPMFilter() {
     }
     
     // If no BPM filter active, show all songs
-    if (minBPM === null && maxBPM === null) {
-  return; // Don't touch display if no BPM filter active
+    // If no BPM filter, unhide songs that were hidden by BPM
+if (minBPM === null && maxBPM === null) {
+  document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(song => {
+    song.removeAttribute('data-hidden-by-bpm');
+    song.style.display = '';
+  });
+  return;
 }
-    
-    // Apply filter to all songs
-    document.querySelectorAll('.song-wrapper').forEach(song => {
-      const bpmText = song.querySelector('.bpm')?.textContent || '';
-      const songBPM = parseInt(bpmText.replace(/\D/g, ''));
-      
-      if (isNaN(songBPM)) {
-        song.style.display = 'none';
-        return;
-      }
-      
-      let shouldShow = true;
-      if (minBPM !== null && songBPM < minBPM) shouldShow = false;
-      if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
-      
-      if (!shouldShow) {
-  song.style.display = 'none';
-}
+
+// Apply filter to all songs
+document.querySelectorAll('.song-wrapper').forEach(song => {
+  const bpmText = song.querySelector('.bpm')?.textContent || '';
+  const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+  
+  if (isNaN(songBPM)) {
+    song.style.display = 'none';
+    song.setAttribute('data-hidden-by-bpm', 'true');
+    return;
+  }
+  
+  let shouldShow = true;
+  if (minBPM !== null && songBPM < minBPM) shouldShow = false;
+  if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+  
+  if (!shouldShow) {
+    song.style.display = 'none';
+    song.setAttribute('data-hidden-by-bpm', 'true');
+  } else {
+    song.removeAttribute('data-hidden-by-bpm');
+  }
+});
 // Don't set display = '' if shouldShow, let other filters control visibility
     });
     
