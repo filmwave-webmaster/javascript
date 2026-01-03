@@ -3109,14 +3109,11 @@ function clearBPM() {
   
   saveBPMState();
   
-  // Show all songs when cleared
-  document.querySelectorAll('.song-wrapper').forEach(song => {
-    const currentDisplay = song.style.display;
-    // Only unhide if it was hidden by BPM (not by other filters)
-    if (currentDisplay === 'none') {
-      song.style.display = '';
-    }
-  });
+  // Show only songs that were hidden by BPM
+document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(song => {
+  song.style.display = '';
+  song.removeAttribute('data-hidden-by-bpm');
+});
   
   updateBPMTag();
   
