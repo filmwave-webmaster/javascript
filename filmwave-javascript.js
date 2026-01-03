@@ -2763,6 +2763,48 @@ function reinitializeTabs() {
  * ============================================================
  */
 
+/**
+   * Restore BPM state from localStorage
+   */
+  function restoreBPMState() {
+    const savedFilters = localStorage.getItem('musicFilters');
+    if (!savedFilters) return;
+    
+    try {
+      const filterState = JSON.parse(savedFilters);
+      if (!filterState.bpm) return;
+      
+      const bpmState = filterState.bpm;
+      
+      // Restore mode
+      setMode(bpmState.mode || 'range');
+      
+      // Restore values
+      if (bpmState.exact && exactInput && sliderHandleExact) {
+        exactInput.value = bpmState.exact;
+        updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact));
+      }
+      
+      if (bpmState.low && lowInput && sliderHandleLow) {
+        lowInput.value = bpmState.low;
+        updateHandlePosition(sliderHandleLow, parseInt(bpmState.low));
+      }
+      
+      if (bpmState.high && highInput && sliderHandleHigh) {
+        highInput.value = bpmState.high;
+        updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high));
+      }
+      
+      console.log('✅ BPM state restored:', bpmState);
+      applyBPMFilter();
+      
+    } catch (e) {
+      console.error('Error restoring BPM state:', e);
+    }
+  }
+
+// START OF INIT BPM FILTER
+
 function initBPMFilter() {
   console.log('🎵 Initializing BPM Filter System');
   
@@ -2991,46 +3033,6 @@ function initBPMFilter() {
     
     localStorage.setItem('musicFilters', JSON.stringify(filterState));
     console.log('💾 BPM state saved:', state);
-  }
-  
-  /**
-   * Restore BPM state from localStorage
-   */
-  function restoreBPMState() {
-    const savedFilters = localStorage.getItem('musicFilters');
-    if (!savedFilters) return;
-    
-    try {
-      const filterState = JSON.parse(savedFilters);
-      if (!filterState.bpm) return;
-      
-      const bpmState = filterState.bpm;
-      
-      // Restore mode
-      setMode(bpmState.mode || 'range');
-      
-      // Restore values
-      if (bpmState.exact && exactInput && sliderHandleExact) {
-        exactInput.value = bpmState.exact;
-        updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact));
-      }
-      
-      if (bpmState.low && lowInput && sliderHandleLow) {
-        lowInput.value = bpmState.low;
-        updateHandlePosition(sliderHandleLow, parseInt(bpmState.low));
-      }
-      
-      if (bpmState.high && highInput && sliderHandleHigh) {
-        highInput.value = bpmState.high;
-        updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high));
-      }
-      
-      console.log('✅ BPM state restored:', bpmState);
-      applyBPMFilter();
-      
-    } catch (e) {
-      console.error('Error restoring BPM state:', e);
-    }
   }
   
   /**
@@ -4068,6 +4070,11 @@ if (filterState.keyState) {
   }
   console.log('✨ Songs faded in');
 }, 800); // Increased from 150 to 800 to wait for filtering
+
+// Restore BPM filter state
+if (filterState.bpm && typeof restoreBPMState === 'function') {
+  restoreBPMState();
+}
     
     return true;
   } catch (error) {
