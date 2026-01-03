@@ -2877,7 +2877,10 @@ function restoreBPMState() {
         if (minBPM !== null && songBPM < minBPM) shouldShow = false;
         if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
         
-        song.style.display = shouldShow ? '' : 'none';
+        if (!shouldShow) {
+  song.style.display = 'none';
+}
+// Don't set display = '' if shouldShow, let other filters control visibility
       });
       
       console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
@@ -3161,7 +3164,10 @@ function initBPMFilter() {
       if (minBPM !== null && songBPM < minBPM) shouldShow = false;
       if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
       
-      song.style.display = shouldShow ? '' : 'none';
+      if (!shouldShow) {
+  song.style.display = 'none';
+}
+// Don't set display = '' if shouldShow, let other filters control visibility
     });
     
     console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
