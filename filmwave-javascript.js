@@ -3071,6 +3071,7 @@ function initBPMFilter() {
       activeHandle = null;
       saveBPMState();
       applyBPMFilter();
+      updateBPMTag();
       
       document.removeEventListener('mousemove', onDrag);
       document.removeEventListener('mouseup', stopDrag);
@@ -3101,6 +3102,9 @@ function initBPMFilter() {
       song.style.display = '';
     }
   });
+
+   updateBPMTag();
+   
 }
   
   /**
@@ -3190,6 +3194,49 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
     
     console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
   }
+
+  function updateBPMTag() {
+  const tagsContainer = document.querySelector('.filter-tags-container');
+  if (!tagsContainer) return;
+  
+  // Remove existing BPM tag
+  const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
+  if (existingTag) existingTag.remove();
+  
+  // Get current values
+  let tagText = '';
+  if (currentMode === 'exact') {
+    const exact = exactInput?.value;
+    if (exact) tagText = `${exact} BPM`;
+  } else {
+    const low = lowInput?.value;
+    const high = highInput?.value;
+    if (low && high) tagText = `${low}-${high} BPM`;
+    else if (low) tagText = `${low}+ BPM`;
+    else if (high) tagText = `≤${high} BPM`;
+  }
+  
+  // Create tag if we have text
+  if (tagText) {
+    const tag = document.createElement('div');
+    tag.className = 'filter-tag';
+    tag.setAttribute('data-bpm-tag', 'true');
+    tag.innerHTML = `
+      <span class="filter-tag-text">${tagText}</span>
+      <span class="filter-tag-remove x-button-style">×</span>
+    `;
+    
+    tag.querySelector('.filter-tag-remove').addEventListener('click', clearBPM);
+    tagsContainer.appendChild(tag);
+  }
+  
+  // Update clear button visibility
+  const clearButton = document.querySelector('.circle-x');
+  if (clearButton) {
+    const hasAnyFilters = tagsContainer.querySelectorAll('.filter-tag').length > 0;
+    clearButton.style.display = hasAnyFilters ? 'flex' : 'none';
+  }
+}
   
   /**
    * Initialize event listeners
@@ -3212,18 +3259,21 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
       updateSliderFromInput(exactInput, sliderHandleExact);
       saveBPMState();
       applyBPMFilter();
+      updateBPMTag();
     });
     
     lowInput?.addEventListener('blur', () => {
       updateSliderFromInput(lowInput, sliderHandleLow);
       saveBPMState();
       applyBPMFilter();
+      updateBPMTag();
     });
     
     highInput?.addEventListener('blur', () => {
       updateSliderFromInput(highInput, sliderHandleHigh);
       saveBPMState();
       applyBPMFilter();
+      updateBPMTag();
     });
     
     // Input fields - Enter key
