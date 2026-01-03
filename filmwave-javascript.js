@@ -521,11 +521,8 @@ async function initMusicPage() {
       initDynamicTagging();
       initMutualExclusion();
       initKeyFilterSystem();
-
-      // ✅ FIX: initSearchAndFilters FIRST so window.applyFilters exists
       initSearchAndFilters();
       initBpmFilterSystem();
-
       g.filtersInitialized = true;
     }
     
@@ -2149,6 +2146,22 @@ function initKeyFilterSystem() {
   let currentSharpFlat = 'sharp'; // 'sharp' or 'flat'
   let sharpMajMin = null; // 'major', 'minor', or null
   let flatMajMin = null; // 'major', 'minor', or null
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   /**
    * Get currently selected generic key (using data-generic-key attribute)
@@ -2750,6 +2763,173 @@ function toggleClearButton() {
   clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
 }
 
+
+
+
+
+
+
+// INITIATE BPM FILTER SYSTEM
+
+function initBpmFilterSystem() {
+  const g = window.musicPlayerPersistent;
+  if (!g) return;
+
+  // Create state if missing
+  if (!g.bpmFilter) {
+    g.bpmFilter = { mode: 'range', exact: null, low: null, high: null };
+  }
+
+  // ---- selectors (edit these to match your DOM) ----
+  const bpmSection =
+    document.querySelector('[data-filter-type="bpm"]') ||
+    document.querySelector('.bpm') ||
+    document.querySelector('.bpm-filter') ||
+    document.querySelector('[data-bpm="true"]');
+
+  if (!bpmSection) {
+    console.warn('⚠️ BPM section not found');
+    return;
+  }
+
+  // Toggle buttons
+  const exactTab = bpmSection.querySelector('[data-bpm-tab="exact"], .bpm-tab-exact, .exact-tab, .exact');
+  const rangeTab = bpmSection.querySelector('[data-bpm-tab="range"], .bpm-tab-range, .range-tab, .range');
+
+  // Inputs (you must have these in your layout somewhere)
+  const exactInput = bpmSection.querySelector('input[data-bpm-input="exact"], input.bpm-exact');
+  const minInput = bpmSection.querySelector('input[data-bpm-input="min"], input.bpm-min');
+  const maxInput = bpmSection.querySelector('input[data-bpm-input="max"], input.bpm-max');
+
+  // Sliders (two range inputs OR a library slider)
+  const minSlider = bpmSection.querySelector('input[type="range"][data-bpm-slider="min"], input[type="range"].bpm-min-slider');
+  const maxSlider = bpmSection.querySelector('input[type="range"][data-bpm-slider="max"], input[type="range"].bpm-max-slider');
+
+  const clearBtn = bpmSection.querySelector('[data-bpm-clear], .bpm-clear, .clear');
+
+  // Helper: safe parse
+  const toNum = (v) => {
+    const n = parseFloat(String(v ?? '').trim());
+    return Number.isFinite(n) ? n : null;
+  };
+
+  function pushAndFilter() {
+    // If applyFilters is not global, nothing happens.
+    if (typeof window.applyFilters === 'function') window.applyFilters();
+    if (typeof window.toggleClearButton === 'function') window.toggleClearButton();
+  }
+
+  function setMode(mode) {
+    g.bpmFilter.mode = mode;
+
+    // Optional UI class toggles
+    if (exactTab) exactTab.classList.toggle('is-active', mode === 'exact');
+    if (rangeTab) rangeTab.classList.toggle('is-active', mode === 'range');
+
+    // Show/hide input groups if you have wrappers
+    const exactGroup = bpmSection.querySelector('[data-bpm-group="exact"], .bpm-exact-group');
+    const rangeGroup = bpmSection.querySelector('[data-bpm-group="range"], .bpm-range-group');
+    if (exactGroup) exactGroup.style.display = (mode === 'exact') ? 'flex' : 'none';
+    if (rangeGroup) rangeGroup.style.display = (mode === 'range') ? 'flex' : 'none';
+
+    pushAndFilter();
+  }
+
+  // ---- events: tabs ----
+  if (exactTab) exactTab.addEventListener('click', (e) => { e.preventDefault(); setMode('exact'); });
+  if (rangeTab) rangeTab.addEventListener('click', (e) => { e.preventDefault(); setMode('range'); });
+
+  // ---- events: exact ----
+  if (exactInput) {
+    exactInput.addEventListener('input', () => {
+      const val = toNum(exactInput.value);
+      g.bpmFilter.exact = val;
+      // Clear range when using exact
+      g.bpmFilter.low = null;
+      g.bpmFilter.high = null;
+      g.bpmFilter.mode = 'exact';
+      pushAndFilter();
+    });
+  }
+
+  // ---- events: range inputs ----
+  function syncRangeFromInputs() {
+    const low = toNum(minInput?.value);
+    const high = toNum(maxInput?.value);
+
+    g.bpmFilter.low = low;
+    g.bpmFilter.high = high;
+
+    // Clear exact when using range
+    g.bpmFilter.exact = null;
+    g.bpmFilter.mode = 'range';
+
+    // Sync sliders if present
+    if (minSlider && low !== null) minSlider.value = String(low);
+    if (maxSlider && high !== null) maxSlider.value = String(high);
+
+    pushAndFilter();
+  }
+
+  if (minInput) minInput.addEventListener('input', syncRangeFromInputs);
+  if (maxInput) maxInput.addEventListener('input', syncRangeFromInputs);
+
+  // ---- events: sliders ----
+  function onSliderChange() {
+    const low = toNum(minSlider?.value);
+    const high = toNum(maxSlider?.value);
+
+    // Keep ordering sane
+    let lo = low, hi = high;
+    if (lo !== null && hi !== null && lo > hi) {
+      // swap if crossed
+      const tmp = lo; lo = hi; hi = tmp;
+    }
+
+    g.bpmFilter.low = lo;
+    g.bpmFilter.high = hi;
+    g.bpmFilter.exact = null;
+    g.bpmFilter.mode = 'range';
+
+    // Sync text fields
+    if (minInput && lo !== null) minInput.value = String(lo);
+    if (maxInput && hi !== null) maxInput.value = String(hi);
+
+    pushAndFilter();
+  }
+
+  if (minSlider) minSlider.addEventListener('input', onSliderChange);
+  if (maxSlider) maxSlider.addEventListener('input', onSliderChange);
+
+  // ---- clear ----
+  if (clearBtn) {
+    clearBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      g.bpmFilter.exact = null;
+      g.bpmFilter.low = null;
+      g.bpmFilter.high = null;
+
+      if (exactInput) exactInput.value = '';
+      if (minInput) minInput.value = '';
+      if (maxInput) maxInput.value = '';
+      if (minSlider) minSlider.value = '1';
+      if (maxSlider) maxSlider.value = '300';
+
+      pushAndFilter();
+    });
+  }
+
+  console.log('✅ BPM Filter System initialized', g.bpmFilter);
+}
+
+// END OF INITITATE BPM FILTER SYSTEM
+
+
+
+
+
+
+
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
@@ -2832,6 +3012,8 @@ function initSearchAndFilters() {
         });
       }
     });
+
+    
     
     const visibleIds = g.MASTER_DATA.filter(record => {
       const fields = record.fields;
@@ -2897,6 +3079,12 @@ function initSearchAndFilters() {
     
     toggleClearButton();
   }
+
+
+  // ✅ expose applyFilters + toggleClearButton globally (for BPM, Key, Clear All)
+window.applyFilters = applyFilters;
+window.toggleClearButton = toggleClearButton;
+
   
   if (clearBtn) {
     // Start hidden — will only show after restoration (if needed)
@@ -2924,6 +3112,16 @@ function initSearchAndFilters() {
     });
   });
 }
+
+
+
+
+
+
+
+
+
+
 
 /**
  * ============================================================
@@ -3570,14 +3768,22 @@ function initFavoriteSync() {
 window.addEventListener('load', function() {
   setTimeout(() => {
     console.log('🚀 Initializing favorite sync system');
-    initFavoriteSync();
+    if (typeof initFavoriteSync === 'function') initFavoriteSync();
   }, 2000);
 });
 
 if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', function() {
     console.log('🔄 Re-initializing favorite sync after Barba transition');
-    setTimeout(initFavoriteSync, 1000);
+    setTimeout(() => {
+      if (typeof initFavoriteSync === 'function') initFavoriteSync();
+    }, 1000);
+  });
+
+  window.addEventListener('barbaAfterTransition', () => {
+    setTimeout(() => {
+      if (typeof initBpmFilterSystem === 'function') initBpmFilterSystem();
+    }, 200);
   });
 }
 
