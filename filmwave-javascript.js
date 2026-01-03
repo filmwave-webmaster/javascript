@@ -3248,7 +3248,13 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
     
     // Clear button
     clearButton?.addEventListener('click', clearBPM);
-    
+
+    // Clear all button (circle-x) also clears BPM
+    const mainClearButton = document.querySelector('.circle-x');
+    if (mainClearButton) {
+    mainClearButton.addEventListener('click', clearBPM);
+    }
+      
     // Slider handles - mousedown events
     sliderHandleLow?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleLow));
     sliderHandleHigh?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleHigh));
