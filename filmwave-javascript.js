@@ -2879,18 +2879,15 @@ setTimeout(() => {
       if (minBPM !== null && songBPM < minBPM) shouldShow = false;
       if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
       
-      if (!shouldShow) {
-  // Only mark as hidden by BPM if it wasn't already hidden
-  if (song.style.display !== 'none') {
-    song.setAttribute('data-hidden-by-bpm', 'true');
-  }
+     if (!shouldShow) {
   song.style.display = 'none';
+  song.setAttribute('data-hidden-by-bpm', 'true');
 } else {
-  // Only unhide if it was specifically hidden by BPM
-  if (song.getAttribute('data-hidden-by-bpm') === 'true') {
+  // Only unhide if currently hidden AND was hidden by BPM
+  if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
     song.style.display = '';
-    song.removeAttribute('data-hidden-by-bpm');
   }
+  song.removeAttribute('data-hidden-by-bpm');
 }
     });
     
@@ -3262,17 +3259,14 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
   if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
   
   if (!shouldShow) {
-  // Only mark as hidden by BPM if it wasn't already hidden
-  if (song.style.display !== 'none') {
-    song.setAttribute('data-hidden-by-bpm', 'true');
-  }
   song.style.display = 'none';
+  song.setAttribute('data-hidden-by-bpm', 'true');
 } else {
-  // Only unhide if it was specifically hidden by BPM
-  if (song.getAttribute('data-hidden-by-bpm') === 'true') {
+  // Only unhide if currently hidden AND was hidden by BPM
+  if (song.style.display === 'none' && song.getAttribute('data-hidden-by-bpm') === 'true') {
     song.style.display = '';
-    song.removeAttribute('data-hidden-by-bpm');
   }
+  song.removeAttribute('data-hidden-by-bpm');
 }
 });
     
