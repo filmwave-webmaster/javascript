@@ -3206,11 +3206,15 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
   if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
   
   if (!shouldShow) {
-    song.style.display = 'none';
-    song.setAttribute('data-hidden-by-bpm', 'true');
-  } else {
+  song.style.display = 'none';
+  song.setAttribute('data-hidden-by-bpm', 'true');
+} else {
+  // Unhide if it was hidden by BPM
+  if (song.getAttribute('data-hidden-by-bpm') === 'true') {
+    song.style.display = '';
     song.removeAttribute('data-hidden-by-bpm');
   }
+}
 });
     
     console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
