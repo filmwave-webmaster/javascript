@@ -3126,11 +3126,16 @@ function initBPMFilter() {
     }
   }
   
-  function stopDrag() {
+function stopDrag() {
   if (isDragging) {
     isDragging = false;
     const lastHandle = activeHandle; // Save before nulling
     activeHandle = null;
+    
+    // Clear all BPM marks before re-applying filter
+    document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
+      song.removeAttribute('data-hidden-by-bpm');
+    });
     
     // Update input from slider and clear if at extremes
     if (lastHandle === sliderHandleLow && lowInput) {
