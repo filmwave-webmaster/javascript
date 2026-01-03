@@ -3416,9 +3416,16 @@ setMode('range', false); // Start in range mode
 // Re-apply BPM filter whenever any other filter changes
 document.addEventListener('change', function(e) {
   if (e.target.matches('[data-filter-group]')) {
-    applyBPMFilter();
-    // Re-add BPM tag after other filters rebuild tags
-    setTimeout(updateBPMTag, 100);
+    // Clear BPM marks first - other filters will hide their songs
+    document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
+      song.removeAttribute('data-hidden-by-bpm');
+    });
+    
+    // Wait for other filters to finish, then re-apply BPM
+    setTimeout(() => {
+      applyBPMFilter();
+      setTimeout(updateBPMTag, 100);
+    }, 0);
   }
 });
   
