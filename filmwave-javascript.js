@@ -2410,6 +2410,31 @@ allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 
 console.log('✅ Key Filter System initialized');
 window.keyFilterSystemReady = true;
+// Clear button handling for Key filter
+const clearButton = document.querySelector('.circle-x, [class*="clear"]');
+if (clearButton) {
+  clearButton.addEventListener('click', () => {
+    // Uncheck all Key radios
+    const allKeyRadios = document.querySelectorAll('[data-filter-group="Key"]');
+    allKeyRadios.forEach(radio => {
+      radio.checked = false;
+    });
+    
+    // Remove all active states from Key wrappers
+    const keyAccordion = document.querySelector('[data-filter-type="key"]');
+    if (keyAccordion) {
+      keyAccordion.querySelectorAll('.is-active').forEach(el => {
+        el.classList.remove('is-active');
+      });
+    }
+    
+    // Reset state variables
+    sharpMajMin = null;
+    flatMajMin = null;
+    
+    console.log('🧹 Cleared Key filter states');
+  });
+}
 }
   
 function toggleClearButton() {
@@ -3528,7 +3553,7 @@ if (filterState.keyState) {
           }
         }
       }
-    }, 600);
+    }, 200);
   }, 500);
 }
     
