@@ -2410,34 +2410,33 @@ allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 
 console.log('✅ Key Filter System initialized');
 window.keyFilterSystemReady = true;
-// Clear button handling for Key filter
-const clearButton = document.querySelector('.circle-x, [class*="clear"]');
-if (clearButton) {
-  clearButton.addEventListener('click', () => {
-    // Use setTimeout to run AFTER Webflow/Finsweet clear
+// Clear button handling for Key filter - attach to document to catch all clears
+document.addEventListener('click', (e) => {
+  if (e.target.matches('.circle-x, .circle-x *')) {
+    console.log('🧹 Clear button clicked, cleaning Key filters...');
     setTimeout(() => {
       // Uncheck all Key radios
       const allKeyRadios = document.querySelectorAll('[data-filter-group="Key"]');
+      console.log('Found Key radios to clear:', allKeyRadios.length);
       allKeyRadios.forEach(radio => {
         radio.checked = false;
       });
       
-      // Remove ALL active states from entire document
-      document.querySelectorAll('.is-active').forEach(el => {
-        // Only remove from Key-related elements
-        if (el.closest('[data-filter-type="key"]')) {
-          el.classList.remove('is-active');
-        }
+      // Remove ALL active states from Key section
+      const activeInKey = document.querySelectorAll('[data-filter-type="key"] .is-active');
+      console.log('Found active wrappers to clear:', activeInKey.length);
+      activeInKey.forEach(el => {
+        el.classList.remove('is-active');
       });
       
       // Reset state variables
       sharpMajMin = null;
       flatMajMin = null;
       
-      console.log('🧹 Cleared Key filter states');
-    }, 50);
-  });
-}
+      console.log('✅ Cleared Key filter states');
+    }, 100);
+  }
+});
 }
   
 function toggleClearButton() {
