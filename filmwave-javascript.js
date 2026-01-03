@@ -3257,14 +3257,21 @@ function initBPMFilter() {
   }
   
   // Initialize
-  initializeSliders();
-  setupEventListeners();
-  setMode('range', false); 
-  
-  console.log('✅ BPM Filter System initialized');
+initializeSliders();
+setupEventListeners();
+setMode('range', false); // Start in range mode
 
-  // Expose restore function globally
-  window.restoreBPMState = restoreBPMState;
+// Re-apply BPM filter whenever any other filter changes
+document.addEventListener('change', function(e) {
+  if (e.target.matches('[data-filter-group]')) {
+    setTimeout(applyBPMFilter, 50); // Run after other filters
+  }
+});
+  
+console.log('✅ BPM Filter System initialized');
+  
+// Expose restore function globally
+window.restoreBPMState = restoreBPMState;
 }
 
 // Call this function after your other filter initializations
