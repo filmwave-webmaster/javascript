@@ -3002,12 +3002,17 @@ function initBPMFilter() {
    * Update slider from input field
    */
   function updateSliderFromInput(input, handle) {
-    if (!input || !handle) return;
-    const bpm = parseInt(input.value) || MIN_BPM;
-    const clampedBPM = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
-    input.value = clampedBPM;
-    updateHandlePosition(handle, clampedBPM);
+  if (!input || !handle) return;
+  if (input.value === '') {
+    handle.style.left = '0px';
+    return;
   }
+  const bpm = parseInt(input.value);
+  if (isNaN(bpm)) return;
+  const clampedBPM = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+  input.value = clampedBPM;
+  updateHandlePosition(handle, clampedBPM);
+}
   
   /**
    * Handle slider dragging
@@ -3075,20 +3080,28 @@ function initBPMFilter() {
   /**
    * Clear all BPM values
    */
-  function clearBPM() {
-    // Reset inputs
-    if (exactInput) exactInput.value = '';
-    if (lowInput) lowInput.value = '';
-    if (highInput) highInput.value = '';
-    
-    // Reset slider positions
-    if (sliderHandleExact) sliderHandleExact.style.left = '0px';
-    if (sliderHandleLow) sliderHandleLow.style.left = '0px';
-    if (sliderHandleHigh) sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
-    
-    saveBPMState();
-    applyBPMFilter();
-  }
+ function clearBPM() {
+  // Reset inputs
+  if (exactInput) exactInput.value = '';
+  if (lowInput) lowInput.value = '';
+  if (highInput) highInput.value = '';
+  
+  // Reset slider positions
+  if (sliderHandleExact) sliderHandleExact.style.left = '0px';
+  if (sliderHandleLow) sliderHandleLow.style.left = '0px';
+  if (sliderHandleHigh) sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
+  
+  saveBPMState();
+  
+  // Show all songs when cleared
+  document.querySelectorAll('.song-wrapper').forEach(song => {
+    const currentDisplay = song.style.display;
+    // Only unhide if it was hidden by BPM (not by other filters)
+    if (currentDisplay === 'none') {
+      song.style.display = '';
+    }
+  });
+}
   
   /**
    * Save BPM state to localStorage
