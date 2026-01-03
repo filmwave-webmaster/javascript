@@ -3415,7 +3415,9 @@ setMode('range', false); // Start in range mode
 // Re-apply BPM filter whenever any other filter changes
 document.addEventListener('change', function(e) {
   if (e.target.matches('[data-filter-group]')) {
-    applyBPMFilter(); // Run immediately
+    applyBPMFilter();
+    // Re-add BPM tag after other filters rebuild tags
+    setTimeout(updateBPMTag, 100);
   }
 });
   
