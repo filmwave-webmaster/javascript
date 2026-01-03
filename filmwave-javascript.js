@@ -2846,50 +2846,105 @@ function restoreBPMState() {
     
     console.log('✅ BPM state restored:', bpmState);
     
-    // Apply filter
-    let minBPM = null;
-    let maxBPM = null;
-    
-    if (mode === 'exact') {
-      const exact = parseInt(exactInput?.value);
-      if (!isNaN(exact)) {
-        minBPM = exact;
-        maxBPM = exact;
+// Apply filter after a short delay to ensure songs are loaded
+setTimeout(() => {
+  let minBPM = null;
+  let maxBPM = null;
+  
+  if (mode === 'exact') {
+    const exact = parseInt(exactInput?.value);
+    if (!isNaN(exact)) {
+      minBPM = exact;
+      maxBPM = exact;
+    }
+  } else {
+    const low = parseInt(lowInput?.value);
+    const high = parseInt(highInput?.value);
+    if (!isNaN(low)) minBPM = low;
+    if (!isNaN(high)) maxBPM = high;
+  }
+  
+  if (minBPM !== null || maxBPM !== null) {
+    document.querySelectorAll('.song-wrapper').forEach(song => {
+      const bpmText = song.querySelector('.bpm')?.textContent || '';
+      const songBPM = parseInt(bpmText.replace(/\D/g, ''));
+      
+      if (isNaN(songBPM)) {
+        song.style.display = 'none';
+        song.setAttribute('data-hidden-by-bpm', 'true');
+        return;
       }
+      
+      let shouldShow = true;
+      if (minBPM !== null && songBPM < minBPM) shouldShow = false;
+      if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
+      
+      if (!shouldShow) {
+        song.style.display = 'none';
+        song.setAttribute('data-hidden-by-bpm', 'true');
+      } else {
+        if (song.getAttribute('data-hidden-by-bpm') === 'true') {
+          song.style.display = '';
+          song.removeAttribute('data-hidden-by-bpm');
+        }
+      }
+    });
+    
+    console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+  }
+  
+  // Update tag - need to access the function from initBPMFilter scope
+  const tagsContainer = document.querySelector('.filter-tags-container');
+  if (tagsContainer) {
+    // Remove existing BPM tag
+    const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
+    if (existingTag) existingTag.remove();
+    
+    // Get current values
+    let tagText = '';
+    if (mode === 'exact') {
+      const exact = exactInput?.value;
+      if (exact) tagText = `${exact} BPM`;
     } else {
-      const low = parseInt(lowInput?.value);
-      const high = parseInt(highInput?.value);
-      if (!isNaN(low)) minBPM = low;
-      if (!isNaN(high)) maxBPM = high;
+      const low = lowInput?.value;
+      const high = highInput?.value;
+      if (low && high) tagText = `${low}-${high} BPM`;
+      else if (low) tagText = `${low}+ BPM`;
+      else if (high) tagText = `≤${high} BPM`;
     }
     
-    if (minBPM !== null || maxBPM !== null) {
-      document.querySelectorAll('.song-wrapper').forEach(song => {
-        const bpmText = song.querySelector('.bpm')?.textContent || '';
-        const songBPM = parseInt(bpmText.replace(/\D/g, ''));
-        
-        if (isNaN(songBPM)) {
-          song.style.display = 'none';
-          return;
-        }
-        
-        let shouldShow = true;
-        if (minBPM !== null && songBPM < minBPM) shouldShow = false;
-        if (maxBPM !== null && songBPM > maxBPM) shouldShow = false;
-        
-        if (!shouldShow) {
-  song.style.display = 'none';
-}
-// Don't set display = '' if shouldShow, let other filters control visibility
+    // Create tag if we have text
+    if (tagText) {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      tag.setAttribute('data-bpm-tag', 'true');
+      tag.innerHTML = `
+        <span class="filter-tag-text">${tagText}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
+      
+      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+        const clearBtn = document.querySelector('.bpm-clear');
+        if (clearBtn) clearBtn.click();
       });
       
-      console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+      tagsContainer.appendChild(tag);
     }
+    
+    // Update clear button visibility
+    const clearButton = document.querySelector('.circle-x');
+    if (clearButton) {
+      const hasAnyFilters = tagsContainer.querySelectorAll('.filter-tag').length > 0;
+      clearButton.style.display = hasAnyFilters ? 'flex' : 'none';
+    }
+  }
+}, 200);
     
   } catch (e) {
     console.error('Error restoring BPM state:', e);
   }
 }
+
 // START OF INIT BPM FILTER
 
 function initBPMFilter() {
