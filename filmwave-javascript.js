@@ -171,6 +171,320 @@ function updateMasterPlayerVisibility() {
   }
 }
 
+
+
+
+
+
+
+
+
+
+/**
+ * ============================================================
+ * BPM FILTER SYSTEM (Exact + Range UI, sliders + inputs)
+ * ============================================================
+ */
+
+function initBpmFilterSystem() {
+  const g = window.musicPlayerPersistent;
+
+  // Scope the BPM section so duplicate class names elsewhere don't collide
+  const bpmSection =
+    document.querySelector('[data-filter-type="bpm"]') ||
+    document.querySelector('.bpm');
+
+  if (!bpmSection) {
+    console.log('⚠️ BPM section not found - skipping BPM filter init');
+    return;
+  }
+
+  // Elements (toggles)
+  const exactToggle = bpmSection.querySelector('.exact');
+  const rangeToggle = bpmSection.querySelector('.range');
+
+  // Inputs
+  const exactInput = bpmSection.querySelector('input.bpm-input-field, .bpm-input-field input');
+  const lowInput = bpmSection.querySelector('input.bpm-input-field-low, .bpm-input-field-low input');
+  const highInput = bpmSection.querySelector('input.bpm-input-field-high, .bpm-input-field-high input');
+
+  // Wrappers that swap visibility
+  const exactFieldWrapper = bpmSection.querySelector('.bpm-field-wrapper'); // contains .bpm-input-field
+  const rangeFieldWrapper = bpmSection.querySelector('.bpm-range-field-wrapper');
+
+  const rangeSliderWrapper = bpmSection.querySelector('.slider-range-wrapper');
+  const exactSliderWrapper = bpmSection.querySelector('.slider-exact-wrapper');
+
+  // Slider parts (RANGE)
+  const rangeTrack = rangeSliderWrapper ? rangeSliderWrapper.querySelector('.slider-track') : null;
+  const rangeHandleLow = rangeSliderWrapper ? rangeSliderWrapper.querySelector('.slider-handle-low') : null;
+  const rangeHandleHigh = rangeSliderWrapper ? rangeSliderWrapper.querySelector('.slider-handle-high') : null;
+
+  // Slider parts (EXACT)
+  const exactTrack = exactSliderWrapper ? exactSliderWrapper.querySelector('.slider-track') : null;
+  const exactHandle = exactSliderWrapper ? exactSliderWrapper.querySelector('.slider-handle-exact') : null;
+
+  // Clear
+  const clearBtn = bpmSection.querySelector('.bpm-clear');
+
+  // Guard
+  if (!rangeTrack || !rangeHandleLow || !rangeHandleHigh || !exactTrack || !exactHandle) {
+    console.warn('⚠️ Missing BPM slider elements. Check class names / structure.');
+    return;
+  }
+
+  // ---------- State (single source of truth) ----------
+  if (!g.bpmFilter) {
+    g.bpmFilter = {
+      mode: 'range', // 'range' or 'exact'
+      exact: null,   // number | null
+      low: null,     // number | null
+      high: null     // number | null
+    };
+  }
+
+  const BPM_MIN = 1;
+  const BPM_MAX = 300;
+
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const isNum = (v) => typeof v === 'number' && isFinite(v);
+
+  function getTrackWidth(trackEl) {
+    // Use actual DOM width (don’t hardcode 225 — safer if responsive)
+    return trackEl.getBoundingClientRect().width || 225;
+  }
+
+  function bpmToX(bpm, trackEl) {
+    const width = getTrackWidth(trackEl);
+    const pct = (clamp(bpm, BPM_MIN, BPM_MAX) - BPM_MIN) / (BPM_MAX - BPM_MIN);
+    return pct * width;
+  }
+
+  function xToBpm(x, trackEl) {
+    const width = getTrackWidth(trackEl);
+    const pct = width > 0 ? clamp(x, 0, width) / width : 0;
+    const bpm = BPM_MIN + pct * (BPM_MAX - BPM_MIN);
+    return Math.round(bpm);
+  }
+
+  function setHandleX(handleEl, x) {
+    handleEl.style.left = `${x}px`;
+  }
+
+  function pointerX(e, trackEl) {
+    const rect = trackEl.getBoundingClientRect();
+    const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+    return clientX - rect.left;
+  }
+
+  // ---------- UI mode switching ----------
+  function setMode(mode) {
+    g.bpmFilter.mode = mode;
+
+    // Visual toggle state (simple "active" underline; customize as you like)
+    if (exactToggle) exactToggle.style.textDecoration = mode === 'exact' ? 'underline' : '';
+    if (rangeToggle) rangeToggle.style.textDecoration = mode === 'range' ? 'underline' : '';
+
+    // Swap input wrappers
+    if (exactFieldWrapper) exactFieldWrapper.style.display = mode === 'exact' ? 'block' : 'none';
+    if (rangeFieldWrapper) rangeFieldWrapper.style.display = mode === 'range' ? 'flex' : 'none';
+
+    // Swap slider wrappers
+    if (exactSliderWrapper) exactSliderWrapper.style.display = mode === 'exact' ? 'block' : 'none';
+    if (rangeSliderWrapper) rangeSliderWrapper.style.display = mode === 'range' ? 'block' : 'none';
+
+    syncUIFromState();
+
+    // ✅ SAFE global applyFilters call
+    if (typeof window.applyFilters === 'function') window.applyFilters();
+  }
+
+  // ---------- Sync UI from state ----------
+  function syncUIFromState() {
+    // EXACT
+    if (exactInput) exactInput.value = isNum(g.bpmFilter.exact) ? String(g.bpmFilter.exact) : '';
+    const exactVal = isNum(g.bpmFilter.exact) ? g.bpmFilter.exact : BPM_MIN;
+    setHandleX(exactHandle, bpmToX(exactVal, exactTrack));
+
+    // RANGE
+    if (lowInput) lowInput.value = isNum(g.bpmFilter.low) ? String(g.bpmFilter.low) : '';
+    if (highInput) highInput.value = isNum(g.bpmFilter.high) ? String(g.bpmFilter.high) : '';
+
+    const lowVal = isNum(g.bpmFilter.low) ? g.bpmFilter.low : BPM_MIN;
+    const highVal = isNum(g.bpmFilter.high) ? g.bpmFilter.high : BPM_MAX;
+
+    // Ensure ordering when drawing
+    const lo = Math.min(lowVal, highVal);
+    const hi = Math.max(lowVal, highVal);
+
+    setHandleX(rangeHandleLow, bpmToX(lo, rangeTrack));
+    setHandleX(rangeHandleHigh, bpmToX(hi, rangeTrack));
+  }
+
+  // ---------- Update state + apply ----------
+  function setExactValue(bpm) {
+    g.bpmFilter.exact = isNum(bpm) ? clamp(bpm, BPM_MIN, BPM_MAX) : null;
+    syncUIFromState();
+
+    // ✅ SAFE global applyFilters call
+    if (typeof window.applyFilters === 'function') window.applyFilters();
+  }
+
+  function setRangeValues(low, high) {
+    g.bpmFilter.low = isNum(low) ? clamp(low, BPM_MIN, BPM_MAX) : null;
+    g.bpmFilter.high = isNum(high) ? clamp(high, BPM_MIN, BPM_MAX) : null;
+
+    // If both exist, enforce order in state
+    if (isNum(g.bpmFilter.low) && isNum(g.bpmFilter.high)) {
+      const lo = Math.min(g.bpmFilter.low, g.bpmFilter.high);
+      const hi = Math.max(g.bpmFilter.low, g.bpmFilter.high);
+      g.bpmFilter.low = lo;
+      g.bpmFilter.high = hi;
+    }
+
+    syncUIFromState();
+
+    // ✅ SAFE global applyFilters call
+    if (typeof window.applyFilters === 'function') window.applyFilters();
+  }
+
+  // ---------- Slider dragging ----------
+  function makeDraggable(handleEl, trackEl, onMoveBpm) {
+    let dragging = false;
+
+    const move = (e) => {
+      if (!dragging) return;
+      const x = pointerX(e, trackEl);
+      const bpm = xToBpm(x, trackEl);
+      onMoveBpm(bpm, x);
+      e.preventDefault();
+    };
+
+    const up = () => {
+      if (!dragging) return;
+      dragging = false;
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      document.removeEventListener('touchmove', move, { passive: false });
+      document.removeEventListener('touchend', up);
+    };
+
+    const down = (e) => {
+      dragging = true;
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+      document.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('touchend', up);
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    handleEl.addEventListener('mousedown', down);
+    handleEl.addEventListener('touchstart', down, { passive: false });
+  }
+
+  // RANGE drag behaviors
+  makeDraggable(rangeHandleLow, rangeTrack, (bpm) => {
+    const currentHigh = isNum(g.bpmFilter.high) ? g.bpmFilter.high : BPM_MAX;
+    setRangeValues(Math.min(bpm, currentHigh), currentHigh);
+  });
+
+  makeDraggable(rangeHandleHigh, rangeTrack, (bpm) => {
+    const currentLow = isNum(g.bpmFilter.low) ? g.bpmFilter.low : BPM_MIN;
+    setRangeValues(currentLow, Math.max(bpm, currentLow));
+  });
+
+  // EXACT drag behavior
+  makeDraggable(exactHandle, exactTrack, (bpm) => {
+    setExactValue(bpm);
+  });
+
+  // Track click = move nearest handle (range) / move handle (exact)
+  rangeTrack.addEventListener('click', (e) => {
+    const bpm = xToBpm(pointerX(e, rangeTrack), rangeTrack);
+
+    const lo = isNum(g.bpmFilter.low) ? g.bpmFilter.low : BPM_MIN;
+    const hi = isNum(g.bpmFilter.high) ? g.bpmFilter.high : BPM_MAX;
+
+    // Move whichever handle is closer
+    if (Math.abs(bpm - lo) <= Math.abs(bpm - hi)) {
+      setRangeValues(Math.min(bpm, hi), hi);
+    } else {
+      setRangeValues(lo, Math.max(bpm, lo));
+    }
+  });
+
+  exactTrack.addEventListener('click', (e) => {
+    const bpm = xToBpm(pointerX(e, exactTrack), exactTrack);
+    setExactValue(bpm);
+  });
+
+  // ---------- Input typing behaviors (on blur to avoid fighting) ----------
+  function parseInput(el) {
+    if (!el) return null;
+    const v = String(el.value || '').trim();
+    if (!v) return null;
+    const n = parseInt(v, 10);
+    return isFinite(n) ? n : null;
+  }
+
+  if (exactInput) {
+    exactInput.addEventListener('blur', () => {
+      const n = parseInput(exactInput);
+      setExactValue(isNum(n) ? n : null);
+    });
+  }
+
+  if (lowInput) {
+    lowInput.addEventListener('blur', () => {
+      const low = parseInput(lowInput);
+      const high = isNum(g.bpmFilter.high) ? g.bpmFilter.high : null;
+      setRangeValues(isNum(low) ? low : null, high);
+    });
+  }
+
+  if (highInput) {
+    highInput.addEventListener('blur', () => {
+      const high = parseInput(highInput);
+      const low = isNum(g.bpmFilter.low) ? g.bpmFilter.low : null;
+      setRangeValues(low, isNum(high) ? high : null);
+    });
+  }
+
+  // ---------- Toggles ----------
+  if (exactToggle) exactToggle.addEventListener('click', () => setMode('exact'));
+  if (rangeToggle) rangeToggle.addEventListener('click', () => setMode('range'));
+
+  // ---------- Clear ----------
+  function clearBpm() {
+    g.bpmFilter.exact = null;
+    g.bpmFilter.low = null;
+    g.bpmFilter.high = null;
+    syncUIFromState();
+
+    // ✅ SAFE global applyFilters call
+    if (typeof window.applyFilters === 'function') window.applyFilters();
+  }
+
+  if (clearBtn) clearBtn.addEventListener('click', clearBpm);
+
+  // ---------- Initial paint ----------
+  // Default mode to 'range' visually (does NOT force values)
+  setMode(g.bpmFilter.mode || 'range');
+
+  console.log('✅ BPM Filter System initialized');
+}
+
+
+
+
+
+
+
+
+
+
+
 /**
  * ============================================================
  * MAIN INITIALIZATION
@@ -207,7 +521,11 @@ async function initMusicPage() {
       initDynamicTagging();
       initMutualExclusion();
       initKeyFilterSystem();
+
+      // ✅ FIX: initSearchAndFilters FIRST so window.applyFilters exists
       initSearchAndFilters();
+      initBpmFilterSystem();
+
       g.filtersInitialized = true;
     }
     
@@ -243,40 +561,40 @@ async function initMusicPage() {
  */
 function navigateStandaloneTrack(direction) {
   console.log('🚨 NAVIGATION FUNCTION CALLED - Direction:', direction);
-  
+
   const g = window.musicPlayerPersistent;
-  
+
   console.log('🚨 CHECKING CONDITIONS:');
   console.log('   - g.currentSongData exists:', !!g.currentSongData);
   console.log('   - g.MASTER_DATA.length:', g.MASTER_DATA.length);
-  
+
   if (!g.currentSongData || g.MASTER_DATA.length === 0) {
     console.log('🚨 RETURNING EARLY - conditions not met');
     return;
   }
-  
+
   // Use filtered songs if available, otherwise use all songs
   const songsToNavigate = g.filteredSongIds && g.filteredSongIds.length > 0
     ? g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id))
     : g.MASTER_DATA;
-  
+
   console.log(`🎵 Navigation Debug:`);
   console.log(`   - Total songs in library: ${g.MASTER_DATA.length}`);
   console.log(`   - Filtered song IDs stored: ${g.filteredSongIds ? g.filteredSongIds.length : 0}`);
   console.log(`   - Songs to navigate through: ${songsToNavigate.length}`);
   console.log(`   - Using filters: ${g.filteredSongIds && g.filteredSongIds.length > 0}`);
-  
+
   const currentIndex = songsToNavigate.findIndex(r => r.id === g.currentSongData.id);
-  
+
   if (currentIndex === -1) {
     console.warn(`⚠️ Current song not found in navigation list!`);
     console.warn(`   - Current song ID: ${g.currentSongData.id}`);
     console.warn(`   - Current song: ${g.currentSongData.fields?.['Song Title']}`);
     return;
   }
-  
+
   let nextIndex = -1;
-  
+
   if (direction === 'next') {
     nextIndex = currentIndex + 1;
     if (nextIndex >= songsToNavigate.length) {
@@ -290,16 +608,16 @@ function navigateStandaloneTrack(direction) {
       return;
     }
   }
-  
+
   const nextSong = songsToNavigate[nextIndex];
   const audioUrl = nextSong.fields['R2 Audio URL'];
-  
+
   console.log(`➡️ Navigating ${direction}: ${nextSong.fields?.['Song Title']}`);
-  
+
   if (!audioUrl) return;
-  
+
   const wasPlaying = g.isPlaying;
-  
+
   if (g.standaloneAudio) {
     try {
       g.standaloneAudio.pause();
@@ -309,31 +627,31 @@ function navigateStandaloneTrack(direction) {
       g.standaloneAudio = null;
     }
   }
-  
+
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
-  
+
   updateMasterPlayerInfo(nextSong, null);
-  
+
   const audio = new Audio(audioUrl);
   g.standaloneAudio = audio;
-  
+
   audio.addEventListener('loadedmetadata', () => {
     if (g.standaloneAudio !== audio) return;
-    
+
     g.currentDuration = audio.duration;
     const masterDuration = document.querySelector('.player-duration');
     if (masterDuration) {
       masterDuration.textContent = formatDuration(audio.duration);
     }
   });
-  
+
   audio.addEventListener('timeupdate', () => {
     if (g.standaloneAudio !== audio) return;
-    
+
     if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
     if (!isFinite(audio.currentTime)) return;
-    
+
     g.currentTime = audio.currentTime;
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
@@ -346,27 +664,27 @@ function navigateStandaloneTrack(direction) {
       }
     }
   });
-  
+
   audio.addEventListener('play', () => {
     if (g.standaloneAudio !== audio) return;
     g.isPlaying = true;
     updateMasterControllerIcons(true);
     updatePlayerCoverArtIcons(true);
   });
-  
+
   audio.addEventListener('pause', () => {
     if (g.standaloneAudio !== audio) return;
     g.isPlaying = false;
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
   });
-  
+
   audio.addEventListener('ended', () => {
     if (g.standaloneAudio !== audio) return;
     g.autoPlayNext = true;
     navigateStandaloneTrack('next');
   });
-  
+
   audio.addEventListener('error', (e) => {
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.error('❌ AUDIO ERROR DETAILS:');
@@ -379,7 +697,7 @@ function navigateStandaloneTrack(direction) {
     console.error('Ready state:', audio.readyState);
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
-  
+
   if (wasPlaying || g.autoPlayNext) {
     audio.play().catch(err => {
       if (err.name !== 'AbortError') {
@@ -396,7 +714,7 @@ function navigateStandaloneTrack(direction) {
   const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
-  
+
   const tempWavesurfer = WaveSurfer.create({
     container: tempContainer,
     waveColor: '#e2e2e2',
@@ -406,9 +724,9 @@ function navigateStandaloneTrack(direction) {
     barGap: 1,
     normalize: true
   });
-  
+
   tempWavesurfer.load(audioUrl);
-  
+
   tempWavesurfer.on('decode', () => {
     try {
       const decodedData = tempWavesurfer.getDecodedData();
@@ -419,7 +737,7 @@ function navigateStandaloneTrack(direction) {
     } catch (e) {
       console.error('Error getting peaks:', e);
     }
-    
+
     try {
       tempWavesurfer.destroy();
       if (document.body.contains(tempContainer)) {
@@ -482,7 +800,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
   const fields = song.fields;
   const playerScope = document.querySelector('.music-player-wrapper');
   if (!playerScope) return;
-  
+
   const masterSongTitle = playerScope.querySelector('.player-song-name');
   const masterArtist = playerScope.querySelector('.player-artist-name');
   const masterCoverArt = playerScope.querySelector('.player-song-cover');
@@ -490,7 +808,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
   const masterBpm = playerScope.querySelector('.player-bpm');
   const masterDuration = playerScope.querySelector('.player-duration');
   const masterCounter = playerScope.querySelector('.player-duration-counter');
-  
+
   if (masterSongTitle) masterSongTitle.textContent = fields['Song Title'] || 'Untitled';
   if (masterArtist) masterArtist.textContent = fields['Artist'] || 'Unknown Artist';
   if (masterCoverArt && fields['Cover Art']) {
@@ -498,7 +816,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
   }
   if (masterKey) masterKey.textContent = fields['Key'] || '-';
   if (masterBpm) masterBpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
-  
+
   if (masterDuration) {
     let duration = 0;
     if (wavesurfer) {
@@ -510,7 +828,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
     }
     masterDuration.textContent = duration > 0 ? formatDuration(duration) : '--:--';
   }
-  
+
   if (masterCounter) {
     let counterTime = 0;
     if (wavesurfer) {
@@ -522,17 +840,17 @@ function updateMasterPlayerInfo(song, wavesurfer) {
     }
     masterCounter.textContent = formatDuration(counterTime);
   }
-  
+
   populateMasterStems(fields, playerScope);
 }
 
 function drawMasterWaveform(peaks, progress) {
   const g = window.musicPlayerPersistent;
-  
+
   if (g.isTransitioning) {
     return;
   }
-  
+
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
   let canvas = container.querySelector('canvas');
@@ -551,7 +869,7 @@ function drawMasterWaveform(peaks, progress) {
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const newProgress = clickX / rect.width;
-      
+
       if (g.standaloneAudio) {
         g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
       } else if (g.currentWavesurfer) {
@@ -567,7 +885,7 @@ function drawMasterWaveform(peaks, progress) {
       }
     });
   }
-  
+
   const dpr = window.devicePixelRatio || 1;
   const displayWidth = canvas.clientWidth;
   const displayHeight = 25;
@@ -577,13 +895,13 @@ function drawMasterWaveform(peaks, progress) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const internalHeight = canvas.height;
   const centerY = internalHeight / 2;
-  
+
   if (!peaks || peaks.length === 0) {
     ctx.fillStyle = '#e2e2e2';
     ctx.fillRect(0, centerY - (1 * dpr), canvas.width, 2 * dpr);
     return;
   }
-  
+
   let maxVal = 0;
   for (let i = 0; i < peaks.length; i++) {
     const p = Math.abs(peaks[i]);
@@ -595,7 +913,7 @@ function drawMasterWaveform(peaks, progress) {
   const barTotal = barWidth + barGap;
   const barsCount = Math.floor(canvas.width / barTotal);
   const samplesPerBar = Math.floor(peaks.length / barsCount);
-  
+
   for (let i = 0; i < barsCount; i++) {
     const startSample = i * samplesPerBar;
     const endSample = startSample + samplesPerBar;
@@ -633,35 +951,40 @@ function updatePlayerCoverArtIcons(isPlaying) {
 
 function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   const g = window.musicPlayerPersistent;
-  
+
   g.currentWavesurfer = wavesurfer;
   g.currentSongData = songData;
   g.hasActiveSong = true;
-  
+
   updateMasterPlayerVisibility();
-  
+
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
     playerWrapper.style.alignItems = 'center';
   }
-  
+
   g.currentPeaksData = null;
   drawMasterWaveform(null, 0);
   updateMasterPlayerInfo(songData, wavesurfer);
-  
+
   const getAndDrawPeaks = () => {
     if (g.currentWavesurfer !== wavesurfer) return;
     try {
       const decodedData = wavesurfer.getDecodedData();
       if (decodedData) {
         g.currentPeaksData = decodedData.getChannelData(0);
-        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
+        const progress =
+          forcedProgress !== null
+            ? forcedProgress
+            : (wavesurfer.getDuration() > 0
+                ? wavesurfer.getCurrentTime() / wavesurfer.getDuration()
+                : 0);
         drawMasterWaveform(g.currentPeaksData, progress);
       }
     } catch (e) {}
   };
-  
+
   if (wavesurfer.getDecodedData()) {
     getAndDrawPeaks();
   } else {
@@ -671,13 +994,13 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
 
 function setupMasterPlayerControls() {
   const g = window.musicPlayerPersistent;
-  
+
   const masterPlayButton = document.querySelector('.player-play-pause-button');
   const controllerPlay = document.querySelector('.controller-play');
   const controllerPause = document.querySelector('.controller-pause');
   const controllerNext = document.querySelector('.controller-next');
   const controllerPrev = document.querySelector('.controller-prev');
-  
+
   const handlePlayPause = () => {
     if (g.standaloneAudio) {
       if (g.standaloneAudio.paused) {
@@ -689,72 +1012,72 @@ function setupMasterPlayerControls() {
       g.currentWavesurfer.playPause();
     }
   };
-  
+
   if (masterPlayButton) masterPlayButton.onclick = handlePlayPause;
   if (controllerPlay) controllerPlay.onclick = handlePlayPause;
   if (controllerPause) controllerPause.onclick = handlePlayPause;
 
   // Add click handler for player cover art
-const playerCoverArt = document.querySelector('.player-cover-art');
-if (playerCoverArt) {
-  playerCoverArt.style.cursor = 'pointer';
-  playerCoverArt.onclick = handlePlayPause;
-}
-  
- const navigateTrack = (direction) => {
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  
-  if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
-    const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
-    let targetWS = null;
-    
-    if (direction === 'next') {
-      for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-        if (data && data.cardElement.offsetParent !== null) {
-          targetWS = g.allWavesurfers[i];
-          break;
+  const playerCoverArt = document.querySelector('.player-cover-art');
+  if (playerCoverArt) {
+    playerCoverArt.style.cursor = 'pointer';
+    playerCoverArt.onclick = handlePlayPause;
+  }
+
+  const navigateTrack = (direction) => {
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+
+    if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
+      const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
+      let targetWS = null;
+
+      if (direction === 'next') {
+        for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+          const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+          if (data && data.cardElement.offsetParent !== null) {
+            targetWS = g.allWavesurfers[i];
+            break;
+          }
         }
+      } else {
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+          if (data && data.cardElement.offsetParent !== null) {
+            targetWS = g.allWavesurfers[i];
+            break;
+          }
+        }
+      }
+
+      if (targetWS) {
+        const wasPlaying = g.isPlaying;
+        const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
+        if (prevData?.cardElement.querySelector('.play-button')) {
+          prevData.cardElement.querySelector('.play-button').style.opacity = '0';
+        }
+
+        if (g.standaloneAudio) {
+          g.standaloneAudio.pause();
+          g.standaloneAudio = null;
+        }
+
+        g.currentWavesurfer.seekTo(0);
+        const nextData = g.waveformData.find(data => data.wavesurfer === targetWS);
+
+        if (nextData?.cardElement.querySelector('.play-button')) {
+          nextData.cardElement.querySelector('.play-button').style.opacity = '1';
+        }
+        scrollToSelected(nextData.cardElement);
+
+        playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
       }
     } else {
-      for (let i = currentIndex - 1; i >= 0; i--) {
-        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
-        if (data && data.cardElement.offsetParent !== null) {
-          targetWS = g.allWavesurfers[i];
-          break;
-        }
-      }
+      // Not on music page or no waveforms - use standalone navigation
+      navigateStandaloneTrack(direction);
     }
-    
-    if (targetWS) {
-      const wasPlaying = g.isPlaying;
-      const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-      if (prevData?.cardElement.querySelector('.play-button')) {
-        prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-      }
-      
-      if (g.standaloneAudio) {
-        g.standaloneAudio.pause();
-        g.standaloneAudio = null;
-      }
-      
-      g.currentWavesurfer.seekTo(0);
-      const nextData = g.waveformData.find(data => data.wavesurfer === targetWS);
-      
-      if (nextData?.cardElement.querySelector('.play-button')) {
-        nextData.cardElement.querySelector('.play-button').style.opacity = '1';
-      }
-      scrollToSelected(nextData.cardElement);
-      
-      playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
-    }
-  } else {
-    // Not on music page or no waveforms - use standalone navigation
-    navigateStandaloneTrack(direction);
-  }
-};
+  };
 
-    if (controllerNext) controllerNext.onclick = () => navigateTrack('next');
+  if (controllerNext) controllerNext.onclick = () => navigateTrack('next');
   if (controllerPrev) controllerPrev.onclick = () => navigateTrack('prev');
 }
 
@@ -764,7 +1087,7 @@ function initMasterPlayer() {
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
 }
-  
+
 /**
  * ============================================================
  * SONG CARD FUNCTIONS
@@ -786,12 +1109,12 @@ function populateSongCard(cardElement, song) {
   if (bpm) bpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
   const downloadLink = cardElement.querySelector('.download-icon');
   if (downloadLink && fields['R2 Audio URL']) downloadLink.href = fields['R2 Audio URL'];
-  
+
   const favoriteCheckbox = cardElement.querySelector('input[type="checkbox"]');
   if (favoriteCheckbox) {
     favoriteCheckbox.classList.add('favourite-checkbox');
   }
-  
+
   const stemsData = fields['Stems'];
   const stemsWrapper = cardElement.querySelector('.stems-dropdown-wrapper');
   const optionsToggle = cardElement.querySelector('.options-dropdown-toggle');
@@ -862,37 +1185,37 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
  */
 function linkStandaloneToWaveform() {
   const g = window.musicPlayerPersistent;
-  
+
   if (!g.standaloneAudio || !g.currentSongData) return;
-  
+
   const matchingData = g.waveformData.find(data => data.songData.id === g.currentSongData.id);
-  
+
   if (matchingData) {
     const { wavesurfer, cardElement } = matchingData;
-    
+
     g.currentWavesurfer = wavesurfer;
-    
+
     updatePlayPauseIcons(cardElement, g.isPlaying);
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
-    
+
     if (g.standaloneAudio.duration > 0) {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
       wavesurfer.seekTo(progress);
     }
-    
+
     const existingListener = g.standaloneAudio._waveformSyncListener;
     if (existingListener) {
       g.standaloneAudio.removeEventListener('timeupdate', existingListener);
     }
-    
+
     const syncListener = () => {
       if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
         const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
         wavesurfer.seekTo(progress);
       }
     };
-    
+
     g.standaloneAudio._waveformSyncListener = syncListener;
     g.standaloneAudio.addEventListener('timeupdate', syncListener);
   }
@@ -905,40 +1228,40 @@ function linkStandaloneToWaveform() {
  */
 function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
-  
+
   const audio = new Audio(audioUrl);
   g.standaloneAudio = audio;
   g.currentSongData = songData;
   g.currentWavesurfer = wavesurfer;
   g.hasActiveSong = true;
-  
+
   audio.addEventListener('loadedmetadata', () => {
     g.currentDuration = audio.duration;
-    
+
     if (seekToTime !== null && seekToTime < audio.duration) {
       audio.currentTime = seekToTime;
     }
   });
-  
+
   audio.addEventListener('timeupdate', () => {
     g.currentTime = audio.currentTime;
-    
+
     if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
       wavesurfer.seekTo(progress);
     }
-    
+
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
     }
-    
+
     if (g.currentPeaksData && g.currentDuration > 0) {
       const progress = audio.currentTime / audio.duration;
       drawMasterWaveform(g.currentPeaksData, progress);
     }
   });
-  
+
   audio.addEventListener('play', () => {
     g.isPlaying = true;
     updatePlayPauseIcons(cardElement, true);
@@ -947,19 +1270,19 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
   });
-  
+
   audio.addEventListener('pause', () => {
     g.isPlaying = false;
     updatePlayPauseIcons(cardElement, false);
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
   });
-  
+
   audio.addEventListener('ended', () => {
     updatePlayPauseIcons(cardElement, false);
     const pb = cardElement.querySelector('.play-button');
     if (pb) pb.style.opacity = '0';
-    
+
     const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
     let nextWavesurfer = null;
     for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
@@ -979,7 +1302,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       navigateStandaloneTrack('next');
     }
   });
-  
+
   audio.addEventListener('error', (e) => {
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.error('❌ AUDIO ERROR DETAILS:');
@@ -992,14 +1315,14 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     console.error('Ready state:', audio.readyState);
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
-  
+
   if (shouldAutoPlay) {
     audio.play().catch(err => console.error('Playback error:', err));
   }
-  
+
   syncMasterTrack(wavesurfer, songData);
   updateMasterPlayerVisibility();
-  
+
   return audio;
 }
 
@@ -1010,25 +1333,25 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
  */
 function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
-  
+
   if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
     if (shouldAutoPlay) {
       g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
     }
     return;
   }
-  
+
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
     g.standaloneAudio = null;
   }
-  
+
   g.allWavesurfers.forEach(ws => {
     if (ws !== wavesurfer) {
       ws.seekTo(0);
     }
   });
-  
+
   g.waveformData.forEach(data => {
     if (data.wavesurfer !== wavesurfer) {
       updatePlayPauseIcons(data.cardElement, false);
@@ -1036,7 +1359,7 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
       if (pb) pb.style.opacity = '0';
     }
   });
-  
+
   createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime, shouldAutoPlay);
 }
 
@@ -1048,26 +1371,26 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
-  
+
   const visibleCards = [];
   const notVisibleCards = [];
-  
+
   const observer = new IntersectionObserver((entries) => {
     const cardsToLoad = [];
-    
+
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const cardElement = entry.target;
-        
+
         if (cardElement.dataset.waveformInitialized === 'true') {
           return;
         }
-        
+
         cardsToLoad.push(cardElement);
         observer.unobserve(cardElement);
       }
     });
-    
+
     if (cardsToLoad.length > 0) {
       loadWaveformBatch(cardsToLoad);
     }
@@ -1076,29 +1399,29 @@ function initializeWaveforms() {
     rootMargin: '200px',
     threshold: 0
   });
-  
+
   songCards.forEach((cardElement) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
-    
+
     if (isInTemplate || hasNoData) {
       return;
     }
-    
+
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
       waveformContainer.style.opacity = '0';
       waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
     }
-    
+
     const rect = cardElement.getBoundingClientRect();
     const container = document.querySelector('.music-list-wrapper');
     const containerRect = container ? container.getBoundingClientRect() : null;
-    
-    const isVisible = containerRect && 
-                     rect.top < containerRect.bottom + 200 && 
-                     rect.bottom > containerRect.top - 200;
-    
+
+    const isVisible = containerRect &&
+      rect.top < containerRect.bottom + 200 &&
+      rect.bottom > containerRect.top - 200;
+
     if (isVisible) {
       visibleCards.push(cardElement);
     } else {
@@ -1106,11 +1429,11 @@ function initializeWaveforms() {
       observer.observe(cardElement);
     }
   });
-  
+
   if (visibleCards.length > 0) {
     loadWaveformBatch(visibleCards);
   }
-  
+
   setTimeout(() => linkStandaloneToWaveform(), 100);
   setTimeout(() => linkStandaloneToWaveform(), 300);
   setTimeout(() => linkStandaloneToWaveform(), 600);
@@ -1125,25 +1448,25 @@ function loadWaveformBatch(cardElements) {
   const g = window.musicPlayerPersistent;
   const waveformPromises = [];
   const waveformContainers = [];
-  
+
   cardElements.forEach((cardElement) => {
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
     const songData = JSON.parse(cardElement.dataset.songData || '{}');
-    
+
     if (!audioUrl) return;
-    
+
     const waveformContainer = cardElement.querySelector('.waveform');
     if (!waveformContainer || waveformContainer.hasChildNodes()) return;
-    
+
     const durationElement = cardElement.querySelector('.duration');
     const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
     const playButton = cardElement.querySelector('.play-button');
     const songName = cardElement.querySelector('.song-name');
-    
+
     waveformContainer.id = `waveform-${songId}`;
     waveformContainers.push(waveformContainer);
-    
+
     if (playButton) {
       playButton.style.opacity = '0';
       cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
@@ -1155,7 +1478,7 @@ function loadWaveformBatch(cardElements) {
         }
       });
     }
-    
+
     const wavesurfer = WaveSurfer.create({
       container: waveformContainer,
       waveColor: '#e2e2e2',
@@ -1174,7 +1497,7 @@ function loadWaveformBatch(cardElements) {
       hideScrollbar: true,
       minPxPerSec: 1
     });
-    
+
     const peaksData = songData.fields['Waveform Peaks'];
     const storedDuration = songData.fields['Duration'];
 
@@ -1196,23 +1519,23 @@ function loadWaveformBatch(cardElements) {
       }
       wavesurfer.load(audioUrl);
     }
-    
+
     const waveformReadyPromise = new Promise((resolve) => {
       let resolved = false;
-      
+
       wavesurfer.on('ready', function () {
         if (resolved) return;
         resolved = true;
-        
+
         const duration = wavesurfer.getDuration();
         const containerWidth = waveformContainer.offsetWidth || 300;
         wavesurfer.zoom(containerWidth / duration);
         if (durationElement) durationElement.textContent = formatDuration(duration);
-        
+
         resolve();
         setTimeout(() => linkStandaloneToWaveform(), 50);
       });
-      
+
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
@@ -1220,9 +1543,9 @@ function loadWaveformBatch(cardElements) {
         }
       }, 5000);
     });
-    
+
     waveformPromises.push(waveformReadyPromise);
-    
+
     g.allWavesurfers.push(wavesurfer);
     g.waveformData.push({
       wavesurfer,
@@ -1231,61 +1554,61 @@ function loadWaveformBatch(cardElements) {
       audioUrl,
       songData
     });
-    
-const handlePlayPause = (e) => {
-  if (e) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
-  
-  if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-  
-  console.log('═══════════════════════════════════════════');
-  console.log('🎯 CLICK DETECTED');
-  console.log('Clicked song:', songData?.fields?.['Song Title']);
-  console.log('Clicked song ID:', songData?.id);
-  console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
-  console.log('Current song ID:', g.currentSongData?.id);
-  console.log('Is same song?', g.currentSongData?.id === songData.id);
-  console.log('═══════════════════════════════════════════');
-      
-  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-    console.log('🔀 Different song clicked - always play it');
-    
-    if (g.standaloneAudio) {
-      g.standaloneAudio.pause();
-    }
-    
-    g.currentWavesurfer.seekTo(0);
-    
-    // ALWAYS play when clicking a different song
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-  } else {
-    // Same song or no current song - toggle play/pause
-    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-      console.log('⏯️ Toggling current song');
-      if (g.standaloneAudio.paused) {
-        g.standaloneAudio.play();
-      } else {
-        g.standaloneAudio.pause();
-      }
-    } else {
-      console.log('▶️ Playing new song');
-      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-    }
-  }
-};
-    
-if (coverArtWrapper) {
-  coverArtWrapper.style.cursor = 'pointer';
-  coverArtWrapper.addEventListener('click', handlePlayPause);
-}
 
-if (songName) {
-  songName.style.cursor = 'pointer';
-  songName.addEventListener('click', handlePlayPause);
-}
-    
+    const handlePlayPause = (e) => {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+
+      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
+
+      console.log('═══════════════════════════════════════════');
+      console.log('🎯 CLICK DETECTED');
+      console.log('Clicked song:', songData?.fields?.['Song Title']);
+      console.log('Clicked song ID:', songData?.id);
+      console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
+      console.log('Current song ID:', g.currentSongData?.id);
+      console.log('Is same song?', g.currentSongData?.id === songData.id);
+      console.log('═══════════════════════════════════════════');
+
+      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+        console.log('🔀 Different song clicked - always play it');
+
+        if (g.standaloneAudio) {
+          g.standaloneAudio.pause();
+        }
+
+        g.currentWavesurfer.seekTo(0);
+
+        // ALWAYS play when clicking a different song
+        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+      } else {
+        // Same song or no current song - toggle play/pause
+        if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+          console.log('⏯️ Toggling current song');
+          if (g.standaloneAudio.paused) {
+            g.standaloneAudio.play();
+          } else {
+            g.standaloneAudio.pause();
+          }
+        } else {
+          console.log('▶️ Playing new song');
+          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+        }
+      }
+    };
+
+    if (coverArtWrapper) {
+      coverArtWrapper.style.cursor = 'pointer';
+      coverArtWrapper.addEventListener('click', handlePlayPause);
+    }
+
+    if (songName) {
+      songName.style.cursor = 'pointer';
+      songName.addEventListener('click', handlePlayPause);
+    }
+
     wavesurfer.on('interaction', function (newProgress) {
       if (g.currentSongData?.id === songData.id) {
         if (g.standaloneAudio) {
@@ -1293,33 +1616,33 @@ if (songName) {
         }
         return;
       }
-      
+
       const wasPlaying = g.isPlaying;
-      
+
       if (g.standaloneAudio) {
         g.standaloneAudio.pause();
         g.standaloneAudio = null;
       }
-      
+
       if (g.currentWavesurfer) {
         g.currentWavesurfer.seekTo(0);
       }
-      
+
       g.currentWavesurfer = wavesurfer;
       g.hasActiveSong = true;
-      
+
       playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
     });
-    
+
     cardElement.dataset.waveformInitialized = 'true';
   });
-  
+
   Promise.all(waveformPromises).then(() => {
     waveformContainers.forEach((container) => {
       container.style.opacity = '1';
     });
   });
-  
+
   setTimeout(() => {
     waveformContainers.forEach((container) => {
       if (container.style.opacity === '0') {
@@ -1337,11 +1660,11 @@ if (songName) {
  */
 async function fetchSongs() {
   const g = window.musicPlayerPersistent;
-  
+
   if (g.MASTER_DATA.length > 0) {
     return g.MASTER_DATA;
   }
-  
+
   try {
     const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?view=${VIEW_ID}`, {
       headers: {
@@ -1392,32 +1715,32 @@ async function displayFeaturedSongs(limit = 6) {
     console.log('No featured songs container found on this page');
     return;
   }
-  
+
   const g = window.musicPlayerPersistent;
-  
+
   if (g.MASTER_DATA.length === 0) {
     await fetchSongs();
   }
-  
+
   const templateWrapper = container.querySelector('.template-wrapper');
   const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
-  
+
   if (!templateCard) {
     console.warn('No template card found in featured-songs-wrapper');
     return;
   }
-  
+
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
-  
+
   const featuredSongs = g.MASTER_DATA.slice(-limit).reverse();
-  
+
   featuredSongs.forEach(song => {
     const newCard = templateCard.cloneNode(true);
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
-    
+
     populateSongCard(newCard, song);
     container.appendChild(newCard);
   });
@@ -1427,9 +1750,9 @@ async function displayFeaturedSongs(limit = 6) {
     window.Webflow.ready();
     window.Webflow.require('ix2').init();
   }
-  
+
   console.log(`✅ Displayed ${featuredSongs.length} featured songs on home page`);
-  
+
   setTimeout(() => {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
@@ -1447,11 +1770,11 @@ document.addEventListener('keydown', function (e) {
   const g = window.musicPlayerPersistent;
   const activeEl = document.activeElement;
   if (activeEl.tagName === 'TEXTAREA' || (activeEl.tagName === 'INPUT' && !['checkbox', 'radio'].includes(activeEl.type))) return;
-  
+
   if (e.code === 'Space') {
     e.preventDefault();
     e.stopImmediatePropagation();
-    
+
     if (g.standaloneAudio) {
       if (g.standaloneAudio.paused) {
         g.standaloneAudio.play();
@@ -1461,12 +1784,12 @@ document.addEventListener('keydown', function (e) {
     }
     return false;
   }
-  
+
   if (['ArrowDown', 'ArrowUp'].includes(e.code)) {
     e.preventDefault();
-    
+
     const isMusicPage = !!document.querySelector('.music-list-wrapper');
-    
+
     if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
       const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
       let nextWS = null;
@@ -1481,19 +1804,19 @@ document.addEventListener('keydown', function (e) {
           if (d && d.cardElement.offsetParent !== null) { nextWS = g.allWavesurfers[i]; break; }
         }
       }
-      
+
       if (nextWS) {
         const wasPlaying = g.isPlaying;
         const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
         if (prevData?.cardElement.querySelector('.play-button')) {
           prevData.cardElement.querySelector('.play-button').style.opacity = '0';
         }
-        
+
         if (g.standaloneAudio) {
           g.standaloneAudio.pause();
           g.standaloneAudio = null;
         }
-        
+
         g.currentWavesurfer.seekTo(0);
         g.currentWavesurfer = nextWS;
         const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
@@ -1501,7 +1824,7 @@ document.addEventListener('keydown', function (e) {
           nextD.cardElement.querySelector('.play-button').style.opacity = '1';
         }
         scrollToSelected(nextD.cardElement);
-        
+
         playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
       }
     } else {
@@ -1509,6 +1832,10 @@ document.addEventListener('keydown', function (e) {
     }
   }
 }, true);
+
+/* =========================
+   PART 3
+   ========================= */
 
 /**
  * ============================================================
@@ -1827,48 +2154,48 @@ function initKeyFilterSystem() {
    * Get currently selected generic key (using data-generic-key attribute)
    */
   function getCurrentlySelectedKey() {
-  const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
-  const genericKey = checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
-  console.log('🔍 getCurrentlySelectedKey:', {
-    found: !!checkedRadio,
-    genericKey: genericKey,
-    element: checkedRadio
-  });
-  return genericKey;
-}
+    const checkedRadio = keyAccordion.querySelector('input[type="radio"][data-generic-key]:checked');
+    const genericKey = checkedRadio ? checkedRadio.getAttribute('data-generic-key') : null;
+    console.log('🔍 getCurrentlySelectedKey:', {
+      found: !!checkedRadio,
+      genericKey: genericKey,
+      element: checkedRadio
+    });
+    return genericKey;
+  }
   
   /**
    * Restore selected key after switching sections (using data-generic-key)
    */
   function restoreSelectedKey(genericKey, targetColumn) {
-  console.log('🔄 restoreSelectedKey called:', {
-    genericKey: genericKey,
-    targetColumn: targetColumn?.className,
-    columnVisible: targetColumn ? getComputedStyle(targetColumn).display : 'n/a'
-  });
-  
-  if (!genericKey || !targetColumn) {
-    console.log('❌ Cannot restore - missing key or column');
-    return;
+    console.log('🔄 restoreSelectedKey called:', {
+      genericKey: genericKey,
+      targetColumn: targetColumn?.className,
+      columnVisible: targetColumn ? getComputedStyle(targetColumn).display : 'n/a'
+    });
+    
+    if (!genericKey || !targetColumn) {
+      console.log('❌ Cannot restore - missing key or column');
+      return;
+    }
+    
+    const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
+    console.log('🔍 Looking for radio with data-generic-key=' + genericKey + ':', {
+      found: !!matchingRadio,
+      alreadyChecked: matchingRadio?.checked,
+      element: matchingRadio
+    });
+    
+    if (matchingRadio && !matchingRadio.checked) {
+      console.log('✅ Clicking radio (not just checking):', matchingRadio);
+      // Trigger actual click instead of just setting checked
+      matchingRadio.click();
+    } else if (matchingRadio && matchingRadio.checked) {
+      console.log('ℹ️ Radio already checked');
+    } else {
+      console.log('❌ No matching radio found');
+    }
   }
-  
-  const matchingRadio = targetColumn.querySelector(`input[type="radio"][data-generic-key="${genericKey}"]`);
-  console.log('🔍 Looking for radio with data-generic-key=' + genericKey + ':', {
-    found: !!matchingRadio,
-    alreadyChecked: matchingRadio?.checked,
-    element: matchingRadio
-  });
-  
-  if (matchingRadio && !matchingRadio.checked) {
-    console.log('✅ Clicking radio (not just checking):', matchingRadio);
-    // Trigger actual click instead of just setting checked
-    matchingRadio.click();
-  } else if (matchingRadio && matchingRadio.checked) {
-    console.log('ℹ️ Radio already checked');
-  } else {
-    console.log('❌ No matching radio found');
-  }
-}
   
   /**
    * Style Sharp/Flat buttons
@@ -1910,139 +2237,139 @@ function initKeyFilterSystem() {
   }
   
   /**
- * Show Sharp or Flat column
- */
-function showSharpFlat(which) {
-  const currentKey = getCurrentlySelectedKey();
-  
-  const keyButtonWrapper = keyAccordion.querySelector('.key-button-wrapper');
-  if (keyButtonWrapper) {
-    keyButtonWrapper.classList.add('no-key-transitions');
-  }
-  
-  currentSharpFlat = which;
-  
-  if (which === 'sharp') {
-    // Sync: Sharp inherits Flat's state
-    if (flatMajMin) {
-      sharpMajMin = flatMajMin;
-    }
+   * Show Sharp or Flat column
+   */
+  function showSharpFlat(which) {
+    const currentKey = getCurrentlySelectedKey();
     
-    sharpColumn.style.display = 'block';
-    sharpColumn.style.visibility = 'visible';
-    sharpColumn.style.opacity = '1';
-    
-    flatColumn.style.display = 'none';
-    flatColumn.style.visibility = 'hidden';
-    flatColumn.style.opacity = '0';
-    
-    styleSharpFlatButton(sharpButton, true);
-    styleSharpFlatButton(flatButton, false);
-    
-    if (sharpMajMin === 'major') {
-      if (sharpMajorColumn) {
-        sharpMajorColumn.style.display = 'flex';
-        sharpMajorColumn.style.visibility = 'visible';
-        sharpMajorColumn.style.opacity = '1';
-      }
-      if (sharpMinorColumn) {
-        sharpMinorColumn.style.display = 'none';
-      }
-      styleMajMinButton(sharpMajorButton, true);
-      sharpMajorButton.checked = true;
-      if (currentKey && sharpMajorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
-      }
-    } else if (sharpMajMin === 'minor') {
-      if (sharpMinorColumn) {
-        sharpMinorColumn.style.display = 'flex';
-        sharpMinorColumn.style.visibility = 'visible';
-        sharpMinorColumn.style.opacity = '1';
-      }
-      if (sharpMajorColumn) {
-        sharpMajorColumn.style.display = 'none';
-      }
-      styleMajMinButton(sharpMinorButton, true);
-      sharpMinorButton.checked = true;
-      if (currentKey && sharpMinorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
-      }
-    } else {
-      // No selection - show major keys
-      if (sharpMajorColumn) {
-        sharpMajorColumn.style.display = 'flex';
-        sharpMajorColumn.style.visibility = 'visible';
-        sharpMajorColumn.style.opacity = '1';
-      }
-      if (sharpMinorColumn) {
-        sharpMinorColumn.style.display = 'none';
-      }
-    }
-    
-  } else {
-    // Sync: Flat inherits Sharp's state
-    if (sharpMajMin) {
-      flatMajMin = sharpMajMin;
-    }
-    
-    flatColumn.style.display = 'block';
-    flatColumn.style.visibility = 'visible';
-    flatColumn.style.opacity = '1';
-    
-    sharpColumn.style.display = 'none';
-    sharpColumn.style.visibility = 'hidden';
-    sharpColumn.style.opacity = '0';
-    
-    styleSharpFlatButton(flatButton, true);
-    styleSharpFlatButton(sharpButton, false);
-    
-    if (flatMajMin === 'major') {
-      if (flatMajorColumn) {
-        flatMajorColumn.style.display = 'flex';
-        flatMajorColumn.style.visibility = 'visible';
-        flatMajorColumn.style.opacity = '1';
-      }
-      if (flatMinorColumn) {
-        flatMinorColumn.style.display = 'none';
-      }
-      styleMajMinButton(flatMajorButton, true);
-      flatMajorButton.checked = true;
-      if (currentKey && flatMajorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
-      }
-    } else if (flatMajMin === 'minor') {
-      if (flatMinorColumn) {
-        flatMinorColumn.style.display = 'flex';
-        flatMinorColumn.style.visibility = 'visible';
-        flatMinorColumn.style.opacity = '1';
-      }
-      if (flatMajorColumn) {
-        flatMajorColumn.style.display = 'none';
-      }
-      styleMajMinButton(flatMinorButton, true);
-      flatMinorButton.checked = true;
-      if (currentKey && flatMinorColumn) {
-        setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
-      }
-    } else {
-      // No selection - show major keys
-      if (flatMajorColumn) {
-        flatMajorColumn.style.display = 'flex';
-        flatMajorColumn.style.visibility = 'visible';
-        flatMajorColumn.style.opacity = '1';
-      }
-      if (flatMinorColumn) {
-        flatMinorColumn.style.display = 'none';
-      }
-    }
-  }
-  
-  setTimeout(() => {
+    const keyButtonWrapper = keyAccordion.querySelector('.key-button-wrapper');
     if (keyButtonWrapper) {
-      keyButtonWrapper.classList.remove('no-key-transitions');
+      keyButtonWrapper.classList.add('no-key-transitions');
     }
-  }, 50);
-}
+    
+    currentSharpFlat = which;
+    
+    if (which === 'sharp') {
+      // Sync: Sharp inherits Flat's state
+      if (flatMajMin) {
+        sharpMajMin = flatMajMin;
+      }
+      
+      sharpColumn.style.display = 'block';
+      sharpColumn.style.visibility = 'visible';
+      sharpColumn.style.opacity = '1';
+      
+      flatColumn.style.display = 'none';
+      flatColumn.style.visibility = 'hidden';
+      flatColumn.style.opacity = '0';
+      
+      styleSharpFlatButton(sharpButton, true);
+      styleSharpFlatButton(flatButton, false);
+      
+      if (sharpMajMin === 'major') {
+        if (sharpMajorColumn) {
+          sharpMajorColumn.style.display = 'flex';
+          sharpMajorColumn.style.visibility = 'visible';
+          sharpMajorColumn.style.opacity = '1';
+        }
+        if (sharpMinorColumn) {
+          sharpMinorColumn.style.display = 'none';
+        }
+        styleMajMinButton(sharpMajorButton, true);
+        sharpMajorButton.checked = true;
+        if (currentKey && sharpMajorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, sharpMajorColumn), 50);
+        }
+      } else if (sharpMajMin === 'minor') {
+        if (sharpMinorColumn) {
+          sharpMinorColumn.style.display = 'flex';
+          sharpMinorColumn.style.visibility = 'visible';
+          sharpMinorColumn.style.opacity = '1';
+        }
+        if (sharpMajorColumn) {
+          sharpMajorColumn.style.display = 'none';
+        }
+        styleMajMinButton(sharpMinorButton, true);
+        sharpMinorButton.checked = true;
+        if (currentKey && sharpMinorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, sharpMinorColumn), 50);
+        }
+      } else {
+        // No selection - show major keys
+        if (sharpMajorColumn) {
+          sharpMajorColumn.style.display = 'flex';
+          sharpMajorColumn.style.visibility = 'visible';
+          sharpMajorColumn.style.opacity = '1';
+        }
+        if (sharpMinorColumn) {
+          sharpMinorColumn.style.display = 'none';
+        }
+      }
+      
+    } else {
+      // Sync: Flat inherits Sharp's state
+      if (sharpMajMin) {
+        flatMajMin = sharpMajMin;
+      }
+      
+      flatColumn.style.display = 'block';
+      flatColumn.style.visibility = 'visible';
+      flatColumn.style.opacity = '1';
+      
+      sharpColumn.style.display = 'none';
+      sharpColumn.style.visibility = 'hidden';
+      sharpColumn.style.opacity = '0';
+      
+      styleSharpFlatButton(flatButton, true);
+      styleSharpFlatButton(sharpButton, false);
+      
+      if (flatMajMin === 'major') {
+        if (flatMajorColumn) {
+          flatMajorColumn.style.display = 'flex';
+          flatMajorColumn.style.visibility = 'visible';
+          flatMajorColumn.style.opacity = '1';
+        }
+        if (flatMinorColumn) {
+          flatMinorColumn.style.display = 'none';
+        }
+        styleMajMinButton(flatMajorButton, true);
+        flatMajorButton.checked = true;
+        if (currentKey && flatMajorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, flatMajorColumn), 50);
+        }
+      } else if (flatMajMin === 'minor') {
+        if (flatMinorColumn) {
+          flatMinorColumn.style.display = 'flex';
+          flatMinorColumn.style.visibility = 'visible';
+          flatMinorColumn.style.opacity = '1';
+        }
+        if (flatMajorColumn) {
+          flatMajorColumn.style.display = 'none';
+        }
+        styleMajMinButton(flatMinorButton, true);
+        flatMinorButton.checked = true;
+        if (currentKey && flatMinorColumn) {
+          setTimeout(() => restoreSelectedKey(currentKey, flatMinorColumn), 50);
+        }
+      } else {
+        // No selection - show major keys
+        if (flatMajorColumn) {
+          flatMajorColumn.style.display = 'flex';
+          flatMajorColumn.style.visibility = 'visible';
+          flatMajorColumn.style.opacity = '1';
+        }
+        if (flatMinorColumn) {
+          flatMinorColumn.style.display = 'none';
+        }
+      }
+    }
+    
+    setTimeout(() => {
+      if (keyButtonWrapper) {
+        keyButtonWrapper.classList.remove('no-key-transitions');
+      }
+    }, 50);
+  }
   
   /**
    * Show Major or Minor column (within current Sharp/Flat section)
@@ -2110,230 +2437,230 @@ function showSharpFlat(which) {
     showSharpFlat('flat');
   }, true); // Use capture phase
 
-// SHARP/FLAT MAJOR/MINORCLICK HANDLERS
+  // SHARP/FLAT MAJOR/MINORCLICK HANDLERS
   
   if (sharpMajorButton) {
-  sharpMajorButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const currentKey = getCurrentlySelectedKey();
-    
-    if (sharpMajMin === 'major') {
-      sharpMajMin = null;
-      styleMajMinButton(sharpMajorButton, false);
-      sharpMajorButton.checked = false;
-      sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      sharpMajMin = 'major';
-      styleMajMinButton(sharpMajorButton, true);
-      styleMajMinButton(sharpMinorButton, false);
-      sharpMinorButton.checked = false;
+    sharpMajorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       
-      if (sharpMajorColumn) {
-        sharpMajorColumn.style.display = 'flex';
-        sharpMajorColumn.style.visibility = 'visible';
-        sharpMajorColumn.style.opacity = '1';
-      }
-      if (sharpMinorColumn) {
-        sharpMinorColumn.style.display = 'none';
-      }
+      const currentKey = getCurrentlySelectedKey();
       
-      if (currentKey && sharpMajorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
-        setTimeout(() => {
-          restoreSelectedKey(currentKey, sharpMajorColumn);
-          setTimeout(() => {
-            sharpMajorButton.checked = true;
-            sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-            sharpMinorColumn.classList.remove('no-key-transitions');
-          }, 5);
-        }, 10);
-      } else {
-        sharpMajorButton.checked = true;
+      if (sharpMajMin === 'major') {
+        sharpMajMin = null;
+        styleMajMinButton(sharpMajorButton, false);
+        sharpMajorButton.checked = false;
         sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    }
-  }, true);
-}
-  
-  if (sharpMinorButton) {
-  sharpMinorButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const currentKey = getCurrentlySelectedKey();
-    
-    if (sharpMajMin === 'minor') {
-      sharpMajMin = null;
-      styleMajMinButton(sharpMinorButton, false);
-      sharpMinorButton.checked = false;
-      sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      sharpMajMin = 'minor';
-      styleMajMinButton(sharpMinorButton, true);
-      styleMajMinButton(sharpMajorButton, false);
-      sharpMajorButton.checked = false;
-      
-      if (sharpMinorColumn) {
-        sharpMinorColumn.style.display = 'flex';
-        sharpMinorColumn.style.visibility = 'visible';
-        sharpMinorColumn.style.opacity = '1';
-      }
-      if (sharpMajorColumn) {
-        sharpMajorColumn.style.display = 'none';
-      }
-      
-      if (currentKey && sharpMinorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
-        setTimeout(() => {
-          restoreSelectedKey(currentKey, sharpMinorColumn);
-          setTimeout(() => {
-            sharpMinorButton.checked = true;
-            sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 5);
-        }, 10);
       } else {
-        sharpMinorButton.checked = true;
-        sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-        sharpMinorColumn.classList.remove('no-key-transitions');
-      }
-    }
-  }, true);
-}
-  
-  if (flatMajorButton) {
-  flatMajorButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const currentKey = getCurrentlySelectedKey();
-    
-    if (flatMajMin === 'major') {
-      flatMajMin = null;
-      styleMajMinButton(flatMajorButton, false);
-      flatMajorButton.checked = false;
-      flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      flatMajMin = 'major';
-      styleMajMinButton(flatMajorButton, true);
-      styleMajMinButton(flatMinorButton, false);
-      flatMinorButton.checked = false;
-      
-      if (flatMajorColumn) {
-        flatMajorColumn.style.display = 'flex';
-        flatMajorColumn.style.visibility = 'visible';
-        flatMajorColumn.style.opacity = '1';
-      }
-      if (flatMinorColumn) {
-        flatMinorColumn.style.display = 'none';
-      }
-      
-      if (currentKey && flatMajorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
-        setTimeout(() => {
-          restoreSelectedKey(currentKey, flatMajorColumn);
-          setTimeout(() => {
-            flatMajorButton.checked = true;
-            flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 5);
-        }, 10);
-      } else {
-        flatMajorButton.checked = true;
-        flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
-        sharpMinorColumn.classList.remove('no-key-transitions');
-      }
-    }
-  }, true);
-}
-  
-  if (flatMinorButton) {
-  flatMinorButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const currentKey = getCurrentlySelectedKey();
-    
-    if (flatMajMin === 'minor') {
-      flatMajMin = null;
-      styleMajMinButton(flatMinorButton, false);
-      flatMinorButton.checked = false;
-      flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      flatMajMin = 'minor';
-      styleMajMinButton(flatMinorButton, true);
-      styleMajMinButton(flatMajorButton, false);
-      flatMajorButton.checked = false;
-      
-      if (flatMinorColumn) {
-        flatMinorColumn.style.display = 'flex';
-        flatMinorColumn.style.visibility = 'visible';
-        flatMinorColumn.style.opacity = '1';
-      }
-      if (flatMajorColumn) {
-        flatMajorColumn.style.display = 'none';
-      }
-      
-      if (currentKey && flatMinorColumn) {
-        sharpMinorColumn.classList.add('no-key-transitions');
-        setTimeout(() => {
-          restoreSelectedKey(currentKey, flatMinorColumn);
-          setTimeout(() => {
-            flatMinorButton.checked = true;
-            flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-          }, 5);
-        }, 10);
-      } else {
-        flatMinorButton.checked = true;
-        flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
-        sharpMinorColumn.classList.remove('no-key-transitions');
-      }
-    }
-  }, true);
-}
-  
- /**
- * Listen for key radio button clicks to maintain Major/Minor active state
- */
-function attachKeyRadioListeners(column, section, majMin) {
-  const radios = column.querySelectorAll('input[type="radio"]');
-  radios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        // Check if major/minor was ALREADY active before this key was clicked
-        const wasMajorActive = (section === 'sharp' ? sharpMajMin : flatMajMin) === 'major';
-        const wasMinorActive = (section === 'sharp' ? sharpMajMin : flatMajMin) === 'minor';
+        sharpMajMin = 'major';
+        styleMajMinButton(sharpMajorButton, true);
+        styleMajMinButton(sharpMinorButton, false);
+        sharpMinorButton.checked = false;
         
-        // Only keep major/minor active if it was already active
-        if (wasMajorActive || wasMinorActive) {
-          // Update state tracking
-          if (section === 'sharp') {
-            sharpMajMin = majMin;
-          } else {
-            flatMajMin = majMin;
-          }
-          
-          // Keep Major/Minor button visually active
+        if (sharpMajorColumn) {
+          sharpMajorColumn.style.display = 'flex';
+          sharpMajorColumn.style.visibility = 'visible';
+          sharpMajorColumn.style.opacity = '1';
+        }
+        if (sharpMinorColumn) {
+          sharpMinorColumn.style.display = 'none';
+        }
+        
+        if (currentKey && sharpMajorColumn) {
+          sharpMinorColumn.classList.add('no-key-transitions');
           setTimeout(() => {
-            if (majMin === 'major') {
-              const majorButton = section === 'sharp' ? sharpMajorButton : flatMajorButton;
-              styleMajMinButton(majorButton, true);
-              if (majorButton) {
-                majorButton.checked = true;
-              }
-            } else {
-              const minorButton = section === 'sharp' ? sharpMinorButton : flatMinorButton;
-              styleMajMinButton(minorButton, true);
-              if (minorButton) {
-                minorButton.checked = true;
-              }
-            }
+            restoreSelectedKey(currentKey, sharpMajorColumn);
+            setTimeout(() => {
+              sharpMajorButton.checked = true;
+              sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+              sharpMinorColumn.classList.remove('no-key-transitions');
+            }, 5);
           }, 10);
+        } else {
+          sharpMajorButton.checked = true;
+          sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
         }
       }
+    }, true);
+  }
+  
+  if (sharpMinorButton) {
+    sharpMinorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentKey = getCurrentlySelectedKey();
+      
+      if (sharpMajMin === 'minor') {
+        sharpMajMin = null;
+        styleMajMinButton(sharpMinorButton, false);
+        sharpMinorButton.checked = false;
+        sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        sharpMajMin = 'minor';
+        styleMajMinButton(sharpMinorButton, true);
+        styleMajMinButton(sharpMajorButton, false);
+        sharpMajorButton.checked = false;
+        
+        if (sharpMinorColumn) {
+          sharpMinorColumn.style.display = 'flex';
+          sharpMinorColumn.style.visibility = 'visible';
+          sharpMinorColumn.style.opacity = '1';
+        }
+        if (sharpMajorColumn) {
+          sharpMajorColumn.style.display = 'none';
+        }
+        
+        if (currentKey && sharpMinorColumn) {
+          sharpMinorColumn.classList.add('no-key-transitions');
+          setTimeout(() => {
+            restoreSelectedKey(currentKey, sharpMinorColumn);
+            setTimeout(() => {
+              sharpMinorButton.checked = true;
+              sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 5);
+          }, 10);
+        } else {
+          sharpMinorButton.checked = true;
+          sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          sharpMinorColumn.classList.remove('no-key-transitions');
+        }
+      }
+    }, true);
+  }
+  
+  if (flatMajorButton) {
+    flatMajorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentKey = getCurrentlySelectedKey();
+      
+      if (flatMajMin === 'major') {
+        flatMajMin = null;
+        styleMajMinButton(flatMajorButton, false);
+        flatMajorButton.checked = false;
+        flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        flatMajMin = 'major';
+        styleMajMinButton(flatMajorButton, true);
+        styleMajMinButton(flatMinorButton, false);
+        flatMinorButton.checked = false;
+        
+        if (flatMajorColumn) {
+          flatMajorColumn.style.display = 'flex';
+          flatMajorColumn.style.visibility = 'visible';
+          flatMajorColumn.style.opacity = '1';
+        }
+        if (flatMinorColumn) {
+          flatMinorColumn.style.display = 'none';
+        }
+        
+        if (currentKey && flatMajorColumn) {
+          sharpMinorColumn.classList.add('no-key-transitions');
+          setTimeout(() => {
+            restoreSelectedKey(currentKey, flatMajorColumn);
+            setTimeout(() => {
+              flatMajorButton.checked = true;
+              flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 5);
+          }, 10);
+        } else {
+          flatMajorButton.checked = true;
+          flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          sharpMinorColumn.classList.remove('no-key-transitions');
+        }
+      }
+    }, true);
+  }
+  
+  if (flatMinorButton) {
+    flatMinorButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentKey = getCurrentlySelectedKey();
+      
+      if (flatMajMin === 'minor') {
+        flatMajMin = null;
+        styleMajMinButton(flatMinorButton, false);
+        flatMinorButton.checked = false;
+        flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        flatMajMin = 'minor';
+        styleMajMinButton(flatMinorButton, true);
+        styleMajMinButton(flatMajorButton, false);
+        flatMajorButton.checked = false;
+        
+        if (flatMinorColumn) {
+          flatMinorColumn.style.display = 'flex';
+          flatMinorColumn.style.visibility = 'visible';
+          flatMinorColumn.style.opacity = '1';
+        }
+        if (flatMajorColumn) {
+          flatMajorColumn.style.display = 'none';
+        }
+        
+        if (currentKey && flatMinorColumn) {
+          sharpMinorColumn.classList.add('no-key-transitions');
+          setTimeout(() => {
+            restoreSelectedKey(currentKey, flatMinorColumn);
+            setTimeout(() => {
+              flatMinorButton.checked = true;
+              flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 5);
+          }, 10);
+        } else {
+          flatMinorButton.checked = true;
+          flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+          sharpMinorColumn.classList.remove('no-key-transitions');
+        }
+      }
+    }, true);
+  }
+  
+  /**
+   * Listen for key radio button clicks to maintain Major/Minor active state
+   */
+  function attachKeyRadioListeners(column, section, majMin) {
+    const radios = column.querySelectorAll('input[type="radio"]');
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.checked) {
+          // Check if major/minor was ALREADY active before this key was clicked
+          const wasMajorActive = (section === 'sharp' ? sharpMajMin : flatMajMin) === 'major';
+          const wasMinorActive = (section === 'sharp' ? sharpMajMin : flatMajMin) === 'minor';
+          
+          // Only keep major/minor active if it was already active
+          if (wasMajorActive || wasMinorActive) {
+            // Update state tracking
+            if (section === 'sharp') {
+              sharpMajMin = majMin;
+            } else {
+              flatMajMin = majMin;
+            }
+            
+            // Keep Major/Minor button visually active
+            setTimeout(() => {
+              if (majMin === 'major') {
+                const majorButton = section === 'sharp' ? sharpMajorButton : flatMajorButton;
+                styleMajMinButton(majorButton, true);
+                if (majorButton) {
+                  majorButton.checked = true;
+                }
+              } else {
+                const minorButton = section === 'sharp' ? sharpMinorButton : flatMinorButton;
+                styleMajMinButton(minorButton, true);
+                if (minorButton) {
+                  minorButton.checked = true;
+                }
+              }
+            }, 10);
+          }
+        }
+      });
     });
-  });
-}
+  }
   
   // Attach listeners to all key radio buttons
   if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
@@ -2341,77 +2668,77 @@ function attachKeyRadioListeners(column, section, majMin) {
   if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
 
-// Attach listeners to all key radio buttons
-if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
-if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
-if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
-if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
+  // Attach listeners to all key radio buttons (duplicate block kept as provided)
+  if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
+  if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
+  if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
+  if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
 
-// Remove old key tags when new key selected
-document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(radio => {
-  radio.addEventListener('change', () => {
-    if (radio.checked) {
-      const tagsContainer = document.querySelector('.filter-tags-container');
-      if (tagsContainer) {
-        const allKeyTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-        allKeyTags.forEach(tag => {
-          const tagText = tag.querySelector('.filter-tag-text')?.textContent.trim();
-          const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
-          const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
-          const currentKeyText = matchingLabel?.textContent.trim();
-          
-          if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
-            tag.remove();
-          }
-        });
+  // Remove old key tags when new key selected
+  document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        if (tagsContainer) {
+          const allKeyTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+          allKeyTags.forEach(tag => {
+            const tagText = tag.querySelector('.filter-tag-text')?.textContent.trim();
+            const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
+            const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
+            const currentKeyText = matchingLabel?.textContent.trim();
+            
+            if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
+              tag.remove();
+            }
+          });
+        }
       }
-    }
+    });
   });
-});
 
-/**
- * Initial state: Show Sharp section with major keys visible (but not filtered)
- */
-showSharpFlat('sharp');
+  /**
+   * Initial state: Show Sharp section with major keys visible (but not filtered)
+   */
+  showSharpFlat('sharp');
   
-/**
- * Initial state: Show Sharp section with major keys visible (but not filtered)
- */
-showSharpFlat('sharp');
+  /**
+   * Initial state: Show Sharp section with major keys visible (but not filtered)
+   */
+  showSharpFlat('sharp');
 
-// Show major keys in both sections for user selection (not filtering yet)
-if (sharpMajorColumn) {
-  sharpMajorColumn.style.display = 'flex';
-  sharpMajorColumn.style.visibility = 'visible';
-  sharpMajorColumn.style.opacity = '1';
-}
-if (sharpMinorColumn) {
-  sharpMinorColumn.style.display = 'none';
+  // Show major keys in both sections for user selection (not filtering yet)
+  if (sharpMajorColumn) {
+    sharpMajorColumn.style.display = 'flex';
+    sharpMajorColumn.style.visibility = 'visible';
+    sharpMajorColumn.style.opacity = '1';
+  }
+  if (sharpMinorColumn) {
+    sharpMinorColumn.style.display = 'none';
+  }
+
+  if (flatMajorColumn) {
+    flatMajorColumn.style.display = 'flex';
+    flatMajorColumn.style.visibility = 'visible';
+    flatMajorColumn.style.opacity = '1';
+  }
+  if (flatMinorColumn) {
+    flatMinorColumn.style.display = 'none';
+  }
+
+  // Ensure no buttons are styled as active on load
+  styleMajMinButton(sharpMajorButton, false);
+  styleMajMinButton(sharpMinorButton, false);
+  styleMajMinButton(flatMajorButton, false);
+  styleMajMinButton(flatMinorButton, false);
+
+  // Also remove any Webflow default active classes
+  const allWrappers = keyAccordion.querySelectorAll('.maj-wrapper, .min-wrapper');
+  allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
+
+  console.log('✅ Key Filter System initialized');
+  window.keyFilterSystemReady = true;
 }
 
-if (flatMajorColumn) {
-  flatMajorColumn.style.display = 'flex';
-  flatMajorColumn.style.visibility = 'visible';
-  flatMajorColumn.style.opacity = '1';
-}
-if (flatMinorColumn) {
-  flatMinorColumn.style.display = 'none';
-}
-
-// Ensure no buttons are styled as active on load
-styleMajMinButton(sharpMajorButton, false);
-styleMajMinButton(sharpMinorButton, false);
-styleMajMinButton(flatMajorButton, false);
-styleMajMinButton(flatMinorButton, false);
-
-// Also remove any Webflow default active classes
-const allWrappers = keyAccordion.querySelectorAll('.maj-wrapper, .min-wrapper');
-allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
-
-console.log('✅ Key Filter System initialized');
-window.keyFilterSystemReady = true;
-}
-  
 function toggleClearButton() {
   const clearBtn = document.querySelector('.circle-x');
   const searchBar = document.querySelector('[data-filter-search="true"]');
@@ -2429,118 +2756,158 @@ function initSearchAndFilters() {
   const clearBtn = document.querySelector('.circle-x');
   
   function clearAllFilters() {
-  const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+    const hasSearch = searchBar && searchBar.value.trim().length > 0;
+    const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
 
-  if (!hasSearch && !hasFilters) {
-    return;
-  }
+    if (!hasSearch && !hasFilters) {
+      return;
+    }
 
-  if (searchBar && hasSearch) {
-    searchBar.value = '';
-    // Optional: dispatch input to trigger applyFilters early
-    searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-  }
+    if (searchBar && hasSearch) {
+      searchBar.value = '';
+      // Optional: dispatch input to trigger applyFilters early
+      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 
-  // Clear checkbox filters
-  const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-  if (tagRemoveButtons.length > 0) {
-    tagRemoveButtons.forEach((btn) => btn.click());
-  } else {
-    document.querySelectorAll('[data-filter-group]').forEach(input => {
-      if (input.checked) {
-        input.checked = false;
-        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    });
-  }
-
-  // Save empty state so restoration knows it was intentionally cleared
-  localStorage.setItem('musicFilters', JSON.stringify({
-    filters: [],
-    searchQuery: ''
-  }));
-
-  toggleClearButton();
-  applyFilters();
-}
-  
- function applyFilters() {
-  const g = window.musicPlayerPersistent;
-  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
-  const keywords = query.split(/\s+/).filter(k => k.length > 0);
-  const filterInputs = document.querySelectorAll('[data-filter-group]');
-  const selectedFilters = [];
-  
-  filterInputs.forEach(input => {
-    if (input.checked) {
-      const group = input.getAttribute('data-filter-group');
-      const value = input.getAttribute('data-filter-value');
-      const keyGroup = input.getAttribute('data-key-group');
-      
-      selectedFilters.push({
-        group: group,
-        value: value ? value.toLowerCase() : null,
-        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+    // Clear checkbox filters
+    const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
+    if (tagRemoveButtons.length > 0) {
+      tagRemoveButtons.forEach((btn) => btn.click());
+    } else {
+      document.querySelectorAll('[data-filter-group]').forEach(input => {
+        if (input.checked) {
+          input.checked = false;
+          const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
+          if (wrapper) wrapper.classList.remove('is-active');
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       });
     }
-  });
-  
-  const visibleIds = g.MASTER_DATA.filter(record => {
-    const fields = record.fields;
-    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-    const matchesSearch = keywords.every(k => allText.includes(k));
-    
-    const matchesAttributes = selectedFilters.every(filter => {
-      let recVal = fields[filter.group];
-      if (recVal === undefined || recVal === null) return false;
-      
-      if (filter.keyGroup) {
-        if (filter.keyGroup === 'major') {
-          return String(recVal).toLowerCase().endsWith('maj');
-        }
-        if (filter.keyGroup === 'minor') {
-          return String(recVal).toLowerCase().endsWith('min');
-        }
-      }
-      
-      if (filter.value) {
-        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
-        return String(recVal).toLowerCase() === filter.value;
-      }
-      
-      return false;
-    });
 
-    return matchesSearch && matchesAttributes;
-  }).map(r => r.id);
-  
-  // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (isMusicPage) {
-    g.filteredSongIds = visibleIds;
-    console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
+    // Save empty state so restoration knows it was intentionally cleared
+    localStorage.setItem('musicFilters', JSON.stringify({
+      filters: [],
+      searchQuery: ''
+    }));
+
+    // ✅ ALSO CLEAR BPM FILTER STATE
+    if (g.bpmFilter) {
+      g.bpmFilter.exact = null;
+      g.bpmFilter.low = null;
+      g.bpmFilter.high = null;
+    }
+
+    // ✅ FORCE BPM UI TO RE-SYNC (OPTIONAL)
+    if (typeof initBpmFilterSystem === 'function') {
+      const bpmSection =
+        document.querySelector('[data-filter-type="bpm"]') ||
+        document.querySelector('.bpm');
+
+      if (bpmSection) {
+        window.dispatchEvent(new Event('resize'));
+      }
+    }
+
+    toggleClearButton();
+    applyFilters();
   }
   
-  document.querySelectorAll('.song-wrapper').forEach(card => {
-    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
-  });
-  
-  toggleClearButton();
-}
+  function applyFilters() {
+    const g = window.musicPlayerPersistent;
+    const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+    const keywords = query.split(/\s+/).filter(k => k.length > 0);
+    const filterInputs = document.querySelectorAll('[data-filter-group]');
+    const selectedFilters = [];
+    
+    filterInputs.forEach(input => {
+      if (input.checked) {
+        const group = input.getAttribute('data-filter-group');
+        const value = input.getAttribute('data-filter-value');
+        const keyGroup = input.getAttribute('data-key-group');
+        
+        selectedFilters.push({
+          group: group,
+          value: value ? value.toLowerCase() : null,
+          keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+        });
+      }
+    });
+    
+    const visibleIds = g.MASTER_DATA.filter(record => {
+      const fields = record.fields;
+      const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+      const matchesSearch = keywords.every(k => allText.includes(k));
+      
+      const matchesAttributes = selectedFilters.every(filter => {
+        let recVal = fields[filter.group];
+        if (recVal === undefined || recVal === null) return false;
+        
+        if (filter.keyGroup) {
+          if (filter.keyGroup === 'major') {
+            return String(recVal).toLowerCase().endsWith('maj');
+          }
+          if (filter.keyGroup === 'minor') {
+            return String(recVal).toLowerCase().endsWith('min');
+          }
+        }
+        
+        if (filter.value) {
+          if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+          return String(recVal).toLowerCase() === filter.value;
+        }
+        
+        return false;
+      });
+
+      // BPM filtering (exact OR range)
+      const bpmState = g.bpmFilter || { mode: 'range', exact: null, low: null, high: null };
+      const bpmValue = parseFloat(fields['BPM']);
+
+      let matchesBpm = true;
+
+      if (isFinite(bpmValue)) {
+        if (bpmState.mode === 'exact' && bpmState.exact !== null) {
+          matchesBpm = bpmValue === bpmState.exact;
+        } else if (bpmState.mode === 'range' && (bpmState.low !== null || bpmState.high !== null)) {
+          const low = bpmState.low !== null ? bpmState.low : 1;
+          const high = bpmState.high !== null ? bpmState.high : 300;
+          matchesBpm = bpmValue >= low && bpmValue <= high;
+        }
+      } else {
+        // If a BPM filter is active, songs without BPM should fail
+        const bpmFilterActive =
+          (bpmState.mode === 'exact' && bpmState.exact !== null) ||
+          (bpmState.mode === 'range' && (bpmState.low !== null || bpmState.high !== null));
+        if (bpmFilterActive) matchesBpm = false;
+      }
+      
+      return matchesSearch && matchesAttributes && matchesBpm;
+    }).map(r => r.id);
+    
+    // 👇 ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
+    const isMusicPage = !!document.querySelector('.music-list-wrapper');
+    if (isMusicPage) {
+      g.filteredSongIds = visibleIds;
+      console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
+    }
+    
+    document.querySelectorAll('.song-wrapper').forEach(card => {
+      card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
+    });
+    
+    toggleClearButton();
+  }
   
   if (clearBtn) {
-  // Start hidden — will only show after restoration (if needed)
-  clearBtn.style.display = 'none';
-  clearBtn.addEventListener('click', clearAllFilters);
+    // Start hidden — will only show after restoration (if needed)
+    clearBtn.style.display = 'none';
+    clearBtn.addEventListener('click', clearAllFilters);
 
-  // Safety: update visibility after a delay in case restoration takes time
-  setTimeout(() => {
-    toggleClearButton();
-  }, 800);
-}
+    // Safety: update visibility after a delay in case restoration takes time
+    setTimeout(() => {
+      toggleClearButton();
+    }, 800);
+  }
   
   if (searchBar) {
     searchBar.addEventListener('input', () => {
@@ -2701,78 +3068,78 @@ if (typeof barba !== 'undefined') {
     transitions: [{
       name: 'default',
       
-    beforeLeave(data) {
-  const g = window.musicPlayerPersistent;
-  g.isTransitioning = true;
-  const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-  const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
-  
-  g.filtersInitialized = false;
-  
-  // Clean up waveforms from ANY page (music page OR home page with featured songs)
-  if (isMusicPage || hasFeaturedSongs) {
-    g.allWavesurfers.forEach(ws => {
-      try {
-        ws.unAll();
-        ws.destroy();
-      } catch (error) {
-        console.warn('Error destroying wavesurfer:', error);
-      }
-    });
-    
-    document.querySelectorAll('.waveform').forEach(container => {
-      container.innerHTML = '';
-    });
-    
-    g.allWavesurfers = [];
-    g.waveformData = [];
-    g.persistedWaveformContainer = null;
-    g.currentWavesurfer = null;
-  }
-  
-  const playerWrapper = document.querySelector('.music-player-wrapper');
-  if (playerWrapper && g.hasActiveSong) {
-    playerWrapper.style.transition = 'none';
-  }
-  
-  document.body.style.overflow = '';
-  document.documentElement.style.overflow = '';
-  document.body.style.height = '';
-  return Promise.resolve();
-},
+      beforeLeave(data) {
+        const g = window.musicPlayerPersistent;
+        g.isTransitioning = true;
+        const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+        const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
+        
+        g.filtersInitialized = false;
+        
+        // Clean up waveforms from ANY page (music page OR home page with featured songs)
+        if (isMusicPage || hasFeaturedSongs) {
+          g.allWavesurfers.forEach(ws => {
+            try {
+              ws.unAll();
+              ws.destroy();
+            } catch (error) {
+              console.warn('Error destroying wavesurfer:', error);
+            }
+          });
+          
+          document.querySelectorAll('.waveform').forEach(container => {
+            container.innerHTML = '';
+          });
+          
+          g.allWavesurfers = [];
+          g.waveformData = [];
+          g.persistedWaveformContainer = null;
+          g.currentWavesurfer = null;
+        }
+        
+        const playerWrapper = document.querySelector('.music-player-wrapper');
+        if (playerWrapper && g.hasActiveSong) {
+          playerWrapper.style.transition = 'none';
+        }
+        
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.height = '';
+        return Promise.resolve();
+      },
 
-     beforeEnter(data) {
-  const nextContainer = data.next.container;
-  const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
+      beforeEnter(data) {
+        const nextContainer = data.next.container;
+        const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
-  // Inject CSS to hide ONLY .login-section during transition
-  const styleId = 'barba-transition-style';
-  let style = document.getElementById(styleId);
-  if (!style) {
-    style = document.createElement('style');
-    style.id = styleId;
-    document.head.appendChild(style);
-  }
-  style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
+        // Inject CSS to hide ONLY .login-section during transition
+        const styleId = 'barba-transition-style';
+        let style = document.getElementById(styleId);
+        if (!style) {
+          style = document.createElement('style');
+          style.id = styleId;
+          document.head.appendChild(style);
+        }
+        style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
-  if (!isMusicPage) {
-    document.body.style.overflow = 'visible';
-    document.documentElement.style.overflow = 'visible';
-    document.body.style.height = 'auto';
-    nextContainer.style.overflow = 'visible';
-    
-    const mainContent = nextContainer.querySelector('.main-content');
-    if (mainContent) mainContent.style.overflow = 'visible';
-  } else {
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
-    nextContainer.style.overflow = 'hidden';
-    
-    const musicArea = nextContainer.querySelector('.music-area-wrapper');
-    if (musicArea) musicArea.style.overflow = 'hidden';
-  }
-},
+        if (!isMusicPage) {
+          document.body.style.overflow = 'visible';
+          document.documentElement.style.overflow = 'visible';
+          document.body.style.height = 'auto';
+          nextContainer.style.overflow = 'visible';
+          
+          const mainContent = nextContainer.querySelector('.main-content');
+          if (mainContent) mainContent.style.overflow = 'visible';
+        } else {
+          document.body.style.overflow = 'hidden';
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.height = '100vh';
+          nextContainer.style.overflow = 'hidden';
+          
+          const musicArea = nextContainer.querySelector('.music-area-wrapper');
+          if (musicArea) musicArea.style.overflow = 'hidden';
+        }
+      },
 
       enter(data) {
         removeDuplicateIds();
@@ -2787,246 +3154,246 @@ if (typeof barba !== 'undefined') {
       },
 
       after(data) {
-  console.log('🚪 BARBA AFTER FIRED');
-  
-  const g = window.musicPlayerPersistent;
-  
-  window.scrollTo(0, 0);
-  
-  console.log('🔍 Checking for page ID...');
-  let newPageId = null;
+        console.log('🚪 BARBA AFTER FIRED');
+        
+        const g = window.musicPlayerPersistent;
+        
+        window.scrollTo(0, 0);
+        
+        console.log('🔍 Checking for page ID...');
+        let newPageId = null;
 
-  newPageId = data.next.container?.getAttribute('data-wf-page');
-  console.log('Method 1 (container):', newPageId);
+        newPageId = data.next.container?.getAttribute('data-wf-page');
+        console.log('Method 1 (container):', newPageId);
 
-  if (!newPageId && data.next.html) {
-    console.log('Method 2: Searching HTML string for data-wf-page');
-    
-    const match = data.next.html.match(/data-wf-page="([^"]+)"/);
-    
-    if (match && match[1]) {
-      newPageId = match[1];
-      console.log('Page ID from regex:', newPageId);
-    } else {
-      console.log('No data-wf-page found in HTML string');
-    }
-  }
-
-  const htmlTag = document.documentElement;
-  const currentPageId = htmlTag.getAttribute('data-wf-page');
-
-  console.log('Current page ID:', currentPageId);
-  console.log('New page ID:', newPageId);
-
-  if (newPageId && currentPageId !== newPageId) {
-    console.log(`📄 Swapping Page ID from ${currentPageId} to ${newPageId}`);
-    htmlTag.setAttribute('data-wf-page', newPageId);
-    console.log('✅ Page ID updated!');
-  } else if (!newPageId) {
-    console.log('⚠️ No new page ID found');
-  } else if (currentPageId === newPageId) {
-    console.log('ℹ️ Page IDs are already the same - no swap needed');
-  }
-  
-  if (window.Webflow) {
-    try {
-      const ix2 = window.Webflow.require('ix2');
-      if (ix2 && ix2.destroy) {
-        ix2.destroy();
-      }
-      
-      window.Webflow.destroy();
-      document.body.offsetHeight;
-      window.Webflow.ready();
-      
-      setTimeout(() => {
-        if (window.Webflow && window.Webflow.require) {
-          const ix2 = window.Webflow.require('ix2');
-          if (ix2 && ix2.init) {
-            ix2.init();
+        if (!newPageId && data.next.html) {
+          console.log('Method 2: Searching HTML string for data-wf-page');
+          
+          const match = data.next.html.match(/data-wf-page="([^"]+)"/);
+          
+          if (match && match[1]) {
+            newPageId = match[1];
+            console.log('Page ID from regex:', newPageId);
+          } else {
+            console.log('No data-wf-page found in HTML string');
           }
         }
-      }, 100);
-      
-    } catch (e) {
-      console.warn('Webflow reinit error:', e);
-    }
-  }
-  
-  positionMasterPlayer();
-  
-  setTimeout(() => {
-    setupMasterPlayerControls();
-    positionMasterPlayer();
-    updateMasterPlayerVisibility();
 
-    // Adjust main-content height based on player visibility (login/signup pages only)
-const mainContent = document.querySelector('.main-content');
-const playerWrapper = document.querySelector('.music-player-wrapper');
-const isPlayerVisible = playerWrapper && 
-                       playerWrapper.style.display !== 'none' && 
-                       playerWrapper.style.visibility !== 'hidden';
+        const htmlTag = document.documentElement;
+        const currentPageId = htmlTag.getAttribute('data-wf-page');
 
-const isLoginPage = !!document.querySelector('.login-section');
+        console.log('Current page ID:', currentPageId);
+        console.log('New page ID:', newPageId);
 
-if (mainContent && isLoginPage) {
-  if (isPlayerVisible) {
-    mainContent.style.height = 'calc(100vh - 77px)';
-    console.log('📐 Main content: calc(100vh - 77px) - player visible');
-  } else {
-    mainContent.style.height = '100vh';
-    console.log('📐 Main content: 100vh - player hidden');
-  }
-  
-  // Remove hiding CSS and reveal .login-section smoothly
-  const style = document.getElementById('barba-transition-style');
-  if (style) style.remove();
-  
-  const loginSection = document.querySelector('.login-section');
-  if (loginSection) {
-    loginSection.style.transition = 'opacity 0.15s ease';
-    loginSection.style.opacity = '1';
-  }
-} else if (mainContent) {
-  mainContent.style.height = '';  // Remove any forced height on other pages
-  const style = document.getElementById('barba-transition-style');
-  if (style) style.remove();
-}
-
-    g.isTransitioning = false;
-
-    setTimeout(() => {
-      const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-      console.log('🏠 [BARBA AFTER] Checking for featured songs container:', hasFeaturedSongs);
-      if (hasFeaturedSongs) {
-        console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
-        displayFeaturedSongs(6);
-      }
-    }, 300);
-    
-    if (g.currentSongData) {
-      updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
-      updateMasterControllerIcons(g.isPlaying);
-      updatePlayerCoverArtIcons(g.isPlaying);
-      
-      if (g.currentPeaksData) {
-        let progress = 0;
-        
-        if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        } else if (g.currentDuration > 0) {
-          progress = g.currentTime / g.currentDuration;
+        if (newPageId && currentPageId !== newPageId) {
+          console.log(`📄 Swapping Page ID from ${currentPageId} to ${newPageId}`);
+          htmlTag.setAttribute('data-wf-page', newPageId);
+          console.log('✅ Page ID updated!');
+        } else if (!newPageId) {
+          console.log('⚠️ No new page ID found');
+        } else if (currentPageId === newPageId) {
+          console.log('ℹ️ Page IDs are already the same - no swap needed');
         }
         
-        drawMasterWaveform(g.currentPeaksData, progress);
-      }
-    }
-    
-    if (playerWrapper) {
-      playerWrapper.style.transition = '';
-    }
-    
-    setTimeout(() => {
-      positionMasterPlayer();
-    }, 100);
-    
-   setTimeout(() => {
-  if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
-    console.log('🔄 Attempting to re-initialize pricing toggle...');
-    try {
-      initPricingToggle();
-      console.log('✅ Pricing toggle re-initialized successfully');
-    } catch (e) {
-      console.error('❌ Error initializing pricing toggle:', e);
-    }
-  }
-
-// NEW: Reinitialize tabs
-  reinitializeTabs();
-  
-// Manual password toggle for login/signup pages
-const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
-
-passwordFields.forEach(passwordField => {
-  const container = passwordField.closest('.form-field, .password-field, .form-block, form');
-  if (!container) return;
-  
-  const visibleToggle = container.querySelector('.password-toggle-visible');
-  const hiddenToggle = container.querySelector('.password-toggle-hidden');
-  
-  if (!visibleToggle || !hiddenToggle) return;
-  
-  // Clone to remove old listeners
-  const newVisibleToggle = visibleToggle.cloneNode(true);
-  const newHiddenToggle = hiddenToggle.cloneNode(true);
-  visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
-  hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
-  
-  // Setup visible toggle (shows password when clicked)
-  newVisibleToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    passwordField.type = 'text';
-    newVisibleToggle.style.display = 'none';
-    newHiddenToggle.style.display = 'flex';
-    console.log('👁️ Password shown');
-  });
-  
-  // Setup hidden toggle (hides password when clicked)
-  newHiddenToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    passwordField.type = 'password';
-    newVisibleToggle.style.display = 'flex';
-    newHiddenToggle.style.display = 'none';
-    console.log('🔒 Password hidden');
-  });
-  
-  // Set initial state
-  passwordField.type = 'password';
-  newVisibleToggle.style.display = 'flex';
-  newHiddenToggle.style.display = 'none';
-  
-  console.log('✅ Password toggle initialized');
-});
-     
-}, 400);
-    
-    window.dispatchEvent(new Event('scroll'));
-    window.dispatchEvent(new Event('resize'));
-    window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
-    
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-      window.dispatchEvent(new Event('scroll'));
-      
-      document.querySelectorAll('[data-w-id]').forEach(el => {
-        if (el.style.opacity === '0' || el.style.display === 'none') {
-          el.style.opacity = '';
-          el.style.display = '';
-        }
-        el.style.transform = '';
-      });
-      
-      if (window.Webflow && window.Webflow.redraw) {
-        window.Webflow.redraw.up();
-      }
-      
-      if (window.Webflow && window.Webflow.require) {
-        try {
-          const ix2 = window.Webflow.require('ix2');
-          if (ix2 && ix2.init) {
-            ix2.init();
+        if (window.Webflow) {
+          try {
+            const ix2 = window.Webflow.require('ix2');
+            if (ix2 && ix2.destroy) {
+              ix2.destroy();
+            }
+            
+            window.Webflow.destroy();
+            document.body.offsetHeight;
+            window.Webflow.ready();
+            
+            setTimeout(() => {
+              if (window.Webflow && window.Webflow.require) {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              }
+            }, 100);
+            
+          } catch (e) {
+            console.warn('Webflow reinit error:', e);
           }
-        } catch (e) {}
+        }
+        
+        positionMasterPlayer();
+        
+        setTimeout(() => {
+          setupMasterPlayerControls();
+          positionMasterPlayer();
+          updateMasterPlayerVisibility();
+
+          // Adjust main-content height based on player visibility (login/signup pages only)
+          const mainContent = document.querySelector('.main-content');
+          const playerWrapper = document.querySelector('.music-player-wrapper');
+          const isPlayerVisible = playerWrapper && 
+                                 playerWrapper.style.display !== 'none' && 
+                                 playerWrapper.style.visibility !== 'hidden';
+
+          const isLoginPage = !!document.querySelector('.login-section');
+
+          if (mainContent && isLoginPage) {
+            if (isPlayerVisible) {
+              mainContent.style.height = 'calc(100vh - 77px)';
+              console.log('📐 Main content: calc(100vh - 77px) - player visible');
+            } else {
+              mainContent.style.height = '100vh';
+              console.log('📐 Main content: 100vh - player hidden');
+            }
+            
+            // Remove hiding CSS and reveal .login-section smoothly
+            const style = document.getElementById('barba-transition-style');
+            if (style) style.remove();
+            
+            const loginSection = document.querySelector('.login-section');
+            if (loginSection) {
+              loginSection.style.transition = 'opacity 0.15s ease';
+              loginSection.style.opacity = '1';
+            }
+          } else if (mainContent) {
+            mainContent.style.height = '';  // Remove any forced height on other pages
+            const style = document.getElementById('barba-transition-style');
+            if (style) style.remove();
+          }
+
+          g.isTransitioning = false;
+
+          setTimeout(() => {
+            const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+            console.log('🏠 [BARBA AFTER] Checking for featured songs container:', hasFeaturedSongs);
+            if (hasFeaturedSongs) {
+              console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
+              displayFeaturedSongs(6);
+            }
+          }, 300);
+          
+          if (g.currentSongData) {
+            updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
+            updateMasterControllerIcons(g.isPlaying);
+            updatePlayerCoverArtIcons(g.isPlaying);
+            
+            if (g.currentPeaksData) {
+              let progress = 0;
+              
+              if (g.standaloneAudio && g.standaloneAudio.duration > 0) {
+                progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+              } else if (g.currentDuration > 0) {
+                progress = g.currentTime / g.currentDuration;
+              }
+              
+              drawMasterWaveform(g.currentPeaksData, progress);
+            }
+          }
+          
+          if (playerWrapper) {
+            playerWrapper.style.transition = '';
+          }
+          
+          setTimeout(() => {
+            positionMasterPlayer();
+          }, 100);
+          
+          setTimeout(() => {
+            if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
+              console.log('🔄 Attempting to re-initialize pricing toggle...');
+              try {
+                initPricingToggle();
+                console.log('✅ Pricing toggle re-initialized successfully');
+              } catch (e) {
+                console.error('❌ Error initializing pricing toggle:', e);
+              }
+            }
+
+            // NEW: Reinitialize tabs
+            reinitializeTabs();
+            
+            // Manual password toggle for login/signup pages
+            const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
+
+            passwordFields.forEach(passwordField => {
+              const container = passwordField.closest('.form-field, .password-field, .form-block, form');
+              if (!container) return;
+              
+              const visibleToggle = container.querySelector('.password-toggle-visible');
+              const hiddenToggle = container.querySelector('.password-toggle-hidden');
+              
+              if (!visibleToggle || !hiddenToggle) return;
+              
+              // Clone to remove old listeners
+              const newVisibleToggle = visibleToggle.cloneNode(true);
+              const newHiddenToggle = hiddenToggle.cloneNode(true);
+              visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
+              hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
+              
+              // Setup visible toggle (shows password when clicked)
+              newVisibleToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                passwordField.type = 'text';
+                newVisibleToggle.style.display = 'none';
+                newHiddenToggle.style.display = 'flex';
+                console.log('👁️ Password shown');
+              });
+              
+              // Setup hidden toggle (hides password when clicked)
+              newHiddenToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                passwordField.type = 'password';
+                newVisibleToggle.style.display = 'flex';
+                newHiddenToggle.style.display = 'none';
+                console.log('🔒 Password hidden');
+              });
+              
+              // Set initial state
+              passwordField.type = 'password';
+              newVisibleToggle.style.display = 'flex';
+              newHiddenToggle.style.display = 'none';
+              
+              console.log('✅ Password toggle initialized');
+            });
+            
+          }, 400);
+          
+          window.dispatchEvent(new Event('scroll'));
+          window.dispatchEvent(new Event('resize'));
+          window.dispatchEvent(new CustomEvent('barbaAfterTransition'));
+          
+          setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+            window.dispatchEvent(new Event('scroll'));
+            
+            document.querySelectorAll('[data-w-id]').forEach(el => {
+              if (el.style.opacity === '0' || el.style.display === 'none') {
+                el.style.opacity = '';
+                el.style.display = '';
+              }
+              el.style.transform = '';
+            });
+            
+            if (window.Webflow && window.Webflow.redraw) {
+              window.Webflow.redraw.up();
+            }
+            
+            if (window.Webflow && window.Webflow.require) {
+              try {
+                const ix2 = window.Webflow.require('ix2');
+                if (ix2 && ix2.init) {
+                  ix2.init();
+                }
+              } catch (e) {}
+            }
+            
+          }, 600);
+          
+        }, 200);
       }
-      
-    }, 600);
-    
-  }, 200);
-}
     }]
   });
 }
@@ -3246,29 +3613,29 @@ function saveFilterState() {
     }
   };
   
- // Check if specific keys are selected
-const hasSpecificKeySelected = !!document.querySelector('[data-filter-group="Key"][data-filter-value]:checked');
+  // Check if specific keys are selected
+  const hasSpecificKeySelected = !!document.querySelector('[data-filter-group="Key"][data-filter-value]:checked');
 
-// Save all checked filters
-document.querySelectorAll('[data-filter-group]').forEach(input => {
-  if (input.checked) {
-    const isKeyGroup = input.getAttribute('data-filter-group') === 'Key';
-    const hasKeyGroupAttr = input.hasAttribute('data-key-group');
-    const hasFilterValue = input.hasAttribute('data-filter-value');
-    
-    // Skip major/minor radios if a specific key is selected
-    if (isKeyGroup && hasKeyGroupAttr && !hasFilterValue && hasSpecificKeySelected) {
-      console.log('⏭️ Skipping major/minor radio (specific key selected)');
-      return; // Skip this radio
+  // Save all checked filters
+  document.querySelectorAll('[data-filter-group]').forEach(input => {
+    if (input.checked) {
+      const isKeyGroup = input.getAttribute('data-filter-group') === 'Key';
+      const hasKeyGroupAttr = input.hasAttribute('data-key-group');
+      const hasFilterValue = input.hasAttribute('data-filter-value');
+      
+      // Skip major/minor radios if a specific key is selected
+      if (isKeyGroup && hasKeyGroupAttr && !hasFilterValue && hasSpecificKeySelected) {
+        console.log('⏭️ Skipping major/minor radio (specific key selected)');
+        return; // Skip this radio
+      }
+      
+      filterState.filters.push({
+        group: input.getAttribute('data-filter-group'),
+        value: input.getAttribute('data-filter-value'),
+        keyGroup: input.getAttribute('data-key-group')
+      });
     }
-    
-    filterState.filters.push({
-      group: input.getAttribute('data-filter-group'),
-      value: input.getAttribute('data-filter-value'),
-      keyGroup: input.getAttribute('data-key-group')
-    });
-  }
-});
+  });
   
   // Save search query
   const searchBar = document.querySelector('[data-filter-search="true"]');
@@ -3286,24 +3653,24 @@ document.querySelectorAll('[data-filter-group]').forEach(input => {
   }
   
   // Detect Sharp section Major/Minor state - check if INPUT is checked
-const sharpMajorInput = document.querySelector('.sharp-key-column [data-key-group="major"]');
-const sharpMinorInput = document.querySelector('.sharp-key-column [data-key-group="minor"]');
+  const sharpMajorInput = document.querySelector('.sharp-key-column [data-key-group="major"]');
+  const sharpMinorInput = document.querySelector('.sharp-key-column [data-key-group="minor"]');
 
-if (sharpMajorInput?.checked) {
-  filterState.keyState.sharpMajMin = 'major';
-} else if (sharpMinorInput?.checked) {
-  filterState.keyState.sharpMajMin = 'minor';
-}
+  if (sharpMajorInput?.checked) {
+    filterState.keyState.sharpMajMin = 'major';
+  } else if (sharpMinorInput?.checked) {
+    filterState.keyState.sharpMajMin = 'minor';
+  }
 
-// Detect Flat section Major/Minor state - check if INPUT is checked
-const flatMajorInput = document.querySelector('.flat-key-column [data-key-group="major"]');
-const flatMinorInput = document.querySelector('.flat-key-column [data-key-group="minor"]');
+  // Detect Flat section Major/Minor state - check if INPUT is checked
+  const flatMajorInput = document.querySelector('.flat-key-column [data-key-group="major"]');
+  const flatMinorInput = document.querySelector('.flat-key-column [data-key-group="minor"]');
 
-if (flatMajorInput?.checked) {
-  filterState.keyState.flatMajMin = 'major';
-} else if (flatMinorInput?.checked) {
-  filterState.keyState.flatMajMin = 'minor';
-}
+  if (flatMajorInput?.checked) {
+    filterState.keyState.flatMajMin = 'major';
+  } else if (flatMinorInput?.checked) {
+    filterState.keyState.flatMajMin = 'minor';
+  }
   
   localStorage.setItem('musicFilters', JSON.stringify(filterState));
   console.log('💾 Saved filter state (with Key state):', filterState);
@@ -3441,46 +3808,45 @@ function restoreFilterState() {
     }
     
     // Don't dispatch change events - we already created the tags manually
-// Dispatching would cause Webflow to create duplicate tags
-console.log('⏭️ Skipping change events to prevent duplicate tags');
+    // Dispatching would cause Webflow to create duplicate tags
+    console.log('⏭️ Skipping change events to prevent duplicate tags');
       
-      setTimeout(() => {
-        if (tagsContainer) {
-          const seen = new Set();
-          const tagsToRemove = [];
-          
-          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
-            const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-            if (text) {
-              if (seen.has(text)) {
-                tagsToRemove.push(tag);
-              } else {
-                seen.add(text);
-              }
+    setTimeout(() => {
+      if (tagsContainer) {
+        const seen = new Set();
+        const tagsToRemove = [];
+        
+        tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
+          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          if (text) {
+            if (seen.has(text)) {
+              tagsToRemove.push(tag);
+            } else {
+              seen.add(text);
             }
-          });
-          
-          tagsToRemove.forEach(tag => tag.remove());
-          
-          if (tagsToRemove.length > 0) {
-            console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
           }
-          
-          setTimeout(() => {
-            if (tagsContainer) {
-              tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
-              tagsContainer.style.opacity = '1';
-            }
-            if (clearButton) {
-              clearButton.style.transition = 'opacity 0.3s ease-in-out';
-              clearButton.style.opacity = '1';
-            }
-            console.log('✨ Tags and clear button faded in');
-          }, 10);
+        });
+        
+        tagsToRemove.forEach(tag => tag.remove());
+        
+        if (tagsToRemove.length > 0) {
+          console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
         }
-      }, 100);
+        
+        setTimeout(() => {
+          if (tagsContainer) {
+            tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
+            tagsContainer.style.opacity = '1';
+          }
+          if (clearButton) {
+            clearButton.style.transition = 'opacity 0.3s ease-in-out';
+            clearButton.style.opacity = '1';
+          }
+          console.log('✨ Tags and clear button faded in');
+        }, 10);
+      }
+    }, 100);
 
-    
     if (filterState.searchQuery) {
       const searchBar = document.querySelector('[data-filter-search="true"]');
       if (searchBar) {
@@ -3489,48 +3855,48 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
       }
     }
     
-   // Restore Key filter UI state - wait longer for Key Filter System to initialize
-if (filterState.keyState) {
-  setTimeout(() => {
-    restoreKeyFilterState(filterState.keyState);
-    
-    // Manually create major/minor tags after restore completes
-    setTimeout(() => {
-      const hasSpecificKey = filterState.filters.some(f => f.group === 'Key' && f.value);
-      
-      if (hasSpecificKey && tagsContainer && filterState.keyState) {
-        // Check if major/minor INPUT is checked (not wrapper class)
-        if (filterState.keyState.sharpMajMin === 'major' || filterState.keyState.flatMajMin === 'major') {
-          const majorInput = document.querySelector('[data-key-group="major"]:checked');
-          if (majorInput) {
-            const tag = document.createElement('div');
-            tag.className = 'filter-tag';
-            tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
-            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-              majorInput.click();
-              tag.remove();
-            });
-            tagsContainer.appendChild(tag);
-          }
-        }
+    // Restore Key filter UI state - wait longer for Key Filter System to initialize
+    if (filterState.keyState) {
+      setTimeout(() => {
+        restoreKeyFilterState(filterState.keyState);
         
-        if (filterState.keyState.sharpMajMin === 'minor' || filterState.keyState.flatMajMin === 'minor') {
-          const minorInput = document.querySelector('[data-key-group="minor"]:checked');
-          if (minorInput) {
-            const tag = document.createElement('div');
-            tag.className = 'filter-tag';
-            tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
-            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-              minorInput.click();
-              tag.remove();
-            });
-            tagsContainer.appendChild(tag);
+        // Manually create major/minor tags after restore completes
+        setTimeout(() => {
+          const hasSpecificKey = filterState.filters.some(f => f.group === 'Key' && f.value);
+          
+          if (hasSpecificKey && tagsContainer && filterState.keyState) {
+            // Check if major/minor INPUT is checked (not wrapper class)
+            if (filterState.keyState.sharpMajMin === 'major' || filterState.keyState.flatMajMin === 'major') {
+              const majorInput = document.querySelector('[data-key-group="major"]:checked');
+              if (majorInput) {
+                const tag = document.createElement('div');
+                tag.className = 'filter-tag';
+                tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
+                tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+                  majorInput.click();
+                  tag.remove();
+                });
+                tagsContainer.appendChild(tag);
+              }
+            }
+            
+            if (filterState.keyState.sharpMajMin === 'minor' || filterState.keyState.flatMajMin === 'minor') {
+              const minorInput = document.querySelector('[data-key-group="minor"]:checked');
+              if (minorInput) {
+                const tag = document.createElement('div');
+                tag.className = 'filter-tag';
+                tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
+                tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+                  minorInput.click();
+                  tag.remove();
+                });
+                tagsContainer.appendChild(tag);
+              }
+            }
           }
-        }
-      }
-    }, 600);
-  }, 500);
-}
+        }, 600);
+      }, 500);
+    }
     
     // Ensure clear button state is correct after restore
     setTimeout(() => {
@@ -3542,15 +3908,15 @@ if (filterState.keyState) {
     console.log(`✅ Restored ${restoredCount} filters`);
     
     setTimeout(() => {
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
-    musicList.style.opacity = '1';
-    musicList.style.visibility = 'visible';
-    musicList.style.pointerEvents = 'auto';
-    musicList.style.transition = 'opacity 0.3s ease-in-out';
-  }
-  console.log('✨ Songs faded in');
-}, 800); // Increased from 150 to 800 to wait for filtering
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        musicList.style.transition = 'opacity 0.3s ease-in-out';
+      }
+      console.log('✨ Songs faded in');
+    }, 800); // Increased from 150 to 800 to wait for filtering
     
     return true;
   } catch (error) {
@@ -3594,90 +3960,90 @@ function restoreKeyFilterState(keyState) {
     }
   }
   
-function doRestore() {
-  // First, open the Key accordion if it's closed
-  const keyAccordion = document.querySelector('[data-filter-type="key"]');
-  const accordionToggle = keyAccordion?.querySelector('.filter-header, .accordion-header, [class*="toggle"], [class*="header"]');
-  
-  console.log('🔍 Accordion check:', {
-    keyAccordion: !!keyAccordion,
-    toggle: !!accordionToggle,
-    toggleClass: accordionToggle?.className
-  });
-  
-  // Don't auto-open - user can open manually if needed
-  
-  // Wait for wrapper to exist - re-query keyAccordion each time
-  let attempts = 0;
-  function waitForWrapper() {
+  function doRestore() {
+    // First, open the Key accordion if it's closed
     const keyAccordion = document.querySelector('[data-filter-type="key"]');
-    const wrapper = keyAccordion?.querySelector('.sharp-flat-toggle-wrapper');
-    console.log(`🔍 Attempt ${attempts + 1}:`, {
-      keyAccordion: !!keyAccordion,
-      wrapper: !!wrapper
-    });
-    if (wrapper) {
-      console.log('✅ Wrapper found, continuing restore...');
-      doActualRestore();
-    } else if (attempts < 10) {
-      attempts++;
-      console.log(`⏳ Waiting for wrapper... attempt ${attempts}`);
-      setTimeout(waitForWrapper, 50);
-    } else {
-      console.log('❌ Timeout waiting for wrapper');
-    }
-  }
-  
-  function doActualRestore() {
-  const keyAccordion = document.querySelector('[data-filter-type="key"]'); // Re-query here too!
-  const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
-    const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
-const sharpButton = buttons[0];
-const flatButton = buttons[1];
-
-// Restore Sharp/Flat selection
-if (keyState.sharpFlat === 'flat' && flatButton) {
-  flatButton.click();
-} else if (sharpButton) {
-  sharpButton.click();
-}
+    const accordionToggle = keyAccordion?.querySelector('.filter-header, .accordion-header, [class*="toggle"], [class*="header"]');
     
-    // Wait for Sharp/Flat to render, then restore Major/Minor
-    setTimeout(() => {
-      // Restore Sharp section Major/Minor - click the actual INPUT
-      if (keyState.sharpMajMin === 'major') {
-        const sharpMajorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="major"]');
-        if (sharpMajorInput) {
-          console.log('🎯 Clicking Sharp Major input');
-          sharpMajorInput.click();
-        }
-      } else if (keyState.sharpMajMin === 'minor') {
-        const sharpMinorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="minor"]');
-        if (sharpMinorInput) {
-          console.log('🎯 Clicking Sharp Minor input');
-          sharpMinorInput.click();
-        }
+    console.log('🔍 Accordion check:', {
+      keyAccordion: !!keyAccordion,
+      toggle: !!accordionToggle,
+      toggleClass: accordionToggle?.className
+    });
+    
+    // Don't auto-open - user can open manually if needed
+    
+    // Wait for wrapper to exist - re-query keyAccordion each time
+    let attempts = 0;
+    function waitForWrapper() {
+      const keyAccordion = document.querySelector('[data-filter-type="key"]');
+      const wrapper = keyAccordion?.querySelector('.sharp-flat-toggle-wrapper');
+      console.log(`🔍 Attempt ${attempts + 1}:`, {
+        keyAccordion: !!keyAccordion,
+        wrapper: !!wrapper
+      });
+      if (wrapper) {
+        console.log('✅ Wrapper found, continuing restore...');
+        doActualRestore();
+      } else if (attempts < 10) {
+        attempts++;
+        console.log(`⏳ Waiting for wrapper... attempt ${attempts}`);
+        setTimeout(waitForWrapper, 50);
+      } else {
+        console.log('❌ Timeout waiting for wrapper');
+      }
+    }
+    
+    function doActualRestore() {
+      const keyAccordion = document.querySelector('[data-filter-type="key"]'); // Re-query here too!
+      const sharpFlatWrapper = keyAccordion.querySelector('.sharp-flat-toggle-wrapper');
+      const buttons = sharpFlatWrapper.querySelectorAll('.w-button, button');
+      const sharpButton = buttons[0];
+      const flatButton = buttons[1];
+
+      // Restore Sharp/Flat selection
+      if (keyState.sharpFlat === 'flat' && flatButton) {
+        flatButton.click();
+      } else if (sharpButton) {
+        sharpButton.click();
       }
       
-      // Restore Flat section Major/Minor - click the actual INPUT
-      if (keyState.flatMajMin === 'major') {
-        const flatMajorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="major"]');
-        if (flatMajorInput) {
-          console.log('🎯 Clicking Flat Major input');
-          flatMajorInput.click();
+      // Wait for Sharp/Flat to render, then restore Major/Minor
+      setTimeout(() => {
+        // Restore Sharp section Major/Minor - click the actual INPUT
+        if (keyState.sharpMajMin === 'major') {
+          const sharpMajorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="major"]');
+          if (sharpMajorInput) {
+            console.log('🎯 Clicking Sharp Major input');
+            sharpMajorInput.click();
+          }
+        } else if (keyState.sharpMajMin === 'minor') {
+          const sharpMinorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="minor"]');
+          if (sharpMinorInput) {
+            console.log('🎯 Clicking Sharp Minor input');
+            sharpMinorInput.click();
+          }
         }
-      } else if (keyState.flatMajMin === 'minor') {
-        const flatMinorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="minor"]');
-        if (flatMinorInput) {
-          console.log('🎯 Clicking Flat Minor input');
-          flatMinorInput.click();
+        
+        // Restore Flat section Major/Minor - click the actual INPUT
+        if (keyState.flatMajMin === 'major') {
+          const flatMajorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="major"]');
+          if (flatMajorInput) {
+            console.log('🎯 Clicking Flat Major input');
+            flatMajorInput.click();
+          }
+        } else if (keyState.flatMajMin === 'minor') {
+          const flatMinorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="minor"]');
+          if (flatMinorInput) {
+            console.log('🎯 Clicking Flat Minor input');
+            flatMinorInput.click();
+          }
         }
-      }
-    }, 100);
+      }, 100);
+    }
+    
+    waitForWrapper();
   }
-  
-  waitForWrapper();
-}
   
   attemptRestore();
 }
