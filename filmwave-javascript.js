@@ -3688,15 +3688,6 @@ if (typeof barba !== 'undefined') {
   
   positionMasterPlayer();
   
-  // Reinitialize Memberstack after initial player positioning but before full setup
-  setTimeout(() => {
-    if (window.$memberstackDom) {
-      window.$memberstackDom.reinitialize().then(() => {
-        console.log("✅ Memberstack re-initialized on new page");
-      });
-    }
-  }, 100);
-  
   setTimeout(() => {
     setupMasterPlayerControls();
     positionMasterPlayer();
@@ -3833,6 +3824,35 @@ passwordFields.forEach(passwordField => {
   
   console.log('✅ Password toggle initialized');
 });
+
+// Manually handle Memberstack logout button after Barba transition
+const logoutBtn = document.querySelector('[data-ms-action="logout"]');
+if (logoutBtn) {
+  // Remove any existing listeners by cloning
+  const newLogoutBtn = logoutBtn.cloneNode(true);
+  logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+  
+  // Add fresh click handler
+  newLogoutBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🚪 Logout clicked');
+    
+    if (window.$memberstackDom && window.$memberstackDom.logout) {
+      window.$memberstackDom.logout().then(() => {
+        console.log('✅ Logged out successfully');
+        window.location.href = '/';
+      }).catch((err) => {
+        console.error('❌ Logout error:', err);
+        window.location.href = '/';
+      });
+    } else {
+      console.warn('⚠️ Memberstack not available, redirecting anyway');
+      window.location.href = '/';
+    }
+  });
+  console.log('✅ Logout handler re-attached');
+}
      
 }, 400);
     
