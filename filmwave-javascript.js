@@ -3825,6 +3825,57 @@ if (mainContent && isLoginPage) {
     console.log('✅ Password toggle initialized');
   });
 
+  // Manually handle Memberstack forms
+  
+  const loginForm = document.querySelector('[data-ms-form="login"]');
+  const signupForm = document.querySelector('[data-ms-form="signup"]');
+
+  if (loginForm) {
+    console.log('🔐 Attaching login form handler');
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = loginForm.querySelector('[data-ms-member="email"]')?.value;
+      const password = loginForm.querySelector('[data-ms-member="password"]')?.value;
+      
+      if (email && password && window.$memberstackDom) {
+        console.log('🔑 Attempting login...');
+        window.$memberstackDom.loginMemberEmailPassword({ email, password })
+          .then(() => {
+            console.log('✅ Login successful');
+            // Redirect is handled by Memberstack or use: window.location.href = '/music';
+          })
+          .catch(err => {
+            console.error('❌ Login failed:', err);
+            alert('Login failed: ' + (err.message || 'Invalid credentials'));
+          });
+      }
+    });
+  }
+
+  if (signupForm) {
+    console.log('📝 Attaching signup form handler');
+    signupForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = signupForm.querySelector('[data-ms-member="email"]')?.value;
+      const password = signupForm.querySelector('[data-ms-member="password"]')?.value;
+      
+      if (email && password && window.$memberstackDom) {
+        console.log('📧 Attempting signup...');
+        window.$memberstackDom.signupMemberEmailPassword({ email, password })
+          .then(() => {
+            console.log('✅ Signup successful');
+            // Redirect is handled by Memberstack or use: window.location.href = '/music';
+          })
+          .catch(err => {
+            console.error('❌ Signup failed:', err);
+            alert('Signup failed: ' + (err.message || 'Please try again'));
+          });
+      }
+    });
+  }
+
   // Force Memberstack to update member data after Barba transition
   if (window.$memberstackDom) {
     window.$memberstackDom.getCurrentMember()
