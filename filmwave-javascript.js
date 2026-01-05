@@ -3516,35 +3516,38 @@ function initializeMemberstackHandlers() {
   console.log('🔧 Initializing Memberstack handlers...');
   
   // Handle login form
-  const loginForm = document.querySelector('[data-ms-form="login"]');
-  if (loginForm) {
-    console.log('🔐 Attaching login form handler');
+const loginForm = document.querySelector('[data-ms-form="login"]');
+if (loginForm) {
+  console.log('🔐 Attaching login form handler');
+  
+  // Remove old listener by cloning
+  const newLoginForm = loginForm.cloneNode(true);
+  loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+  
+  newLoginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     
-    // Remove old listener by cloning
-    const newLoginForm = loginForm.cloneNode(true);
-    loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+    const email = newLoginForm.querySelector('[data-ms-member="email"]')?.value;
+    const password = newLoginForm.querySelector('[data-ms-member="password"]')?.value;
     
-    newLoginForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const email = newLoginForm.querySelector('[data-ms-member="email"]')?.value;
-      const password = newLoginForm.querySelector('[data-ms-member="password"]')?.value;
-      
-      if (email && password && window.$memberstackDom) {
-        console.log('🔑 Attempting login...');
-        window.$memberstackDom.loginMemberEmailPassword({ email, password })
-          .then(() => {
-            console.log('✅ Login successful - Memberstack will handle redirect');
-            // Don't reload - let Memberstack handle the redirect
-          })
-          .catch(err => {
-            console.error('❌ Login failed:', err);
-            alert('Login failed: ' + (err.message || 'Invalid credentials'));
-          });
-      }
-    });
-  }
+    if (email && password && window.$memberstackDom) {
+      console.log('🔑 Attempting login...');
+      window.$memberstackDom.loginMemberEmailPassword({ email, password })
+        .then(({ data: member }) => {
+          console.log('✅ Login successful');
+          // Get the redirect URL from member data or default to dashboard
+          const redirectUrl = member?.loginRedirect || '/dashboard/dashboard';
+          console.log('🔀 Redirecting to:', redirectUrl);
+          window.location.href = redirectUrl;
+        })
+        .catch(err => {
+          console.error('❌ Login failed:', err);
+          alert('Login failed: ' + (err.message || 'Invalid credentials'));
+        });
+    }
+  });
+}
 
   // Handle signup form
   const signupForm = document.querySelector('[data-ms-form="signup"]');
