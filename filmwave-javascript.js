@@ -3622,13 +3622,6 @@ if (typeof barba !== 'undefined') {
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
   
-  // Reinitialize Memberstack after page transition
-  if (window.$memberstackDom) {
-    window.$memberstackDom.reinitialize().then(() => {
-      console.log("✅ Memberstack re-initialized on new page");
-    });
-  }
-  
   const g = window.musicPlayerPersistent;
   
   window.scrollTo(0, 0);
@@ -3831,6 +3824,13 @@ passwordFields.forEach(passwordField => {
   
   console.log('✅ Password toggle initialized');
 });
+
+// Reinitialize Memberstack AFTER music player is set up
+if (window.$memberstackDom) {
+  window.$memberstackDom.reinitialize().then(() => {
+    console.log("✅ Memberstack re-initialized on new page");
+  });
+}
      
 }, 400);
     
