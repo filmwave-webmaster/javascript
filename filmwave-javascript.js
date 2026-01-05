@@ -3535,8 +3535,8 @@ function initializeMemberstackHandlers() {
         console.log('🔑 Attempting login...');
         window.$memberstackDom.loginMemberEmailPassword({ email, password })
           .then(() => {
-            console.log('✅ Login successful');
-            window.location.reload();
+            console.log('✅ Login successful - Memberstack will handle redirect');
+            // Don't reload - let Memberstack handle the redirect
           })
           .catch(err => {
             console.error('❌ Login failed:', err);
@@ -3565,8 +3565,8 @@ function initializeMemberstackHandlers() {
         console.log('📧 Attempting signup...');
         window.$memberstackDom.signupMemberEmailPassword({ email, password })
           .then(() => {
-            console.log('✅ Signup successful');
-            window.location.reload();
+            console.log('✅ Signup successful - Memberstack will handle redirect');
+            // Don't reload - let Memberstack handle the redirect
           })
           .catch(err => {
             console.error('❌ Signup failed:', err);
@@ -3618,20 +3618,35 @@ function initializeMemberstackHandlers() {
           // Attach logout handler
           const logoutBtn = document.querySelector('[data-ms-action="logout"]');
           if (logoutBtn) {
+            console.log('🔍 Found logout button:', logoutBtn);
+            
             const newLogoutBtn = logoutBtn.cloneNode(true);
             logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
             
             newLogoutBtn.addEventListener('click', function(e) {
               e.preventDefault();
               e.stopPropagation();
-              console.log('🚪 Logout clicked');
+              console.log('🚪 Logout button clicked!');
               
-              window.$memberstackDom.logout().then(() => {
-                console.log('✅ Logged out');
+              if (window.$memberstackDom && window.$memberstackDom.logout) {
+                console.log('🔑 Calling logout...');
+                window.$memberstackDom.logout()
+                  .then(() => {
+                    console.log('✅ Logged out successfully');
+                    window.location.href = '/';
+                  })
+                  .catch(err => {
+                    console.error('❌ Logout error:', err);
+                    window.location.href = '/';
+                  });
+              } else {
+                console.error('❌ Memberstack logout not available');
                 window.location.href = '/';
-              });
+              }
             });
-            console.log('✅ Logout handler attached');
+            console.log('✅ Logout handler attached to:', newLogoutBtn);
+          } else {
+            console.log('⚠️ No logout button found on this page');
           }
         } else {
           console.log('ℹ️ No member logged in');
@@ -3966,7 +3981,7 @@ if (mainContent && isLoginPage) {
   // Call shared Memberstack handler function
   initializeMemberstackHandlers();
      
-}, 400);
+}, 200);
     
     window.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
