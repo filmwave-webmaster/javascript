@@ -3624,6 +3624,13 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
   
+  // Reinitialize Memberstack EARLY so forms/buttons work immediately
+  if (window.$memberstackDom) {
+    window.$memberstackDom.reinitialize().then(() => {
+      console.log("✅ Memberstack re-initialized on new page");
+    });
+  }
+  
   window.scrollTo(0, 0);
   
   console.log('🔍 Checking for page ID...');
@@ -3824,13 +3831,6 @@ passwordFields.forEach(passwordField => {
   
   console.log('✅ Password toggle initialized');
 });
-
-// Reinitialize Memberstack AFTER music player is set up
-if (window.$memberstackDom) {
-  window.$memberstackDom.reinitialize().then(() => {
-    console.log("✅ Memberstack re-initialized on new page");
-  });
-}
      
 }, 400);
     
