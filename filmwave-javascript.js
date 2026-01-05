@@ -3774,85 +3774,114 @@ if (mainContent && isLoginPage) {
     }
   }
 
-// NEW: Reinitialize tabs
+  // Reinitialize tabs
   reinitializeTabs();
   
-// Manual password toggle for login/signup pages
-const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
+  // Manual password toggle for login/signup pages
+  const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
 
-passwordFields.forEach(passwordField => {
-  const container = passwordField.closest('.form-field, .password-field, .form-block, form');
-  if (!container) return;
-  
-  const visibleToggle = container.querySelector('.password-toggle-visible');
-  const hiddenToggle = container.querySelector('.password-toggle-hidden');
-  
-  if (!visibleToggle || !hiddenToggle) return;
-  
-  // Clone to remove old listeners
-  const newVisibleToggle = visibleToggle.cloneNode(true);
-  const newHiddenToggle = hiddenToggle.cloneNode(true);
-  visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
-  hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
-  
-  // Setup visible toggle (shows password when clicked)
-  newVisibleToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  passwordFields.forEach(passwordField => {
+    const container = passwordField.closest('.form-field, .password-field, .form-block, form');
+    if (!container) return;
     
-    passwordField.type = 'text';
-    newVisibleToggle.style.display = 'none';
-    newHiddenToggle.style.display = 'flex';
-    console.log('👁️ Password shown');
-  });
-  
-  // Setup hidden toggle (hides password when clicked)
-  newHiddenToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+    const visibleToggle = container.querySelector('.password-toggle-visible');
+    const hiddenToggle = container.querySelector('.password-toggle-hidden');
     
+    if (!visibleToggle || !hiddenToggle) return;
+    
+    // Clone to remove old listeners
+    const newVisibleToggle = visibleToggle.cloneNode(true);
+    const newHiddenToggle = hiddenToggle.cloneNode(true);
+    visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
+    hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
+    
+    // Setup visible toggle (shows password when clicked)
+    newVisibleToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      passwordField.type = 'text';
+      newVisibleToggle.style.display = 'none';
+      newHiddenToggle.style.display = 'flex';
+      console.log('👁️ Password shown');
+    });
+    
+    // Setup hidden toggle (hides password when clicked)
+    newHiddenToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      passwordField.type = 'password';
+      newVisibleToggle.style.display = 'flex';
+      newHiddenToggle.style.display = 'none';
+      console.log('🔒 Password hidden');
+    });
+    
+    // Set initial state
     passwordField.type = 'password';
     newVisibleToggle.style.display = 'flex';
     newHiddenToggle.style.display = 'none';
-    console.log('🔒 Password hidden');
-  });
-  
-  // Set initial state
-  passwordField.type = 'password';
-  newVisibleToggle.style.display = 'flex';
-  newHiddenToggle.style.display = 'none';
-  
-  console.log('✅ Password toggle initialized');
-});
-
-// Manually handle Memberstack logout button after Barba transition
-const logoutBtn = document.querySelector('[data-ms-action="logout"]');
-if (logoutBtn) {
-  // Remove any existing listeners by cloning
-  const newLogoutBtn = logoutBtn.cloneNode(true);
-  logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
-  
-  // Add fresh click handler
-  newLogoutBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('🚪 Logout clicked');
     
-    if (window.$memberstackDom && window.$memberstackDom.logout) {
-      window.$memberstackDom.logout().then(() => {
-        console.log('✅ Logged out successfully');
-        window.location.href = '/';
-      }).catch((err) => {
-        console.error('❌ Logout error:', err);
-        window.location.href = '/';
-      });
-    } else {
-      console.warn('⚠️ Memberstack not available, redirecting anyway');
-      window.location.href = '/';
-    }
+    console.log('✅ Password toggle initialized');
   });
-  console.log('✅ Logout handler re-attached');
-}
+
+  // Force Memberstack to update member data after Barba transition
+  if (window.$memberstackDom) {
+    window.$memberstackDom.getCurrentMember()
+      .then(({ data: member }) => {
+        if (member) {
+          console.log('✅ Member logged in:', member.auth?.email);
+          
+          // Manually update all data-ms-member elements
+          document.querySelectorAll('[data-ms-member]').forEach(el => {
+            const field = el.getAttribute('data-ms-member');
+            
+            // Handle nested properties like auth.email
+            let value = member;
+            const fieldParts = field.split('.');
+            for (const part of fieldParts) {
+              value = value?.[part];
+            }
+            
+            if (value) {
+              if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el.value = value;
+              } else {
+                el.textContent = value;
+              }
+              console.log(`✅ Updated [data-ms-member="${field}"]:`, value);
+            }
+          });
+          
+          // Re-attach logout button handler
+          const logoutBtn = document.querySelector('[data-ms-action="logout"]');
+          if (logoutBtn) {
+            const newLogoutBtn = logoutBtn.cloneNode(true);
+            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+            
+            newLogoutBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🚪 Logout clicked');
+              
+              window.$memberstackDom.logout().then(() => {
+                console.log('✅ Logged out successfully');
+                window.location.href = '/';
+              }).catch((err) => {
+                console.error('❌ Logout error:', err);
+                window.location.href = '/';
+              });
+            });
+            console.log('✅ Logout handler re-attached');
+          }
+        } else {
+          console.log('ℹ️ No member logged in');
+        }
+      })
+      .catch(err => {
+        console.error('❌ Error getting member:', err);
+      });
+  }
      
 }, 400);
     
