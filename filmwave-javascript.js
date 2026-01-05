@@ -3502,7 +3502,146 @@ setTimeout(updateFilterDots, 500);
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
-window.addEventListener('load', () => initMusicPage());
+window.addEventListener('load', () => {
+  initMusicPage();
+  
+  // Initialize Memberstack handlers on initial page load
+  setTimeout(() => {
+    initializeMemberstackHandlers();
+  }, 500);
+});
+
+// Shared function to initialize all Memberstack handlers
+function initializeMemberstackHandlers() {
+  console.log('🔧 Initializing Memberstack handlers...');
+  
+  // Handle login form
+  const loginForm = document.querySelector('[data-ms-form="login"]');
+  if (loginForm) {
+    console.log('🔐 Attaching login form handler');
+    
+    // Remove old listener by cloning
+    const newLoginForm = loginForm.cloneNode(true);
+    loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+    
+    newLoginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const email = newLoginForm.querySelector('[data-ms-member="email"]')?.value;
+      const password = newLoginForm.querySelector('[data-ms-member="password"]')?.value;
+      
+      if (email && password && window.$memberstackDom) {
+        console.log('🔑 Attempting login...');
+        window.$memberstackDom.loginMemberEmailPassword({ email, password })
+          .then(() => {
+            console.log('✅ Login successful');
+            window.location.reload();
+          })
+          .catch(err => {
+            console.error('❌ Login failed:', err);
+            alert('Login failed: ' + (err.message || 'Invalid credentials'));
+          });
+      }
+    });
+  }
+
+  // Handle signup form
+  const signupForm = document.querySelector('[data-ms-form="signup"]');
+  if (signupForm) {
+    console.log('📝 Attaching signup form handler');
+    
+    const newSignupForm = signupForm.cloneNode(true);
+    signupForm.parentNode.replaceChild(newSignupForm, signupForm);
+    
+    newSignupForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const email = newSignupForm.querySelector('[data-ms-member="email"]')?.value;
+      const password = newSignupForm.querySelector('[data-ms-member="password"]')?.value;
+      
+      if (email && password && window.$memberstackDom) {
+        console.log('📧 Attempting signup...');
+        window.$memberstackDom.signupMemberEmailPassword({ email, password })
+          .then(() => {
+            console.log('✅ Signup successful');
+            window.location.reload();
+          })
+          .catch(err => {
+            console.error('❌ Signup failed:', err);
+            alert('Signup failed: ' + (err.message || 'Please try again'));
+          });
+      }
+    });
+  }
+
+  // Update member data display
+  if (window.$memberstackDom) {
+    window.$memberstackDom.getCurrentMember()
+      .then(({ data: member }) => {
+        if (member) {
+          console.log('✅ Member found:', member.auth?.email);
+          console.log('📋 Custom fields:', member.customFields);
+          
+          // Update all [data-ms-member] elements
+          const elementsToUpdate = document.querySelectorAll('[data-ms-member]');
+          console.log(`🔍 Found ${elementsToUpdate.length} elements with [data-ms-member]`);
+          
+          elementsToUpdate.forEach(el => {
+            const field = el.getAttribute('data-ms-member');
+            console.log(`🔍 Processing field: "${field}"`);
+            
+            // Check customFields first (where first-name and last-name are)
+            let value = member.customFields?.[field] || member[field];
+            
+            // Handle nested paths like "auth.email"
+            if (!value && field.includes('.')) {
+              value = member;
+              field.split('.').forEach(part => {
+                value = value?.[part];
+              });
+            }
+            
+            if (value) {
+              if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el.value = value;
+              } else {
+                el.textContent = value;
+              }
+              console.log(`✅ Updated [data-ms-member="${field}"]: "${value}"`);
+            } else {
+              console.warn(`⚠️ No value found for [data-ms-member="${field}"]`);
+            }
+          });
+          
+          // Attach logout handler
+          const logoutBtn = document.querySelector('[data-ms-action="logout"]');
+          if (logoutBtn) {
+            const newLogoutBtn = logoutBtn.cloneNode(true);
+            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+            
+            newLogoutBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🚪 Logout clicked');
+              
+              window.$memberstackDom.logout().then(() => {
+                console.log('✅ Logged out');
+                window.location.href = '/';
+              });
+            });
+            console.log('✅ Logout handler attached');
+          }
+        } else {
+          console.log('ℹ️ No member logged in');
+        }
+      })
+      .catch(err => {
+        console.error('❌ Error getting member:', err);
+      });
+  }
+}
 
 function forceWebflowRestart() {
   console.log('🔄 Force-restarting Webflow IX engine...');
@@ -3774,7 +3913,6 @@ if (mainContent && isLoginPage) {
     }
   }
 
-  // Reinitialize tabs
   reinitializeTabs();
   
   // Manual password toggle for login/signup pages
@@ -3825,114 +3963,8 @@ if (mainContent && isLoginPage) {
     console.log('✅ Password toggle initialized');
   });
 
-  // Manually handle Memberstack forms
-  
-  const loginForm = document.querySelector('[data-ms-form="login"]');
-  const signupForm = document.querySelector('[data-ms-form="signup"]');
-
-  if (loginForm) {
-    console.log('🔐 Attaching login form handler');
-    loginForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const email = loginForm.querySelector('[data-ms-member="email"]')?.value;
-      const password = loginForm.querySelector('[data-ms-member="password"]')?.value;
-      
-      if (email && password && window.$memberstackDom) {
-        console.log('🔑 Attempting login...');
-        window.$memberstackDom.loginMemberEmailPassword({ email, password })
-          .then(() => {
-            console.log('✅ Login successful');
-            // Redirect is handled by Memberstack or use: window.location.href = '/music';
-          })
-          .catch(err => {
-            console.error('❌ Login failed:', err);
-            alert('Login failed: ' + (err.message || 'Invalid credentials'));
-          });
-      }
-    });
-  }
-
-  if (signupForm) {
-    console.log('📝 Attaching signup form handler');
-    signupForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const email = signupForm.querySelector('[data-ms-member="email"]')?.value;
-      const password = signupForm.querySelector('[data-ms-member="password"]')?.value;
-      
-      if (email && password && window.$memberstackDom) {
-        console.log('📧 Attempting signup...');
-        window.$memberstackDom.signupMemberEmailPassword({ email, password })
-          .then(() => {
-            console.log('✅ Signup successful');
-            // Redirect is handled by Memberstack or use: window.location.href = '/music';
-          })
-          .catch(err => {
-            console.error('❌ Signup failed:', err);
-            alert('Signup failed: ' + (err.message || 'Please try again'));
-          });
-      }
-    });
-  }
-
-  // Force Memberstack to update member data after Barba transition
-  if (window.$memberstackDom) {
-    window.$memberstackDom.getCurrentMember()
-      .then(({ data: member }) => {
-        if (member) {
-          console.log('✅ Member logged in:', member.auth?.email);
-          
-          // Manually update all data-ms-member elements
-          document.querySelectorAll('[data-ms-member]').forEach(el => {
-            const field = el.getAttribute('data-ms-member');
-            
-            // Handle nested properties like auth.email
-            let value = member;
-            const fieldParts = field.split('.');
-            for (const part of fieldParts) {
-              value = value?.[part];
-            }
-            
-            if (value) {
-              if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                el.value = value;
-              } else {
-                el.textContent = value;
-              }
-              console.log(`✅ Updated [data-ms-member="${field}"]:`, value);
-            }
-          });
-          
-          // Re-attach logout button handler
-          const logoutBtn = document.querySelector('[data-ms-action="logout"]');
-          if (logoutBtn) {
-            const newLogoutBtn = logoutBtn.cloneNode(true);
-            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
-            
-            newLogoutBtn.addEventListener('click', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🚪 Logout clicked');
-              
-              window.$memberstackDom.logout().then(() => {
-                console.log('✅ Logged out successfully');
-                window.location.href = '/';
-              }).catch((err) => {
-                console.error('❌ Logout error:', err);
-                window.location.href = '/';
-              });
-            });
-            console.log('✅ Logout handler re-attached');
-          }
-        } else {
-          console.log('ℹ️ No member logged in');
-        }
-      })
-      .catch(err => {
-        console.error('❌ Error getting member:', err);
-      });
-  }
+  // Call shared Memberstack handler function
+  initializeMemberstackHandlers();
      
 }, 400);
     
