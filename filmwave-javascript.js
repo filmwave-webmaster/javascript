@@ -3824,6 +3824,19 @@ passwordFields.forEach(passwordField => {
   
   console.log('✅ Password toggle initialized');
 });
+
+// Re-attach logout handler after Barba page transition
+const logoutBtn = document.querySelector('[data-ms-action="logout"]');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    window.$memberstackDom.logout().then(() => {
+      window.location.href = '/';
+    });
+  });
+  console.log('✅ Logout handler re-attached');
+}
      
 }, 400);
     
