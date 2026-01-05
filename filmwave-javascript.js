@@ -3499,6 +3499,161 @@ setTimeout(updateFilterDots, 500);
 
 /**
  * ============================================================
+ * SORTABLE PROFILE ITEMS
+ * ============================================================
+ */
+
+let sortableInstance = null;
+
+function initializeProfileSortable() {
+  const container = document.querySelector('.sortable-container');
+  
+  if (!container) {
+    console.log('ℹ️ No sortable container found on this page');
+    return;
+  }
+  
+  // Destroy existing instance if it exists
+  if (sortableInstance) {
+    sortableInstance.destroy();
+  }
+  
+  // 1. Dynamically assign data-ids to items
+  assignDataIds(container);
+  
+  // 2. Restore saved order
+  restoreOrder(container);
+  
+  // 3. Initialize SortableJS
+  if (typeof Sortable !== 'undefined') {
+    sortableInstance = Sortable.create(container, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      dragClass: 'sortable-drag',
+      
+      onEnd: function(evt) {
+        console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
+        saveOrder(container);
+      }
+    });
+    
+    console.log('✅ Sortable profile items initialized');
+  } else {
+    console.error('❌ SortableJS not loaded');
+  }
+}
+
+// Dynamically assign data-ids
+function assignDataIds(container) {
+  const items = container.querySelectorAll('.profile-item');
+  
+  items.forEach((item, index) => {
+    // Only assign if it doesn't already have one
+    if (!item.getAttribute('data-id')) {
+      // Use index or generate a unique ID
+      const uniqueId = `profile-item-${index + 1}`;
+      item.setAttribute('data-id', uniqueId);
+      console.log(`📌 Assigned data-id: ${uniqueId}`);
+    }
+  });
+}
+
+// Save order to localStorage
+function saveOrder(container) {
+  const items = container.querySelectorAll('.profile-item');
+  const order = Array.from(items).map(item => item.getAttribute('data-id'));
+  
+  // Save to localStorage (per user if needed)
+  const storageKey = 'profile-item-order';
+  localStorage.setItem(storageKey, JSON.stringify(order));
+  
+  console.log('💾 Saved order:', order);
+  
+  // Optional: Save to backend
+  // saveOrderToBackend(order);
+}
+
+// Restore order from localStorage
+function restoreOrder(container) {
+  const storageKey = 'profile-item-order';
+  const savedOrder = localStorage.getItem(storageKey);
+  
+  if (!savedOrder) {
+    console.log('ℹ️ No saved order found');
+    return;
+  }
+  
+  const order = JSON.parse(savedOrder);
+  console.log('🔄 Restoring order:', order);
+  
+  // Create a map of items by data-id
+  const items = container.querySelectorAll('.profile-item');
+  const itemMap = {};
+  items.forEach(item => {
+    const id = item.getAttribute('data-id');
+    if (id) itemMap[id] = item;
+  });
+  
+  // Reorder items based on saved order
+  order.forEach(id => {
+    if (itemMap[id]) {
+      container.appendChild(itemMap[id]);
+    }
+  });
+  
+  console.log('✅ Order restored');
+}
+
+// Optional: Save to backend (Xano)
+async function saveOrderToBackend(order) {
+  // Get current member
+  if (!window.$memberstackDom) return;
+  
+  try {
+    const { data: member } = await window.$memberstackDom.getCurrentMember();
+    if (!member) return;
+    
+    // Save to Xano
+    const response = await fetch('YOUR_XANO_ENDPOINT/profile-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        memberId: member.id,
+        itemOrder: order
+      })
+    });
+    
+    if (response.ok) {
+      console.log('✅ Order saved to backend');
+    }
+  } catch (err) {
+    console.error('❌ Failed to save to backend:', err);
+  }
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+  initializeProfileSortable();
+});
+
+// Reinitialize after Barba transitions
+if (typeof barba !== 'undefined') {
+  // Add to your existing Barba after() hook at the 400ms timeout
+  // (where you already have initializeMemberstackHandlers)
+  
+  // Or create a separate handler:
+  document.addEventListener('barbaAfterTransition', () => {
+    setTimeout(() => {
+      initializeProfileSortable();
+    }, 300);
+  });
+}
+
+/**
+ * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
@@ -3985,6 +4140,8 @@ if (mainContent && isLoginPage) {
 
   // Call shared Memberstack handler function
   initializeMemberstackHandlers();
+
+   initializeProfileSortable();  
      
 }, 200);
     
