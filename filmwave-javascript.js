@@ -3615,39 +3615,41 @@ function initializeMemberstackHandlers() {
             }
           });
           
-          // Attach logout handler
-          const logoutBtn = document.querySelector('[data-ms-action="logout"]');
-          if (logoutBtn) {
-            console.log('🔍 Found logout button:', logoutBtn);
-            
-            const newLogoutBtn = logoutBtn.cloneNode(true);
-            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
-            
-            newLogoutBtn.addEventListener('click', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🚪 Logout button clicked!');
-              
-              if (window.$memberstackDom && window.$memberstackDom.logout) {
-                console.log('🔑 Calling logout...');
-                window.$memberstackDom.logout()
-                  .then(() => {
-                    console.log('✅ Logged out successfully');
-                    window.location.href = '/';
-                  })
-                  .catch(err => {
-                    console.error('❌ Logout error:', err);
-                    window.location.href = '/';
-                  });
-              } else {
-                console.error('❌ Memberstack logout not available');
-                window.location.href = '/';
-              }
-            });
-            console.log('✅ Logout handler attached to:', newLogoutBtn);
-          } else {
-            console.log('⚠️ No logout button found on this page');
-          }
+          // Attach logout handler using event delegation (works with dropdowns)
+// First, remove any existing delegated handlers
+document.removeEventListener('click', window._logoutHandler);
+
+// Create new handler
+window._logoutHandler = function(e) {
+  const logoutBtn = e.target.closest('[data-ms-action="logout"]');
+  
+  if (logoutBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    console.log('🚪 Logout button clicked!');
+    
+    if (window.$memberstackDom && window.$memberstackDom.logout) {
+      console.log('🔑 Calling logout...');
+      window.$memberstackDom.logout()
+        .then(() => {
+          console.log('✅ Logged out successfully');
+          window.location.href = '/';
+        })
+        .catch(err => {
+          console.error('❌ Logout error:', err);
+          window.location.href = '/';
+        });
+    } else {
+      console.error('❌ Memberstack logout not available');
+      window.location.href = '/';
+    }
+  }
+};
+
+// Attach to document with capture phase to catch before dropdown closes
+document.addEventListener('click', window._logoutHandler, true);
+console.log('✅ Logout handler attached via event delegation');
         } else {
           console.log('ℹ️ No member logged in');
         }
