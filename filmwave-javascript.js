@@ -3624,13 +3624,6 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
   
-  // Reinitialize Memberstack EARLY so forms/buttons work immediately
-  if (window.$memberstackDom) {
-    window.$memberstackDom.reinitialize().then(() => {
-      console.log("✅ Memberstack re-initialized on new page");
-    });
-  }
-  
   window.scrollTo(0, 0);
   
   console.log('🔍 Checking for page ID...');
@@ -3694,6 +3687,15 @@ if (typeof barba !== 'undefined') {
   }
   
   positionMasterPlayer();
+  
+  // Reinitialize Memberstack after initial player positioning but before full setup
+  setTimeout(() => {
+    if (window.$memberstackDom) {
+      window.$memberstackDom.reinitialize().then(() => {
+        console.log("✅ Memberstack re-initialized on new page");
+      });
+    }
+  }, 100);
   
   setTimeout(() => {
     setupMasterPlayerControls();
