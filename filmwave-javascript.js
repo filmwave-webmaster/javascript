@@ -4205,8 +4205,8 @@ if (mainContent && isLoginPage) {
 
   // Call shared Memberstack handler function
   initializeMemberstackHandlers();
-
-   initializeProfileSortable();  
+  initializeProfileSortable(); 
+  initializePlaylistOverlay();  
      
 }, 200);
     
