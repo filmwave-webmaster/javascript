@@ -3561,6 +3561,9 @@ function initializeProfileSortable() {
     updateButtonState(newButton, false);
     console.log('✅ Organize button initialized');
   }
+  
+  // 5. Hide edit icons initially
+  toggleEditIcons(false);
 }
 
 // Toggle between edit and view mode
@@ -3571,16 +3574,35 @@ function toggleEditMode(container, button) {
     // UNLOCK - Enter edit mode
     sortableInstance.option('disabled', false);
     container.classList.add('is-editing');
+    toggleEditIcons(true); // Show edit icons
     console.log('🔓 Edit mode enabled');
   } else {
     // LOCK - Exit edit mode and save
     sortableInstance.option('disabled', true);
     container.classList.remove('is-editing');
+    toggleEditIcons(false); // Hide edit icons
     saveOrder(container);
     console.log('🔒 Edit mode disabled, order saved');
   }
   
   updateButtonState(button, isEditMode);
+}
+
+// Show/hide playlist edit icons
+function toggleEditIcons(show) {
+  const editIcons = document.querySelectorAll('.playlist-edit-icon');
+  
+  editIcons.forEach(icon => {
+    if (show) {
+      icon.style.display = 'flex'; // or 'block' depending on your layout
+      icon.classList.add('is-visible');
+      console.log('👁️ Edit icons shown');
+    } else {
+      icon.style.display = 'none';
+      icon.classList.remove('is-visible');
+      console.log('👁️ Edit icons hidden');
+    }
+  });
 }
 
 // Update button text based on mode
