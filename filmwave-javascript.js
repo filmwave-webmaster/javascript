@@ -3588,19 +3588,32 @@ function toggleEditMode(container, button) {
   updateButtonState(button, isEditMode);
 }
 
-// Show/hide playlist edit icons
+// Show/hide playlist edit icons with smooth fade
 function toggleEditIcons(show) {
   const editIcons = document.querySelectorAll('.playlist-edit-icon');
   
   editIcons.forEach(icon => {
     if (show) {
+      // Show: Set display first, then trigger opacity transition
       icon.style.display = 'flex'; // or 'block' depending on your layout
-      icon.classList.add('is-visible');
-      console.log('👁️ Edit icons shown');
+      icon.style.pointerEvents = 'auto';
+      
+      // Force reflow to ensure display is applied before opacity changes
+      icon.offsetHeight;
+      
+      // Fade in
+      icon.style.opacity = '1';
+      icon.style.transform = 'scale(1)';
     } else {
-      icon.style.display = 'none';
-      icon.classList.remove('is-visible');
-      console.log('👁️ Edit icons hidden');
+      // Fade out
+      icon.style.opacity = '0';
+      icon.style.transform = 'scale(0.9)';
+      icon.style.pointerEvents = 'none';
+      
+      // Hide after transition completes
+      setTimeout(() => {
+        icon.style.display = 'none';
+      }, 200); // Match your CSS transition duration
     }
   });
 }
