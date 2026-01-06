@@ -3527,19 +3527,26 @@ function initializeProfileSortable() {
   restoreOrder(container);
   
   // 3. Initialize SortableJS (starts disabled)
-  if (typeof Sortable !== 'undefined') {
-    sortableInstance = Sortable.create(container, {
-      animation: 150,
-      ghostClass: 'sortable-ghost',
-      chosenClass: 'sortable-chosen',
-      dragClass: 'sortable-drag',
-      disabled: true, // Start locked
-      
-      onEnd: function(evt) {
-        console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
-        // Don't auto-save - user needs to click "Save"
-      }
-    });
+if (typeof Sortable !== 'undefined') {
+  sortableInstance = Sortable.create(container, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    dragClass: 'sortable-drag',
+    disabled: true, // Start locked
+    delay: 200, // 200ms delay before drag starts
+    delayOnTouchOnly: false, // Apply delay to mouse events too (not just touch)
+    
+    onEnd: function(evt) {
+      console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
+      // Don't auto-save - user needs to click "Save"
+    }
+  });
+  
+  console.log('✅ Sortable profile items initialized (locked)');
+} else {
+  console.error('❌ SortableJS not loaded');
+}
     
     console.log('✅ Sortable profile items initialized (locked)');
   } else {
