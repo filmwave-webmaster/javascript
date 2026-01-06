@@ -3504,9 +3504,11 @@ setTimeout(updateFilterDots, 500);
  */
 
 let sortableInstance = null;
+let isEditMode = false;
 
 function initializeProfileSortable() {
   const container = document.querySelector('.sortable-container');
+  const organizeButton = document.querySelector('.organize-button');
   
   if (!container) {
     console.log('ℹ️ No sortable container found on this page');
@@ -3524,23 +3526,71 @@ function initializeProfileSortable() {
   // 2. Restore saved order
   restoreOrder(container);
   
-  // 3. Initialize SortableJS
+  // 3. Initialize SortableJS (starts disabled)
   if (typeof Sortable !== 'undefined') {
     sortableInstance = Sortable.create(container, {
       animation: 150,
       ghostClass: 'sortable-ghost',
       chosenClass: 'sortable-chosen',
       dragClass: 'sortable-drag',
+      disabled: true, // Start locked
       
       onEnd: function(evt) {
         console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
-        saveOrder(container);
+        // Don't auto-save - user needs to click "Save"
       }
     });
     
-    console.log('✅ Sortable profile items initialized');
+    console.log('✅ Sortable profile items initialized (locked)');
   } else {
     console.error('❌ SortableJS not loaded');
+  }
+  
+  // 4. Setup organize/save button
+  if (organizeButton) {
+    // Clone to remove old listeners
+    const newButton = organizeButton.cloneNode(true);
+    organizeButton.parentNode.replaceChild(newButton, organizeButton);
+    
+    newButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      toggleEditMode(container, newButton);
+    });
+    
+    // Set initial button state
+    updateButtonState(newButton, false);
+    console.log('✅ Organize button initialized');
+  }
+}
+
+// Toggle between edit and view mode
+function toggleEditMode(container, button) {
+  isEditMode = !isEditMode;
+  
+  if (isEditMode) {
+    // UNLOCK - Enter edit mode
+    sortableInstance.option('disabled', false);
+    container.classList.add('is-editing');
+    console.log('🔓 Edit mode enabled');
+  } else {
+    // LOCK - Exit edit mode and save
+    sortableInstance.option('disabled', true);
+    container.classList.remove('is-editing');
+    saveOrder(container);
+    console.log('🔒 Edit mode disabled, order saved');
+  }
+  
+  updateButtonState(button, isEditMode);
+}
+
+// Update button text based on mode
+function updateButtonState(button, editing) {
+  if (editing) {
+    button.textContent = 'Save';
+    button.classList.add('is-saving');
+  } else {
+    button.textContent = 'Organize';
+    button.classList.remove('is-saving');
   }
 }
 
@@ -3549,9 +3599,7 @@ function assignDataIds(container) {
   const items = container.querySelectorAll('.profile-item');
   
   items.forEach((item, index) => {
-    // Only assign if it doesn't already have one
     if (!item.getAttribute('data-id')) {
-      // Use index or generate a unique ID
       const uniqueId = `profile-item-${index + 1}`;
       item.setAttribute('data-id', uniqueId);
       console.log(`📌 Assigned data-id: ${uniqueId}`);
@@ -3564,7 +3612,6 @@ function saveOrder(container) {
   const items = container.querySelectorAll('.profile-item');
   const order = Array.from(items).map(item => item.getAttribute('data-id'));
   
-  // Save to localStorage (per user if needed)
   const storageKey = 'profile-item-order';
   localStorage.setItem(storageKey, JSON.stringify(order));
   
@@ -3587,7 +3634,6 @@ function restoreOrder(container) {
   const order = JSON.parse(savedOrder);
   console.log('🔄 Restoring order:', order);
   
-  // Create a map of items by data-id
   const items = container.querySelectorAll('.profile-item');
   const itemMap = {};
   items.forEach(item => {
@@ -3595,7 +3641,6 @@ function restoreOrder(container) {
     if (id) itemMap[id] = item;
   });
   
-  // Reorder items based on saved order
   order.forEach(id => {
     if (itemMap[id]) {
       container.appendChild(itemMap[id]);
@@ -3605,16 +3650,14 @@ function restoreOrder(container) {
   console.log('✅ Order restored');
 }
 
-// Optional: Save to backend (Xano)
+// Optional: Save to backend
 async function saveOrderToBackend(order) {
-  // Get current member
   if (!window.$memberstackDom) return;
   
   try {
     const { data: member } = await window.$memberstackDom.getCurrentMember();
     if (!member) return;
     
-    // Save to Xano
     const response = await fetch('YOUR_XANO_ENDPOINT/profile-order', {
       method: 'POST',
       headers: {
@@ -3638,19 +3681,6 @@ async function saveOrderToBackend(order) {
 window.addEventListener('load', () => {
   initializeProfileSortable();
 });
-
-// Reinitialize after Barba transitions
-if (typeof barba !== 'undefined') {
-  // Add to your existing Barba after() hook at the 400ms timeout
-  // (where you already have initializeMemberstackHandlers)
-  
-  // Or create a separate handler:
-  document.addEventListener('barbaAfterTransition', () => {
-    setTimeout(() => {
-      initializeProfileSortable();
-    }, 300);
-  });
-}
 
 /**
  * ============================================================
