@@ -3515,9 +3515,17 @@ function initializeProfileSortable() {
     return;
   }
   
+  console.log('📦 Found container:', container);
+  
   // Destroy existing instance if it exists
   if (sortableInstance) {
-    sortableInstance.destroy();
+    try {
+      sortableInstance.destroy();
+      console.log('🗑️ Destroyed old sortable instance');
+    } catch (e) {
+      console.warn('⚠️ Error destroying sortable:', e);
+    }
+    sortableInstance = null;
   }
   
   // 1. Dynamically assign data-ids to items
@@ -3528,24 +3536,33 @@ function initializeProfileSortable() {
   
   // 3. Initialize SortableJS (starts disabled)
   if (typeof Sortable !== 'undefined') {
-    sortableInstance = Sortable.create(container, {
-      animation: 150,
-      ghostClass: 'sortable-ghost',
-      chosenClass: 'sortable-chosen',
-      dragClass: 'sortable-drag',
-      disabled: true, // Start locked
-      delay: 200, // 200ms delay before drag starts
-      delayOnTouchOnly: false, // Apply delay to mouse events too
+    try {
+      sortableInstance = Sortable.create(container, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        disabled: true, // Start locked
+        delay: 200, // 200ms delay before drag starts
+        delayOnTouchOnly: false, // Apply delay to mouse events too
+        
+        onStart: function(evt) {
+          console.log('🎯 Drag started');
+        },
+        
+        onEnd: function(evt) {
+          console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
+          // Don't auto-save - user needs to click "Save"
+        }
+      });
       
-      onEnd: function(evt) {
-        console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
-        // Don't auto-save - user needs to click "Save"
-      }
-    });
-    
-    console.log('✅ Sortable profile items initialized (locked)');
+      console.log('✅ Sortable profile items initialized (locked)');
+      console.log('📌 Sortable instance:', sortableInstance);
+    } catch (e) {
+      console.error('❌ Error creating sortable:', e);
+    }
   } else {
-    console.error('❌ SortableJS not loaded');
+    console.error('❌ SortableJS not loaded - check if script is in <head>');
   }
   
   // 4. Setup organize/save button
@@ -3556,12 +3573,15 @@ function initializeProfileSortable() {
     
     newButton.addEventListener('click', function(e) {
       e.preventDefault();
+      console.log('🔘 Organize button clicked');
       toggleEditMode(container, newButton);
     });
     
     // Set initial button state
     updateButtonState(newButton, false);
     console.log('✅ Organize button initialized');
+  } else {
+    console.warn('⚠️ No organize button found');
   }
   
   // 5. Hide edit icons initially
@@ -3570,21 +3590,52 @@ function initializeProfileSortable() {
 
 // Toggle between edit and view mode
 function toggleEditMode(container, button) {
+  console.log('🔄 Toggling edit mode. Current state:', isEditMode);
+  console.log('📌 Sortable instance exists?', !!sortableInstance);
+  
+  if (!sortableInstance) {
+    console.error('❌ Sortable instance is null - cannot toggle');
+    return;
+  }
+  
   isEditMode = !isEditMode;
   
   if (isEditMode) {
     // UNLOCK - Enter edit mode
-    sortableInstance.option('disabled', false);
-    container.classList.add('is-editing');
-    toggleEditIcons(true); // Show edit icons
-    console.log('🔓 Edit mode enabled');
+    try {
+      sortableInstance.option('disabled', false);
+      container.classList.add('is-editing');
+      
+      // Directly set cursor on items
+      const items = container.querySelectorAll('.profile-item');
+      console.log('🎯 Found', items.length, 'items to enable dragging');
+      items.forEach(item => {
+        item.style.cursor = 'grab';
+      });
+      
+      toggleEditIcons(true); // Show edit icons
+      console.log('🔓 Edit mode enabled - dragging should work now');
+    } catch (e) {
+      console.error('❌ Error enabling edit mode:', e);
+    }
   } else {
     // LOCK - Exit edit mode and save
-    sortableInstance.option('disabled', true);
-    container.classList.remove('is-editing');
-    toggleEditIcons(false); // Hide edit icons
-    saveOrder(container);
-    console.log('🔒 Edit mode disabled, order saved');
+    try {
+      sortableInstance.option('disabled', true);
+      container.classList.remove('is-editing');
+      
+      // Reset cursor
+      const items = container.querySelectorAll('.profile-item');
+      items.forEach(item => {
+        item.style.cursor = 'default';
+      });
+      
+      toggleEditIcons(false); // Hide edit icons
+      saveOrder(container);
+      console.log('🔒 Edit mode disabled, order saved');
+    } catch (e) {
+      console.error('❌ Error disabling edit mode:', e);
+    }
   }
   
   updateButtonState(button, isEditMode);
