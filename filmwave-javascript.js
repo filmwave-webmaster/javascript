@@ -3626,7 +3626,7 @@ function updateButtonState(button, editing) {
     button.textContent = 'Save';
     button.classList.add('is-saving');
   } else {
-    button.textContent = 'Edit';
+    button.textContent = 'Organize';
     button.classList.remove('is-saving');
   }
 }
