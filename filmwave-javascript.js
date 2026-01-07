@@ -3499,7 +3499,7 @@ setTimeout(updateFilterDots, 500);
 
 /**
  * ============================================================
- * SORTABLE PROFILE ITEMS
+ * DRAG AND DROP - SORTABLE PROFILE ITEMS
  * ============================================================
  */
 
@@ -3769,6 +3769,117 @@ async function saveOrderToBackend(order) {
 window.addEventListener('load', () => {
   initializeProfileSortable();
 });
+
+/**
+ * ============================================================
+ * PLAYLIST EDIT OVERLAY
+ * ============================================================
+ */
+
+function initializePlaylistOverlay() {
+  const editIcons = document.querySelectorAll('.playlist-edit-icon');
+  const closeButtons = document.querySelectorAll('.playlist-x-button');
+  const overlays = document.querySelectorAll('.playlist-edit-overlay');
+  
+  if (editIcons.length === 0) {
+    console.log('ℹ️ No playlist edit icons found');
+    return;
+  }
+  
+  // Show overlay when edit icon is clicked
+  editIcons.forEach(editIcon => {
+    // Clone to remove old listeners
+    const newEditIcon = editIcon.cloneNode(true);
+    editIcon.parentNode.replaceChild(newEditIcon, editIcon);
+    
+    newEditIcon.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Find the associated overlay (could be parent/sibling)
+      const overlay = findAssociatedOverlay(newEditIcon);
+      
+      if (overlay) {
+        showOverlay(overlay);
+        console.log('✅ Playlist overlay shown');
+      }
+    });
+  });
+  
+  // Hide overlay when X button is clicked
+  closeButtons.forEach(closeBtn => {
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    
+    newCloseBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Find the overlay (usually a parent)
+      const overlay = newCloseBtn.closest('.playlist-edit-overlay');
+      
+      if (overlay) {
+        hideOverlay(overlay);
+        console.log('✅ Playlist overlay hidden');
+      }
+    });
+  });
+  
+  console.log(`✅ Initialized ${editIcons.length} playlist overlays`);
+}
+
+// Find the associated overlay for an edit icon
+function findAssociatedOverlay(editIcon) {
+  // Try to find overlay in same parent
+  let overlay = editIcon.parentElement.querySelector('.playlist-edit-overlay');
+  
+  // If not found, try siblings
+  if (!overlay) {
+    overlay = editIcon.nextElementSibling;
+    if (overlay && !overlay.classList.contains('playlist-edit-overlay')) {
+      overlay = null;
+    }
+  }
+  
+  // If still not found, try closest parent container
+  if (!overlay) {
+    const container = editIcon.closest('.playlist-item, .playlist-card, .playlist-container');
+    if (container) {
+      overlay = container.querySelector('.playlist-edit-overlay');
+    }
+  }
+  
+  return overlay;
+}
+
+// Show overlay with fade in
+function showOverlay(overlay) {
+  // Set display first
+  overlay.style.display = 'flex'; // or 'block' depending on your layout
+  
+  // Force reflow to ensure display is applied
+  overlay.offsetHeight;
+  
+  // Add visible class for fade in
+  overlay.classList.add('is-visible');
+}
+
+// Hide overlay with fade out
+function hideOverlay(overlay) {
+  // Remove visible class for fade out
+  overlay.classList.remove('is-visible');
+  
+  // Wait for transition to complete before hiding
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 300); // Match the CSS transition duration
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+  initializePlaylistOverlay();
+});  
+  
 
 /**
  * ============================================================
