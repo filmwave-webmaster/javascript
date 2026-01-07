@@ -144,8 +144,6 @@ function updateMasterPlayerVisibility() {
   const isDashboardPage = !!document.querySelector('.dashboard-content-wrapper');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
-  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'isDashboardPage:', isDashboardPage);
-  
   positionMasterPlayer();
   
   if (shouldShow) {
@@ -160,18 +158,19 @@ function updateMasterPlayerVisibility() {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', '77px', 'important');
-        console.log('✅ Added padding to music-area-container');
       }
     }
     
-    // ADD PADDING TO DASHBOARD CONTENT WRAPPER ON DASHBOARD PAGE
+    // ADJUST DASHBOARD CONTENT WRAPPER ON DASHBOARD PAGE
     if (isDashboardPage) {
       const dashboardContentWrapper = document.querySelector('.dashboard-content-wrapper');
       if (dashboardContentWrapper) {
+        // Remove fixed height and set min-height instead
+        const currentHeight = window.getComputedStyle(dashboardContentWrapper).height;
+        dashboardContentWrapper.style.setProperty('height', 'auto', 'important');
+        dashboardContentWrapper.style.setProperty('min-height', 'calc(100vh - 77px)', 'important');
         dashboardContentWrapper.style.setProperty('padding-bottom', '77px', 'important');
-        console.log('✅ Added padding to dashboard-content-wrapper');
-      } else {
-        console.warn('⚠️ .dashboard-content-wrapper not found!');
+        console.log('✅ Adjusted dashboard-content-wrapper');
       }
     }
   } else {
@@ -179,26 +178,26 @@ function updateMasterPlayerVisibility() {
     playerWrapper.style.visibility = 'hidden';
     playerWrapper.style.opacity = '0';
     
-    // REMOVE PADDING WHEN PLAYER IS HIDDEN
+    // REMOVE ADJUSTMENTS WHEN PLAYER IS HIDDEN
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', '0px', 'important');
-        console.log('🗑️ Removed padding from music-area-container');
       }
     }
     
-    // REMOVE PADDING FROM DASHBOARD WHEN PLAYER IS HIDDEN
+    // RESTORE DASHBOARD WHEN PLAYER IS HIDDEN
     if (isDashboardPage) {
       const dashboardContentWrapper = document.querySelector('.dashboard-content-wrapper');
       if (dashboardContentWrapper) {
+        dashboardContentWrapper.style.removeProperty('height');
+        dashboardContentWrapper.style.removeProperty('min-height');
         dashboardContentWrapper.style.setProperty('padding-bottom', '0px', 'important');
-        console.log('🗑️ Removed padding from dashboard-content-wrapper');
+        console.log('🗑️ Restored dashboard-content-wrapper');
       }
     }
   }
 }
-
 /**
  * ============================================================
  * MAIN INITIALIZATION
