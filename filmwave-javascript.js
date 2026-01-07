@@ -141,10 +141,7 @@ function updateMasterPlayerVisibility() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const isDashboardPage = !!document.querySelector('.dashboard-tab-content');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
-  
-  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'isDashboardPage:', isDashboardPage);
   
   positionMasterPlayer();
   
@@ -160,18 +157,6 @@ function updateMasterPlayerVisibility() {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', '77px', 'important');
-        console.log('✅ Added padding to music-area-container');
-      }
-    }
-    
-    // ADD PADDING TO DASHBOARD TAB SECTION ON DASHBOARD PAGE
-    if (isDashboardPage) {
-      const dashboardTabSection = document.querySelector('.dashboard-tab-section');
-      if (dashboardTabSection) {
-        dashboardTabSection.style.setProperty('padding-bottom', '77px', 'important');
-        console.log('✅ Added padding to dashboard-tab-section');
-      } else {
-        console.warn('⚠️ .dashboard-tab-section not found!');
       }
     }
   } else {
@@ -184,16 +169,6 @@ function updateMasterPlayerVisibility() {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', '0px', 'important');
-        console.log('🗑️ Removed padding from music-area-container');
-      }
-    }
-    
-    // REMOVE PADDING FROM DASHBOARD WHEN PLAYER IS HIDDEN
-    if (isDashboardPage) {
-      const dashboardTabSection = document.querySelector('.dashboard-tab-section');
-      if (dashboardTabSection) {
-        dashboardTabSection.style.setProperty('padding-bottom', '0px', 'important');
-        console.log('🗑️ Removed padding from dashboard-tab-section');
       }
     }
   }
