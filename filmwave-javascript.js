@@ -144,6 +144,8 @@ function updateMasterPlayerVisibility() {
   const hasFooter = !!document.querySelector('.footer-wrapper');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'hasFooter:', hasFooter);
+  
   positionMasterPlayer();
   
   if (shouldShow) {
@@ -161,12 +163,12 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD MARGIN TO FOOTER ON ANY PAGE THAT HAS IT
+    // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
-        footerWrapper.style.setProperty('margin-bottom', '77px', 'important');
-        console.log('✅ Added margin to footer-wrapper');
+        footerWrapper.style.setProperty('padding-bottom', '77px', 'important');
+        console.log('✅ Added padding to footer-wrapper');
       }
     }
   } else {
@@ -182,12 +184,12 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // REMOVE MARGIN FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+    // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
-        footerWrapper.style.setProperty('margin-bottom', '0px', 'important');
-        console.log('🗑️ Removed margin from footer-wrapper');
+        footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
+        console.log('🗑️ Removed padding from footer-wrapper');
       }
     }
   }
