@@ -161,16 +161,14 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADJUST DASHBOARD CONTENT WRAPPER ON DASHBOARD PAGE
+    // ADJUST MAIN-CONTENT ON DASHBOARD PAGE
     if (isDashboardPage) {
-      const dashboardContentWrapper = document.querySelector('.dashboard-content-wrapper');
-      if (dashboardContentWrapper) {
-        // Remove fixed height and set min-height instead
-        const currentHeight = window.getComputedStyle(dashboardContentWrapper).height;
-        dashboardContentWrapper.style.setProperty('height', 'auto', 'important');
-        dashboardContentWrapper.style.setProperty('min-height', 'calc(100vh - 77px)', 'important');
-        dashboardContentWrapper.style.setProperty('padding-bottom', '77px', 'important');
-        console.log('✅ Adjusted dashboard-content-wrapper');
+      const mainContent = document.querySelector('.main-content');
+      if (mainContent) {
+        // Set min-height instead of height so it can expand
+        mainContent.style.setProperty('min-height', 'calc(100vh - 77px)', 'important');
+        mainContent.style.setProperty('height', 'auto', 'important');
+        console.log('✅ Adjusted main-content for player');
       }
     }
   } else {
@@ -186,18 +184,18 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // RESTORE DASHBOARD WHEN PLAYER IS HIDDEN
+    // RESTORE MAIN-CONTENT ON DASHBOARD WHEN PLAYER IS HIDDEN
     if (isDashboardPage) {
-      const dashboardContentWrapper = document.querySelector('.dashboard-content-wrapper');
-      if (dashboardContentWrapper) {
-        dashboardContentWrapper.style.removeProperty('height');
-        dashboardContentWrapper.style.removeProperty('min-height');
-        dashboardContentWrapper.style.setProperty('padding-bottom', '0px', 'important');
-        console.log('🗑️ Restored dashboard-content-wrapper');
+      const mainContent = document.querySelector('.main-content');
+      if (mainContent) {
+        mainContent.style.removeProperty('min-height');
+        mainContent.style.removeProperty('height');
+        console.log('🗑️ Restored main-content');
       }
     }
   }
 }
+
 /**
  * ============================================================
  * MAIN INITIALIZATION
