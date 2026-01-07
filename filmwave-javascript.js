@@ -164,24 +164,14 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD PADDING TO DASHBOARD TAB CONTENT ON DASHBOARD PAGE
+    // ADD PADDING TO DASHBOARD TAB SECTION ON DASHBOARD PAGE
     if (isDashboardPage) {
-      const dashboardTabContent = document.querySelector('.dashboard-tab-content');
-      if (dashboardTabContent) {
-        dashboardTabContent.style.setProperty('padding-bottom', '77px', 'important');
-        
-        // Also adjust height if it's set
-        const computedStyle = window.getComputedStyle(dashboardTabContent);
-        if (computedStyle.height && computedStyle.height !== 'auto') {
-          dashboardTabContent.style.setProperty('height', 'calc(100% - 77px)', 'important');
-        }
-        
-        // Ensure overflow is visible
-        dashboardTabContent.style.setProperty('overflow', 'visible', 'important');
-        
-        console.log('✅ Added padding to dashboard-tab-content');
+      const dashboardTabSection = document.querySelector('.dashboard-tab-section');
+      if (dashboardTabSection) {
+        dashboardTabSection.style.setProperty('padding-bottom', '77px', 'important');
+        console.log('✅ Added padding to dashboard-tab-section');
       } else {
-        console.warn('⚠️ .dashboard-tab-content not found!');
+        console.warn('⚠️ .dashboard-tab-section not found!');
       }
     }
   } else {
@@ -200,12 +190,10 @@ function updateMasterPlayerVisibility() {
     
     // REMOVE PADDING FROM DASHBOARD WHEN PLAYER IS HIDDEN
     if (isDashboardPage) {
-      const dashboardTabContent = document.querySelector('.dashboard-tab-content');
-      if (dashboardTabContent) {
-        dashboardTabContent.style.setProperty('padding-bottom', '0px', 'important');
-        dashboardTabContent.style.removeProperty('height');
-        dashboardTabContent.style.removeProperty('overflow');
-        console.log('🗑️ Removed padding from dashboard-tab-content');
+      const dashboardTabSection = document.querySelector('.dashboard-tab-section');
+      if (dashboardTabSection) {
+        dashboardTabSection.style.setProperty('padding-bottom', '0px', 'important');
+        console.log('🗑️ Removed padding from dashboard-tab-section');
       }
     }
   }
