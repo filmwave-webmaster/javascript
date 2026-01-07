@@ -3612,6 +3612,13 @@ function toggleEditMode(container, button) {
       items.forEach(item => {
         item.style.cursor = 'grab';
       });
+
+      // Disable playlist links in edit mode
+      const playlistLinks = document.querySelectorAll('.playlist-link-block');
+      playlistLinks.forEach(link => {
+      link.style.pointerEvents = 'none';
+      link.style.cursor = 'grab';
+      });
       
       toggleEditIcons(true); // Show edit icons
       console.log('🔓 Edit mode enabled - dragging should work now');
@@ -3629,8 +3636,23 @@ function toggleEditMode(container, button) {
       items.forEach(item => {
         item.style.cursor = 'default';
       });
+
+      // Re-enable playlist links
+      const playlistLinks = document.querySelectorAll('.playlist-link-block');
+      playlistLinks.forEach(link => {
+      link.style.pointerEvents = 'auto';
+      link.style.cursor = 'pointer';
+      });
       
       toggleEditIcons(false); // Hide edit icons
+
+      // Close any open playlist overlays
+      const openOverlays = document.querySelectorAll('.playlist-edit-overlay.is-visible');
+      openOverlays.forEach(overlay => {
+      hideOverlay(overlay);
+      });
+      console.log('✅ Closed', openOverlays.length, 'open overlays');
+      
       saveOrder(container);
       console.log('🔒 Edit mode disabled, order saved');
     } catch (e) {
