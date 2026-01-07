@@ -88,6 +88,7 @@ function scrollToSelected(cardElement) {
 function adjustDropdownPosition(toggle, list) {
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
+                    document.querySelector('.favourite-songs-wrapper') ||
                     document.body;
   
   if (!list || !toggle) return;
@@ -221,20 +222,33 @@ async function initMusicPage() {
       updateMasterPlayerVisibility();
     }, 200);
   } else {
-    initMasterPlayer();
-    updateMasterPlayerVisibility();
+  initMasterPlayer();
+  updateMasterPlayerVisibility();
 
-    setTimeout(() => {
-      const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-      console.log('🏠 Checking for featured songs container:', hasFeaturedSongs);
-      if (hasFeaturedSongs) {
-        console.log('🎵 Calling displayFeaturedSongs...');
-        displayFeaturedSongs(6);
-      } else {
-        console.log('⚠️ No featured songs container found');
-      }
-    }, 200);
-  }
+  setTimeout(() => {
+    const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+    const hasFavouriteSongs = !!document.querySelector('.favourite-songs-wrapper');
+    
+    console.log('🏠 Checking containers:', { 
+      featuredSongs: hasFeaturedSongs, 
+      favouriteSongs: hasFavouriteSongs 
+    });
+    
+    if (hasFeaturedSongs) {
+      console.log('🎵 Calling displayFeaturedSongs...');
+      displayFeaturedSongs(6);
+    }
+    
+    if (hasFavouriteSongs) {
+      console.log('💛 Calling displayFavouriteSongs...');
+      displayFavouriteSongs(); // Shows all songs, or pass a number like displayFavouriteSongs(20)
+    }
+    
+    if (!hasFeaturedSongs && !hasFavouriteSongs) {
+      console.log('⚠️ No song containers found on this page');
+    }
+  }, 200);
+}
 } 
 
 /**
@@ -1431,6 +1445,74 @@ async function displayFeaturedSongs(limit = 6) {
   
   console.log(`✅ Displayed ${featuredSongs.length} featured songs on home page`);
   
+  setTimeout(() => {
+    const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+    if (cards.length > 0) {
+      loadWaveformBatch(Array.from(cards));
+    }
+  }, 100);
+}
+
+/**
+ * ============================================================
+ * DISPLAY FAVOURITE SONGS ON BACKEND PAGE
+ * ============================================================
+ */
+async function displayFavouriteSongs(limit = null) {
+  const container = document.querySelector('.favourite-songs-wrapper');
+  if (!container) {
+    console.log('No favourite songs container found on this page');
+    return;
+  }
+  
+  const g = window.musicPlayerPersistent;
+  
+  // Fetch songs if not already loaded
+  if (g.MASTER_DATA.length === 0) {
+    await fetchSongs();
+  }
+  
+  const templateWrapper = container.querySelector('.template-wrapper');
+  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
+  
+  if (!templateCard) {
+    console.warn('No template card found in favourite-songs-wrapper');
+    return;
+  }
+  
+  // Clear container but keep template
+  container.innerHTML = '';
+  if (templateWrapper) container.appendChild(templateWrapper);
+  
+  // Decide which songs to show
+  let songsToDisplay = g.MASTER_DATA;
+  
+  // If limit is specified, take the most recent songs
+  if (limit) {
+    songsToDisplay = g.MASTER_DATA.slice(-limit).reverse();
+  }
+  
+  // Create song cards
+  songsToDisplay.forEach(song => {
+    const newCard = templateCard.cloneNode(true);
+    newCard.style.opacity = '1';
+    newCard.style.position = 'relative';
+    newCard.style.pointerEvents = 'auto';
+    
+    populateSongCard(newCard, song);
+    container.appendChild(newCard);
+  });
+
+  // Reinitialize Webflow interactions
+  if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+    window.Webflow.require('ix2').init();
+  }
+  
+  console.log(`✅ Displayed ${songsToDisplay.length} songs on favourite songs page`);
+  
+  // Initialize waveforms for these cards
   setTimeout(() => {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
@@ -4259,46 +4341,61 @@ if (typeof barba !== 'undefined') {
     updateMasterPlayerVisibility();
 
     // Adjust main-content height based on player visibility (login/signup pages only)
-const mainContent = document.querySelector('.main-content');
-const playerWrapper = document.querySelector('.music-player-wrapper');
-const isPlayerVisible = playerWrapper && 
-                       playerWrapper.style.display !== 'none' && 
-                       playerWrapper.style.visibility !== 'hidden';
+    const mainContent = document.querySelector('.main-content');
+    const playerWrapper = document.querySelector('.music-player-wrapper');
+    const isPlayerVisible = playerWrapper && 
+                           playerWrapper.style.display !== 'none' && 
+                           playerWrapper.style.visibility !== 'hidden';
 
-const isLoginPage = !!document.querySelector('.login-section');
+    const isLoginPage = !!document.querySelector('.login-section');
 
-if (mainContent && isLoginPage) {
-  if (isPlayerVisible) {
-    mainContent.style.height = 'calc(100vh - 77px)';
-    console.log('📐 Main content: calc(100vh - 77px) - player visible');
-  } else {
-    mainContent.style.height = '100vh';
-    console.log('📐 Main content: 100vh - player hidden');
-  }
-  
-  // Remove hiding CSS and reveal .login-section smoothly
-  const style = document.getElementById('barba-transition-style');
-  if (style) style.remove();
-  
-  const loginSection = document.querySelector('.login-section');
-  if (loginSection) {
-    loginSection.style.transition = 'opacity 0.15s ease';
-    loginSection.style.opacity = '1';
-  }
-} else if (mainContent) {
-  mainContent.style.height = '';  // Remove any forced height on other pages
-  const style = document.getElementById('barba-transition-style');
-  if (style) style.remove();
-}
+    if (mainContent && isLoginPage) {
+      if (isPlayerVisible) {
+        mainContent.style.height = 'calc(100vh - 77px)';
+        console.log('📐 Main content: calc(100vh - 77px) - player visible');
+      } else {
+        mainContent.style.height = '100vh';
+        console.log('📐 Main content: 100vh - player hidden');
+      }
+      
+      // Remove hiding CSS and reveal .login-section smoothly
+      const style = document.getElementById('barba-transition-style');
+      if (style) style.remove();
+      
+      const loginSection = document.querySelector('.login-section');
+      if (loginSection) {
+        loginSection.style.transition = 'opacity 0.15s ease';
+        loginSection.style.opacity = '1';
+      }
+    } else if (mainContent) {
+      mainContent.style.height = '';  // Remove any forced height on other pages
+      const style = document.getElementById('barba-transition-style');
+      if (style) style.remove();
+    }
 
     g.isTransitioning = false;
 
     setTimeout(() => {
       const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-      console.log('🏠 [BARBA AFTER] Checking for featured songs container:', hasFeaturedSongs);
+      const hasFavouriteSongs = !!document.querySelector('.favourite-songs-wrapper');
+      
+      console.log('🏠 [BARBA AFTER] Checking containers:', { 
+        featuredSongs: hasFeaturedSongs, 
+        favouriteSongs: hasFavouriteSongs 
+      });
+      
       if (hasFeaturedSongs) {
         console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
         displayFeaturedSongs(6);
+      }
+      
+      if (hasFavouriteSongs) {
+        console.log('💛 [BARBA AFTER] Calling displayFavouriteSongs...');
+        displayFavouriteSongs();
+      }
+      
+      if (!hasFeaturedSongs && !hasFavouriteSongs) {
+        console.log('⚠️ No song containers found on this page');
       }
     }, 300);
     
@@ -4328,73 +4425,73 @@ if (mainContent && isLoginPage) {
       positionMasterPlayer();
     }, 100);
     
-   setTimeout(() => {
-  if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
-    console.log('🔄 Attempting to re-initialize pricing toggle...');
-    try {
-      initPricingToggle();
-      console.log('✅ Pricing toggle re-initialized successfully');
-    } catch (e) {
-      console.error('❌ Error initializing pricing toggle:', e);
-    }
-  }
+    setTimeout(() => {
+      if (typeof $ !== 'undefined' && typeof initPricingToggle === 'function') {
+        console.log('🔄 Attempting to re-initialize pricing toggle...');
+        try {
+          initPricingToggle();
+          console.log('✅ Pricing toggle re-initialized successfully');
+        } catch (e) {
+          console.error('❌ Error initializing pricing toggle:', e);
+        }
+      }
 
-  reinitializeTabs();
-  
-  // Manual password toggle for login/signup pages
-  const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
-
-  passwordFields.forEach(passwordField => {
-    const container = passwordField.closest('.form-field, .password-field, .form-block, form');
-    if (!container) return;
-    
-    const visibleToggle = container.querySelector('.password-toggle-visible');
-    const hiddenToggle = container.querySelector('.password-toggle-hidden');
-    
-    if (!visibleToggle || !hiddenToggle) return;
-    
-    // Clone to remove old listeners
-    const newVisibleToggle = visibleToggle.cloneNode(true);
-    const newHiddenToggle = hiddenToggle.cloneNode(true);
-    visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
-    hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
-    
-    // Setup visible toggle (shows password when clicked)
-    newVisibleToggle.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
+      reinitializeTabs();
       
-      passwordField.type = 'text';
-      newVisibleToggle.style.display = 'none';
-      newHiddenToggle.style.display = 'flex';
-      console.log('👁️ Password shown');
-    });
-    
-    // Setup hidden toggle (hides password when clicked)
-    newHiddenToggle.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      passwordField.type = 'password';
-      newVisibleToggle.style.display = 'flex';
-      newHiddenToggle.style.display = 'none';
-      console.log('🔒 Password hidden');
-    });
-    
-    // Set initial state
-    passwordField.type = 'password';
-    newVisibleToggle.style.display = 'flex';
-    newHiddenToggle.style.display = 'none';
-    
-    console.log('✅ Password toggle initialized');
-  });
+      // Manual password toggle for login/signup pages
+      const passwordFields = document.querySelectorAll('input[type="password"], input[type="text"][name*="password"], input[placeholder*="Password"]');
 
-  // Call shared Memberstack handler function
-  initializeMemberstackHandlers();
-  initializeProfileSortable(); 
-  initializePlaylistOverlay();  
-     
-}, 200);
+      passwordFields.forEach(passwordField => {
+        const container = passwordField.closest('.form-field, .password-field, .form-block, form');
+        if (!container) return;
+        
+        const visibleToggle = container.querySelector('.password-toggle-visible');
+        const hiddenToggle = container.querySelector('.password-toggle-hidden');
+        
+        if (!visibleToggle || !hiddenToggle) return;
+        
+        // Clone to remove old listeners
+        const newVisibleToggle = visibleToggle.cloneNode(true);
+        const newHiddenToggle = hiddenToggle.cloneNode(true);
+        visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
+        hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
+        
+        // Setup visible toggle (shows password when clicked)
+        newVisibleToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          passwordField.type = 'text';
+          newVisibleToggle.style.display = 'none';
+          newHiddenToggle.style.display = 'flex';
+          console.log('👁️ Password shown');
+        });
+        
+        // Setup hidden toggle (hides password when clicked)
+        newHiddenToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          passwordField.type = 'password';
+          newVisibleToggle.style.display = 'flex';
+          newHiddenToggle.style.display = 'none';
+          console.log('🔒 Password hidden');
+        });
+        
+        // Set initial state
+        passwordField.type = 'password';
+        newVisibleToggle.style.display = 'flex';
+        newHiddenToggle.style.display = 'none';
+        
+        console.log('✅ Password toggle initialized');
+      });
+
+      // Call shared Memberstack handler function
+      initializeMemberstackHandlers();
+      initializeProfileSortable(); 
+      initializePlaylistOverlay();  
+         
+    }, 200);
     
     window.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
