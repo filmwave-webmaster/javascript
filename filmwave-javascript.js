@@ -161,14 +161,14 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADJUST MAIN-CONTENT ON DASHBOARD PAGE
+    // ADD MARGIN TO FOOTER ON DASHBOARD PAGE
     if (isDashboardPage) {
-      const mainContent = document.querySelector('.main-content');
-      if (mainContent) {
-        // Set min-height instead of height so it can expand
-        mainContent.style.setProperty('min-height', 'calc(100vh - 77px)', 'important');
-        mainContent.style.setProperty('height', 'auto', 'important');
-        console.log('✅ Adjusted main-content for player');
+      const footerWrapper = document.querySelector('.footer-wrapper');
+      if (footerWrapper) {
+        footerWrapper.style.setProperty('margin-bottom', '77px', 'important');
+        console.log('✅ Added margin to footer-wrapper');
+      } else {
+        console.warn('⚠️ .footer-wrapper not found!');
       }
     }
   } else {
@@ -176,7 +176,7 @@ function updateMasterPlayerVisibility() {
     playerWrapper.style.visibility = 'hidden';
     playerWrapper.style.opacity = '0';
     
-    // REMOVE ADJUSTMENTS WHEN PLAYER IS HIDDEN
+    // REMOVE PADDING WHEN PLAYER IS HIDDEN
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
@@ -184,13 +184,12 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // RESTORE MAIN-CONTENT ON DASHBOARD WHEN PLAYER IS HIDDEN
+    // REMOVE MARGIN FROM FOOTER ON DASHBOARD WHEN PLAYER IS HIDDEN
     if (isDashboardPage) {
-      const mainContent = document.querySelector('.main-content');
-      if (mainContent) {
-        mainContent.style.removeProperty('min-height');
-        mainContent.style.removeProperty('height');
-        console.log('🗑️ Restored main-content');
+      const footerWrapper = document.querySelector('.footer-wrapper');
+      if (footerWrapper) {
+        footerWrapper.style.setProperty('margin-bottom', '0px', 'important');
+        console.log('🗑️ Removed margin from footer-wrapper');
       }
     }
   }
