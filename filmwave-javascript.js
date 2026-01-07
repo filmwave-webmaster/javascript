@@ -169,6 +169,16 @@ function updateMasterPlayerVisibility() {
       const dashboardTabContent = document.querySelector('.dashboard-tab-content');
       if (dashboardTabContent) {
         dashboardTabContent.style.setProperty('padding-bottom', '77px', 'important');
+        
+        // Also adjust height if it's set
+        const computedStyle = window.getComputedStyle(dashboardTabContent);
+        if (computedStyle.height && computedStyle.height !== 'auto') {
+          dashboardTabContent.style.setProperty('height', 'calc(100% - 77px)', 'important');
+        }
+        
+        // Ensure overflow is visible
+        dashboardTabContent.style.setProperty('overflow', 'visible', 'important');
+        
         console.log('✅ Added padding to dashboard-tab-content');
       } else {
         console.warn('⚠️ .dashboard-tab-content not found!');
@@ -193,6 +203,8 @@ function updateMasterPlayerVisibility() {
       const dashboardTabContent = document.querySelector('.dashboard-tab-content');
       if (dashboardTabContent) {
         dashboardTabContent.style.setProperty('padding-bottom', '0px', 'important');
+        dashboardTabContent.style.removeProperty('height');
+        dashboardTabContent.style.removeProperty('overflow');
         console.log('🗑️ Removed padding from dashboard-tab-content');
       }
     }
