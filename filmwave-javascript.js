@@ -3543,8 +3543,8 @@ function initializeProfileSortable() {
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
         disabled: true, // Start locked
-        delay: 200, // 200ms delay before drag starts
-        delayOnTouchOnly: false, // Apply delay to mouse events too
+        // delay: 200, // 200ms delay before drag starts
+        // delayOnTouchOnly: false, // Apply delay to mouse events too
         
         onStart: function(evt) {
           console.log('🎯 Drag started');
