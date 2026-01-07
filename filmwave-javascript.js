@@ -141,7 +141,7 @@ function updateMasterPlayerVisibility() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const isDashboardPage = !!document.querySelector('.dashboard-content-wrapper');
+  const hasFooter = !!document.querySelector('.footer-wrapper');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
   positionMasterPlayer();
@@ -161,14 +161,12 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD MARGIN TO FOOTER ON DASHBOARD PAGE
-    if (isDashboardPage) {
+    // ADD MARGIN TO FOOTER ON ANY PAGE THAT HAS IT
+    if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('margin-bottom', '77px', 'important');
         console.log('✅ Added margin to footer-wrapper');
-      } else {
-        console.warn('⚠️ .footer-wrapper not found!');
       }
     }
   } else {
@@ -184,8 +182,8 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // REMOVE MARGIN FROM FOOTER ON DASHBOARD WHEN PLAYER IS HIDDEN
-    if (isDashboardPage) {
+    // REMOVE MARGIN FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+    if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('margin-bottom', '0px', 'important');
