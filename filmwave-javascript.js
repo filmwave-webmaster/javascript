@@ -141,8 +141,10 @@ function updateMasterPlayerVisibility() {
   if (!playerWrapper) return;
   
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  const isDashboardPage = !!document.querySelector('.dashboard-content-wrapper');
+  const isDashboardPage = !!document.querySelector('.dashboard-tab-content');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
+  
+  console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'isDashboardPage:', isDashboardPage);
   
   positionMasterPlayer();
   
@@ -158,14 +160,18 @@ function updateMasterPlayerVisibility() {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', '77px', 'important');
+        console.log('✅ Added padding to music-area-container');
       }
     }
     
-    // ADD PADDING TO DASHBOARD CONTENT WRAPPER ON DASHBOARD PAGE
+    // ADD PADDING TO DASHBOARD TAB CONTENT ON DASHBOARD PAGE
     if (isDashboardPage) {
-      const dashboardContentWrapper = document.querySelector('.dashboard-content-wrapper');
-      if (dashboardContentWrapper) {
-        dashboardContentWrapper.style.setProperty('padding-bottom', '77px', 'important');
+      const dashboardTabContent = document.querySelector('.dashboard-tab-content');
+      if (dashboardTabContent) {
+        dashboardTabContent.style.setProperty('padding-bottom', '77px', 'important');
+        console.log('✅ Added padding to dashboard-tab-content');
+      } else {
+        console.warn('⚠️ .dashboard-tab-content not found!');
       }
     }
   } else {
@@ -178,14 +184,16 @@ function updateMasterPlayerVisibility() {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', '0px', 'important');
+        console.log('🗑️ Removed padding from music-area-container');
       }
     }
     
     // REMOVE PADDING FROM DASHBOARD WHEN PLAYER IS HIDDEN
     if (isDashboardPage) {
-      const dashboardContentWrapper = document.querySelector('.dashboard-content-wrapper');
-      if (dashboardContentWrapper) {
-        dashboardContentWrapper.style.setProperty('padding-bottom', '0px', 'important');
+      const dashboardTabContent = document.querySelector('.dashboard-tab-content');
+      if (dashboardTabContent) {
+        dashboardTabContent.style.setProperty('padding-bottom', '0px', 'important');
+        console.log('🗑️ Removed padding from dashboard-tab-content');
       }
     }
   }
