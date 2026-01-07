@@ -1074,11 +1074,6 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   });
   
   createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime, shouldAutoPlay);
-  
-  // Update player visibility and footer padding
-  setTimeout(() => {
-    updateMasterPlayerVisibility();
-  }, 100);
 }
 
 /**
