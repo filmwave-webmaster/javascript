@@ -4096,6 +4096,9 @@ function initPlaylistImageUpload() {
       const newSaveButton = saveButton.cloneNode(true);
       saveButton.parentNode.replaceChild(newSaveButton, saveButton);
       
+      // Get the button text element
+      const saveButtonText = newSaveButton.textContent.trim();
+      
       newSaveButton.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -4105,22 +4108,28 @@ function initPlaylistImageUpload() {
         if (tempData) {
           console.log(`📷 Applying image for ${profileItemId}`);
           
-          // HIDE IMAGE FIRST to prevent flash
-          playlistImage.style.opacity = '0';
+          // Create a temporary image to preload
+          const tempImg = new Image();
           
-          // Remove srcset and sizes
-          playlistImage.removeAttribute('srcset');
-          playlistImage.removeAttribute('sizes');
-          
-          // Set the src
-          playlistImage.src = tempData.dataUrl;
-          
-          // Show image once loaded
-          playlistImage.onload = function() {
+          tempImg.onload = function() {
+            // Once loaded, hide current image
+            playlistImage.style.opacity = '0';
+            
+            // Remove srcset and sizes
+            playlistImage.removeAttribute('srcset');
+            playlistImage.removeAttribute('sizes');
+            
+            // Set the src
+            playlistImage.src = tempData.dataUrl;
+            
+            // Show new image immediately (it's already loaded)
             playlistImage.style.opacity = '1';
+            
+            console.log('✅ Image updated, srcset removed');
           };
           
-          console.log('✅ Image updated, srcset removed');
+          // Start loading the image
+          tempImg.src = tempData.dataUrl;
           
           // Save to localStorage
           localStorage.setItem(`playlist-image-${profileItemId}`, tempData.dataUrl);
@@ -4128,8 +4137,16 @@ function initPlaylistImageUpload() {
           // Clear temp
           tempImageData.delete(profileItemId);
           
-          alert('✅ Playlist image saved!');
+          // Change button text to "Saved"
+          newSaveButton.textContent = 'Saved';
+          
+          // Reset after 3 seconds
+          setTimeout(() => {
+            newSaveButton.textContent = saveButtonText;
+          }, 3000);
+          
         } else {
+          // Show alert only if no image selected
           alert('⚠️ Please select an image first');
         }
       });
@@ -4156,21 +4173,27 @@ function restorePlaylistImages() {
     if (savedImage) {
       const playlistImage = profileItem.querySelector('.playlist-image');
       if (playlistImage) {
-        // Hide first to prevent flash
-        playlistImage.style.opacity = '0';
+        // Create temp image to preload
+        const tempImg = new Image();
         
-        // Remove srcset so src takes precedence
-        playlistImage.removeAttribute('srcset');
-        playlistImage.removeAttribute('sizes');
-        
-        playlistImage.src = savedImage;
-        
-        // Show once loaded
-        playlistImage.onload = function() {
+        tempImg.onload = function() {
+          // Hide current image
+          playlistImage.style.opacity = '0';
+          
+          // Remove srcset so src takes precedence
+          playlistImage.removeAttribute('srcset');
+          playlistImage.removeAttribute('sizes');
+          
+          playlistImage.src = savedImage;
+          
+          // Show immediately (already loaded)
           playlistImage.style.opacity = '1';
+          
+          console.log(`✅ Restored image for ${profileItemId}`);
         };
         
-        console.log(`✅ Restored image for ${profileItemId}`);
+        // Start preloading
+        tempImg.src = savedImage;
       }
     }
   });
