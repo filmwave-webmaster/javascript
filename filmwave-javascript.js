@@ -4031,7 +4031,6 @@ function initPlaylistImageUpload() {
     
     const addImageButton = profileItem.querySelector('.add-image');
     const saveButton = profileItem.querySelector('.playlist-save-button');
-    const addImageText = profileItem.querySelector('.add-image-text');
     const playlistImageWrapper = profileItem.querySelector('.playlist-image-wrapper');
     
     if (!addImageButton || !playlistImageWrapper) {
@@ -4058,6 +4057,9 @@ function initPlaylistImageUpload() {
     const newAddImageButton = addImageButton.cloneNode(true);
     addImageButton.parentNode.replaceChild(newAddImageButton, addImageButton);
     
+    // Get the text element from the NEW cloned button
+    const addImageText = newAddImageButton.querySelector('.add-image-text');
+    
     newAddImageButton.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -4071,7 +4073,7 @@ function initPlaylistImageUpload() {
         return;
       }
       
-      // Update filename text
+      // Update filename text on the NEW button
       if (addImageText) {
         addImageText.textContent = file.name;
         console.log(`📝 Updated filename to: ${file.name}`);
@@ -4103,12 +4105,20 @@ function initPlaylistImageUpload() {
         if (tempData) {
           console.log(`📷 Applying image for ${profileItemId}`);
           
-          // CRITICAL FIX: Remove srcset and sizes
+          // HIDE IMAGE FIRST to prevent flash
+          playlistImage.style.opacity = '0';
+          
+          // Remove srcset and sizes
           playlistImage.removeAttribute('srcset');
           playlistImage.removeAttribute('sizes');
           
           // Set the src
           playlistImage.src = tempData.dataUrl;
+          
+          // Show image once loaded
+          playlistImage.onload = function() {
+            playlistImage.style.opacity = '1';
+          };
           
           console.log('✅ Image updated, srcset removed');
           
@@ -4146,11 +4156,20 @@ function restorePlaylistImages() {
     if (savedImage) {
       const playlistImage = profileItem.querySelector('.playlist-image');
       if (playlistImage) {
+        // Hide first to prevent flash
+        playlistImage.style.opacity = '0';
+        
         // Remove srcset so src takes precedence
         playlistImage.removeAttribute('srcset');
         playlistImage.removeAttribute('sizes');
         
         playlistImage.src = savedImage;
+        
+        // Show once loaded
+        playlistImage.onload = function() {
+          playlistImage.style.opacity = '1';
+        };
+        
         console.log(`✅ Restored image for ${profileItemId}`);
       }
     }
