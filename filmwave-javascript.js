@@ -4159,15 +4159,24 @@ function initPlaylistImageUpload() {
           if (isImgTag) {
             // Update src attribute
             playlistImage.src = tempData.dataUrl;
-            console.log('🖼️ Applied playlist image');
-            console.log('Image src:', playlistImage.src.substring(0, 50) + '...');
+            console.log('🖼️ Applied playlist image src');
           }
           
           // ALSO set background-image (in case CSS is using that)
-          playlistImage.style.setProperty('background-image', `url(${tempData.dataUrl})`, 'important');
+          playlistImage.style.setProperty('background-image', `url("${tempData.dataUrl}")`, 'important');
           playlistImage.style.setProperty('background-size', 'cover', 'important');
           playlistImage.style.setProperty('background-position', 'center', 'important');
+          playlistImage.style.setProperty('background-repeat', 'no-repeat', 'important');
           console.log('🎨 Applied background-image style');
+          
+          // Also try setting it on the wrapper
+          if (playlistImageWrapper) {
+            playlistImageWrapper.style.setProperty('background-image', `url("${tempData.dataUrl}")`, 'important');
+            playlistImageWrapper.style.setProperty('background-size', 'cover', 'important');
+            playlistImageWrapper.style.setProperty('background-position', 'center', 'important');
+            playlistImageWrapper.style.setProperty('background-repeat', 'no-repeat', 'important');
+            console.log('🎨 Also applied to wrapper');
+          }
           
           // Save to localStorage for persistence
           const storageKey = `playlist-image-${profileItemId}`;
@@ -4216,8 +4225,10 @@ function restorePlaylistImages() {
     
     if (savedData) {
       try {
+        // Try to parse as JSON
         const data = JSON.parse(savedData);
         const playlistImage = profileItem.querySelector('.playlist-image');
+        const playlistImageWrapper = profileItem.querySelector('.playlist-image-wrapper');
         
         if (playlistImage) {
           // Apply to both src AND background-image
@@ -4225,14 +4236,24 @@ function restorePlaylistImages() {
             playlistImage.src = data.dataUrl;
           }
           
-          playlistImage.style.setProperty('background-image', `url(${data.dataUrl})`, 'important');
+          playlistImage.style.setProperty('background-image', `url("${data.dataUrl}")`, 'important');
           playlistImage.style.setProperty('background-size', 'cover', 'important');
           playlistImage.style.setProperty('background-position', 'center', 'important');
+          playlistImage.style.setProperty('background-repeat', 'no-repeat', 'important');
+          
+          if (playlistImageWrapper) {
+            playlistImageWrapper.style.setProperty('background-image', `url("${data.dataUrl}")`, 'important');
+            playlistImageWrapper.style.setProperty('background-size', 'cover', 'important');
+            playlistImageWrapper.style.setProperty('background-position', 'center', 'important');
+            playlistImageWrapper.style.setProperty('background-repeat', 'no-repeat', 'important');
+          }
           
           console.log(`✅ Restored image for ${profileItemId}`);
         }
       } catch (e) {
-        console.error(`❌ Error parsing saved data for ${profileItemId}:`, e);
+        // Old format - just raw data URL, clear it
+        console.warn(`⚠️ Old data format for ${profileItemId}, clearing...`);
+        localStorage.removeItem(storageKey);
       }
     }
   });
@@ -4257,7 +4278,6 @@ if (typeof barba !== 'undefined') {
     }, 1000);
   });
 }
-
 
 
 /**
