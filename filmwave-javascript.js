@@ -4009,11 +4009,14 @@ window.addEventListener('load', () => {
 
 /**
  * ============================================================
- * PLAYLIST COVER IMAGE UPLOAD
+ * PLAYLIST COVER IMAGE UPLOAD (TWO-STEP PROCESS)
  * ============================================================
  */
 function initPlaylistImageUpload() {
   console.log('🖼️ Initializing playlist image upload...');
+  
+  // Store temporary image data for each profile item
+  const tempImageData = new Map();
   
   // Find all add-image buttons
   const addImageButtons = document.querySelectorAll('.add-image');
@@ -4032,16 +4035,22 @@ function initPlaylistImageUpload() {
       return;
     }
     
+    // Get or create profile item ID
+    if (!profileItem.dataset.id) {
+      profileItem.dataset.id = `profile-item-${index + 1}`;
+    }
+    const profileItemId = profileItem.dataset.id;
+    
     // Create a hidden file input for this button
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = 'image/*'; // Only accept images
+    fileInput.accept = 'image/*';
     fileInput.style.display = 'none';
     
     // Add the file input to the DOM
     profileItem.appendChild(fileInput);
     
-    // When button is clicked, trigger file input
+    // When add-image is clicked, trigger file input
     button.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -4066,28 +4075,26 @@ function initPlaylistImageUpload() {
         return;
       }
       
-      // Read the file and convert to data URL
+      // Update the add-image-text with filename
+      const addImageText = profileItem.querySelector('.add-image-text');
+      if (addImageText) {
+        addImageText.textContent = file.name;
+        console.log('📝 Updated filename text');
+      }
+      
+      // Read the file and store temporarily
       const reader = new FileReader();
       
       reader.onload = function(event) {
         const imageDataUrl = event.target.result;
         
-        // Find the playlist image in this profile item
-        const playlistImage = profileItem.querySelector('.playlist-image');
+        // Store temporarily - don't apply yet!
+        tempImageData.set(profileItemId, {
+          dataUrl: imageDataUrl,
+          filename: file.name
+        });
         
-        if (playlistImage) {
-          // Replace the image
-          playlistImage.src = imageDataUrl;
-          console.log('🖼️ Updated playlist image');
-          
-          // Store in localStorage for persistence
-          const profileItemId = profileItem.dataset.id || `profile-item-${index}`;
-          const storageKey = `playlist-image-${profileItemId}`;
-          localStorage.setItem(storageKey, imageDataUrl);
-          console.log(`💾 Saved image to localStorage: ${storageKey}`);
-        } else {
-          console.warn('⚠️ No .playlist-image found in profile-item');
-        }
+        console.log(`💾 Stored temp image for ${profileItemId}`);
       };
       
       reader.onerror = function() {
@@ -4095,14 +4102,103 @@ function initPlaylistImageUpload() {
         alert('Error uploading image. Please try again.');
       };
       
-      // Read the file as data URL
       reader.readAsDataURL(file);
     });
+    
+    // Handle save button
+    const saveButton = profileItem.querySelector('.playlist-save-button');
+    if (saveButton) {
+      saveButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log(`💾 Save button clicked for ${profileItemId}`);
+        
+        // Check if there's a temp image for this profile item
+        const tempData = tempImageData.get(profileItemId);
+        
+        if (tempData) {
+          // Apply the image
+          const playlistImage = profileItem.querySelector('.playlist-image');
+          
+          if (playlistImage) {
+            playlistImage.src = tempData.dataUrl;
+            console.log('🖼️ Applied playlist image');
+            
+            // Save to localStorage for persistence
+            const storageKey = `playlist-image-${profileItemId}`;
+            localStorage.setItem(storageKey, tempData.dataUrl);
+            console.log(`💾 Saved image to localStorage: ${storageKey}`);
+            
+            // Clear temp data
+            tempImageData.delete(profileItemId);
+            
+            // Optional: Reset the add-image-text back to default
+            const addImageText = profileItem.querySelector('.add-image-text');
+            if (addImageText) {
+              // Keep the filename or reset to default text
+              // addImageText.textContent = 'Add Image'; // Uncomment to reset
+            }
+            
+            alert('Playlist image saved!');
+          } else {
+            console.warn('⚠️ No .playlist-image found in profile-item');
+          }
+        } else {
+          console.log('ℹ️ No image to save for this playlist');
+        }
+      });
+      
+      console.log(`✅ Save button initialized for ${profileItemId}`);
+    }
     
     console.log(`✅ Image upload initialized for button ${index + 1}`);
   });
   
   console.log(`✅ Initialized ${addImageButtons.length} image upload buttons`);
+}
+
+/**
+ * ============================================================
+ * RESTORE PLAYLIST IMAGES FROM LOCALSTORAGE
+ * ============================================================
+ */
+function restorePlaylistImages() {
+  console.log('🔄 Restoring playlist images from localStorage...');
+  
+  const profileItems = document.querySelectorAll('.profile-item');
+  
+  profileItems.forEach((profileItem, index) => {
+    const profileItemId = profileItem.dataset.id || `profile-item-${index + 1}`;
+    const storageKey = `playlist-image-${profileItemId}`;
+    const savedImage = localStorage.getItem(storageKey);
+    
+    if (savedImage) {
+      const playlistImage = profileItem.querySelector('.playlist-image');
+      if (playlistImage) {
+        playlistImage.src = savedImage;
+        console.log(`✅ Restored image for ${profileItemId}`);
+      }
+    }
+  });
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initPlaylistImageUpload();
+    restorePlaylistImages();
+  }, 500);
+});
+
+// Re-initialize after Barba transitions
+if (typeof barba !== 'undefined') {
+  window.addEventListener('barbaAfterTransition', function() {
+    setTimeout(() => {
+      initPlaylistImageUpload();
+      restorePlaylistImages();
+    }, 500);
+  });
 }
 
 /**
