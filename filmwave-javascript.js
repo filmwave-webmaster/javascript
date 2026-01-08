@@ -4018,7 +4018,7 @@ function initPlaylistImageUpload() {
   // Store temporary image data for each profile item
   const tempImageData = new Map();
   
-  // Find all profile items (not just buttons)
+  // Find all profile items
   const profileItems = document.querySelectorAll('.profile-item');
   
   if (profileItems.length === 0) {
@@ -4033,35 +4033,23 @@ function initPlaylistImageUpload() {
     }
     const profileItemId = profileItem.dataset.id;
     
-    console.log(`🔧 Setting up ${profileItemId}`);
-    
     // Find elements within this profile item
     const addImageButton = profileItem.querySelector('.add-image');
     const saveButton = profileItem.querySelector('.playlist-save-button');
     const addImageText = profileItem.querySelector('.add-image-text');
     const playlistImageWrapper = profileItem.querySelector('.playlist-image-wrapper');
     
-    if (!addImageButton) {
-      console.warn(`⚠️ No .add-image found in ${profileItemId}`);
+    if (!addImageButton || !playlistImageWrapper) {
       return;
     }
     
-    if (!playlistImageWrapper) {
-      console.warn(`⚠️ No .playlist-image-wrapper found in ${profileItemId}`);
-      return;
-    }
-    
-    // Find the actual image element - could be img tag or background image div
     let playlistImage = playlistImageWrapper.querySelector('.playlist-image');
     
     if (!playlistImage) {
-      console.warn(`⚠️ No .playlist-image found in ${profileItemId}`);
       return;
     }
     
-    console.log(`✅ Found all elements for ${profileItemId}`);
-    
-    // Create a hidden file input ONCE per profile item
+    // Create file input ONCE
     let fileInput = profileItem.querySelector('input[type="file"].playlist-image-input');
     
     if (!fileInput) {
@@ -4071,72 +4059,47 @@ function initPlaylistImageUpload() {
       fileInput.classList.add('playlist-image-input');
       fileInput.style.display = 'none';
       profileItem.appendChild(fileInput);
-      console.log(`📁 Created file input for ${profileItemId}`);
     }
     
-    // Remove old event listeners by cloning button
+    // Clone button to remove old listeners
     const newAddImageButton = addImageButton.cloneNode(true);
     addImageButton.parentNode.replaceChild(newAddImageButton, addImageButton);
     
-    // When add-image is clicked, trigger file input
+    // Click handler
     newAddImageButton.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      console.log(`📁 Opening file picker for ${profileItemId}`);
       fileInput.click();
     });
     
-    // When file is selected
+    // File change handler
     fileInput.addEventListener('change', function(e) {
       const file = e.target.files[0];
       
-      if (!file) {
-        console.log('❌ No file selected');
+      if (!file || !file.type.startsWith('image/')) {
         return;
       }
       
-      console.log(`✅ File selected: ${file.name} for ${profileItemId}`);
-      
-      // Check if it's an image
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        fileInput.value = '';
-        return;
-      }
-      
-      // Update the add-image-text with filename
+      // Update filename text
       if (addImageText) {
         addImageText.textContent = file.name;
-        console.log(`📝 Updated filename text to: ${file.name}`);
       }
       
-      // Read the file and store temporarily
+      // Read file
       const reader = new FileReader();
       
       reader.onload = function(event) {
-        const imageDataUrl = event.target.result;
-        
-        // Store temporarily - don't apply yet!
         tempImageData.set(profileItemId, {
-          dataUrl: imageDataUrl,
+          dataUrl: event.target.result,
           filename: file.name
         });
-        
-        console.log(`💾 Stored temp image for ${profileItemId}`, imageDataUrl.substring(0, 50) + '...');
-      };
-      
-      reader.onerror = function() {
-        console.error('❌ Error reading file');
-        alert('Error uploading image. Please try again.');
-        fileInput.value = '';
       };
       
       reader.readAsDataURL(file);
     });
     
-    // Handle save button
+    // Save button handler
     if (saveButton) {
-      // Remove old event listeners by cloning
       const newSaveButton = saveButton.cloneNode(true);
       saveButton.parentNode.replaceChild(newSaveButton, saveButton);
       
@@ -4144,65 +4107,26 @@ function initPlaylistImageUpload() {
         e.preventDefault();
         e.stopPropagation();
         
-        console.log(`💾 Save button clicked for ${profileItemId}`);
-        
-        // Check if there's a temp image for this profile item
         const tempData = tempImageData.get(profileItemId);
         
         if (tempData) {
-          console.log(`📷 Temp data found: ${tempData.filename}`);
-          console.log(`🔍 Looking for .playlist-image...`, playlistImage ? 'FOUND' : 'NOT FOUND');
-          
-          // Apply image to BOTH src AND background-image (cover all cases)
-          const isImgTag = playlistImage.tagName === 'IMG';
-          
-          if (isImgTag) {
-            // Update src attribute
+          // Apply to img src if it's an img tag
+          if (playlistImage.tagName === 'IMG') {
             playlistImage.src = tempData.dataUrl;
-            console.log('🖼️ Applied playlist image src');
           }
           
-          // ALSO set background-image (in case CSS is using that)
-          playlistImage.style.setProperty('background-image', `url("${tempData.dataUrl}")`, 'important');
-          playlistImage.style.setProperty('background-size', 'cover', 'important');
-          playlistImage.style.setProperty('background-position', 'center', 'important');
-          playlistImage.style.setProperty('background-repeat', 'no-repeat', 'important');
-          console.log('🎨 Applied background-image style');
+          // Save to localStorage
+          localStorage.setItem(`playlist-image-${profileItemId}`, tempData.dataUrl);
           
-          // Also try setting it on the wrapper
-          if (playlistImageWrapper) {
-            playlistImageWrapper.style.setProperty('background-image', `url("${tempData.dataUrl}")`, 'important');
-            playlistImageWrapper.style.setProperty('background-size', 'cover', 'important');
-            playlistImageWrapper.style.setProperty('background-position', 'center', 'important');
-            playlistImageWrapper.style.setProperty('background-repeat', 'no-repeat', 'important');
-            console.log('🎨 Also applied to wrapper');
-          }
-          
-          // Save to localStorage for persistence
-          const storageKey = `playlist-image-${profileItemId}`;
-          const storageData = JSON.stringify({
-            dataUrl: tempData.dataUrl,
-            isImgTag: isImgTag
-          });
-          localStorage.setItem(storageKey, storageData);
-          console.log(`💾 Saved image to localStorage: ${storageKey}`);
-          
-          // Clear temp data
+          // Clear temp
           tempImageData.delete(profileItemId);
           
           alert('✅ Playlist image saved!');
         } else {
-          console.log('ℹ️ No image to save for this playlist');
           alert('⚠️ Please select an image first');
         }
       });
-      
-      console.log(`✅ Save button initialized for ${profileItemId}`);
-    } else {
-      console.warn(`⚠️ No .playlist-save-button found in ${profileItemId}`);
     }
-    
-    console.log(`✅ Image upload initialized for ${profileItemId}`);
   });
   
   console.log(`✅ Initialized ${profileItems.length} image upload buttons`);
@@ -4220,48 +4144,19 @@ function restorePlaylistImages() {
   
   profileItems.forEach((profileItem, index) => {
     const profileItemId = profileItem.dataset.id || `profile-item-${index + 1}`;
-    const storageKey = `playlist-image-${profileItemId}`;
-    const savedData = localStorage.getItem(storageKey);
+    const savedImage = localStorage.getItem(`playlist-image-${profileItemId}`);
     
-    if (savedData) {
-      try {
-        // Try to parse as JSON
-        const data = JSON.parse(savedData);
-        const playlistImage = profileItem.querySelector('.playlist-image');
-        const playlistImageWrapper = profileItem.querySelector('.playlist-image-wrapper');
-        
-        if (playlistImage) {
-          // Apply to both src AND background-image
-          if (data.isImgTag) {
-            playlistImage.src = data.dataUrl;
-          }
-          
-          playlistImage.style.setProperty('background-image', `url("${data.dataUrl}")`, 'important');
-          playlistImage.style.setProperty('background-size', 'cover', 'important');
-          playlistImage.style.setProperty('background-position', 'center', 'important');
-          playlistImage.style.setProperty('background-repeat', 'no-repeat', 'important');
-          
-          if (playlistImageWrapper) {
-            playlistImageWrapper.style.setProperty('background-image', `url("${data.dataUrl}")`, 'important');
-            playlistImageWrapper.style.setProperty('background-size', 'cover', 'important');
-            playlistImageWrapper.style.setProperty('background-position', 'center', 'important');
-            playlistImageWrapper.style.setProperty('background-repeat', 'no-repeat', 'important');
-          }
-          
-          console.log(`✅ Restored image for ${profileItemId}`);
-        }
-      } catch (e) {
-        // Old format - just raw data URL, clear it
-        console.warn(`⚠️ Old data format for ${profileItemId}, clearing...`);
-        localStorage.removeItem(storageKey);
+    if (savedImage) {
+      const playlistImage = profileItem.querySelector('.playlist-image');
+      if (playlistImage && playlistImage.tagName === 'IMG') {
+        playlistImage.src = savedImage;
+        console.log(`✅ Restored image for ${profileItemId}`);
       }
     }
   });
-  
-  console.log('✅ Restore complete');
 }
 
-// Initialize on page load
+// Initialize
 window.addEventListener('load', () => {
   setTimeout(() => {
     initPlaylistImageUpload();
@@ -4269,7 +4164,6 @@ window.addEventListener('load', () => {
   }, 1000);
 });
 
-// Re-initialize after Barba transitions
 if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', function() {
     setTimeout(() => {
@@ -4278,7 +4172,6 @@ if (typeof barba !== 'undefined') {
     }, 1000);
   });
 }
-
 
 /**
  * ============================================================
