@@ -4018,30 +4018,50 @@ function initPlaylistImageUpload() {
   // Store temporary image data for each profile item
   const tempImageData = new Map();
   
-  // Find all add-image buttons
-  const addImageButtons = document.querySelectorAll('.add-image');
+  // Find all profile items (not just buttons)
+  const profileItems = document.querySelectorAll('.profile-item');
   
-  if (addImageButtons.length === 0) {
-    console.log('ℹ️ No add-image buttons found');
+  if (profileItems.length === 0) {
+    console.log('ℹ️ No profile items found');
     return;
   }
   
-  addImageButtons.forEach((button, index) => {
-    // Find the parent profile-item
-    const profileItem = button.closest('.profile-item');
-    
-    if (!profileItem) {
-      console.warn(`⚠️ No profile-item found for button ${index}`);
-      return;
-    }
-    
+  profileItems.forEach((profileItem, index) => {
     // Get or create profile item ID
     if (!profileItem.dataset.id) {
       profileItem.dataset.id = `profile-item-${index + 1}`;
     }
     const profileItemId = profileItem.dataset.id;
     
-    // Create a hidden file input for this button ONCE
+    console.log(`🔧 Setting up ${profileItemId}`);
+    
+    // Find elements within this profile item
+    const addImageButton = profileItem.querySelector('.add-image');
+    const saveButton = profileItem.querySelector('.playlist-save-button');
+    const addImageText = profileItem.querySelector('.add-image-text');
+    const playlistImageWrapper = profileItem.querySelector('.playlist-image-wrapper');
+    
+    if (!addImageButton) {
+      console.warn(`⚠️ No .add-image found in ${profileItemId}`);
+      return;
+    }
+    
+    if (!playlistImageWrapper) {
+      console.warn(`⚠️ No .playlist-image-wrapper found in ${profileItemId}`);
+      return;
+    }
+    
+    // Find the actual image element - could be img tag or background image div
+    let playlistImage = playlistImageWrapper.querySelector('.playlist-image');
+    
+    if (!playlistImage) {
+      console.warn(`⚠️ No .playlist-image found in ${profileItemId}`);
+      return;
+    }
+    
+    console.log(`✅ Found all elements for ${profileItemId}`);
+    
+    // Create a hidden file input ONCE per profile item
     let fileInput = profileItem.querySelector('input[type="file"].playlist-image-input');
     
     if (!fileInput) {
@@ -4051,13 +4071,18 @@ function initPlaylistImageUpload() {
       fileInput.classList.add('playlist-image-input');
       fileInput.style.display = 'none';
       profileItem.appendChild(fileInput);
+      console.log(`📁 Created file input for ${profileItemId}`);
     }
     
+    // Remove old event listeners by cloning button
+    const newAddImageButton = addImageButton.cloneNode(true);
+    addImageButton.parentNode.replaceChild(newAddImageButton, addImageButton);
+    
     // When add-image is clicked, trigger file input
-    button.addEventListener('click', function(e) {
+    newAddImageButton.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      console.log('📁 Opening file picker for', profileItemId);
+      console.log(`📁 Opening file picker for ${profileItemId}`);
       fileInput.click();
     });
     
@@ -4070,20 +4095,19 @@ function initPlaylistImageUpload() {
         return;
       }
       
-      console.log('✅ File selected:', file.name, 'for', profileItemId);
+      console.log(`✅ File selected: ${file.name} for ${profileItemId}`);
       
       // Check if it's an image
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
-        fileInput.value = ''; // Reset input
+        fileInput.value = '';
         return;
       }
       
       // Update the add-image-text with filename
-      const addImageText = profileItem.querySelector('.add-image-text');
       if (addImageText) {
         addImageText.textContent = file.name;
-        console.log('📝 Updated filename text to:', file.name);
+        console.log(`📝 Updated filename text to: ${file.name}`);
       }
       
       // Read the file and store temporarily
@@ -4104,22 +4128,15 @@ function initPlaylistImageUpload() {
       reader.onerror = function() {
         console.error('❌ Error reading file');
         alert('Error uploading image. Please try again.');
-        fileInput.value = ''; // Reset input
+        fileInput.value = '';
       };
       
       reader.readAsDataURL(file);
-      
-      // Reset the file input so the same file can be selected again if needed
-      // BUT don't clear it immediately to avoid re-opening
-      setTimeout(() => {
-        fileInput.value = '';
-      }, 1000);
     });
     
     // Handle save button
-    const saveButton = profileItem.querySelector('.playlist-save-button');
     if (saveButton) {
-      // Remove any existing listeners by cloning
+      // Remove old event listeners by cloning
       const newSaveButton = saveButton.cloneNode(true);
       saveButton.parentNode.replaceChild(newSaveButton, saveButton);
       
@@ -4133,49 +4150,53 @@ function initPlaylistImageUpload() {
         const tempData = tempImageData.get(profileItemId);
         
         if (tempData) {
-          console.log('📷 Temp data found:', tempData.filename);
+          console.log(`📷 Temp data found: ${tempData.filename}`);
+          console.log(`🔍 Looking for .playlist-image...`, playlistImage ? 'FOUND' : 'NOT FOUND');
           
-          // Find the playlist image
-          const playlistImage = profileItem.querySelector('.playlist-image');
+          // Apply image to BOTH src AND background-image (cover all cases)
+          const isImgTag = playlistImage.tagName === 'IMG';
           
-          console.log('🔍 Looking for .playlist-image...', playlistImage ? 'FOUND' : 'NOT FOUND');
-          
-          if (playlistImage) {
-            // Apply the image with !important via inline style
-            playlistImage.setAttribute('src', tempData.dataUrl);
-            playlistImage.style.setProperty('background-image', `url(${tempData.dataUrl})`, 'important');
-            
+          if (isImgTag) {
+            // Update src attribute
+            playlistImage.src = tempData.dataUrl;
             console.log('🖼️ Applied playlist image');
             console.log('Image src:', playlistImage.src.substring(0, 50) + '...');
-            
-            // Save to localStorage for persistence
-            const storageKey = `playlist-image-${profileItemId}`;
-            localStorage.setItem(storageKey, tempData.dataUrl);
-            console.log(`💾 Saved image to localStorage: ${storageKey}`);
-            
-            // Clear temp data
-            tempImageData.delete(profileItemId);
-            
-            alert('✅ Playlist image saved!');
-          } else {
-            console.warn('⚠️ No .playlist-image found in profile-item');
-            alert('Error: Could not find image element');
           }
+          
+          // ALSO set background-image (in case CSS is using that)
+          playlistImage.style.setProperty('background-image', `url(${tempData.dataUrl})`, 'important');
+          playlistImage.style.setProperty('background-size', 'cover', 'important');
+          playlistImage.style.setProperty('background-position', 'center', 'important');
+          console.log('🎨 Applied background-image style');
+          
+          // Save to localStorage for persistence
+          const storageKey = `playlist-image-${profileItemId}`;
+          const storageData = JSON.stringify({
+            dataUrl: tempData.dataUrl,
+            isImgTag: isImgTag
+          });
+          localStorage.setItem(storageKey, storageData);
+          console.log(`💾 Saved image to localStorage: ${storageKey}`);
+          
+          // Clear temp data
+          tempImageData.delete(profileItemId);
+          
+          alert('✅ Playlist image saved!');
         } else {
           console.log('ℹ️ No image to save for this playlist');
-          alert('Please select an image first');
+          alert('⚠️ Please select an image first');
         }
       });
       
       console.log(`✅ Save button initialized for ${profileItemId}`);
     } else {
-      console.warn(`⚠️ No .playlist-save-button found for ${profileItemId}`);
+      console.warn(`⚠️ No .playlist-save-button found in ${profileItemId}`);
     }
     
     console.log(`✅ Image upload initialized for ${profileItemId}`);
   });
   
-  console.log(`✅ Initialized ${addImageButtons.length} image upload buttons`);
+  console.log(`✅ Initialized ${profileItems.length} image upload buttons`);
 }
 
 /**
@@ -4191,17 +4212,32 @@ function restorePlaylistImages() {
   profileItems.forEach((profileItem, index) => {
     const profileItemId = profileItem.dataset.id || `profile-item-${index + 1}`;
     const storageKey = `playlist-image-${profileItemId}`;
-    const savedImage = localStorage.getItem(storageKey);
+    const savedData = localStorage.getItem(storageKey);
     
-    if (savedImage) {
-      const playlistImage = profileItem.querySelector('.playlist-image');
-      if (playlistImage) {
-        playlistImage.setAttribute('src', savedImage);
-        playlistImage.style.setProperty('background-image', `url(${savedImage})`, 'important');
-        console.log(`✅ Restored image for ${profileItemId}`);
+    if (savedData) {
+      try {
+        const data = JSON.parse(savedData);
+        const playlistImage = profileItem.querySelector('.playlist-image');
+        
+        if (playlistImage) {
+          // Apply to both src AND background-image
+          if (data.isImgTag) {
+            playlistImage.src = data.dataUrl;
+          }
+          
+          playlistImage.style.setProperty('background-image', `url(${data.dataUrl})`, 'important');
+          playlistImage.style.setProperty('background-size', 'cover', 'important');
+          playlistImage.style.setProperty('background-position', 'center', 'important');
+          
+          console.log(`✅ Restored image for ${profileItemId}`);
+        }
+      } catch (e) {
+        console.error(`❌ Error parsing saved data for ${profileItemId}:`, e);
       }
     }
   });
+  
+  console.log('✅ Restore complete');
 }
 
 // Initialize on page load
@@ -4209,7 +4245,7 @@ window.addEventListener('load', () => {
   setTimeout(() => {
     initPlaylistImageUpload();
     restorePlaylistImages();
-  }, 500);
+  }, 1000);
 });
 
 // Re-initialize after Barba transitions
@@ -4218,7 +4254,7 @@ if (typeof barba !== 'undefined') {
     setTimeout(() => {
       initPlaylistImageUpload();
       restorePlaylistImages();
-    }, 500);
+    }, 1000);
   });
 }
 
