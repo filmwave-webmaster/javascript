@@ -4041,20 +4041,23 @@ function initPlaylistImageUpload() {
     }
     const profileItemId = profileItem.dataset.id;
     
-    // Create a hidden file input for this button
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
+    // Create a hidden file input for this button ONCE
+    let fileInput = profileItem.querySelector('input[type="file"].playlist-image-input');
     
-    // Add the file input to the DOM
-    profileItem.appendChild(fileInput);
+    if (!fileInput) {
+      fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.classList.add('playlist-image-input');
+      fileInput.style.display = 'none';
+      profileItem.appendChild(fileInput);
+    }
     
     // When add-image is clicked, trigger file input
     button.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      console.log('📁 Opening file picker...');
+      console.log('📁 Opening file picker for', profileItemId);
       fileInput.click();
     });
     
@@ -4067,11 +4070,12 @@ function initPlaylistImageUpload() {
         return;
       }
       
-      console.log('✅ File selected:', file.name);
+      console.log('✅ File selected:', file.name, 'for', profileItemId);
       
       // Check if it's an image
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
+        fileInput.value = ''; // Reset input
         return;
       }
       
@@ -4079,7 +4083,7 @@ function initPlaylistImageUpload() {
       const addImageText = profileItem.querySelector('.add-image-text');
       if (addImageText) {
         addImageText.textContent = file.name;
-        console.log('📝 Updated filename text');
+        console.log('📝 Updated filename text to:', file.name);
       }
       
       // Read the file and store temporarily
@@ -4094,21 +4098,32 @@ function initPlaylistImageUpload() {
           filename: file.name
         });
         
-        console.log(`💾 Stored temp image for ${profileItemId}`);
+        console.log(`💾 Stored temp image for ${profileItemId}`, imageDataUrl.substring(0, 50) + '...');
       };
       
       reader.onerror = function() {
         console.error('❌ Error reading file');
         alert('Error uploading image. Please try again.');
+        fileInput.value = ''; // Reset input
       };
       
       reader.readAsDataURL(file);
+      
+      // Reset the file input so the same file can be selected again if needed
+      // BUT don't clear it immediately to avoid re-opening
+      setTimeout(() => {
+        fileInput.value = '';
+      }, 1000);
     });
     
     // Handle save button
     const saveButton = profileItem.querySelector('.playlist-save-button');
     if (saveButton) {
-      saveButton.addEventListener('click', function(e) {
+      // Remove any existing listeners by cloning
+      const newSaveButton = saveButton.cloneNode(true);
+      saveButton.parentNode.replaceChild(newSaveButton, saveButton);
+      
+      newSaveButton.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -4118,12 +4133,20 @@ function initPlaylistImageUpload() {
         const tempData = tempImageData.get(profileItemId);
         
         if (tempData) {
-          // Apply the image
+          console.log('📷 Temp data found:', tempData.filename);
+          
+          // Find the playlist image
           const playlistImage = profileItem.querySelector('.playlist-image');
           
+          console.log('🔍 Looking for .playlist-image...', playlistImage ? 'FOUND' : 'NOT FOUND');
+          
           if (playlistImage) {
-            playlistImage.src = tempData.dataUrl;
+            // Apply the image with !important via inline style
+            playlistImage.setAttribute('src', tempData.dataUrl);
+            playlistImage.style.setProperty('background-image', `url(${tempData.dataUrl})`, 'important');
+            
             console.log('🖼️ Applied playlist image');
+            console.log('Image src:', playlistImage.src.substring(0, 50) + '...');
             
             // Save to localStorage for persistence
             const storageKey = `playlist-image-${profileItemId}`;
@@ -4133,26 +4156,23 @@ function initPlaylistImageUpload() {
             // Clear temp data
             tempImageData.delete(profileItemId);
             
-            // Optional: Reset the add-image-text back to default
-            const addImageText = profileItem.querySelector('.add-image-text');
-            if (addImageText) {
-              // Keep the filename or reset to default text
-              // addImageText.textContent = 'Add Image'; // Uncomment to reset
-            }
-            
-            alert('Playlist image saved!');
+            alert('✅ Playlist image saved!');
           } else {
             console.warn('⚠️ No .playlist-image found in profile-item');
+            alert('Error: Could not find image element');
           }
         } else {
           console.log('ℹ️ No image to save for this playlist');
+          alert('Please select an image first');
         }
       });
       
       console.log(`✅ Save button initialized for ${profileItemId}`);
+    } else {
+      console.warn(`⚠️ No .playlist-save-button found for ${profileItemId}`);
     }
     
-    console.log(`✅ Image upload initialized for button ${index + 1}`);
+    console.log(`✅ Image upload initialized for ${profileItemId}`);
   });
   
   console.log(`✅ Initialized ${addImageButtons.length} image upload buttons`);
@@ -4176,7 +4196,8 @@ function restorePlaylistImages() {
     if (savedImage) {
       const playlistImage = profileItem.querySelector('.playlist-image');
       if (playlistImage) {
-        playlistImage.src = savedImage;
+        playlistImage.setAttribute('src', savedImage);
+        playlistImage.style.setProperty('background-image', `url(${savedImage})`, 'important');
         console.log(`✅ Restored image for ${profileItemId}`);
       }
     }
@@ -4189,47 +4210,6 @@ window.addEventListener('load', () => {
     initPlaylistImageUpload();
     restorePlaylistImages();
   }, 500);
-});
-
-// Re-initialize after Barba transitions
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', function() {
-    setTimeout(() => {
-      initPlaylistImageUpload();
-      restorePlaylistImages();
-    }, 500);
-  });
-}
-
-/**
- * ============================================================
- * RESTORE PLAYLIST IMAGES FROM LOCALSTORAGE
- * ============================================================
- */
-function restorePlaylistImages() {
-  console.log('🔄 Restoring playlist images from localStorage...');
-  
-  const profileItems = document.querySelectorAll('.profile-item');
-  
-  profileItems.forEach((profileItem, index) => {
-    const profileItemId = profileItem.dataset.id || `profile-item-${index}`;
-    const storageKey = `playlist-image-${profileItemId}`;
-    const savedImage = localStorage.getItem(storageKey);
-    
-    if (savedImage) {
-      const playlistImage = profileItem.querySelector('.playlist-image');
-      if (playlistImage) {
-        playlistImage.src = savedImage;
-        console.log(`✅ Restored image for ${profileItemId}`);
-      }
-    }
-  });
-}
-
-// Initialize on page load
-window.addEventListener('load', () => {
-  initPlaylistImageUpload();
-  restorePlaylistImages();
 });
 
 // Re-initialize after Barba transitions
