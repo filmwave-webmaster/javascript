@@ -4071,8 +4071,10 @@ function initPlaylistImageUpload() {
         return;
       }
       
+      // Update filename text
       if (addImageText) {
         addImageText.textContent = file.name;
+        console.log(`📝 Updated filename to: ${file.name}`);
       }
       
       const reader = new FileReader();
@@ -4082,6 +4084,7 @@ function initPlaylistImageUpload() {
           dataUrl: event.target.result,
           filename: file.name
         });
+        console.log(`💾 Stored temp data for ${profileItemId}`);
       };
       
       reader.readAsDataURL(file);
@@ -4098,7 +4101,9 @@ function initPlaylistImageUpload() {
         const tempData = tempImageData.get(profileItemId);
         
         if (tempData) {
-          // CRITICAL FIX: Remove srcset so src takes precedence
+          console.log(`📷 Applying image for ${profileItemId}`);
+          
+          // CRITICAL FIX: Remove srcset and sizes
           playlistImage.removeAttribute('srcset');
           playlistImage.removeAttribute('sizes');
           
