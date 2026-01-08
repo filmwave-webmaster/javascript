@@ -4006,7 +4006,147 @@ function hideOverlay(overlay) {
 window.addEventListener('load', () => {
   initializePlaylistOverlay();
 });  
+
+/**
+ * ============================================================
+ * PLAYLIST COVER IMAGE UPLOAD
+ * ============================================================
+ */
+function initPlaylistImageUpload() {
+  console.log('🖼️ Initializing playlist image upload...');
   
+  // Find all add-image buttons
+  const addImageButtons = document.querySelectorAll('.add-image');
+  
+  if (addImageButtons.length === 0) {
+    console.log('ℹ️ No add-image buttons found');
+    return;
+  }
+  
+  addImageButtons.forEach((button, index) => {
+    // Find the parent profile-item
+    const profileItem = button.closest('.profile-item');
+    
+    if (!profileItem) {
+      console.warn(`⚠️ No profile-item found for button ${index}`);
+      return;
+    }
+    
+    // Create a hidden file input for this button
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*'; // Only accept images
+    fileInput.style.display = 'none';
+    
+    // Add the file input to the DOM
+    profileItem.appendChild(fileInput);
+    
+    // When button is clicked, trigger file input
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('📁 Opening file picker...');
+      fileInput.click();
+    });
+    
+    // When file is selected
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      
+      if (!file) {
+        console.log('❌ No file selected');
+        return;
+      }
+      
+      console.log('✅ File selected:', file.name);
+      
+      // Check if it's an image
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Read the file and convert to data URL
+      const reader = new FileReader();
+      
+      reader.onload = function(event) {
+        const imageDataUrl = event.target.result;
+        
+        // Find the playlist image in this profile item
+        const playlistImage = profileItem.querySelector('.playlist-image');
+        
+        if (playlistImage) {
+          // Replace the image
+          playlistImage.src = imageDataUrl;
+          console.log('🖼️ Updated playlist image');
+          
+          // Store in localStorage for persistence
+          const profileItemId = profileItem.dataset.id || `profile-item-${index}`;
+          const storageKey = `playlist-image-${profileItemId}`;
+          localStorage.setItem(storageKey, imageDataUrl);
+          console.log(`💾 Saved image to localStorage: ${storageKey}`);
+        } else {
+          console.warn('⚠️ No .playlist-image found in profile-item');
+        }
+      };
+      
+      reader.onerror = function() {
+        console.error('❌ Error reading file');
+        alert('Error uploading image. Please try again.');
+      };
+      
+      // Read the file as data URL
+      reader.readAsDataURL(file);
+    });
+    
+    console.log(`✅ Image upload initialized for button ${index + 1}`);
+  });
+  
+  console.log(`✅ Initialized ${addImageButtons.length} image upload buttons`);
+}
+
+/**
+ * ============================================================
+ * RESTORE PLAYLIST IMAGES FROM LOCALSTORAGE
+ * ============================================================
+ */
+function restorePlaylistImages() {
+  console.log('🔄 Restoring playlist images from localStorage...');
+  
+  const profileItems = document.querySelectorAll('.profile-item');
+  
+  profileItems.forEach((profileItem, index) => {
+    const profileItemId = profileItem.dataset.id || `profile-item-${index}`;
+    const storageKey = `playlist-image-${profileItemId}`;
+    const savedImage = localStorage.getItem(storageKey);
+    
+    if (savedImage) {
+      const playlistImage = profileItem.querySelector('.playlist-image');
+      if (playlistImage) {
+        playlistImage.src = savedImage;
+        console.log(`✅ Restored image for ${profileItemId}`);
+      }
+    }
+  });
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+  initPlaylistImageUpload();
+  restorePlaylistImages();
+});
+
+// Re-initialize after Barba transitions
+if (typeof barba !== 'undefined') {
+  window.addEventListener('barbaAfterTransition', function() {
+    setTimeout(() => {
+      initPlaylistImageUpload();
+      restorePlaylistImages();
+    }, 500);
+  });
+}
+
+
 
 /**
  * ============================================================
