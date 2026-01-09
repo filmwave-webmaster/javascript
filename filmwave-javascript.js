@@ -4253,50 +4253,32 @@ document.addEventListener("click", function (e) {
   console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
   
   setTimeout(() => {
-    // Find the tabs container
-    const tabsContainer = document.querySelector('.dashboard-tab-section');
+    // Search for ALL anchor tags or divs that might be tab links
+    const allPossibleLinks = document.querySelectorAll('.dashboard-tab-section a, .dashboard-tab-section [class*="tab"]');
     
-    if (!tabsContainer) {
-      console.warn('⚠️ Tabs container not found');
-      return;
-    }
+    console.log(`🔍 Found ${allPossibleLinks.length} possible tab elements`);
     
-    console.log('✅ Found tabs container');
+    let foundLink = null;
     
-    // Look for the tab menu - try different selectors
-    let tabMenu = tabsContainer.querySelector('.w-tab-menu');
-    
-    if (!tabMenu) {
-      tabMenu = tabsContainer.querySelector('.dashboard-tabs');
-      console.log('Trying .dashboard-tabs:', tabMenu);
-    }
-    
-    if (!tabMenu) {
-      // Just search for any element with tab links inside the container
-      const allTabLinks = tabsContainer.querySelectorAll('[data-w-tab]');
-      console.log(`🔍 Found ${allTabLinks.length} elements with data-w-tab in container`);
+    allPossibleLinks.forEach((el, i) => {
+      const classes = el.className;
+      const dataWTab = el.getAttribute('data-w-tab');
+      const href = el.getAttribute('href');
       
-      allTabLinks.forEach((el, i) => {
-        const dataWTab = el.getAttribute('data-w-tab');
-        const isLink = el.classList.contains('w-tab-link') || el.tagName === 'A';
-        console.log(`  ${i + 1}. data-w-tab="${dataWTab}" | isLink: ${isLink} | classes: ${el.className}`);
-        
-        if (dataWTab === targetTabName && isLink) {
-          console.log('✅ Found matching tab link, clicking!');
-          el.click();
-        }
-      });
-      return;
-    }
+      console.log(`  ${i + 1}. Tag: ${el.tagName} | data-w-tab: "${dataWTab}" | href: "${href}" | classes: ${classes}`);
+      
+      // Check if this element corresponds to our target
+      if (dataWTab === targetTabName || href === `#${targetTabName}`) {
+        foundLink = el;
+        console.log(`    ✅ MATCH FOUND!`);
+      }
+    });
     
-    // If we found the menu, look for the link inside it
-    const tabLink = tabMenu.querySelector(`[data-w-tab="${targetTabName}"]`);
-    
-    if (tabLink) {
-      console.log('✅ Found tab link in menu, clicking...', tabLink);
-      tabLink.click();
+    if (foundLink) {
+      console.log('✅ Clicking found link:', foundLink);
+      foundLink.click();
     } else {
-      console.warn(`❌ Tab link not found for: ${targetTabName}`);
+      console.warn(`❌ No clickable tab link found for: ${targetTabName}`);
     }
   }, 100);
 });
