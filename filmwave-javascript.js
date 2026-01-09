@@ -4316,21 +4316,21 @@ function initUniversalSearch() {
     
     console.log(`✅ Setting up search for ${isFavoritesPage ? 'Favorites' : 'Playlist Template'} page`);
     
-    const newSearchInput = searchInput.cloneNode(true);
-    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-    
+    // DON'T clone - just add listeners to existing input
     let searchTimeout;
     
     const performSearch = () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
-        const query = newSearchInput.value.toLowerCase().trim();
+        const query = searchInput.value.toLowerCase().trim();
         const keywords = query.split(/\s+/).filter(k => k.length > 0);
         
         console.log(`🔍 Searching for: "${query}"`);
         
         const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
         let visibleCount = 0;
+        
+        console.log(`📊 Found ${songCards.length} song cards to search`);
         
         songCards.forEach(card => {
           // Get text content
@@ -4352,6 +4352,17 @@ function initUniversalSearch() {
           // Combine everything
           const allText = `${songTitle} ${artistName} ${bpm} ${key} ${mood} ${genre} ${instrument} ${theme} ${build} ${vocals} ${instrumental} ${acapella}`;
           
+          // Debug first card
+          if (visibleCount === 0) {
+            console.log('🔍 First card data:', {
+              songTitle,
+              mood,
+              genre,
+              instrument,
+              allText: allText.substring(0, 100) + '...'
+            });
+          }
+          
           const matchesSearch = keywords.length === 0 || keywords.every(k => allText.includes(k));
           
           if (matchesSearch) {
@@ -4366,11 +4377,16 @@ function initUniversalSearch() {
       }, 400);
     };
     
-    newSearchInput.addEventListener('input', performSearch);
-    newSearchInput.addEventListener('keyup', performSearch);
+    // Remove old listeners first
+    searchInput.removeEventListener('input', performSearch);
+    searchInput.removeEventListener('keyup', performSearch);
+    
+    // Add new listeners
+    searchInput.addEventListener('input', performSearch);
+    searchInput.addEventListener('keyup', performSearch);
     
     // Prevent Enter key from submitting
-    newSearchInput.addEventListener('keydown', (e) => {
+    searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
@@ -4380,12 +4396,9 @@ function initUniversalSearch() {
     });
     
     // Prevent form submission
-    const searchForm = newSearchInput.closest('form');
+    const searchForm = searchInput.closest('form');
     if (searchForm) {
-      const newForm = searchForm.cloneNode(true);
-      searchForm.parentNode.replaceChild(newForm, searchForm);
-      
-      newForm.addEventListener('submit', (e) => {
+      searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         e.stopPropagation();
         performSearch();
@@ -4397,17 +4410,18 @@ function initUniversalSearch() {
   });
 }
 
+// Wait longer for songs to finish loading with data attributes
 window.addEventListener('load', () => {
   setTimeout(() => {
     initUniversalSearch();
-  }, 2000);
+  }, 3000); // Increased to 3 seconds
 });
 
 if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', function() {
     setTimeout(() => {
       initUniversalSearch();
-    }, 2000);
+    }, 3000); // Increased to 3 seconds
   });
 }
 
