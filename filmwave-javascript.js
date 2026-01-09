@@ -4253,11 +4253,18 @@ document.addEventListener("click", function (e) {
   console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
   
   setTimeout(() => {
-    // Get all tab links in the tabs section
-    const allTabLinks = document.querySelectorAll('.dashboard-tabs .w-tab-link');
-    console.log(`🔍 Found ${allTabLinks.length} tab links`);
+    // Search EVERYWHERE for tab links
+    const allTabLinks = document.querySelectorAll('.w-tab-link');
+    console.log(`🔍 Found ${allTabLinks.length} tab links total`);
     
-    // Map of target names to their index
+    // Show what we found
+    allTabLinks.forEach((link, i) => {
+      const parent = link.closest('.w-tabs');
+      const parentClass = parent ? parent.className : 'no parent';
+      console.log(`  Tab ${i}: ${link.textContent.trim()} | Parent: ${parentClass}`);
+    });
+    
+    // Map of target names to their index (adjust based on order in your Webflow)
     const tabMap = {
       'tab-playlist': 0,
       'tab-playlist-template': 1,
@@ -4268,13 +4275,12 @@ document.addEventListener("click", function (e) {
     const tabIndex = tabMap[targetTabName];
     
     if (tabIndex !== undefined && allTabLinks[tabIndex]) {
-      console.log(`✅ Clicking tab at index ${tabIndex}`, allTabLinks[tabIndex]);
+      console.log(`✅ Clicking tab at index ${tabIndex}:`, allTabLinks[tabIndex].textContent.trim());
       allTabLinks[tabIndex].click();
     } else {
-      console.warn(`❌ No tab found for: ${targetTabName}`);
-      console.log('Available tabs:', allTabLinks);
+      console.warn(`❌ No tab found for: ${targetTabName} at index ${tabIndex}`);
     }
-  }, 100);
+  }, 500); // Increased timeout
 });
 
 console.log('✅ Tab triggers initialized');
