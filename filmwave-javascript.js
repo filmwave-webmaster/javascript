@@ -4253,21 +4253,26 @@ document.addEventListener("click", function (e) {
   console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
   
   setTimeout(() => {
-    // The Tab Links in Webflow have data-tab-target attribute!
-    const tabLink = document.querySelector(`[data-tab-target="${targetTabName}"]`);
+    // Get all tab links in the tabs section
+    const allTabLinks = document.querySelectorAll('.dashboard-tabs .w-tab-link');
+    console.log(`🔍 Found ${allTabLinks.length} tab links`);
     
-    if (tabLink) {
-      console.log('✅ Found tab link, clicking...', tabLink);
-      tabLink.click();
+    // Map of target names to their index
+    const tabMap = {
+      'tab-playlist': 0,
+      'tab-playlist-template': 1,
+      'tab-favorites': 2,
+      'tab-collections': 3
+    };
+    
+    const tabIndex = tabMap[targetTabName];
+    
+    if (tabIndex !== undefined && allTabLinks[tabIndex]) {
+      console.log(`✅ Clicking tab at index ${tabIndex}`, allTabLinks[tabIndex]);
+      allTabLinks[tabIndex].click();
     } else {
-      console.warn(`❌ No tab link found with data-tab-target="${targetTabName}"`);
-      
-      // Debug: show what's available
-      const allTabTargets = document.querySelectorAll('[data-tab-target]');
-      console.log(`🔍 Found ${allTabTargets.length} elements with data-tab-target:`);
-      allTabTargets.forEach((el, i) => {
-        console.log(`  ${i + 1}. data-tab-target="${el.getAttribute('data-tab-target')}"`, el);
-      });
+      console.warn(`❌ No tab found for: ${targetTabName}`);
+      console.log('Available tabs:', allTabLinks);
     }
   }, 100);
 });
