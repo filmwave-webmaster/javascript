@@ -2676,12 +2676,7 @@ function toggleClearButton() {
   clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
 }
 
-function initSearchAndFilters() {
-  const g = window.musicPlayerPersistent;
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  const clearBtn = document.querySelector('.circle-x');
-  
-  function clearAllFilters() {
+function clearAllFilters() {
   const searchBar = document.querySelector('[data-filter-search="true"]'); // Add this line
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
@@ -2731,6 +2726,11 @@ function initSearchAndFilters() {
   
   updateFilterDots();
 }
+
+function initSearchAndFilters() {
+  const g = window.musicPlayerPersistent;
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const clearBtn = document.querySelector('.circle-x');
   
  function applyFilters() {
   const g = window.musicPlayerPersistent;
