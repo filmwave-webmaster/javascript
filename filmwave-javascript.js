@@ -1,12 +1,47 @@
 /**
  * ============================================================
  * FILMWAVE MUSIC PLATFORM - VERSION 26
- * Updated: January 1, 2026
+ * Updated: January 9, 2026
+ * ============================================================
+ */
+/**
+ * ============================================================
+ * FILMWAVE MUSIC PLATFORM - CODE INDEX
+ * ============================================================
  * 
- * NEW FEATURES IN THIS VERSION:
- * - Key Filter System (Sharp/Flat toggle, Major/Minor toggle)
- * - Enhanced Filter Persistence (saves Key filter state)
- * - Automatic initialization on page load and Barba transitions
+ * SECTION                                    LINE #
+ * ------------------------------------------------
+ * 1.  GLOBAL STATE                           ~20
+ * 2.  UTILITY FUNCTIONS                      ~65
+ * 3.  MASTER PLAYER POSITIONING              ~100
+ * 4.  MASTER PLAYER VISIBILITY CONTROL       ~115
+ * 5.  MAIN INITIALIZATION                    ~175
+ * 6.  STANDALONE AUDIO PLAYER                ~280
+ * 7.  MASTER PLAYER FUNCTIONS                ~450
+ * 8.  SONG CARD FUNCTIONS                    ~650
+ * 9.  LINK STANDALONE AUDIO TO WAVEFORM      ~750
+ * 10. CREATE STANDALONE AUDIO                ~820
+ * 11. PLAY STANDALONE SONG                   ~950
+ * 12. INITIALIZE WAVEFORMS (LAZY LOADING)    ~1000
+ * 13. LOAD WAVEFORM BATCH                    ~1090
+ * 14. FETCH & DISPLAY SONGS                  ~1350
+ * 15. DISPLAY FEATURED SONGS                 ~1400
+ * 16. DISPLAY FAVORITE SONGS                 ~1470
+ * 17. KEYBOARD CONTROLS                      ~1540
+ * 18. FILTER HELPERS                         ~1620
+ * 19. KEY FILTER SYSTEM                      ~1750
+ * 20. BPM FILTER SYSTEM                      ~2350
+ * 21. DRAG AND DROP - SORTABLE ITEMS         ~2950
+ * 22. PLAYLIST EDIT OVERLAY                  ~3150
+ * 23. PLAYLIST IMAGE UPLOAD                  ~3250
+ * 24. RESTORE PLAYLIST IMAGES                ~3450
+ * 25. UNIVERSAL SEARCH (NON-MUSIC PAGES)     ~3500
+ * 26. BARBA.JS & PAGE TRANSITIONS            ~3600
+ * 27. FAVORITE BUTTON SYNCING                ~4100
+ * 28. LOCALSTORAGE PERSISTENCE               ~4250
+ * 29. FILTER STATE SAVE/RESTORE              ~4280
+ * 30. FAVORITE SONGS PERSISTENCE             ~4750
+ * 
  * ============================================================
  */
 
@@ -4244,7 +4279,6 @@ if (typeof barba !== 'undefined') {
 function initUniversalSearch() {
   console.log('🔍 Initializing universal search...');
   
-  // Find all search inputs EXCEPT on music page
   const searchInputs = document.querySelectorAll('.text-field');
   
   if (searchInputs.length === 0) {
@@ -4253,124 +4287,86 @@ function initUniversalSearch() {
   }
   
   searchInputs.forEach(searchInput => {
-    // Skip if this is the music page search
     const isMusicPage = !!searchInput.closest('.music-area-container');
     if (isMusicPage) {
       console.log('⏭️ Skipping music page search (has its own handler)');
       return;
     }
     
-    // Detect which page we're on
-    const isFavoritesPage = !!searchInput.closest('.favorite-songs-wrapper') || !!document.querySelector('.favorite-songs-wrapper');
+    const isFavoritesPage = !!document.querySelector('.favorite-songs-wrapper');
     const isPlaylistTemplatePage = !!document.querySelector('.playlist-template-container');
     
-    let songCardSelector = '';
-    let pageType = '';
-    
-    if (isFavoritesPage) {
-      songCardSelector = '.favorite-songs-wrapper .song-card';
-      pageType = 'Favorites';
-    } else if (isPlaylistTemplatePage) {
-      songCardSelector = '.playlist-template-container .song-card';
-      pageType = 'Playlist Template';
-    } else {
-      songCardSelector = '.song-card';
-      pageType = 'Generic';
+    if (!isFavoritesPage && !isPlaylistTemplatePage) {
+      console.log('ℹ️ Not on a supported page');
+      return;
     }
     
-    console.log(`✅ Setting up ${pageType} page search`);
-    setupUniversalSearch(searchInput, songCardSelector);
+    console.log(`✅ Setting up search for ${isFavoritesPage ? 'Favorites' : 'Playlist Template'} page`);
+    
+    const newSearchInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+    
+    let searchTimeout;
+    
+    const performSearch = () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const query = newSearchInput.value.toLowerCase().trim();
+        const keywords = query.split(/\s+/).filter(k => k.length > 0);
+        
+        console.log(`🔍 Searching for: "${query}"`);
+        
+        const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+        let visibleCount = 0;
+        
+        songCards.forEach(card => {
+          const songTitle = card.querySelector('.song-title, .song-name')?.textContent.toLowerCase() || '';
+          const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+          const bpm = card.querySelector('.bpm')?.textContent.toLowerCase() || '';
+          const key = card.querySelector('.key')?.textContent.toLowerCase() || '';
+          
+          const allText = `${songTitle} ${artistName} ${bpm} ${key}`;
+          
+          const matchesSearch = keywords.length === 0 || keywords.every(k => allText.includes(k));
+          
+          if (matchesSearch) {
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        
+        console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
+      }, 400);
+    };
+    
+    newSearchInput.addEventListener('input', performSearch);
+    newSearchInput.addEventListener('keyup', performSearch);
+    
+    const searchForm = newSearchInput.closest('form');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        performSearch();
+      });
+    }
+    
+    console.log('✅ Universal search initialized');
   });
 }
 
-function setupUniversalSearch(searchInput, songCardSelector) {
-  // Remove existing listeners by cloning
-  const newSearchInput = searchInput.cloneNode(true);
-  searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-  
-  const performSearch = () => {
-    const searchTerm = newSearchInput.value.toLowerCase().trim();
-    
-    // Wait a bit for songs to render if they're not there yet
-    setTimeout(() => {
-      const songCards = document.querySelectorAll(songCardSelector);
-      
-      if (songCards.length === 0) {
-        console.warn('⚠️ No song cards found with selector:', songCardSelector);
-        return;
-      }
-      
-      let visibleCount = 0;
-      
-      console.log(`🔍 Searching "${searchTerm}" in ${songCards.length} songs`);
-      
-      songCards.forEach(card => {
-        // Get basic info
-        const songTitle = card.querySelector('.song-title')?.textContent.toLowerCase() || '';
-        const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
-        const bpm = card.getAttribute('data-bpm')?.toLowerCase() || 
-                    card.querySelector('.bpm-text')?.textContent.toLowerCase() || '';
-        const key = card.getAttribute('data-key')?.toLowerCase() || 
-                    card.querySelector('.key-text')?.textContent.toLowerCase() || '';
-        const duration = card.getAttribute('data-duration')?.toLowerCase() || '';
-        
-        // Get all Airtable filter data attributes
-        const mood = card.getAttribute('data-mood')?.toLowerCase() || '';
-        const genre = card.getAttribute('data-genre')?.toLowerCase() || '';
-        const instrument = card.getAttribute('data-instrument')?.toLowerCase() || '';
-        const theme = card.getAttribute('data-theme')?.toLowerCase() || '';
-        const build = card.getAttribute('data-build')?.toLowerCase() || '';
-        const vocals = card.getAttribute('data-vocals')?.toLowerCase() || '';
-        const instrumental = card.getAttribute('data-instrumental')?.toLowerCase() || '';
-        const acapella = card.getAttribute('data-acapella')?.toLowerCase() || '';
-        
-        // Combine all searchable text
-        const searchableText = `${songTitle} ${artistName} ${bpm} ${key} ${duration} ${mood} ${genre} ${instrument} ${theme} ${build} ${vocals} ${instrumental} ${acapella}`;
-        
-        // Show/hide based on search match
-        if (searchTerm === '' || searchableText.includes(searchTerm)) {
-          card.style.display = '';
-          card.style.opacity = '1';
-          visibleCount++;
-        } else {
-          card.style.display = 'none';
-          card.style.opacity = '0';
-        }
-      });
-      
-      console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
-    }, 100); // Small delay to let songs render
-  };
-  
-  // Add event listeners
-  newSearchInput.addEventListener('input', performSearch);
-  newSearchInput.addEventListener('keyup', performSearch);
-  
-  // Also handle form submission to prevent page reload
-  const searchForm = newSearchInput.closest('form');
-  if (searchForm) {
-    searchForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      performSearch();
-    });
-  }
-  
-  console.log('✅ Universal search initialized');
-}
-
-// Initialize with longer delay AND also after displayFavoriteSongs
 window.addEventListener('load', () => {
   setTimeout(() => {
     initUniversalSearch();
-  }, 3000); // 3 seconds to ensure songs are loaded
+  }, 2000);
 });
 
-// Re-initialize after Barba transitions
 if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', function() {
     setTimeout(() => {
       initUniversalSearch();
-    }, 3000);
+    }, 2000);
   });
 }
 
