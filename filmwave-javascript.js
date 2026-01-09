@@ -2643,17 +2643,22 @@ document.addEventListener('click', (e) => {
       console.log('✅ Cleared Key filter states');
 
       // Also remove all Key-related tags from container
-const tagsContainer = document.querySelector('.filter-tags-container');
-if (tagsContainer) {
-  const allTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-  allTags.forEach(tag => {
-    const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-    // Remove any tag that looks like a key (single letter) or Major/Minor
-    if (text && (text.length <= 3 || text === 'Major' || text === 'Minor')) {
-      tag.remove();
-    }
-  });
-}
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      if (tagsContainer) {
+        const allTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        allTags.forEach(tag => {
+          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          // Remove any tag that looks like a key (single letter) or Major/Minor
+          if (text && (text.length <= 3 || text === 'Major' || text === 'Minor')) {
+            tag.remove();
+          }
+        });
+      }
+      
+      // ✅ ALSO CALL clearAllFilters to handle search and other filters
+      if (typeof clearAllFilters === 'function') {
+        clearAllFilters();
+      }
       
     }, 100);
   }
