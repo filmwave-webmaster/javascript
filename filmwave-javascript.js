@@ -5459,12 +5459,22 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
 
     
     if (filterState.searchQuery) {
-      const searchBar = document.querySelector('[data-filter-search="true"]');
-      if (searchBar) {
-        searchBar.value = filterState.searchQuery;
-        searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  if (searchBar) {
+    searchBar.value = filterState.searchQuery;
+    console.log('🔍 Restored search query:', filterState.searchQuery);
+    
+    // Trigger search properly with a delay to ensure songs are loaded
+    setTimeout(() => {
+      searchBar.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      // Also manually call applyFilters if it exists
+      if (typeof applyFilters === 'function') {
+        applyFilters();
       }
-    }
+    }, 100);
+  }
+}
     
    // Restore Key filter UI state - wait longer for Key Filter System to initialize
 if (filterState.keyState) {
