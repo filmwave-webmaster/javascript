@@ -865,6 +865,19 @@ function populateSongCard(cardElement, song) {
     favoriteCheckbox.classList.add('favorite-checkbox');
   }
   
+  // ✅ ADD DATA ATTRIBUTES FOR SEARCH
+  cardElement.setAttribute('data-mood', fields['Mood'] || '');
+  cardElement.setAttribute('data-genre', fields['Genre'] || '');
+  cardElement.setAttribute('data-instrument', fields['Instrument'] || '');
+  cardElement.setAttribute('data-theme', fields['Theme'] || '');
+  cardElement.setAttribute('data-build', fields['Build'] || '');
+  cardElement.setAttribute('data-vocals', fields['Vocals'] || '');
+  cardElement.setAttribute('data-instrumental', fields['Instrumental'] || '');
+  cardElement.setAttribute('data-acapella', fields['Acapella'] || '');
+  cardElement.setAttribute('data-bpm', fields['BPM'] || '');
+  cardElement.setAttribute('data-key', fields['Key'] || '');
+  cardElement.setAttribute('data-duration', fields['Duration'] || '');
+  
   const stemsData = fields['Stems'];
   const stemsWrapper = cardElement.querySelector('.stems-dropdown-wrapper');
   const optionsToggle = cardElement.querySelector('.options-dropdown-toggle');
