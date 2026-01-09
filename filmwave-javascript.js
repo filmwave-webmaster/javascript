@@ -4261,14 +4261,14 @@ function initUniversalSearch() {
     }
     
     // Detect which page we're on
-    const isFavoritesPage = !!searchInput.closest('.favourite-songs-wrapper');
+    const isFavoritesPage = !!searchInput.closest('.favorite-songs-wrapper') || !!document.querySelector('.favorite-songs-wrapper');
     const isPlaylistTemplatePage = !!document.querySelector('.playlist-template-container'); // Adjust selector
     
     let songCardSelector = '';
     let pageType = '';
     
     if (isFavoritesPage) {
-      songCardSelector = '.favourite-songs-wrapper .song-card';
+      songCardSelector = '.favorite-songs-wrapper .song-card';
       pageType = 'Favorites';
     } else if (isPlaylistTemplatePage) {
       songCardSelector = '.playlist-template-container .song-card'; // Adjust selector
@@ -4355,11 +4355,11 @@ function setupUniversalSearch(searchInput, songCardSelector) {
   console.log('✅ Universal search initialized');
 }
 
-// Initialize on page load
+// Initialize on page load - LONGER DELAY for songs to load
 window.addEventListener('load', () => {
   setTimeout(() => {
     initUniversalSearch();
-  }, 1500);
+  }, 2000); // Increased to 2 seconds
 });
 
 // Re-initialize after Barba transitions
@@ -4367,7 +4367,7 @@ if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', function() {
     setTimeout(() => {
       initUniversalSearch();
-    }, 1500);
+    }, 2000); // Increased to 2 seconds
   });
 }
 
