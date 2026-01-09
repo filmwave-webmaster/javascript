@@ -4701,6 +4701,16 @@ if (typeof barba !== 'undefined') {
 
       enter(data) {
         removeDuplicateIds();
+
+        // CLEAR SEARCH INPUT ON MUSIC PAGE
+  const isMusicPage = !!data.next.container.querySelector('.music-list-wrapper');
+  if (isMusicPage) {
+    const searchInput = document.querySelector('.music-area-container .text-field, [data-filter-search="true"]');
+    if (searchInput) {
+      searchInput.value = '';
+      console.log('🧹 Cleared music page search input');
+    }
+  }
         
         if (window.Webflow) {
           setTimeout(() => {
