@@ -5458,7 +5458,7 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
       }, 100);
 
     
-    if (filterState.searchQuery) {
+   if (filterState.searchQuery) {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
     searchBar.value = filterState.searchQuery;
@@ -5466,11 +5466,17 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
     
     // Trigger search properly with a delay to ensure songs are loaded
     setTimeout(() => {
+      console.log('🔥 About to trigger search...');
+      console.log('   - Search bar value:', searchBar.value);
+      console.log('   - applyFilters exists?', typeof applyFilters === 'function');
+      console.log('   - Songs on page:', document.querySelectorAll('.song-wrapper').length);
+      
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
       
       // Also manually call applyFilters if it exists
       if (typeof applyFilters === 'function') {
         applyFilters();
+        console.log('   ✅ applyFilters() called');
       }
     }, 100);
   }
