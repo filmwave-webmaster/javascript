@@ -4237,6 +4237,142 @@ if (typeof barba !== 'undefined') {
 
 /**
  * ============================================================
+ * UNIVERSAL SEARCH FOR NON-MUSIC PAGES
+ * (Favorites, Playlist Templates, etc.)
+ * ============================================================
+ */
+function initUniversalSearch() {
+  console.log('🔍 Initializing universal search...');
+  
+  // Find all search inputs EXCEPT on music page
+  const searchInputs = document.querySelectorAll('.text-field');
+  
+  if (searchInputs.length === 0) {
+    console.log('ℹ️ No search inputs found');
+    return;
+  }
+  
+  searchInputs.forEach(searchInput => {
+    // Skip if this is the music page search
+    const isMusicPage = !!searchInput.closest('.music-area-container');
+    if (isMusicPage) {
+      console.log('⏭️ Skipping music page search (has its own handler)');
+      return;
+    }
+    
+    // Detect which page we're on
+    const isFavoritesPage = !!searchInput.closest('.favourite-songs-wrapper');
+    const isPlaylistTemplatePage = !!document.querySelector('.playlist-template-container'); // Adjust selector
+    
+    let songCardSelector = '';
+    let pageType = '';
+    
+    if (isFavoritesPage) {
+      songCardSelector = '.favourite-songs-wrapper .song-card';
+      pageType = 'Favorites';
+    } else if (isPlaylistTemplatePage) {
+      songCardSelector = '.playlist-template-container .song-card'; // Adjust selector
+      pageType = 'Playlist Template';
+    } else {
+      // Generic fallback - search for any song cards on the page
+      songCardSelector = '.song-card';
+      pageType = 'Generic';
+    }
+    
+    console.log(`✅ Setting up ${pageType} page search`);
+    setupUniversalSearch(searchInput, songCardSelector);
+  });
+}
+
+function setupUniversalSearch(searchInput, songCardSelector) {
+  // Remove existing listeners by cloning
+  const newSearchInput = searchInput.cloneNode(true);
+  searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+  
+  const performSearch = () => {
+    const searchTerm = newSearchInput.value.toLowerCase().trim();
+    const songCards = document.querySelectorAll(songCardSelector);
+    
+    if (songCards.length === 0) {
+      console.warn('⚠️ No song cards found with selector:', songCardSelector);
+      return;
+    }
+    
+    let visibleCount = 0;
+    
+    console.log(`🔍 Searching "${searchTerm}" in ${songCards.length} songs`);
+    
+    songCards.forEach(card => {
+      // Get basic info
+      const songTitle = card.querySelector('.song-title')?.textContent.toLowerCase() || '';
+      const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+      const bpm = card.getAttribute('data-bpm')?.toLowerCase() || 
+                  card.querySelector('.bpm-text')?.textContent.toLowerCase() || '';
+      const key = card.getAttribute('data-key')?.toLowerCase() || 
+                  card.querySelector('.key-text')?.textContent.toLowerCase() || '';
+      const duration = card.getAttribute('data-duration')?.toLowerCase() || '';
+      
+      // Get all Airtable filter data attributes
+      const mood = card.getAttribute('data-mood')?.toLowerCase() || '';
+      const genre = card.getAttribute('data-genre')?.toLowerCase() || '';
+      const instrument = card.getAttribute('data-instrument')?.toLowerCase() || '';
+      const theme = card.getAttribute('data-theme')?.toLowerCase() || '';
+      const build = card.getAttribute('data-build')?.toLowerCase() || '';
+      const vocals = card.getAttribute('data-vocals')?.toLowerCase() || '';
+      const instrumental = card.getAttribute('data-instrumental')?.toLowerCase() || '';
+      const acapella = card.getAttribute('data-acapella')?.toLowerCase() || '';
+      
+      // Combine all searchable text
+      const searchableText = `${songTitle} ${artistName} ${bpm} ${key} ${duration} ${mood} ${genre} ${instrument} ${theme} ${build} ${vocals} ${instrumental} ${acapella}`;
+      
+      // Show/hide based on search match
+      if (searchTerm === '' || searchableText.includes(searchTerm)) {
+        card.style.display = '';
+        card.style.opacity = '1';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+        card.style.opacity = '0';
+      }
+    });
+    
+    console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
+  };
+  
+  // Add event listeners
+  newSearchInput.addEventListener('input', performSearch);
+  newSearchInput.addEventListener('keyup', performSearch);
+  
+  // Also handle form submission to prevent page reload
+  const searchForm = newSearchInput.closest('form');
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      performSearch();
+    });
+  }
+  
+  console.log('✅ Universal search initialized');
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initUniversalSearch();
+  }, 1500);
+});
+
+// Re-initialize after Barba transitions
+if (typeof barba !== 'undefined') {
+  window.addEventListener('barbaAfterTransition', function() {
+    setTimeout(() => {
+      initUniversalSearch();
+    }, 1500);
+  });
+}
+
+/**
+ * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
