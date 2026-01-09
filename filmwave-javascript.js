@@ -3788,7 +3788,7 @@ function toggleEditMode(container, button) {
       container.classList.add('is-editing');
       
       // Directly set cursor on items
-     // const items = container.querySelectorAll('.profile-item');
+     // const items = container.querySelectorAll('.playlist-item');
     //  console.log('🎯 Found', items.length, 'items to enable dragging');
     //  items.forEach(item => {
      //   item.style.cursor = 'grab';
@@ -3813,7 +3813,7 @@ function toggleEditMode(container, button) {
       container.classList.remove('is-editing');
       
       // Reset cursor
-      const items = container.querySelectorAll('.profile-item');
+      const items = container.querySelectorAll('.playlist-item');
       items.forEach(item => {
         item.style.cursor = 'default';
       });
@@ -3887,11 +3887,11 @@ function updateButtonState(button, editing) {
 
 // Dynamically assign data-ids
 function assignDataIds(container) {
-  const items = container.querySelectorAll('.profile-item');
+  const items = container.querySelectorAll('.playlist-item');
   
   items.forEach((item, index) => {
     if (!item.getAttribute('data-id')) {
-      const uniqueId = `profile-item-${index + 1}`;
+      const uniqueId = `playlist-item-${index + 1}`;
       item.setAttribute('data-id', uniqueId);
       console.log(`📌 Assigned data-id: ${uniqueId}`);
     }
@@ -3900,10 +3900,10 @@ function assignDataIds(container) {
 
 // Save order to localStorage
 function saveOrder(container) {
-  const items = container.querySelectorAll('.profile-item');
+  const items = container.querySelectorAll('.playlist-item');
   const order = Array.from(items).map(item => item.getAttribute('data-id'));
   
-  const storageKey = 'profile-item-order';
+  const storageKey = 'playlist-item-order';
   localStorage.setItem(storageKey, JSON.stringify(order));
   
   console.log('💾 Saved order:', order);
@@ -3914,7 +3914,7 @@ function saveOrder(container) {
 
 // Restore order from localStorage
 function restoreOrder(container) {
-  const storageKey = 'profile-item-order';
+  const storageKey = 'playlist-item-order';
   const savedOrder = localStorage.getItem(storageKey);
   
   if (!savedOrder) {
@@ -3925,7 +3925,7 @@ function restoreOrder(container) {
   const order = JSON.parse(savedOrder);
   console.log('🔄 Restoring order:', order);
   
-  const items = container.querySelectorAll('.profile-item');
+  const items = container.querySelectorAll('.playlist-item');
   const itemMap = {};
   items.forEach(item => {
     const id = item.getAttribute('data-id');
@@ -4092,7 +4092,7 @@ function initPlaylistImageUpload() {
   console.log('🖼️ Initializing playlist image upload...');
   
   const tempImageData = new Map();
-  const profileItems = document.querySelectorAll('.profile-item');
+  const profileItems = document.querySelectorAll('.playlist-item');
   
   if (profileItems.length === 0) {
     console.log('ℹ️ No profile items found');
@@ -4101,7 +4101,7 @@ function initPlaylistImageUpload() {
   
   profileItems.forEach((profileItem, index) => {
     if (!profileItem.dataset.id) {
-      profileItem.dataset.id = `profile-item-${index + 1}`;
+      profileItem.dataset.id = `playlist-item-${index + 1}`;
     }
     const profileItemId = profileItem.dataset.id;
     
@@ -4259,10 +4259,10 @@ function initPlaylistImageUpload() {
 function restorePlaylistImages() {
   console.log('🔄 Restoring playlist images from localStorage...');
   
-  const profileItems = document.querySelectorAll('.profile-item');
+  const profileItems = document.querySelectorAll('.playlist-item');
   
   profileItems.forEach((profileItem, index) => {
-    const profileItemId = profileItem.dataset.id || `profile-item-${index + 1}`;
+    const profileItemId = profileItem.dataset.id || `playlist-item-${index + 1}`;
     const savedImage = localStorage.getItem(`playlist-image-${profileItemId}`);
     
     if (savedImage) {
