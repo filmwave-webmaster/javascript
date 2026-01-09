@@ -4262,7 +4262,7 @@ function initUniversalSearch() {
     
     // Detect which page we're on
     const isFavoritesPage = !!searchInput.closest('.favorite-songs-wrapper') || !!document.querySelector('.favorite-songs-wrapper');
-    const isPlaylistTemplatePage = !!document.querySelector('.playlist-template-container'); // Adjust selector
+    const isPlaylistTemplatePage = !!document.querySelector('.playlist-template-container');
     
     let songCardSelector = '';
     let pageType = '';
@@ -4271,10 +4271,9 @@ function initUniversalSearch() {
       songCardSelector = '.favorite-songs-wrapper .song-card';
       pageType = 'Favorites';
     } else if (isPlaylistTemplatePage) {
-      songCardSelector = '.playlist-template-container .song-card'; // Adjust selector
+      songCardSelector = '.playlist-template-container .song-card';
       pageType = 'Playlist Template';
     } else {
-      // Generic fallback - search for any song cards on the page
       songCardSelector = '.song-card';
       pageType = 'Generic';
     }
@@ -4291,52 +4290,56 @@ function setupUniversalSearch(searchInput, songCardSelector) {
   
   const performSearch = () => {
     const searchTerm = newSearchInput.value.toLowerCase().trim();
-    const songCards = document.querySelectorAll(songCardSelector);
     
-    if (songCards.length === 0) {
-      console.warn('⚠️ No song cards found with selector:', songCardSelector);
-      return;
-    }
-    
-    let visibleCount = 0;
-    
-    console.log(`🔍 Searching "${searchTerm}" in ${songCards.length} songs`);
-    
-    songCards.forEach(card => {
-      // Get basic info
-      const songTitle = card.querySelector('.song-title')?.textContent.toLowerCase() || '';
-      const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
-      const bpm = card.getAttribute('data-bpm')?.toLowerCase() || 
-                  card.querySelector('.bpm-text')?.textContent.toLowerCase() || '';
-      const key = card.getAttribute('data-key')?.toLowerCase() || 
-                  card.querySelector('.key-text')?.textContent.toLowerCase() || '';
-      const duration = card.getAttribute('data-duration')?.toLowerCase() || '';
+    // Wait a bit for songs to render if they're not there yet
+    setTimeout(() => {
+      const songCards = document.querySelectorAll(songCardSelector);
       
-      // Get all Airtable filter data attributes
-      const mood = card.getAttribute('data-mood')?.toLowerCase() || '';
-      const genre = card.getAttribute('data-genre')?.toLowerCase() || '';
-      const instrument = card.getAttribute('data-instrument')?.toLowerCase() || '';
-      const theme = card.getAttribute('data-theme')?.toLowerCase() || '';
-      const build = card.getAttribute('data-build')?.toLowerCase() || '';
-      const vocals = card.getAttribute('data-vocals')?.toLowerCase() || '';
-      const instrumental = card.getAttribute('data-instrumental')?.toLowerCase() || '';
-      const acapella = card.getAttribute('data-acapella')?.toLowerCase() || '';
-      
-      // Combine all searchable text
-      const searchableText = `${songTitle} ${artistName} ${bpm} ${key} ${duration} ${mood} ${genre} ${instrument} ${theme} ${build} ${vocals} ${instrumental} ${acapella}`;
-      
-      // Show/hide based on search match
-      if (searchTerm === '' || searchableText.includes(searchTerm)) {
-        card.style.display = '';
-        card.style.opacity = '1';
-        visibleCount++;
-      } else {
-        card.style.display = 'none';
-        card.style.opacity = '0';
+      if (songCards.length === 0) {
+        console.warn('⚠️ No song cards found with selector:', songCardSelector);
+        return;
       }
-    });
-    
-    console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
+      
+      let visibleCount = 0;
+      
+      console.log(`🔍 Searching "${searchTerm}" in ${songCards.length} songs`);
+      
+      songCards.forEach(card => {
+        // Get basic info
+        const songTitle = card.querySelector('.song-title')?.textContent.toLowerCase() || '';
+        const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+        const bpm = card.getAttribute('data-bpm')?.toLowerCase() || 
+                    card.querySelector('.bpm-text')?.textContent.toLowerCase() || '';
+        const key = card.getAttribute('data-key')?.toLowerCase() || 
+                    card.querySelector('.key-text')?.textContent.toLowerCase() || '';
+        const duration = card.getAttribute('data-duration')?.toLowerCase() || '';
+        
+        // Get all Airtable filter data attributes
+        const mood = card.getAttribute('data-mood')?.toLowerCase() || '';
+        const genre = card.getAttribute('data-genre')?.toLowerCase() || '';
+        const instrument = card.getAttribute('data-instrument')?.toLowerCase() || '';
+        const theme = card.getAttribute('data-theme')?.toLowerCase() || '';
+        const build = card.getAttribute('data-build')?.toLowerCase() || '';
+        const vocals = card.getAttribute('data-vocals')?.toLowerCase() || '';
+        const instrumental = card.getAttribute('data-instrumental')?.toLowerCase() || '';
+        const acapella = card.getAttribute('data-acapella')?.toLowerCase() || '';
+        
+        // Combine all searchable text
+        const searchableText = `${songTitle} ${artistName} ${bpm} ${key} ${duration} ${mood} ${genre} ${instrument} ${theme} ${build} ${vocals} ${instrumental} ${acapella}`;
+        
+        // Show/hide based on search match
+        if (searchTerm === '' || searchableText.includes(searchTerm)) {
+          card.style.display = '';
+          card.style.opacity = '1';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+          card.style.opacity = '0';
+        }
+      });
+      
+      console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
+    }, 100); // Small delay to let songs render
   };
   
   // Add event listeners
@@ -4355,11 +4358,11 @@ function setupUniversalSearch(searchInput, songCardSelector) {
   console.log('✅ Universal search initialized');
 }
 
-// Initialize on page load - LONGER DELAY for songs to load
+// Initialize with longer delay AND also after displayFavoriteSongs
 window.addEventListener('load', () => {
   setTimeout(() => {
     initUniversalSearch();
-  }, 2000); // Increased to 2 seconds
+  }, 3000); // 3 seconds to ensure songs are loaded
 });
 
 // Re-initialize after Barba transitions
@@ -4367,7 +4370,7 @@ if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', function() {
     setTimeout(() => {
       initUniversalSearch();
-    }, 2000); // Increased to 2 seconds
+    }, 3000);
   });
 }
 
