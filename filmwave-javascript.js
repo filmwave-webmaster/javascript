@@ -4252,52 +4252,43 @@ document.addEventListener("click", function (e) {
   const targetTabName = btn.getAttribute("data-tab-trigger");
   console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
   
-  // Wait a tiny bit for DOM to be ready, then search
   setTimeout(() => {
-    // Try multiple selectors
-    let tab = document.querySelector(`.w-tab-link[data-w-tab="${targetTabName}"]`);
+    // Find the TAB LINK (the button), not the TAB PANE (the content)
+    const tabsContainer = document.querySelector('.dashboard-tab-section');
     
-    if (!tab) {
-      // Try without the class
-      tab = document.querySelector(`[data-w-tab="${targetTabName}"]`);
-      console.log('Trying without class:', tab);
+    if (!tabsContainer) {
+      console.warn('⚠️ Tabs container not found');
+      return;
     }
     
-    if (!tab) {
-      // Search in the tabs container
-      const tabsContainer = document.querySelector('.dashboard-tabs');
-      if (tabsContainer) {
-        console.log('Found tabs container, searching inside...');
-        tab = tabsContainer.querySelector(`[data-w-tab="${targetTabName}"]`);
-        console.log('Found in container:', tab);
-      }
+    // Find the menu that contains the clickable tab links
+    const tabMenu = tabsContainer.querySelector('.w-tab-menu');
+    
+    if (!tabMenu) {
+      console.warn('⚠️ Tab menu not found');
+      return;
     }
     
-    if (!tab) {
-      // Last resort: search all elements with data-w-tab
-      const allTabElements = document.querySelectorAll('[data-w-tab]');
-      console.log(`🔍 Found ${allTabElements.length} elements with data-w-tab:`);
-      allTabElements.forEach((el, i) => {
-        const dataWTab = el.getAttribute('data-w-tab');
-        console.log(`  ${i + 1}. data-w-tab="${dataWTab}"`, el.tagName, el.className);
-        if (dataWTab === targetTabName) {
-          tab = el;
-        }
-      });
-    }
+    // Find the specific tab link
+    const tabLink = tabMenu.querySelector(`[data-w-tab="${targetTabName}"]`);
     
-    if (tab) {
-      console.log('✅ Found tab, clicking...', tab);
-      tab.click();
+    if (tabLink) {
+      console.log('✅ Found tab LINK, clicking...', tabLink);
+      tabLink.click();
     } else {
-      console.warn(`❌ No tab found with data-w-tab="${targetTabName}"`);
-      console.log('Available in DOM:', document.querySelector('.dashboard-tab-section'));
+      console.warn(`❌ Tab link not found for: ${targetTabName}`);
+      
+      // Debug: show what's in the menu
+      const allLinks = tabMenu.querySelectorAll('[data-w-tab]');
+      console.log(`🔍 Found ${allLinks.length} tab links in menu:`);
+      allLinks.forEach((link, i) => {
+        console.log(`  ${i + 1}. data-w-tab="${link.getAttribute('data-w-tab')}"`, link);
+      });
     }
   }, 100);
 });
 
 console.log('✅ Tab triggers initialized');
-
 /**
  * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
