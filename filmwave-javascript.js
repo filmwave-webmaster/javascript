@@ -4818,28 +4818,40 @@ if (typeof barba !== 'undefined') {
     g.isTransitioning = false;
 
     setTimeout(() => {
-      const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-      const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
-      
-      console.log('🏠 [BARBA AFTER] Checking containers:', { 
-        featuredSongs: hasFeaturedSongs, 
-        favoriteSongs: hasFavoriteSongs 
-      });
-      
-      if (hasFeaturedSongs) {
-        console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
-        displayFeaturedSongs(6);
-      }
-      
-      if (hasFavoriteSongs) {
-        console.log('💛 [BARBA AFTER] Calling displayFavoriteSongs...');
-        displayFavoriteSongs();
-      }
-      
-      if (!hasFeaturedSongs && !hasFavoriteSongs) {
-        console.log('⚠️ No song containers found on this page');
-      }
-    }, 300);
+  const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+  const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
+  
+  console.log('🏠 [BARBA AFTER] Checking containers:', { 
+    featuredSongs: hasFeaturedSongs, 
+    favoriteSongs: hasFavoriteSongs 
+  });
+  
+  if (hasFeaturedSongs) {
+    console.log('🎵 [BARBA AFTER] Calling displayFeaturedSongs...');
+    displayFeaturedSongs(6);
+    
+    // Initialize search after featured songs load
+    setTimeout(() => {
+      console.log('🔍 [BARBA] Initializing search for featured songs...');
+      initUniversalSearch();
+    }, 800);
+  }
+  
+  if (hasFavoriteSongs) {
+    console.log('💛 [BARBA AFTER] Calling displayFavoriteSongs...');
+    displayFavoriteSongs();
+    
+    // Initialize search after favorite songs load
+    setTimeout(() => {
+      console.log('🔍 [BARBA] Initializing search for favorite songs...');
+      initUniversalSearch();
+    }, 800);
+  }
+  
+  if (!hasFeaturedSongs && !hasFavoriteSongs) {
+    console.log('⚠️ No song containers found on this page');
+  }
+}, 300);
     
     if (g.currentSongData) {
       updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
