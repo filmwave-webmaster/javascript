@@ -2677,19 +2677,20 @@ function initSearchAndFilters() {
   const clearBtn = document.querySelector('.circle-x');
   
   function clearAllFilters() {
+  const searchBar = document.querySelector('[data-filter-search="true"]'); // Add this line
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-
+  
   if (!hasSearch && !hasFilters) {
     return;
   }
-
+  
   if (searchBar && hasSearch) {
     searchBar.value = '';
     // Optional: dispatch input to trigger applyFilters early
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
-
+  
   // Clear checkbox filters
   const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
   if (tagRemoveButtons.length > 0) {
@@ -2704,15 +2705,25 @@ function initSearchAndFilters() {
       }
     });
   }
-
+  
+  // Show all songs manually (in case applyFilters doesn't exist yet)
+  document.querySelectorAll('.song-wrapper').forEach(song => {
+    song.style.display = '';
+  });
+  
   // Save empty state so restoration knows it was intentionally cleared
   localStorage.setItem('musicFilters', JSON.stringify({
     filters: [],
     searchQuery: ''
   }));
-
+  
   toggleClearButton();
-  applyFilters();
+  
+  // Only call applyFilters if it exists
+  if (typeof applyFilters === 'function') {
+    applyFilters();
+  }
+  
   updateFilterDots();
 }
   
