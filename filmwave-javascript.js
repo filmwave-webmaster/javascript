@@ -4702,15 +4702,35 @@ if (typeof barba !== 'undefined') {
       enter(data) {
         removeDuplicateIds();
 
-        // CLEAR SEARCH INPUT ON MUSIC PAGE
+         // ✅ DEBUG AND CLEAR SEARCH INPUT
+  console.log('═══════════════════════════════════');
+  console.log('🔍 SEARCH INPUT DEBUG');
+  console.log('═══════════════════════════════════');
+  
   const isMusicPage = !!data.next.container.querySelector('.music-list-wrapper');
-  if (isMusicPage) {
-    const searchInput = document.querySelector('.music-area-container .text-field, [data-filter-search="true"]');
-    if (searchInput) {
-      searchInput.value = '';
-      console.log('🧹 Cleared music page search input');
+  console.log('Is music page?', isMusicPage);
+  
+  // Try multiple selectors
+  const allTextFields = document.querySelectorAll('.text-field');
+  console.log('Total .text-field elements found:', allTextFields.length);
+  
+  allTextFields.forEach((field, index) => {
+    console.log(`Field ${index}:`, {
+      value: field.value,
+      parent: field.closest('.music-area-container, .favorite-songs-wrapper, .playlist-template-container')?.className || 'no parent',
+      placeholder: field.placeholder
+    });
+    
+    // Clear ALL text fields when entering music page
+    if (isMusicPage) {
+      if (field.value) {
+        console.log(`🧹 Clearing field ${index} with value: "${field.value}"`);
+        field.value = '';
+      }
     }
-  }
+  });
+  
+  console.log('═══════════════════════════════════');
         
         if (window.Webflow) {
           setTimeout(() => {
