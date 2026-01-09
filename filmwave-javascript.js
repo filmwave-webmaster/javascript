@@ -4131,8 +4131,27 @@ function initPlaylistImageUpload() {
           // Start loading the image
           tempImg.src = tempData.dataUrl;
           
-          // Save to localStorage
-          localStorage.setItem(`playlist-image-${profileItemId}`, tempData.dataUrl);
+          // Try to save to localStorage with error handling
+          try {
+            localStorage.setItem(`playlist-image-${profileItemId}`, tempData.dataUrl);
+            console.log(`💾 Saved to localStorage: ${profileItemId}`);
+            
+            // Check localStorage usage
+            let totalSize = 0;
+            for (let key in localStorage) {
+              if (localStorage.hasOwnProperty(key)) {
+                totalSize += localStorage[key].length + key.length;
+              }
+            }
+            console.log(`📊 Total localStorage usage: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+            
+          } catch (e) {
+            console.error('❌ localStorage quota exceeded!', e);
+            alert('⚠️ Storage limit reached! Cannot save more images. Consider using smaller images or clearing old data.');
+            
+            // Don't change button text if save failed
+            return;
+          }
           
           // Clear temp
           tempImageData.delete(profileItemId);
@@ -4215,7 +4234,6 @@ if (typeof barba !== 'undefined') {
     }, 1000);
   });
 }
-
 /**
  * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
