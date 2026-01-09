@@ -5458,27 +5458,33 @@ console.log('⏭️ Skipping change events to prevent duplicate tags');
       }, 100);
 
     
-   if (filterState.searchQuery) {
+  if (filterState.searchQuery) {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (searchBar) {
     searchBar.value = filterState.searchQuery;
     console.log('🔍 Restored search query:', filterState.searchQuery);
     
-    // Trigger search properly with a delay to ensure songs are loaded
+    // Manually apply the search filter
     setTimeout(() => {
-      console.log('🔥 About to trigger search...');
-      console.log('   - Search bar value:', searchBar.value);
-      console.log('   - applyFilters exists?', typeof applyFilters === 'function');
-      console.log('   - Songs on page:', document.querySelectorAll('.song-wrapper').length);
+      const query = filterState.searchQuery.toLowerCase().trim();
+      const keywords = query.split(/\s+/).filter(k => k.length > 0);
+      const songCards = document.querySelectorAll('.song-wrapper');
       
+      console.log('🔥 Manually filtering', songCards.length, 'songs with query:', query);
+      
+      songCards.forEach(card => {
+        const songTitle = card.querySelector('.song-title, .song-name')?.textContent.toLowerCase() || '';
+        const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+        const allFields = Object.values(card.dataset).join(' ').toLowerCase();
+        const searchableText = `${songTitle} ${artistName} ${allFields}`;
+        
+        const matches = keywords.every(k => searchableText.includes(k));
+        card.style.display = matches ? '' : 'none';
+      });
+      
+      // Trigger the input event so listeners can update
       searchBar.dispatchEvent(new Event('input', { bubbles: true }));
-      
-      // Also manually call applyFilters if it exists
-      if (typeof applyFilters === 'function') {
-        applyFilters();
-        console.log('   ✅ applyFilters() called');
-      }
-    }, 100);
+    }, 200);
   }
 }
     
