@@ -4616,13 +4616,6 @@ if (typeof barba !== 'undefined') {
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
   g.filtersInitialized = false;
-
-  // CLEAR UNIVERSAL SEARCH INPUT WHEN LEAVING NON-MUSIC PAGES
-  const universalSearchInput = data.current.container.querySelector('.favorite-songs-wrapper .text-field, .playlist-template-container .text-field');
-  if (universalSearchInput && universalSearchInput.value) {
-    console.log('🧹 Clearing universal search input');
-    universalSearchInput.value = '';
-  }    
   
   // Clean up waveforms from ANY page (music page OR home page with featured songs)
   if (isMusicPage || hasFeaturedSongs) {
@@ -4659,15 +4652,6 @@ if (typeof barba !== 'undefined') {
      beforeEnter(data) {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-
-  // ✅ CLEAR ANY SEARCH INPUT WHEN ENTERING MUSIC PAGE
-  if (isMusicPage) {
-  const searchInput = nextContainer.querySelector('.text-field');
-  if (searchInput) {
-      searchInput.value = '';
-      console.log('🧹 Cleared search input on music page entry');
-    }
-  }
        
   // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
@@ -4702,35 +4686,18 @@ if (typeof barba !== 'undefined') {
       enter(data) {
         removeDuplicateIds();
 
-         // ✅ DEBUG AND CLEAR SEARCH INPUT
-  console.log('═══════════════════════════════════');
-  console.log('🔍 SEARCH INPUT DEBUG');
-  console.log('═══════════════════════════════════');
-  
+         // ✅ CLEAR ONLY THE MUSIC PAGE SEARCH INPUT
   const isMusicPage = !!data.next.container.querySelector('.music-list-wrapper');
-  console.log('Is music page?', isMusicPage);
-  
-  // Try multiple selectors
-  const allTextFields = document.querySelectorAll('.text-field');
-  console.log('Total .text-field elements found:', allTextFields.length);
-  
-  allTextFields.forEach((field, index) => {
-    console.log(`Field ${index}:`, {
-      value: field.value,
-      parent: field.closest('.music-area-container, .favorite-songs-wrapper, .playlist-template-container')?.className || 'no parent',
-      placeholder: field.placeholder
-    });
-    
-    // Clear ALL text fields when entering music page
-    if (isMusicPage) {
-      if (field.value) {
-        console.log(`🧹 Clearing field ${index} with value: "${field.value}"`);
-        field.value = '';
+  if (isMusicPage) {
+    // Wait for DOM to settle, then clear the actual music page input
+    setTimeout(() => {
+      const musicSearchInput = document.querySelector('.music-area-container .text-field');
+      if (musicSearchInput) {
+        musicSearchInput.value = '';
+        console.log('🧹 Cleared music page search input');
       }
-    }
-  });
-  
-  console.log('═══════════════════════════════════');
+    }, 100);
+  }
         
         if (window.Webflow) {
           setTimeout(() => {
