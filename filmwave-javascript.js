@@ -88,7 +88,7 @@ function scrollToSelected(cardElement) {
 function adjustDropdownPosition(toggle, list) {
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
-                    document.querySelector('.favourite-songs-wrapper') ||
+                    document.querySelector('.favorite-songs-wrapper') ||
                     document.body;
   
   if (!list || !toggle) return;
@@ -250,7 +250,7 @@ async function initMusicPage() {
 
   setTimeout(() => {
     const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-    const hasFavoriteSongs = !!document.querySelector('.favourite-songs-wrapper');
+    const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
     
     console.log('🏠 Checking containers:', { 
       featuredSongs: hasFeaturedSongs, 
@@ -827,7 +827,7 @@ function populateSongCard(cardElement, song) {
   
   const favoriteCheckbox = cardElement.querySelector('input[type="checkbox"]');
   if (favoriteCheckbox) {
-    favoriteCheckbox.classList.add('favourite-checkbox');
+    favoriteCheckbox.classList.add('favorite-checkbox');
   }
   
   const stemsData = fields['Stems'];
@@ -1478,13 +1478,13 @@ async function displayFeaturedSongs(limit = 6) {
 
 /**
  * ============================================================
- * DISPLAY FAVOURITE SONGS ON BACKEND PAGE
+ * DISPLAY favorite SONGS ON BACKEND PAGE
  * ============================================================
  */
 async function displayFavoriteSongs(limit = null) {
-  const container = document.querySelector('.favourite-songs-wrapper');
+  const container = document.querySelector('.favorite-songs-wrapper');
   if (!container) {
-    console.log('No favourite songs container found on this page');
+    console.log('No favorite songs container found on this page');
     return;
   }
   
@@ -1499,7 +1499,7 @@ async function displayFavoriteSongs(limit = null) {
   const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
   
   if (!templateCard) {
-    console.warn('No template card found in favourite-songs-wrapper');
+    console.warn('No template card found in favorite-songs-wrapper');
     return;
   }
   
@@ -1533,7 +1533,7 @@ async function displayFavoriteSongs(limit = null) {
     window.Webflow.require('ix2').init();
   }
   
-  console.log(`✅ Displayed ${songsToDisplay.length} songs on favourite songs page`);
+  console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
   
   // Initialize waveforms for these cards
   setTimeout(() => {
@@ -2766,7 +2766,7 @@ function removeDuplicateIds() {
     cb.removeAttribute('id');
   });
   
-  document.querySelectorAll('[id="favourite-button"]').forEach((btn) => {
+  document.querySelectorAll('[id="favorite-button"]').forEach((btn) => {
     btn.removeAttribute('id');
   });
 }
@@ -4627,7 +4627,7 @@ if (typeof barba !== 'undefined') {
 
     setTimeout(() => {
       const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-      const hasFavoriteSongs = !!document.querySelector('.favourite-songs-wrapper');
+      const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
       
       console.log('🏠 [BARBA AFTER] Checking containers:', { 
         featuredSongs: hasFeaturedSongs, 
@@ -4794,30 +4794,30 @@ function initFavoriteSync() {
 
   const playerCheckbox = document.querySelector('.music-player-wrapper input[type="checkbox"]');
   if (playerCheckbox) {
-    playerCheckbox.classList.add('player-favourite-checkbox');
-    console.log('✅ Added player-favourite-checkbox class to player');
+    playerCheckbox.classList.add('player-favorite-checkbox');
+    console.log('✅ Added player-favorite-checkbox class to player');
   }
   
-  let currentSongFavourite = null;
-  let playerFavourite = null;
+  let currentSongfavorite = null;
+  let playerfavorite = null;
   let lastChangeSource = null;
   let playerListenerAttached = false;
   
   const observer = new MutationObserver(function() {
-    const player = document.querySelector('.music-player-wrapper input.player-favourite-checkbox');
+    const player = document.querySelector('.music-player-wrapper input.player-favorite-checkbox');
     if (player && !playerListenerAttached) {
-      console.log('✅ Player favourite appeared in DOM');
-      playerFavourite = player;
-      playerFavourite.addEventListener('change', handlePlayerFavouriteChange);
+      console.log('✅ Player favorite appeared in DOM');
+      playerfavorite = player;
+      playerfavorite.addEventListener('change', handlePlayerfavoriteChange);
       playerListenerAttached = true;
       
-      if (currentSongFavourite) {
+      if (currentSongfavorite) {
         console.log('Current song exists, syncing on player appear');
         setTimeout(() => {
-          if (playerFavourite.checked !== currentSongFavourite.checked) {
-            console.log(`🔄 Syncing: Song is ${currentSongFavourite.checked}, Player is ${playerFavourite.checked}`);
+          if (playerfavorite.checked !== currentSongfavorite.checked) {
+            console.log(`🔄 Syncing: Song is ${currentSongfavorite.checked}, Player is ${playerfavorite.checked}`);
             lastChangeSource = 'sync';
-            playerFavourite.click();
+            playerfavorite.click();
             setTimeout(() => { lastChangeSource = null; }, 100);
           }
         }, 500);
@@ -4832,38 +4832,38 @@ function initFavoriteSync() {
     subtree: true
   });
   
-  function getPlayerFavourite() {
-    if (!playerFavourite || !document.body.contains(playerFavourite)) {
-      playerFavourite = document.querySelector('.music-player-wrapper input.player-favourite-checkbox');
-      if (playerFavourite && !playerListenerAttached) {
-        console.log('✅ Player favourite found via getter');
-        playerFavourite.addEventListener('change', handlePlayerFavouriteChange);
+  function getPlayerfavorite() {
+    if (!playerfavorite || !document.body.contains(playerfavorite)) {
+      playerfavorite = document.querySelector('.music-player-wrapper input.player-favorite-checkbox');
+      if (playerfavorite && !playerListenerAttached) {
+        console.log('✅ Player favorite found via getter');
+        playerfavorite.addEventListener('change', handlePlayerfavoriteChange);
         playerListenerAttached = true;
       }
     }
-    return playerFavourite;
+    return playerfavorite;
   }
   
   function syncFavorites(songCard) {
-    if (currentSongFavourite) {
-      currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
+    if (currentSongfavorite) {
+      currentSongfavorite.removeEventListener('change', handleSongfavoriteChange);
     }
     
-    currentSongFavourite = songCard.querySelector('input.favourite-checkbox');
-    console.log('Set current song favourite:', currentSongFavourite ? 'found' : 'not found');
+    currentSongfavorite = songCard.querySelector('input.favorite-checkbox');
+    console.log('Set current song favorite:', currentSongfavorite ? 'found' : 'not found');
     
-    if (currentSongFavourite) {
-      console.log('Song checkbox element:', currentSongFavourite.tagName, currentSongFavourite.type, 'checked:', currentSongFavourite.checked);
+    if (currentSongfavorite) {
+      console.log('Song checkbox element:', currentSongfavorite.tagName, currentSongfavorite.type, 'checked:', currentSongfavorite.checked);
       
-      const player = getPlayerFavourite();
+      const player = getPlayerfavorite();
       
       if (player) {
         console.log('Player checkbox element:', player.tagName, player.type, 'checked:', player.checked);
       }
       
       if (player) {
-        if (player.checked !== currentSongFavourite.checked) {
-          console.log(`🔄 Song changed - syncing player from ${player.checked} to ${currentSongFavourite.checked}`);
+        if (player.checked !== currentSongfavorite.checked) {
+          console.log(`🔄 Song changed - syncing player from ${player.checked} to ${currentSongfavorite.checked}`);
           lastChangeSource = 'sync';
           player.click();
           setTimeout(() => { lastChangeSource = null; }, 100);
@@ -4872,42 +4872,42 @@ function initFavoriteSync() {
         }
       }
       
-      currentSongFavourite.addEventListener('change', handleSongFavouriteChange);
-      console.log('Synced favourite for current song');
+      currentSongfavorite.addEventListener('change', handleSongfavoriteChange);
+      console.log('Synced favorite for current song');
     }
   }
   
-  function handleSongFavouriteChange(e) {
+  function handleSongfavoriteChange(e) {
     if (lastChangeSource === 'player') {
       console.log('Ignoring song change - triggered by player');
       lastChangeSource = null;
       return;
     }
     
-    const player = getPlayerFavourite();
+    const player = getPlayerfavorite();
     if (!player) {
-      console.log('Player not available, song favourite changed to:', e.target.checked);
+      console.log('Player not available, song favorite changed to:', e.target.checked);
       return;
     }
     
     if (player.checked !== e.target.checked) {
       lastChangeSource = 'song';
-      console.log('💛 Song favourite clicked, syncing player to:', e.target.checked);
+      console.log('💛 Song favorite clicked, syncing player to:', e.target.checked);
       player.click();
     }
   }
   
-  function handlePlayerFavouriteChange() {
+  function handlePlayerfavoriteChange() {
     if (lastChangeSource === 'song' || lastChangeSource === 'sync') {
       console.log('Ignoring player change - triggered by', lastChangeSource);
       lastChangeSource = null;
       return;
     }
     
-    if (currentSongFavourite && currentSongFavourite.checked !== this.checked) {
+    if (currentSongfavorite && currentSongfavorite.checked !== this.checked) {
       lastChangeSource = 'player';
-      console.log('💛 Player favourite clicked, syncing song to:', this.checked);
-      currentSongFavourite.click();
+      console.log('💛 Player favorite clicked, syncing song to:', this.checked);
+      currentSongfavorite.click();
     }
   }
   
@@ -4926,11 +4926,11 @@ function initFavoriteSync() {
       }
     }
     
-    if (!g.currentSongData && currentSongFavourite) {
-      if (currentSongFavourite) {
-        currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
+    if (!g.currentSongData && currentSongfavorite) {
+      if (currentSongfavorite) {
+        currentSongfavorite.removeEventListener('change', handleSongfavoriteChange);
       }
-      currentSongFavourite = null;
+      currentSongfavorite = null;
       lastSyncedSongId = null;
     }
   }, 500);
@@ -5671,7 +5671,7 @@ if (typeof barba !== 'undefined') {
 
 function saveFavorites() {
   const favorites = [];
-  document.querySelectorAll('input.favourite-checkbox:checked').forEach(checkbox => {
+  document.querySelectorAll('input.favorite-checkbox:checked').forEach(checkbox => {
     const songCard = checkbox.closest('.song-wrapper');
     if (songCard?.dataset.songId) {
       favorites.push(songCard.dataset.songId);
@@ -5688,7 +5688,7 @@ function restoreFavorites() {
     const favoriteIds = JSON.parse(saved);
     favoriteIds.forEach(songId => {
       const songCard = document.querySelector(`[data-song-id="${songId}"]`);
-      const checkbox = songCard?.querySelector('input.favourite-checkbox');
+      const checkbox = songCard?.querySelector('input.favorite-checkbox');
       if (checkbox && !checkbox.checked) {
         checkbox.checked = true;
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
@@ -5701,7 +5701,7 @@ function restoreFavorites() {
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target.matches('input.favourite-checkbox')) {
+  if (e.target.matches('input.favorite-checkbox')) {
     saveFavorites();
   }
 });
