@@ -4616,6 +4616,13 @@ if (typeof barba !== 'undefined') {
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
   g.filtersInitialized = false;
+
+  // CLEAR UNIVERSAL SEARCH INPUT WHEN LEAVING NON-MUSIC PAGES
+  const universalSearchInput = data.current.container.querySelector('.favorite-songs-wrapper .text-field, .playlist-template-container .text-field');
+  if (universalSearchInput && universalSearchInput.value) {
+    console.log('🧹 Clearing universal search input');
+    universalSearchInput.value = '';
+  }    
   
   // Clean up waveforms from ANY page (music page OR home page with featured songs)
   if (isMusicPage || hasFeaturedSongs) {
