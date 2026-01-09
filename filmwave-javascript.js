@@ -284,28 +284,31 @@ async function initMusicPage() {
   updateMasterPlayerVisibility();
 
   setTimeout(() => {
-    const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-    const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
-    
-    console.log('🏠 Checking containers:', { 
-      featuredSongs: hasFeaturedSongs, 
-      favoriteSongs: hasFavoriteSongs 
-    });
-    
-    if (hasFeaturedSongs) {
-      console.log('🎵 Calling displayFeaturedSongs...');
-      displayFeaturedSongs(6);
-    }
-    
-    if (hasFavoriteSongs) {
-      console.log('💛 Calling displayFavoriteSongs...');
-      displayFavoriteSongs(); // Shows all songs, or pass a number like displayFavoriteSongs(20)
-    }
-    
-    if (!hasFeaturedSongs && !hasFavoriteSongs) {
-      console.log('⚠️ No song containers found on this page');
-    }
-  }, 200);
+  const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+  const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
+  
+  console.log('🏠 Checking containers:', { 
+    featuredSongs: hasFeaturedSongs, 
+    favoriteSongs: hasFavoriteSongs 
+  });
+  
+  if (hasFeaturedSongs) {
+    console.log('🎵 Calling displayFeaturedSongs...');
+    displayFeaturedSongs(6);
+  }
+  
+  if (hasFavoriteSongs) {
+    console.log('💛 Calling displayFavoriteSongs...');
+    displayFavoriteSongs();
+  }
+  
+  // Initialize search immediately after songs are displayed
+  if (hasFeaturedSongs || hasFavoriteSongs) {
+    setTimeout(() => {
+      initUniversalSearch();
+    }, 100);
+  }
+}, 200);
 }
 } 
 
@@ -4407,21 +4410,6 @@ function initUniversalSearch() {
     }
     
     console.log('✅ Universal search initialized');
-  });
-}
-
-// Wait longer for songs to finish loading with data attributes
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    initUniversalSearch();
-  }, 3000); // Increased to 3 seconds
-});
-
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', function() {
-    setTimeout(() => {
-      initUniversalSearch();
-    }, 3000); // Increased to 3 seconds
   });
 }
 
