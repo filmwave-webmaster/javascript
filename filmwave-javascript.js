@@ -35,7 +35,7 @@
  * 22. PLAYLIST EDIT OVERLAY                  ~3150
  * 23. PLAYLIST IMAGE UPLOAD                  ~3250
  * 24. RESTORE PLAYLIST IMAGES                ~3450
- * 25. UNIVERSAL SEARCH (NON-MUSIC PAGES)     ~3500
+ * 25. UNIVERSAL SEARCH FOR NON-MUSIC PAGES   ~3500
  * 26. BARBA.JS & PAGE TRANSITIONS            ~3600
  * 27. FAVORITE BUTTON SYNCING                ~4100
  * 28. LOCALSTORAGE PERSISTENCE               ~4250
@@ -4320,12 +4320,24 @@ function initUniversalSearch() {
         let visibleCount = 0;
         
         songCards.forEach(card => {
+          // Get text content
           const songTitle = card.querySelector('.song-title, .song-name')?.textContent.toLowerCase() || '';
           const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
           const bpm = card.querySelector('.bpm')?.textContent.toLowerCase() || '';
           const key = card.querySelector('.key')?.textContent.toLowerCase() || '';
           
-          const allText = `${songTitle} ${artistName} ${bpm} ${key}`;
+          // Get data attributes (keywords from Airtable)
+          const mood = card.getAttribute('data-mood')?.toLowerCase() || '';
+          const genre = card.getAttribute('data-genre')?.toLowerCase() || '';
+          const instrument = card.getAttribute('data-instrument')?.toLowerCase() || '';
+          const theme = card.getAttribute('data-theme')?.toLowerCase() || '';
+          const build = card.getAttribute('data-build')?.toLowerCase() || '';
+          const vocals = card.getAttribute('data-vocals')?.toLowerCase() || '';
+          const instrumental = card.getAttribute('data-instrumental')?.toLowerCase() || '';
+          const acapella = card.getAttribute('data-acapella')?.toLowerCase() || '';
+          
+          // Combine everything
+          const allText = `${songTitle} ${artistName} ${bpm} ${key} ${mood} ${genre} ${instrument} ${theme} ${build} ${vocals} ${instrumental} ${acapella}`;
           
           const matchesSearch = keywords.length === 0 || keywords.every(k => allText.includes(k));
           
@@ -4344,11 +4356,27 @@ function initUniversalSearch() {
     newSearchInput.addEventListener('input', performSearch);
     newSearchInput.addEventListener('keyup', performSearch);
     
+    // Prevent Enter key from submitting
+    newSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        performSearch(); // Trigger search immediately
+        return false;
+      }
+    });
+    
+    // Prevent form submission
     const searchForm = newSearchInput.closest('form');
     if (searchForm) {
-      searchForm.addEventListener('submit', (e) => {
+      const newForm = searchForm.cloneNode(true);
+      searchForm.parentNode.replaceChild(newForm, searchForm);
+      
+      newForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         performSearch();
+        return false;
       });
     }
     
