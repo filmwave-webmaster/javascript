@@ -4253,34 +4253,48 @@ document.addEventListener("click", function (e) {
   console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
   
   setTimeout(() => {
-    // Search EVERYWHERE for tab links
-    const allTabLinks = document.querySelectorAll('.w-tab-link');
-    console.log(`🔍 Found ${allTabLinks.length} tab links total`);
+    const tabsContainer = document.querySelector('.w-tabs');
     
-    // Show what we found
-    allTabLinks.forEach((link, i) => {
-      const parent = link.closest('.w-tabs');
-      const parentClass = parent ? parent.className : 'no parent';
-      console.log(`  Tab ${i}: ${link.textContent.trim()} | Parent: ${parentClass}`);
-    });
-    
-    // Map of target names to their index (adjust based on order in your Webflow)
-    const tabMap = {
-      'tab-playlist': 0,
-      'tab-playlist-template': 1,
-      'tab-favorites': 2,
-      'tab-collections': 3
-    };
-    
-    const tabIndex = tabMap[targetTabName];
-    
-    if (tabIndex !== undefined && allTabLinks[tabIndex]) {
-      console.log(`✅ Clicking tab at index ${tabIndex}:`, allTabLinks[tabIndex].textContent.trim());
-      allTabLinks[tabIndex].click();
-    } else {
-      console.warn(`❌ No tab found for: ${targetTabName} at index ${tabIndex}`);
+    if (!tabsContainer) {
+      console.warn('⚠️ No tabs container found');
+      return;
     }
-  }, 500); // Increased timeout
+    
+    // Use Webflow's Tabs API to switch tabs
+    if (window.Webflow && window.Webflow.require) {
+      try {
+        const Tabs = window.Webflow.require('tabs');
+        
+        // Find the tab pane we want to show
+        const targetPane = tabsContainer.querySelector(`[data-w-tab="${targetTabName}"]`);
+        
+        if (targetPane) {
+          console.log('✅ Found target pane, switching...', targetPane);
+          
+          // Manually trigger Webflow's tab change
+          // Hide all panes
+          const allPanes = tabsContainer.querySelectorAll('.w-tab-pane');
+          allPanes.forEach(pane => {
+            pane.classList.remove('w--tab-active');
+            pane.style.display = 'none';
+          });
+          
+          // Show target pane
+          targetPane.classList.add('w--tab-active');
+          targetPane.style.display = 'block';
+          
+          // Update data-current attribute
+          tabsContainer.setAttribute('data-current', targetTabName);
+          
+          console.log('✅ Tab switched successfully!');
+        } else {
+          console.warn(`❌ No pane found for: ${targetTabName}`);
+        }
+      } catch (e) {
+        console.error('Error switching tabs:', e);
+      }
+    }
+  }, 100);
 });
 
 console.log('✅ Tab triggers initialized');
