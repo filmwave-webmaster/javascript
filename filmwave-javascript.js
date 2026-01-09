@@ -3788,11 +3788,11 @@ function toggleEditMode(container, button) {
       container.classList.add('is-editing');
       
       // Directly set cursor on items
-      const items = container.querySelectorAll('.profile-item');
-      console.log('🎯 Found', items.length, 'items to enable dragging');
-      items.forEach(item => {
-        item.style.cursor = 'grab';
-      });
+     // const items = container.querySelectorAll('.profile-item');
+    //  console.log('🎯 Found', items.length, 'items to enable dragging');
+    //  items.forEach(item => {
+     //   item.style.cursor = 'grab';
+    //  });
 
       // Disable playlist links in edit mode
       const playlistLinks = document.querySelectorAll('.playlist-link-block');
