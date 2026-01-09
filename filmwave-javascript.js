@@ -2725,6 +2725,15 @@ function clearAllFilters() {
   }
   
   updateFilterDots();
+
+// ✅ REINITIALIZE SEARCH after clearing
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (isMusicPage && typeof initSearchAndFilters === 'function') {
+    console.log('🔄 Reinitializing search after clear');
+    setTimeout(() => {
+      initSearchAndFilters();
+    }, 100);
+  }
 }
 
 function initSearchAndFilters() {
