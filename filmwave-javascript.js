@@ -4234,6 +4234,52 @@ if (typeof barba !== 'undefined') {
     }, 1000);
   });
 }
+
+/**
+ * ============================================================
+ * EXTERNAL TAB TRIGGERS FOR DASHBOARD
+ * ============================================================
+ */
+console.log('🔘 Initializing tab triggers...');
+
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest("[data-tab-trigger]");
+  if (!btn) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const targetTabName = btn.getAttribute("data-tab-trigger");
+  console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
+  
+  // Find all available tabs first
+  const allTabs = document.querySelectorAll('.w-tab-link');
+  console.log(`🔍 Found ${allTabs.length} tab links on page`);
+  
+  if (allTabs.length === 0) {
+    console.warn('⚠️ No tabs found on this page');
+    return;
+  }
+  
+  // Show what tabs are available
+  allTabs.forEach((tabLink, i) => {
+    const dataWTab = tabLink.getAttribute('data-w-tab');
+    console.log(`  Tab ${i + 1}: data-w-tab="${dataWTab}"`);
+  });
+  
+  // Try to find the matching tab
+  const tab = document.querySelector(`.w-tab-link[data-w-tab="${targetTabName}"]`);
+  
+  if (tab) {
+    console.log('✅ Found matching tab, clicking...', tab);
+    tab.click();
+  } else {
+    console.warn(`❌ No tab found with data-w-tab="${targetTabName}"`);
+  }
+});
+
+console.log('✅ Tab triggers initialized');
+
 /**
  * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
