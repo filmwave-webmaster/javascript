@@ -4252,30 +4252,48 @@ document.addEventListener("click", function (e) {
   const targetTabName = btn.getAttribute("data-tab-trigger");
   console.log(`🔘 Tab trigger clicked: ${targetTabName}`);
   
-  // Find all available tabs first
-  const allTabs = document.querySelectorAll('.w-tab-link');
-  console.log(`🔍 Found ${allTabs.length} tab links on page`);
-  
-  if (allTabs.length === 0) {
-    console.warn('⚠️ No tabs found on this page');
-    return;
-  }
-  
-  // Show what tabs are available
-  allTabs.forEach((tabLink, i) => {
-    const dataWTab = tabLink.getAttribute('data-w-tab');
-    console.log(`  Tab ${i + 1}: data-w-tab="${dataWTab}"`);
-  });
-  
-  // Try to find the matching tab
-  const tab = document.querySelector(`.w-tab-link[data-w-tab="${targetTabName}"]`);
-  
-  if (tab) {
-    console.log('✅ Found matching tab, clicking...', tab);
-    tab.click();
-  } else {
-    console.warn(`❌ No tab found with data-w-tab="${targetTabName}"`);
-  }
+  // Wait a tiny bit for DOM to be ready, then search
+  setTimeout(() => {
+    // Try multiple selectors
+    let tab = document.querySelector(`.w-tab-link[data-w-tab="${targetTabName}"]`);
+    
+    if (!tab) {
+      // Try without the class
+      tab = document.querySelector(`[data-w-tab="${targetTabName}"]`);
+      console.log('Trying without class:', tab);
+    }
+    
+    if (!tab) {
+      // Search in the tabs container
+      const tabsContainer = document.querySelector('.dashboard-tabs');
+      if (tabsContainer) {
+        console.log('Found tabs container, searching inside...');
+        tab = tabsContainer.querySelector(`[data-w-tab="${targetTabName}"]`);
+        console.log('Found in container:', tab);
+      }
+    }
+    
+    if (!tab) {
+      // Last resort: search all elements with data-w-tab
+      const allTabElements = document.querySelectorAll('[data-w-tab]');
+      console.log(`🔍 Found ${allTabElements.length} elements with data-w-tab:`);
+      allTabElements.forEach((el, i) => {
+        const dataWTab = el.getAttribute('data-w-tab');
+        console.log(`  ${i + 1}. data-w-tab="${dataWTab}"`, el.tagName, el.className);
+        if (dataWTab === targetTabName) {
+          tab = el;
+        }
+      });
+    }
+    
+    if (tab) {
+      console.log('✅ Found tab, clicking...', tab);
+      tab.click();
+    } else {
+      console.warn(`❌ No tab found with data-w-tab="${targetTabName}"`);
+      console.log('Available in DOM:', document.querySelector('.dashboard-tab-section'));
+    }
+  }, 100);
 });
 
 console.log('✅ Tab triggers initialized');
