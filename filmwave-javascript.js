@@ -5172,6 +5172,14 @@ let searchSaveTimeout;
  * ============================================================
  */
 function saveFilterState() {
+
+  // ✅ ONLY SAVE FILTERS ON MUSIC PAGE
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (!isMusicPage) {
+    console.log('⏭️ Skipping filter save - not on music page');
+    return;
+  }
+  
   if (isClearing) {
     console.log('⏸️ Skipping save - clearing in progress');
     return;
