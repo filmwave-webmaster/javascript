@@ -4660,6 +4660,15 @@ if (typeof barba !== 'undefined') {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
+  // ✅ CLEAR ANY SEARCH INPUT WHEN ENTERING MUSIC PAGE
+  if (isMusicPage) {
+  const searchInput = nextContainer.querySelector('.text-field');
+  if (searchInput) {
+      searchInput.value = '';
+      console.log('🧹 Cleared search input on music page entry');
+    }
+  }
+       
   // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
   let style = document.getElementById(styleId);
@@ -4668,6 +4677,7 @@ if (typeof barba !== 'undefined') {
     style.id = styleId;
     document.head.appendChild(style);
   }
+       
   style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
   if (!isMusicPage) {
