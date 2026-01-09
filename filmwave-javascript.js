@@ -250,11 +250,11 @@ async function initMusicPage() {
 
   setTimeout(() => {
     const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-    const hasFavouriteSongs = !!document.querySelector('.favourite-songs-wrapper');
+    const hasFavoriteSongs = !!document.querySelector('.favourite-songs-wrapper');
     
     console.log('🏠 Checking containers:', { 
       featuredSongs: hasFeaturedSongs, 
-      favouriteSongs: hasFavouriteSongs 
+      favoriteSongs: hasFavoriteSongs 
     });
     
     if (hasFeaturedSongs) {
@@ -262,12 +262,12 @@ async function initMusicPage() {
       displayFeaturedSongs(6);
     }
     
-    if (hasFavouriteSongs) {
-      console.log('💛 Calling displayFavouriteSongs...');
-      displayFavouriteSongs(); // Shows all songs, or pass a number like displayFavouriteSongs(20)
+    if (hasFavoriteSongs) {
+      console.log('💛 Calling displayFavoriteSongs...');
+      displayFavoriteSongs(); // Shows all songs, or pass a number like displayFavoriteSongs(20)
     }
     
-    if (!hasFeaturedSongs && !hasFavouriteSongs) {
+    if (!hasFeaturedSongs && !hasFavoriteSongs) {
       console.log('⚠️ No song containers found on this page');
     }
   }, 200);
@@ -1481,7 +1481,7 @@ async function displayFeaturedSongs(limit = 6) {
  * DISPLAY FAVOURITE SONGS ON BACKEND PAGE
  * ============================================================
  */
-async function displayFavouriteSongs(limit = null) {
+async function displayFavoriteSongs(limit = null) {
   const container = document.querySelector('.favourite-songs-wrapper');
   if (!container) {
     console.log('No favourite songs container found on this page');
@@ -4627,11 +4627,11 @@ if (typeof barba !== 'undefined') {
 
     setTimeout(() => {
       const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-      const hasFavouriteSongs = !!document.querySelector('.favourite-songs-wrapper');
+      const hasFavoriteSongs = !!document.querySelector('.favourite-songs-wrapper');
       
       console.log('🏠 [BARBA AFTER] Checking containers:', { 
         featuredSongs: hasFeaturedSongs, 
-        favouriteSongs: hasFavouriteSongs 
+        favoriteSongs: hasFavoriteSongs 
       });
       
       if (hasFeaturedSongs) {
@@ -4639,12 +4639,12 @@ if (typeof barba !== 'undefined') {
         displayFeaturedSongs(6);
       }
       
-      if (hasFavouriteSongs) {
-        console.log('💛 [BARBA AFTER] Calling displayFavouriteSongs...');
-        displayFavouriteSongs();
+      if (hasFavoriteSongs) {
+        console.log('💛 [BARBA AFTER] Calling displayFavoriteSongs...');
+        displayFavoriteSongs();
       }
       
-      if (!hasFeaturedSongs && !hasFavouriteSongs) {
+      if (!hasFeaturedSongs && !hasFavoriteSongs) {
         console.log('⚠️ No song containers found on this page');
       }
     }, 300);
@@ -4844,7 +4844,7 @@ function initFavoriteSync() {
     return playerFavourite;
   }
   
-  function syncFavourites(songCard) {
+  function syncFavorites(songCard) {
     if (currentSongFavourite) {
       currentSongFavourite.removeEventListener('change', handleSongFavouriteChange);
     }
@@ -4922,7 +4922,7 @@ function initFavoriteSync() {
       
       if (matchingData && matchingData.cardElement) {
         console.log('🎵 New song detected, syncing favorites');
-        syncFavourites(matchingData.cardElement);
+        syncFavorites(matchingData.cardElement);
       }
     }
     
@@ -4943,7 +4943,7 @@ function initFavoriteSync() {
       
       if (matchingData && matchingData.cardElement) {
         console.log('🎵 Initial song detected, syncing favorites');
-        syncFavourites(matchingData.cardElement);
+        syncFavorites(matchingData.cardElement);
       }
     }
   }, 1000);
