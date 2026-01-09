@@ -4295,6 +4295,13 @@ document.addEventListener("click", function (e) {
     if (tabLink) {
       console.log('✅ Found tab link in menu, clicking...', tabLink);
       tabLink.click();
+    } else {
+      console.warn(`❌ Tab link not found for: ${targetTabName}`);
+    }
+  }, 100);
+});
+
+console.log('✅ Tab triggers initialized');
       
 /**
  * ============================================================
