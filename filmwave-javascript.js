@@ -2223,7 +2223,7 @@ const PlaylistManager = {
       throw new Error('User not logged in');
     }
     
-    const response = await fetch(`${XANO_PLAYLISTS_API}/playlists`, {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Create_Playlist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2251,7 +2251,7 @@ const PlaylistManager = {
     }
     
     try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/playlists?user_id=${this.currentUserId}`);
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Get_User_Playlists?user_id=${this.currentUserId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch playlists');
@@ -2279,7 +2279,7 @@ const PlaylistManager = {
    */
   async getPlaylistSongs(playlistId) {
     try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/playlists/${playlistId}/songs`);
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Get_Playlist_Songs?playlist_id=${playlistId}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch playlist songs');
@@ -2297,10 +2297,11 @@ const PlaylistManager = {
    */
   async addSongToPlaylist(playlistId, songId, position = 0) {
     try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/playlists/${playlistId}/songs`, {
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Add_Song_to_Playlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          playlist_id: parseInt(playlistId),
           song_id: songId,
           position: position
         })
@@ -2322,8 +2323,13 @@ const PlaylistManager = {
    */
   async removeSongFromPlaylist(playlistId, songId) {
     try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/playlists/${playlistId}/songs/${songId}`, {
-        method: 'DELETE'
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playlist_id: parseInt(playlistId),
+          song_id: songId
+        })
       });
       
       if (!response.ok) {
@@ -2342,7 +2348,7 @@ const PlaylistManager = {
    */
   async reorderPlaylistSongs(playlistId, positions) {
     try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/playlists/${playlistId}/reorder`, {
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_Playlist_Songs`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2367,8 +2373,12 @@ const PlaylistManager = {
    */
   async deletePlaylist(playlistId) {
     try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/playlists/${playlistId}`, {
-        method: 'DELETE'
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Delete_Playlist`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playlist_id: parseInt(playlistId)
+        })
       });
       
       if (!response.ok) {
