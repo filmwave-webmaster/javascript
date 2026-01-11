@@ -6027,6 +6027,7 @@ const PlaylistManager = {
   listenersInitialized: false,
   currentSongForPlaylist: null,
   selectedPlaylistIds: [],
+  originalPlaylistIds: [],
 
   async init() {
     console.log('🎵 Initializing Playlist Manager');
@@ -6404,14 +6405,15 @@ if (e.target.closest('.dd-remove-from-playlist')) {
   },
 
   async populateAddToPlaylistModal() {
-    const container = document.querySelector('.module-bod-container');
-    const template = container?.querySelector('.add-to-playlist-row');
-    if (!container || !template) return;
-    
-    const playlists = await this.getUserPlaylists();
-    
-    // Get playlists this song is already in
-    const songInPlaylists = [];
+  const container = document.querySelector('.module-bod-container');
+  const template = container?.querySelector('.add-to-playlist-row');
+  if (!container || !template) return;
+  
+  const playlists = await this.getUserPlaylists();
+  
+  // Get playlists this song is already in
+  const songInPlaylists = [];
+  this.originalPlaylistIds = [];
     for (const playlist of playlists) {
       const songs = await this.getPlaylistSongs(playlist.id);
       if (songs.some(s => s.song_id === this.currentSongForPlaylist)) {
@@ -6453,9 +6455,10 @@ row.onmouseleave = () => {
 
 // Pre-select if song already in playlist
 if (songInPlaylists.includes(playlist.id)) {
-        this.selectedPlaylistIds.push(playlist.id);
-        if (icon) icon.style.opacity = '1';
-      }
+  this.selectedPlaylistIds.push(playlist.id);
+  this.originalPlaylistIds.push(playlist.id);
+  if (icon) icon.style.opacity = '1';
+}
       
       container.appendChild(row);
     });
@@ -6476,24 +6479,31 @@ if (songInPlaylists.includes(playlist.id)) {
   },
 
   async saveToSelectedPlaylists() {
-  if (!this.currentSongForPlaylist || this.selectedPlaylistIds.length === 0) {
+  if (!this.currentSongForPlaylist) {
     this.closeAddToPlaylistModal();
     return;
   }
   
   try {
+    // Add to newly selected playlists
     for (const playlistId of this.selectedPlaylistIds) {
-      const songs = await this.getPlaylistSongs(playlistId);
-      const alreadyIn = songs.some(s => s.song_id === this.currentSongForPlaylist);
-      if (!alreadyIn) {
+      if (!this.originalPlaylistIds.includes(playlistId)) {
+        const songs = await this.getPlaylistSongs(playlistId);
         await this.addSongToPlaylist(playlistId, this.currentSongForPlaylist, songs.length + 1);
+      }
+    }
+    
+    // Remove from deselected playlists
+    for (const playlistId of this.originalPlaylistIds) {
+      if (!this.selectedPlaylistIds.includes(playlistId)) {
+        await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
       }
     }
     
     this.closeAddToPlaylistModal();
   } catch (error) {
     console.error('Error saving to playlists:', error);
-    this.showNotification('Error adding to playlists', 'error');
+    this.showNotification('Error updating playlists', 'error');
   }
 },
 
