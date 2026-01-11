@@ -6152,58 +6152,60 @@ const PlaylistManager = {
   // ==================== UI METHODS ====================
 
   setupEventListeners() {
-    if (this.listenersInitialized) return;
-    this.listenersInitialized = true;
-    // Create playlist buttons
-    document.querySelectorAll('.create-playlist-button, .playlist-add-button').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.pendingSongToAdd = null;
-    this.openCreatePlaylistModal();
-  });
-});
-
-    // Create from dropdown
-    document.body.addEventListener('click', (e) => {
-  const btn = e.target.closest('.dd-create-new-playlist');
-  if (btn) {
-    e.preventDefault();
-    e.stopPropagation();
-    const songWrapper = btn.closest('.song-wrapper');
-    if (songWrapper) {
-      this.pendingSongToAdd = {
-        songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
-      };
+  if (this.listenersInitialized) return;
+  this.listenersInitialized = true;
+  
+  // Consolidated event delegation
+  document.body.addEventListener('click', (e) => {
+    // Create new playlist from dropdown
+    if (e.target.closest('.dd-create-new-playlist')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const songWrapper = e.target.closest('.song-wrapper');
+      if (songWrapper) {
+        this.pendingSongToAdd = {
+          songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
+        };
+      }
+      this.openCreatePlaylistModal();
+      return;
     }
-    this.openCreatePlaylistModal();
-  }
-});
-
-    // Close modal
-    document.querySelectorAll('.create-playlist-x-button').forEach(btn => {
-      btn.addEventListener('click', () => this.closeCreatePlaylistModal());
-    });
-
-    document.querySelectorAll('.create-playlist-module-wrapper').forEach(wrapper => {
-      wrapper.addEventListener('click', (e) => {
-        if (e.target === wrapper) this.closeCreatePlaylistModal();
-      });
-    });
-
-    // Save button
-    document.querySelectorAll('.create-playlist-save-button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.handleCreatePlaylist();
-      });
-    });
-
-    // Add-to-playlist dropdowns
-    this.setupAddToPlaylistDropdowns();
     
-    console.log('✅ Playlist event listeners setup complete');
-  },
+    // Close modal X button
+    if (e.target.closest('.create-playlist-x-button')) {
+      e.preventDefault();
+      this.closeCreatePlaylistModal();
+      return;
+    }
+    
+    // Create playlist button
+    if (e.target.closest('.create-playlist-button') || e.target.closest('.playlist-add-button')) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.pendingSongToAdd = null;
+      this.openCreatePlaylistModal();
+      return;
+    }
+    
+    // Save button
+    if (e.target.closest('.create-playlist-save-button')) {
+      e.preventDefault();
+      this.handleCreatePlaylist();
+      return;
+    }
+    
+    // Click outside modal to close
+    if (e.target.classList.contains('create-playlist-module-wrapper')) {
+      this.closeCreatePlaylistModal();
+      return;
+    }
+  });
+
+  // Add-to-playlist dropdowns
+  this.setupAddToPlaylistDropdowns();
+  
+  console.log('✅ Playlist event listeners setup complete');
+},
 
   openCreatePlaylistModal() {
     const modal = document.querySelector('.create-playlist-module-wrapper');
