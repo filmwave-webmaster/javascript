@@ -6443,7 +6443,7 @@ row.style.display = '';
 row.onmouseenter = () => {
   if (!this.selectedPlaylistIds.includes(playlist.id)) {
     const icon = row.querySelector('.add-to-playlist-icon');
-    if (icon) icon.style.opacity = '1';
+    if (icon) icon.style.opacity = '0.3';
   }
 };
 row.onmouseleave = () => {
