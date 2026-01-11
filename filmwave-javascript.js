@@ -6166,18 +6166,18 @@ const PlaylistManager = {
 
     // Create from dropdown
     document.querySelectorAll('.dd-create-new-playlist').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const songWrapper = btn.closest('.song-wrapper');
-        if (songWrapper) {
-          this.pendingSongToAdd = {
-            songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
-          };
-        }
-        this.openCreatePlaylistModal();
-      });
-    });
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const songWrapper = btn.closest('.song-wrapper');
+    if (songWrapper) {
+      this.pendingSongToAdd = {
+        songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
+      };
+    }
+    this.openCreatePlaylistModal();
+  };
+});
 
     // Close modal
     document.querySelectorAll('.create-playlist-x-button').forEach(btn => {
