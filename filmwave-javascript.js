@@ -6182,12 +6182,12 @@ const PlaylistManager = {
     this.listenersInitialized = true;
     // Create playlist buttons
     document.querySelectorAll('.create-playlist-button, .playlist-add-button').forEach(btn => {
-  btn.onclick = (e) => {
+  btn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     this.pendingSongToAdd = null;
     this.openCreatePlaylistModal();
-  };
+  });
 });
 
     // Create from dropdown
