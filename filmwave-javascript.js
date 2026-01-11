@@ -1534,7 +1534,7 @@ async function displayFeaturedSongs(limit = 6) {
 
 /**
  * ============================================================
- * DISPLAY favorite SONGS ON BACKEND PAGE
+ * DISPLAY FAVORITE SONGS ON BACKEND PAGE
  * ============================================================
  */
 async function displayFavoriteSongs(limit = null) {
@@ -6466,7 +6466,7 @@ const PlaylistManager = {
   },
 
   async renderPlaylistSongs(playlistId) {
-    const container = document.querySelector('.favorite-songs-wrapper');
+    const container = document.querySelector('.playlist-songs-wrapper');
     if (!container) return;
     
     const g = window.musicPlayerPersistent;
