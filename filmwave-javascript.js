@@ -4033,57 +4033,32 @@ function initializePlaylistOverlay() {
     });
   });
 
-  function initPlaylistDeleteHandler() {
-  // Prevent double-binding if init runs multiple times (Barba, Webflow interactions, etc.)
-  if (window.__playlistDeleteBound) return;
-  window.__playlistDeleteBound = true;
+  // Initialize delete buttons
+  container.querySelectorAll('.playlist-delete-button').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-  document.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.playlist-delete-button');
-    if (!btn) return;
+      const card = btn.closest('.playlist-card-template');
+      const playlistId = card?.dataset.playlistId;
+      const title = card?.querySelector('.playlist-title')?.textContent;
 
-    e.preventDefault();
-    e.stopPropagation();
+      if (!playlistId) return;
 
-    const card = btn.closest('.playlist-card-template');
-    if (!card) {
-      console.warn('❌ No .playlist-card-template found for delete button');
-      return;
-    }
-
-    const playlistId =
-      card.dataset.playlistId ||               // expects data-playlist-id="123"
-      card.getAttribute('data-playlist-id');   // fallback
-
-    const title = card.querySelector('.playlist-title')?.textContent?.trim() || 'this playlist';
-
-    console.log('🗑️ Delete clicked:', { playlistId, title, card });
-
-    if (!playlistId) {
-      console.warn('❌ Missing playlistId on card dataset. Check data-playlist-id attribute.');
-      return;
-    }
-
-    if (!window.PlaylistManager?.deletePlaylist) {
-      console.error('❌ PlaylistManager.deletePlaylist is not available at click time.');
-      return;
-    }
-
-    if (confirm(`Delete "${title}"?`)) {
-      try {
-        await PlaylistManager.deletePlaylist(playlistId);
-        card.remove();
-        window.PlaylistManager?.showNotification?.('Playlist deleted');
-      } catch (error) {
-        console.error('❌ Error deleting playlist:', error);
-        window.PlaylistManager?.showNotification?.('Error deleting playlist', 'error');
+      if (confirm(`Delete "${title}"?`)) {
+        try {
+          await PlaylistManager.deletePlaylist(playlistId);
+          card.remove();
+          PlaylistManager.showNotification('Playlist deleted');
+        } catch (error) {
+          PlaylistManager.showNotification('Error deleting playlist', 'error');
+        }
       }
-    }
+    };
   });
-
-  console.log('✅ Playlist delete handler bound (delegated)');
+  
+  console.log(`✅ Initialized ${editIcons.length} playlist overlays`);
 }
-
 
 
 
@@ -4137,7 +4112,6 @@ function hideOverlay(overlay) {
 // Initialize on page load
 window.addEventListener('load', () => {
   initializePlaylistOverlay();
-  initPlaylistDeleteHandler();
 });  
 
 /**
