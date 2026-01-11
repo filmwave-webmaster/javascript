@@ -6423,10 +6423,24 @@ const PlaylistManager = {
       if (icon) icon.style.opacity = '0';
       
       row.dataset.playlistId = playlist.id;
-      row.style.display = '';
-      
-      // Pre-select if song already in playlist
-      if (songInPlaylists.includes(playlist.id)) {
+row.style.display = '';
+
+// Hover behavior
+row.onmouseenter = () => {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    const icon = row.querySelector('.add-to-playlist-icon');
+    if (icon) icon.style.opacity = '1';
+  }
+};
+row.onmouseleave = () => {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    const icon = row.querySelector('.add-to-playlist-icon');
+    if (icon) icon.style.opacity = '0';
+  }
+};
+
+// Pre-select if song already in playlist
+if (songInPlaylists.includes(playlist.id)) {
         this.selectedPlaylistIds.push(playlist.id);
         if (icon) icon.style.opacity = '1';
       }
@@ -6450,27 +6464,26 @@ const PlaylistManager = {
   },
 
   async saveToSelectedPlaylists() {
-    if (!this.currentSongForPlaylist || this.selectedPlaylistIds.length === 0) {
-      this.closeAddToPlaylistModal();
-      return;
+  if (!this.currentSongForPlaylist || this.selectedPlaylistIds.length === 0) {
+    this.closeAddToPlaylistModal();
+    return;
+  }
+  
+  try {
+    for (const playlistId of this.selectedPlaylistIds) {
+      const songs = await this.getPlaylistSongs(playlistId);
+      const alreadyIn = songs.some(s => s.song_id === this.currentSongForPlaylist);
+      if (!alreadyIn) {
+        await this.addSongToPlaylist(playlistId, this.currentSongForPlaylist, songs.length + 1);
+      }
     }
     
-    try {
-      for (const playlistId of this.selectedPlaylistIds) {
-        const songs = await this.getPlaylistSongs(playlistId);
-        const alreadyIn = songs.some(s => s.song_id === this.currentSongForPlaylist);
-        if (!alreadyIn) {
-          await this.addSongToPlaylist(playlistId, this.currentSongForPlaylist, songs.length + 1);
-        }
-      }
-      
-      this.closeAddToPlaylistModal();
-      alert(`Song added to ${this.selectedPlaylistIds.length} playlist(s)`);
-    } catch (error) {
-      console.error('Error saving to playlists:', error);
-      this.showNotification('Error adding to playlists', 'error');
-    }
-  },
+    this.closeAddToPlaylistModal();
+  } catch (error) {
+    console.error('Error saving to playlists:', error);
+    this.showNotification('Error adding to playlists', 'error');
+  }
+},
 
   // ==================== DROPDOWN METHODS ====================
 
