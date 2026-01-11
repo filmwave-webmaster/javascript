@@ -6156,13 +6156,13 @@ const PlaylistManager = {
     this.listenersInitialized = true;
     // Create playlist buttons
     document.querySelectorAll('.create-playlist-button, .playlist-add-button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.pendingSongToAdd = null;
-        this.openCreatePlaylistModal();
-      });
-    });
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    this.pendingSongToAdd = null;
+    this.openCreatePlaylistModal();
+  };
+});
 
     // Create from dropdown
     document.querySelectorAll('.dd-create-new-playlist').forEach(btn => {
