@@ -6264,8 +6264,9 @@ const PlaylistManager = {
       }
       
       if (window.location.pathname.includes('playlists') && !window.location.pathname.includes('playlist-template')) {
-        await this.renderPlaylistsGrid();
-      }
+  this.playlists = [];
+  await this.renderPlaylistsGrid();
+}
     } catch (error) {
       console.error('Error creating playlist:', error);
       this.showNotification('Error creating playlist', 'error');
