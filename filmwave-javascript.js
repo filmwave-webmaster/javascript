@@ -2802,7 +2802,7 @@ const PlaylistManager = {
         image.src = playlist.cover_image_url;
       }
       if (link) {
-        link.href = `/playlist-template?playlist=${playlist.id}`;
+        link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
       }
       
       // Store playlist ID on card
