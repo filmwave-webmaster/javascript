@@ -6717,8 +6717,8 @@ if (songInPlaylists.includes(playlist.id)) {
     
     const btn = document.createElement('div');
     btn.className = 'remove-from-playlist-option';
-    btn.textContent = 'Remove from Playlist';
-    btn.style.cssText = 'padding:8px 16px;cursor:pointer;color:#dc3545;font-size:14px;';
+    btn.textContent = 'Remove';
+    btn.style.cssText = 'padding:8px 16px;cursor:pointer;color:#fb8f61;font-size:14px;';
     
     optionsList.appendChild(btn);
   }
