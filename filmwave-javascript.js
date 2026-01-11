@@ -6416,6 +6416,11 @@ const PlaylistManager = {
     window.Webflow.ready();
     window.Webflow.require('ix2').init();
   }
+  
+  // Reinitialize playlist overlay buttons
+  if (typeof initializePlaylistOverlay === 'function') {
+    initializePlaylistOverlay();
+  }
 },
 
   async initPlaylistTemplatePage() {
