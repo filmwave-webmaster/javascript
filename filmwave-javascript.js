@@ -6217,7 +6217,7 @@ const PlaylistManager = {
       }
       
       // Remove from playlist
-if (e.target.closest('.remove-from-playlist-option')) {
+if (e.target.closest('.dd-remove-from-playlist')) {
   e.preventDefault();
   e.stopPropagation();
   const card = e.target.closest('.song-wrapper');
@@ -6694,7 +6694,6 @@ if (songInPlaylists.includes(playlist.id)) {
         card.style.pointerEvents = 'auto';
         populateSongCard(card, song);
         card.dataset.playlistPosition = ps.position;
-        this.addRemoveButton(card, playlistId, ps.song_id);
         container.appendChild(card);
       }
     });
@@ -6706,22 +6705,16 @@ if (songInPlaylists.includes(playlist.id)) {
     }
     
     setTimeout(() => {
-      const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
-      if (cards.length > 0) loadWaveformBatch(Array.from(cards));
-    }, 100);
+  const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+  if (cards.length > 0) loadWaveformBatch(Array.from(cards));
+  
+  // Show remove buttons on playlist page
+  cards.forEach(card => {
+    const removeBtn = card.querySelector('.dd-remove-from-playlist');
+    if (removeBtn) removeBtn.style.display = '';
+  });
+}, 100);
   },
-
-  addRemoveButton(card, playlistId, songId) {
-    const optionsList = card.querySelector('.options-dropdown-list');
-    if (!optionsList) return;
-    
-    const btn = document.createElement('div');
-    btn.className = 'remove-from-playlist-option';
-    btn.textContent = 'Remove';
-    btn.style.cssText = 'padding:8px 16px;cursor:pointer;color:#fb8f61;font-size:14px;';
-    
-    optionsList.appendChild(btn);
-  }
 };
 
 window.PlaylistManager = PlaylistManager;
