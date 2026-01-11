@@ -6418,7 +6418,7 @@ const PlaylistManager = {
     
     const playlist = await this.getPlaylistById(playlistId);
     if (playlist) {
-      const header = document.querySelector('.playlist-template-header');
+      const header = document.querySelector('.playlist-template-title');
       if (header) header.textContent = playlist.name;
     }
     
