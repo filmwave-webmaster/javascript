@@ -6217,22 +6217,34 @@ const PlaylistManager = {
       }
       
       // Remove from playlist
-      if (e.target.closest('.remove-from-playlist-option')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const card = e.target.closest('.song-wrapper');
-        const songId = card?.dataset.songId || card?.dataset.airtableId;
-        if (songId && this.currentPlaylistId) {
-          this.removeSongFromPlaylist(this.currentPlaylistId, songId).then(() => {
-            card.style.opacity = '0';
-            setTimeout(() => card.remove(), 300);
-            this.showNotification('Song removed');
-          }).catch(() => {
-            this.showNotification('Error removing song', 'error');
-          });
+if (e.target.closest('.remove-from-playlist-option')) {
+  e.preventDefault();
+  e.stopPropagation();
+  const card = e.target.closest('.song-wrapper');
+  const songId = card?.dataset.songId || card?.dataset.airtableId;
+  if (songId && this.currentPlaylistId) {
+    this.removeSongFromPlaylist(this.currentPlaylistId, songId).then(() => {
+      card.style.opacity = '0';
+      setTimeout(() => {
+        card.remove();
+        // Check if playlist is now empty
+        const container = document.querySelector('.playlist-songs-wrapper');
+        const remainingSongs = container?.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+        if (remainingSongs && remainingSongs.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-playlist-message';
+          empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
+          empty.innerHTML = '<p>This playlist is empty.</p>';
+          container.appendChild(empty);
         }
-        return;
-      }
+      }, 300);
+      this.showNotification('Song removed');
+    }).catch(() => {
+      this.showNotification('Error removing song', 'error');
+    });
+  }
+  return;
+}
       
       // Delete playlist
       const deleteBtn = e.target.closest('.playlist-delete-button');
