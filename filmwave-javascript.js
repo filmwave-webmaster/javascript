@@ -1625,7 +1625,7 @@ function initBPMFilter() {
       searchTimeout = setTimeout(filterByBPM, 300);
     });
   }
-}
+} 
 
 /**
  * ============================================================
