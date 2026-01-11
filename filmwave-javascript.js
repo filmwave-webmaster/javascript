@@ -6711,7 +6711,7 @@ if (songInPlaylists.includes(playlist.id)) {
   // Show remove buttons on playlist page
   cards.forEach(card => {
     const removeBtn = card.querySelector('.dd-remove-from-playlist');
-    if (removeBtn) removeBtn.style.display = '';
+    if (removeBtn) removeBtn.style.display = 'flex';
   });
 }, 100);
   },
