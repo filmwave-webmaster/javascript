@@ -4032,6 +4032,30 @@ function initializePlaylistOverlay() {
       }
     });
   });
+
+  // Initialize delete buttons
+  container.querySelectorAll('.playlist-delete-button').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const card = btn.closest('.playlist-card-template');
+      const playlistId = card?.dataset.playlistId;
+      const title = card?.querySelector('.playlist-title')?.textContent;
+
+      if (!playlistId) return;
+
+      if (confirm(`Delete "${title}"?`)) {
+        try {
+          await PlaylistManager.deletePlaylist(playlistId);
+          card.remove();
+          PlaylistManager.showNotification('Playlist deleted');
+        } catch (error) {
+          PlaylistManager.showNotification('Error deleting playlist', 'error');
+        }
+      }
+    };
+  });
   
   console.log(`✅ Initialized ${editIcons.length} playlist overlays`);
 }
