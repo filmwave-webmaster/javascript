@@ -465,6 +465,12 @@ function drawMasterWaveform(peaks, progress) {
   const canvas = document.querySelector('.player-waveform-visual');
   if (!canvas) return;
   
+  // Check if it's actually a canvas element
+  if (canvas.tagName !== 'CANVAS') {
+    console.warn('player-waveform-visual is not a canvas element');
+    return;
+  }
+  
   const dpr = window.devicePixelRatio || 1;
   const displayWidth = canvas.offsetWidth;
   const displayHeight = canvas.offsetHeight;
