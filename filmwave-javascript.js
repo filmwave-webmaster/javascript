@@ -2840,7 +2840,7 @@ const PlaylistManager = {
     const playlist = await this.getPlaylistById(playlistId);
     if (playlist) {
       // Update page title/header
-      const headerTitle = document.querySelector('.playlist-template-header');
+      const headerTitle = document.querySelector('.playlist-template-title');
       if (headerTitle) headerTitle.textContent = playlist.name;
       
       // Also update any breadcrumb or navigation that shows playlist name
