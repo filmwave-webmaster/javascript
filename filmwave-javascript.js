@@ -6165,8 +6165,9 @@ const PlaylistManager = {
 });
 
     // Create from dropdown
-    document.querySelectorAll('.dd-create-new-playlist').forEach(btn => {
-  btn.onclick = (e) => {
+    document.body.addEventListener('click', (e) => {
+  const btn = e.target.closest('.dd-create-new-playlist');
+  if (btn) {
     e.preventDefault();
     e.stopPropagation();
     const songWrapper = btn.closest('.song-wrapper');
@@ -6176,7 +6177,7 @@ const PlaylistManager = {
       };
     }
     this.openCreatePlaylistModal();
-  };
+  }
 });
 
     // Close modal
