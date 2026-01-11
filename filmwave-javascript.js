@@ -41,6 +41,7 @@
  * 28. LOCALSTORAGE PERSISTENCE               ~4250
  * 29. FILTER STATE SAVE/RESTORE              ~4280
  * 30. FAVORITE SONGS PERSISTENCE             ~4750
+ * 31. XANO PLAYLIST SYSTEM                   ~6016
  * 
  * ============================================================
  */
@@ -82,6 +83,8 @@ const AIRTABLE_API_KEY = 'patiV6QOeKzi9nFsZ.6670b6f25ef81e914add50d3839946c2905e
 const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
+
+const XANO_PLAYLISTS_API = 'https://xuvv-ysql-w1uc.n2.xano.io/api:Pjks2U_C';
 
 // Force-clear saved search query on hard refresh so field starts empty
 window.addEventListener('load', () => {
@@ -278,10 +281,14 @@ async function initMusicPage() {
     setTimeout(() => {
       positionMasterPlayer();
       updateMasterPlayerVisibility();
+      PlaylistManager.init();
     }, 200);
   } else {
   initMasterPlayer();
   updateMasterPlayerVisibility();
+  PlaylistManager.init();
+
+  setTimeout(() => {
 
   setTimeout(() => {
   const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
@@ -933,6 +940,7 @@ function populateSongCard(cardElement, song) {
   cardElement.dataset.audioUrl = fields['R2 Audio URL'] || '';
   cardElement.dataset.songId = song.id;
   cardElement.dataset.songData = JSON.stringify(song);
+  cardElement.setAttribute('data-airtable-id', song.id);
 }
 
 function updatePlayPauseIcons(cardElement, isPlaying) {
@@ -6008,3 +6016,495 @@ if (typeof barba !== 'undefined') {
 }
 
 console.log('💾 localStorage persistence initialized');
+
+/**
+ * ============================================================
+ * XANO PLAYLIST SYSTEM
+ * ============================================================
+ */
+const PlaylistManager = {
+  currentUserId: null,
+  playlists: [],
+  currentPlaylistId: null,
+  pendingSongToAdd: null,
+
+  async init() {
+    console.log('🎵 Initializing Playlist Manager');
+    await this.getUserId();
+    this.setupEventListeners();
+    this.setupPageSpecificFeatures();
+  },
+
+  async getUserId() {
+    try {
+      if (window.$memberstackDom) {
+        const member = await window.$memberstackDom.getCurrentMember();
+        if (member && member.data) {
+          this.currentUserId = member.data.id;
+          console.log('👤 User ID:', this.currentUserId);
+        }
+      }
+    } catch (error) {
+      console.warn('Could not get Memberstack user:', error);
+    }
+    return this.currentUserId;
+  },
+
+  // ==================== API METHODS ====================
+
+  async createPlaylist(name, description = '') {
+    if (!this.currentUserId) throw new Error('User not logged in');
+    
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Create_Playlist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: this.currentUserId,
+        name: name,
+        description: description,
+        cover_image_url: ''
+      })
+    });
+    
+    if (!response.ok) throw new Error('Failed to create playlist');
+    return response.json();
+  },
+
+  async getUserPlaylists() {
+    if (!this.currentUserId) return [];
+    
+    try {
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Get_User_Playlists?user_id=${this.currentUserId}`);
+      if (!response.ok) throw new Error('Failed to fetch playlists');
+      const data = await response.json();
+      this.playlists = data;
+      return data;
+    } catch (error) {
+      console.error('Error fetching playlists:', error);
+      return [];
+    }
+  },
+
+  async getPlaylistById(playlistId) {
+    const playlists = await this.getUserPlaylists();
+    return playlists.find(p => p.id === parseInt(playlistId));
+  },
+
+  async getPlaylistSongs(playlistId) {
+    try {
+      const response = await fetch(`${XANO_PLAYLISTS_API}/Get_Playlist_Songs?playlist_id=${playlistId}`);
+      if (!response.ok) throw new Error('Failed to fetch playlist songs');
+      return response.json();
+    } catch (error) {
+      console.error('Error fetching playlist songs:', error);
+      return [];
+    }
+  },
+
+  async addSongToPlaylist(playlistId, songId, position = 0) {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Add_Song_to_Playlist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playlist_id: parseInt(playlistId),
+        song_id: songId,
+        position: position
+      })
+    });
+    if (!response.ok) throw new Error('Failed to add song to playlist');
+    return response.json();
+  },
+
+  async removeSongFromPlaylist(playlistId, songId) {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playlist_id: parseInt(playlistId),
+        song_id: songId
+      })
+    });
+    if (!response.ok) throw new Error('Failed to remove song');
+    return response.json();
+  },
+
+  async reorderPlaylistSongs(playlistId, positions) {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_Playlist_Songs`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playlist_id: parseInt(playlistId),
+        positions: positions
+      })
+    });
+    if (!response.ok) throw new Error('Failed to reorder playlist');
+    return response.json();
+  },
+
+  async deletePlaylist(playlistId) {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Delete_Playlist`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playlist_id: parseInt(playlistId) })
+    });
+    if (!response.ok) throw new Error('Failed to delete playlist');
+    return response.json();
+  },
+
+  // ==================== UI METHODS ====================
+
+  setupEventListeners() {
+    // Create playlist buttons
+    document.querySelectorAll('.create-playlist-button, .playlist-add-button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.pendingSongToAdd = null;
+        this.openCreatePlaylistModal();
+      });
+    });
+
+    // Create from dropdown
+    document.querySelectorAll('.dd-create-new-playlist').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const songWrapper = btn.closest('.song-wrapper');
+        if (songWrapper) {
+          this.pendingSongToAdd = {
+            songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
+          };
+        }
+        this.openCreatePlaylistModal();
+      });
+    });
+
+    // Close modal
+    document.querySelectorAll('.create-playlist-x-button').forEach(btn => {
+      btn.addEventListener('click', () => this.closeCreatePlaylistModal());
+    });
+
+    document.querySelectorAll('.create-playlist-module-wrapper').forEach(wrapper => {
+      wrapper.addEventListener('click', (e) => {
+        if (e.target === wrapper) this.closeCreatePlaylistModal();
+      });
+    });
+
+    // Save button
+    document.querySelectorAll('.create-playlist-save-button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.handleCreatePlaylist();
+      });
+    });
+
+    // Add-to-playlist dropdowns
+    this.setupAddToPlaylistDropdowns();
+    
+    console.log('✅ Playlist event listeners setup complete');
+  },
+
+  openCreatePlaylistModal() {
+    const modal = document.querySelector('.create-playlist-module-wrapper');
+    if (modal) {
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        const input = modal.querySelector('.playlist-text-field-1');
+        if (input) input.focus();
+      }, 100);
+    }
+  },
+
+  closeCreatePlaylistModal() {
+    const modal = document.querySelector('.create-playlist-module-wrapper');
+    if (modal) {
+      modal.style.display = 'none';
+      const titleInput = modal.querySelector('.playlist-text-field-1');
+      const descInput = modal.querySelector('.playlist-text-field-2');
+      if (titleInput) titleInput.value = '';
+      if (descInput) descInput.value = '';
+      this.pendingSongToAdd = null;
+    }
+  },
+
+  async handleCreatePlaylist() {
+    const modal = document.querySelector('.create-playlist-module-wrapper');
+    const titleInput = modal?.querySelector('.playlist-text-field-1');
+    const descInput = modal?.querySelector('.playlist-text-field-2');
+    
+    const name = titleInput?.value?.trim();
+    const description = descInput?.value?.trim() || '';
+    
+    if (!name) {
+      this.showNotification('Please enter a playlist name', 'error');
+      return;
+    }
+    
+    if (!this.currentUserId) {
+      this.showNotification('Please log in to create a playlist', 'error');
+      return;
+    }
+    
+    try {
+      const saveBtn = modal?.querySelector('.create-playlist-save-button');
+      const originalText = saveBtn?.textContent;
+      if (saveBtn) saveBtn.textContent = 'Creating...';
+      
+      const playlist = await this.createPlaylist(name, description);
+      
+      if (saveBtn) saveBtn.textContent = originalText;
+      this.closeCreatePlaylistModal();
+      
+      if (this.pendingSongToAdd?.songId) {
+        await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1);
+        this.showNotification(`Playlist created and song added!`);
+        this.pendingSongToAdd = null;
+      } else {
+        this.showNotification(`Playlist "${name}" created!`);
+      }
+      
+      if (window.location.pathname.includes('playlists') && !window.location.pathname.includes('playlist-template')) {
+        await this.renderPlaylistsGrid();
+      }
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      this.showNotification('Error creating playlist', 'error');
+    }
+  },
+
+  setupAddToPlaylistDropdowns() {
+    document.querySelectorAll('.add-to-playlist').forEach(dropdown => {
+      dropdown.addEventListener('mouseenter', () => this.populatePlaylistDropdown(dropdown));
+    });
+  },
+
+  async populatePlaylistDropdown(dropdown) {
+    if (!this.currentUserId) return;
+    
+    const lastPopulated = dropdown.dataset.lastPopulated;
+    if (lastPopulated && (Date.now() - parseInt(lastPopulated)) < 30000) return;
+    
+    const playlists = await this.getUserPlaylists();
+    const createNewBtn = dropdown.querySelector('.dd-create-new-playlist');
+    
+    dropdown.querySelectorAll('.playlist-dropdown-item, .playlist-dropdown-separator').forEach(item => item.remove());
+    
+    playlists.forEach(playlist => {
+      const item = document.createElement('div');
+      item.className = 'playlist-dropdown-item';
+      item.textContent = playlist.name;
+      item.dataset.playlistId = playlist.id;
+      item.style.cssText = 'padding:8px 16px;cursor:pointer;font-size:14px;';
+      
+      item.addEventListener('mouseenter', () => item.style.background = '#f5f5f5');
+      item.addEventListener('mouseleave', () => item.style.background = '');
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleAddSongToPlaylist(dropdown, playlist.id, playlist.name);
+      });
+      
+      if (createNewBtn) dropdown.insertBefore(item, createNewBtn);
+      else dropdown.appendChild(item);
+    });
+    
+    if (playlists.length > 0 && createNewBtn && !dropdown.querySelector('.playlist-dropdown-separator')) {
+      const sep = document.createElement('div');
+      sep.className = 'playlist-dropdown-separator';
+      sep.style.cssText = 'height:1px;background:#e0e0e0;margin:4px 0;';
+      dropdown.insertBefore(sep, createNewBtn);
+    }
+    
+    dropdown.dataset.lastPopulated = Date.now().toString();
+  },
+
+  async handleAddSongToPlaylist(dropdown, playlistId, playlistName) {
+    const songWrapper = dropdown.closest('.song-wrapper');
+    const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+    
+    if (!songId) {
+      this.showNotification('Error: Could not find song', 'error');
+      return;
+    }
+    
+    try {
+      const songs = await this.getPlaylistSongs(playlistId);
+      await this.addSongToPlaylist(playlistId, songId, songs.length + 1);
+      this.showNotification(`Added to "${playlistName}"`);
+      document.body.click();
+    } catch (error) {
+      this.showNotification('Error adding song', 'error');
+    }
+  },
+
+  showNotification(message, type = 'success') {
+    document.querySelectorAll('.playlist-notification').forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = 'playlist-notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+      position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+      background:${type === 'error' ? '#dc3545' : '#333'};color:white;
+      padding:12px 24px;border-radius:8px;z-index:10000;font-size:14px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  },
+
+  // ==================== PAGE FEATURES ====================
+
+  setupPageSpecificFeatures() {
+    const path = window.location.pathname;
+    if (path.includes('playlists') && !path.includes('playlist-template')) {
+      this.initPlaylistsPage();
+    }
+    if (path.includes('playlist-template')) {
+      this.initPlaylistTemplatePage();
+    }
+  },
+
+  async initPlaylistsPage() {
+    if (!this.currentUserId) return;
+    await this.renderPlaylistsGrid();
+  },
+
+  async renderPlaylistsGrid() {
+    const container = document.querySelector('.sortable-container');
+    const template = container?.querySelector('.playlist-card-template');
+    if (!container || !template) return;
+    
+    const playlists = await this.getUserPlaylists();
+    
+    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+      if (i > 0) card.remove();
+    });
+    
+    if (playlists.length === 0) {
+      template.style.display = 'none';
+      return;
+    }
+    
+    playlists.forEach((playlist, index) => {
+      const card = index === 0 ? template : template.cloneNode(true);
+      
+      const title = card.querySelector('.playlist-title');
+      const detail = card.querySelector('.playlist-detail');
+      const image = card.querySelector('.playlist-image');
+      const link = card.querySelector('.playlist-link-block');
+      
+      if (title) title.textContent = playlist.name;
+      if (detail) detail.textContent = playlist.description || '';
+      if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
+      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+      
+      card.dataset.playlistId = playlist.id;
+      card.style.display = '';
+      
+      if (index > 0) container.appendChild(card);
+    });
+    
+    console.log(`✅ Rendered ${playlists.length} playlist cards`);
+  },
+
+  async initPlaylistTemplatePage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistId = urlParams.get('playlist');
+    if (!playlistId) return;
+    
+    this.currentPlaylistId = playlistId;
+    
+    const playlist = await this.getPlaylistById(playlistId);
+    if (playlist) {
+      const header = document.querySelector('.playlist-template-header');
+      if (header) header.textContent = playlist.name;
+    }
+    
+    await this.renderPlaylistSongs(playlistId);
+  },
+
+  async renderPlaylistSongs(playlistId) {
+    const container = document.querySelector('.favorite-songs-wrapper');
+    if (!container) return;
+    
+    const g = window.musicPlayerPersistent;
+    if (g.MASTER_DATA.length === 0) await fetchSongs();
+    
+    const templateWrapper = container.querySelector('.template-wrapper');
+    const templateCard = templateWrapper?.querySelector('.song-wrapper') || container.querySelector('.song-wrapper');
+    if (!templateCard) return;
+    
+    const playlistSongs = await this.getPlaylistSongs(playlistId);
+    
+    container.innerHTML = '';
+    if (templateWrapper) container.appendChild(templateWrapper);
+    
+    if (playlistSongs.length === 0) {
+      if (templateWrapper) templateWrapper.style.display = 'none';
+      const empty = document.createElement('div');
+      empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
+      empty.innerHTML = '<p>This playlist is empty.</p>';
+      container.appendChild(empty);
+      return;
+    }
+    
+    playlistSongs.sort((a, b) => a.position - b.position);
+    
+    playlistSongs.forEach(ps => {
+      const song = g.MASTER_DATA.find(s => s.id === ps.song_id);
+      if (song) {
+        const card = templateCard.cloneNode(true);
+        card.style.opacity = '1';
+        card.style.pointerEvents = 'auto';
+        populateSongCard(card, song);
+        card.dataset.playlistPosition = ps.position;
+        this.addRemoveButton(card, playlistId, ps.song_id);
+        container.appendChild(card);
+      }
+    });
+    
+    if (window.Webflow?.require) {
+      window.Webflow.destroy();
+      window.Webflow.ready();
+      window.Webflow.require('ix2').init();
+    }
+    
+    setTimeout(() => {
+      const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+      if (cards.length > 0) loadWaveformBatch(Array.from(cards));
+    }, 100);
+  },
+
+  addRemoveButton(card, playlistId, songId) {
+    const optionsList = card.querySelector('.options-dropdown-list');
+    if (!optionsList) return;
+    
+    const btn = document.createElement('div');
+    btn.className = 'remove-from-playlist-option';
+    btn.textContent = 'Remove from Playlist';
+    btn.style.cssText = 'padding:8px 16px;cursor:pointer;color:#dc3545;font-size:14px;';
+    
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        await this.removeSongFromPlaylist(playlistId, songId);
+        card.style.opacity = '0';
+        setTimeout(() => card.remove(), 300);
+        this.showNotification('Song removed');
+      } catch (error) {
+        this.showNotification('Error removing song', 'error');
+      }
+    });
+    
+    optionsList.appendChild(btn);
+  }
+};
+
+window.PlaylistManager = PlaylistManager;
+console.log('🎵 Playlist System loaded');
