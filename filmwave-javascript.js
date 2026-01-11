@@ -284,40 +284,37 @@ async function initMusicPage() {
       PlaylistManager.init();
     }, 200);
   } else {
-  initMasterPlayer();
-  updateMasterPlayerVisibility();
-  PlaylistManager.init();
-
-  setTimeout(() => {
-
-  setTimeout(() => {
-  const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
-  const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
-  
-  console.log('🏠 Checking containers:', { 
-    featuredSongs: hasFeaturedSongs, 
-    favoriteSongs: hasFavoriteSongs 
-  });
-  
-  if (hasFeaturedSongs) {
-    console.log('🎵 Calling displayFeaturedSongs...');
-    displayFeaturedSongs(6);
-  }
-  
-  if (hasFavoriteSongs) {
-    console.log('💛 Calling displayFavoriteSongs...');
-    displayFavoriteSongs();
-  }
-  
-  // Initialize search immediately after songs are displayed
-  if (hasFeaturedSongs || hasFavoriteSongs) {
+    initMasterPlayer();
+    updateMasterPlayerVisibility();
+    PlaylistManager.init();
+    
     setTimeout(() => {
-      initUniversalSearch();
-    }, 100);
+      const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
+      const hasFavoriteSongs = !!document.querySelector('.favorite-songs-wrapper');
+      
+      console.log('🏠 Checking containers:', { 
+        featuredSongs: hasFeaturedSongs, 
+        favoriteSongs: hasFavoriteSongs 
+      });
+      
+      if (hasFeaturedSongs) {
+        console.log('🎵 Calling displayFeaturedSongs...');
+        displayFeaturedSongs(6);
+      }
+      
+      if (hasFavoriteSongs) {
+        console.log('💛 Calling displayFavoriteSongs...');
+        displayFavoriteSongs();
+      }
+      
+      if (hasFeaturedSongs || hasFavoriteSongs) {
+        setTimeout(() => {
+          initUniversalSearch();
+        }, 100);
+      }
+    }, 200);
   }
-}, 200);
 }
-} 
 
 /**
  * ============================================================
