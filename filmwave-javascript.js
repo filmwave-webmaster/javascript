@@ -6376,42 +6376,41 @@ const PlaylistManager = {
   },
 
   async renderPlaylistsGrid() {
-    const container = document.querySelector('.sortable-container');
-    const template = container?.querySelector('.playlist-card-template');
-    if (!container || !template) return;
+  const container = document.querySelector('.sortable-container');
+  const template = container?.querySelector('.playlist-card-template');
+  if (!container || !template) return;
+  
+  const playlists = await this.getUserPlaylists();
+  
+  container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+    if (i > 0) card.remove();
+  });
+  
+  template.style.display = 'none';
+  
+  if (playlists.length === 0) return;
+  
+  playlists.forEach((playlist) => {
+    const card = template.cloneNode(true);
     
-    const playlists = await this.getUserPlaylists();
+    const title = card.querySelector('.playlist-title');
+    const detail = card.querySelector('.playlist-detail');
+    const image = card.querySelector('.playlist-image');
+    const link = card.querySelector('.playlist-link-block');
     
-    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-      if (i > 0) card.remove();
-    });
+    if (title) title.textContent = playlist.name;
+    if (detail) detail.textContent = playlist.description || '';
+    if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
+    if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
     
-    if (playlists.length === 0) {
-      template.style.display = 'none';
-      return;
-    }
+    card.dataset.playlistId = playlist.id;
+    card.style.display = '';
     
-    playlists.forEach((playlist, index) => {
-      const card = index === 0 ? template : template.cloneNode(true);
-      
-      const title = card.querySelector('.playlist-title');
-      const detail = card.querySelector('.playlist-detail');
-      const image = card.querySelector('.playlist-image');
-      const link = card.querySelector('.playlist-link-block');
-      
-      if (title) title.textContent = playlist.name;
-      if (detail) detail.textContent = playlist.description || '';
-      if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
-      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
-      
-      card.dataset.playlistId = playlist.id;
-      card.style.display = '';
-      
-      if (index > 0) container.appendChild(card);
-    });
-    
-    console.log(`✅ Rendered ${playlists.length} playlist cards`);
-  },
+    container.appendChild(card);
+  });
+  
+  console.log(`✅ Rendered ${playlists.length} playlist cards`);
+},
 
   async initPlaylistTemplatePage() {
     const urlParams = new URLSearchParams(window.location.search);
