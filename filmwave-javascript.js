@@ -2910,7 +2910,7 @@ const PlaylistManager = {
         font-size: 16px;
       `;
       emptyState.innerHTML = `
-        <p>This playlist is empty.</p><br>
+        <p>This playlist is empty.</p>
         <p style="margin-top: 10px; font-size: 14px; color: #999;">Browse music and click "Add to Playlist" to add songs!</p>
       `;
       container.appendChild(emptyState);
