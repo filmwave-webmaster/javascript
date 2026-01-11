@@ -6024,6 +6024,7 @@ const PlaylistManager = {
   playlists: [],
   currentPlaylistId: null,
   pendingSongToAdd: null,
+  listenersInitialized: false,
 
   async init() {
     console.log('🎵 Initializing Playlist Manager');
@@ -6151,6 +6152,8 @@ const PlaylistManager = {
   // ==================== UI METHODS ====================
 
   setupEventListeners() {
+    if (this.listenersInitialized) return;
+    this.listenersInitialized = true;
     // Create playlist buttons
     document.querySelectorAll('.create-playlist-button, .playlist-add-button').forEach(btn => {
       btn.addEventListener('click', (e) => {
