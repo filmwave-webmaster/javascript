@@ -6410,6 +6410,12 @@ const PlaylistManager = {
   });
   
   console.log(`✅ Rendered ${playlists.length} playlist cards`);
+  
+  if (window.Webflow) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+    window.Webflow.require('ix2').init();
+  }
 },
 
   async initPlaylistTemplatePage() {
