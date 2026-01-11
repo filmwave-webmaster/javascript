@@ -6485,7 +6485,7 @@ const PlaylistManager = {
       if (templateWrapper) templateWrapper.style.display = 'none';
       const empty = document.createElement('div');
       empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
-      empty.innerHTML = '<p>This playlist is empty.</p>';
+      empty.innerHTML = '<p style="font-family: 'Instrument', sans-serif; font-weight: 400; color: red;">This playlist is empty.</p>';
       container.appendChild(empty);
       return;
     }
