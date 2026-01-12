@@ -6059,7 +6059,7 @@ const PlaylistManager = {
     setupCoverImageUpload(".change-cover-image");
     
     // Consolidated event delegation
-    document.body.addEventListener('click', (e) => {
+    document.body.addEventListener('click', async (e) => {
       // Create new playlist from dropdown
       if (e.target.closest('.dd-create-new-playlist')) {
         e.preventDefault();
