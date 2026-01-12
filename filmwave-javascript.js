@@ -5855,6 +5855,38 @@ console.log('💾 localStorage persistence initialized');
  * XANO PLAYLIST SYSTEM
  * ============================================================
  */
+let selectedCoverImageBase64 = null; // NEW: holds base64 cover image
+
+// NEW: helper to pick image, limit 5MB, convert to base64
+function setupCoverImageUpload(buttonSelector) {
+  document.querySelectorAll(buttonSelector).forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+
+      input.onchange = () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+          alert("Image too large. Max size is 5MB.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          selectedCoverImageBase64 = reader.result;
+          console.log("Cover image ready:", selectedCoverImageBase64.slice(0, 50) + "...");
+        };
+        reader.readAsDataURL(file);
+      };
+
+      input.click();
+    });
+  });
+}
+
 const PlaylistManager = {
   currentUserId: null,
   playlists: [],
@@ -5899,7 +5931,7 @@ const PlaylistManager = {
         user_id: this.currentUserId,
         name: name,
         description: description,
-        cover_image_url: ''
+        cover_image_url: selectedCoverImageBase64 || '' // UPDATED
       })
     });
     
@@ -5999,6 +6031,10 @@ const PlaylistManager = {
   setupEventListeners() {
     if (this.listenersInitialized) return;
     this.listenersInitialized = true;
+
+    // NEW: hook cover image buttons (create + edit)
+    setupCoverImageUpload(".add-cover-image");
+    setupCoverImageUpload(".add-image");
     
     // Consolidated event delegation
     document.body.addEventListener('click', (e) => {
@@ -6192,6 +6228,7 @@ if (e.target.closest('.dd-remove-from-playlist')) {
       if (titleInput) titleInput.value = '';
       if (descInput) descInput.value = '';
       this.pendingSongToAdd = null;
+      selectedCoverImageBase64 = null; // NEW: reset after close
     }
   },
 
