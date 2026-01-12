@@ -5900,6 +5900,8 @@ const PlaylistManager = {
   originalPlaylistIds: [],
   pendingCoverImageBase64: null,
   editingPlaylistId: null,
+  selectedCoverImageBase64: null,
+  selectedCoverImageName: null,
 
   async init() {
     console.log('🎵 Initializing Playlist Manager');
@@ -6060,6 +6062,7 @@ const PlaylistManager = {
     
     // Consolidated event delegation
     document.body.addEventListener('click', async (e) => {
+      
       // Create new playlist from dropdown
       if (e.target.closest('.dd-create-new-playlist')) {
         e.preventDefault();
@@ -6117,137 +6120,167 @@ const PlaylistManager = {
         return;
       }
 
-// Change cover image (edit overlay) - pick file + preview only (save happens on Save button)
-if (e.target.closest('.change-cover-image')) {
-  e.preventDefault();
-  e.stopPropagation();
+      // Add cover image (create playlist modal) - pick file (NO preview; update text only)
+      if (e.target.closest('.add-cover-image')) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  // Find the playlist card being edited (must contain data-playlist-id)
-  const card = e.target.closest('.playlist-card-template');
-  const playlistId = card?.dataset.playlistId;
+        const btn = e.target.closest('.add-cover-image');
 
-  if (!playlistId) {
-    console.warn('❌ Could not find playlistId for cover change');
-    return;
-  }
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
 
-  this.editingPlaylistId = playlistId;
+        input.onchange = () => {
+          const file = input.files && input.files[0];
+          if (!file) return;
 
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
+          if (file.size > 5 * 1024 * 1024) {
+            alert("Image too large. Max size is 5MB.");
+            return;
+          }
 
-  input.onchange = () => {
-    const file = input.files && input.files[0];
-    if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            // Store pending image for Create Playlist save
+            this.pendingCoverImageBase64 = reader.result;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image too large. Max size is 5MB.");
-      return;
-    }
+            // Update button text to filename
+            const textEl = btn?.querySelector('.add-image-text');
+            if (textEl) textEl.textContent = file.name;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Store pending image for Save button
-      this.pendingCoverImageBase64 = reader.result;
+            console.log("🖼️ Pending cover image set for create playlist");
+          };
+          reader.readAsDataURL(file);
+        };
 
-      // Preview immediately (and prevent Webflow srcset overriding)
-      const img = card.querySelector('.playlist-image');
-      if (img) {
-        img.removeAttribute('srcset');
-        img.removeAttribute('sizes');
-        img.src = this.pendingCoverImageBase64;
-
-        requestAnimationFrame(() => {
-          img.removeAttribute('srcset');
-          img.removeAttribute('sizes');
-          img.src = this.pendingCoverImageBase64;
-        });
+        input.click();
+        return;
       }
 
-      console.log("🖼️ Pending cover image set for playlist:", playlistId);
-    };
-    reader.readAsDataURL(file);
-  };
+      // Change cover image (edit overlay) - pick file (NO preview; update text only)
+      if (e.target.closest('.change-cover-image')) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  input.click();
-  return;
-}
-// End of change cover image
+        // Find the playlist card being edited (must contain data-playlist-id)
+        const card = e.target.closest('.playlist-card-template');
+        const playlistId = card?.dataset.playlistId;
+
+        if (!playlistId) {
+          console.warn('❌ Could not find playlistId for cover change');
+          return;
+        }
+
+        this.editingPlaylistId = playlistId;
+
+        const btn = e.target.closest('.change-cover-image');
+
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+
+        input.onchange = () => {
+          const file = input.files && input.files[0];
+          if (!file) return;
+
+          if (file.size > 5 * 1024 * 1024) {
+            alert("Image too large. Max size is 5MB.");
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            // Store pending image for Save button
+            this.pendingCoverImageBase64 = reader.result;
+
+            // Update button text to filename
+            const textEl = btn?.querySelector('.add-image-text');
+            if (textEl) textEl.textContent = file.name;
+
+            console.log("🖼️ Pending cover image set for playlist:", playlistId);
+          };
+          reader.readAsDataURL(file);
+        };
+
+        input.click();
+        return;
+      }
+      // End of change cover image
 
       // Save playlist edits (name/description/cover) - replace selector with your real Save button class
-if (e.target.closest('.playlist-save-button')) {
-  e.preventDefault();
-  e.stopPropagation();
+      if (e.target.closest('.playlist-save-button')) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  const playlistId = this.editingPlaylistId;
-  if (!playlistId) {
-    console.warn('❌ No editingPlaylistId set');
-    return;
-  }
+        const playlistId = this.editingPlaylistId;
+        if (!playlistId) {
+          console.warn('❌ No editingPlaylistId set');
+          return;
+        }
 
-  const updates = {};
+        const updates = {};
 
-  // Only send cover if user selected one
-  if (this.pendingCoverImageBase64) {
-    updates.cover_image_url = this.pendingCoverImageBase64;
-  }
+        // Only send cover if user selected one
+        if (this.pendingCoverImageBase64) {
+          updates.cover_image_url = this.pendingCoverImageBase64;
+        }
 
-  // OPTIONAL: if your overlay has inputs for name/description, wire them here
-  // updates.name = document.querySelector('...')?.value?.trim();
-  // updates.description = document.querySelector('...')?.value?.trim();
+        // OPTIONAL: if your overlay has inputs for name/description, wire them here
+        // updates.name = document.querySelector('...')?.value?.trim();
+        // updates.description = document.querySelector('...')?.value?.trim();
 
-  try {
-    await this.updatePlaylist(playlistId, updates);
+        try {
+          await this.updatePlaylist(playlistId, updates);
 
-    // Refresh cached playlists everywhere
-    await this.getUserPlaylists(true);
-    document.querySelectorAll('.add-to-playlist').forEach(dd => {
-      delete dd.dataset.lastPopulated;
-    });
+          // Refresh cached playlists everywhere
+          await this.getUserPlaylists(true);
+          document.querySelectorAll('.add-to-playlist').forEach(dd => {
+            delete dd.dataset.lastPopulated;
+          });
 
-    // Clear pending
-    this.pendingCoverImageBase64 = null;
+          // Clear pending
+          this.pendingCoverImageBase64 = null;
 
-    this.showNotification('Playlist updated');
-  } catch (err) {
-    console.error('Error saving playlist edits:', err);
-    this.showNotification('Error saving playlist', 'error');
-  }
+          this.showNotification('Playlist updated');
+        } catch (err) {
+          console.error('Error saving playlist edits:', err);
+          this.showNotification('Error saving playlist', 'error');
+        }
 
-  return;
-}
+        return;
+      }
 
       
       // Remove from playlist
-if (e.target.closest('.dd-remove-from-playlist')) {
-  e.preventDefault();
-  e.stopPropagation();
-  const card = e.target.closest('.song-wrapper');
-  const songId = card?.dataset.songId || card?.dataset.airtableId;
-  if (songId && this.currentPlaylistId) {
-    this.removeSongFromPlaylist(this.currentPlaylistId, songId).then(() => {
-      card.style.opacity = '0';
-      setTimeout(() => {
-        card.remove();
-        // Check if playlist is now empty
-        const container = document.querySelector('.playlist-songs-wrapper');
-        const remainingSongs = container?.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
-        if (remainingSongs && remainingSongs.length === 0) {
-          const empty = document.createElement('div');
-          empty.className = 'empty-playlist-message';
-          empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
-          empty.innerHTML = '<p>This playlist is empty.</p>';
-          container.appendChild(empty);
+      if (e.target.closest('.dd-remove-from-playlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = e.target.closest('.song-wrapper');
+        const songId = card?.dataset.songId || card?.dataset.airtableId;
+        if (songId && this.currentPlaylistId) {
+          this.removeSongFromPlaylist(this.currentPlaylistId, songId).then(() => {
+            card.style.opacity = '0';
+            setTimeout(() => {
+              card.remove();
+              // Check if playlist is now empty
+              const container = document.querySelector('.playlist-songs-wrapper');
+              const remainingSongs = container?.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+              if (remainingSongs && remainingSongs.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-playlist-message';
+                empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
+                empty.innerHTML = '<p>This playlist is empty.</p>';
+                container.appendChild(empty);
+              }
+            }, 300);
+            this.showNotification('Song removed');
+          }).catch(() => {
+            this.showNotification('Error removing song', 'error');
+          });
         }
-      }, 300);
-      this.showNotification('Song removed');
-    }).catch(() => {
-      this.showNotification('Error removing song', 'error');
-    });
-  }
-  return;
-}
+        return;
+      }
       
       // Delete playlist
       const deleteBtn = e.target.closest('.playlist-delete-button');
@@ -6258,30 +6291,30 @@ if (e.target.closest('.dd-remove-from-playlist')) {
         const playlistId = card?.dataset.playlistId;
         const title = card?.querySelector('.playlist-title')?.textContent;
         if (playlistId && confirm(`Delete "${title}"?`)) {
-  this.deletePlaylist(playlistId).then(async () => {
-    // Remove UI card immediately
-    card.remove();
+          this.deletePlaylist(playlistId).then(async () => {
+            // Remove UI card immediately
+            card.remove();
 
-    // Force refresh playlists from Xano so deleted playlist is gone everywhere
-    await this.getUserPlaylists(true);
+            // Force refresh playlists from Xano so deleted playlist is gone everywhere
+            await this.getUserPlaylists(true);
 
-    // Clear any hover-cached dropdowns so they repopulate next time
-    document.querySelectorAll('.add-to-playlist').forEach(dd => {
-      delete dd.dataset.lastPopulated;
-    });
+            // Clear any hover-cached dropdowns so they repopulate next time
+            document.querySelectorAll('.add-to-playlist').forEach(dd => {
+              delete dd.dataset.lastPopulated;
+            });
 
-    // If add-to-playlist modal is open anywhere, rebuild it
-    const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-    const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
-    if (addModalOpen) {
-      await this.populateAddToPlaylistModal();
-    }
+            // If add-to-playlist modal is open anywhere, rebuild it
+            const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+            const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+            if (addModalOpen) {
+              await this.populateAddToPlaylistModal();
+            }
 
-    this.showNotification('Playlist deleted');
-  }).catch(() => {
-    this.showNotification('Error deleting playlist', 'error');
-  });
-}
+            this.showNotification('Playlist deleted');
+          }).catch(() => {
+            this.showNotification('Error deleting playlist', 'error');
+          });
+        }
         return;
       }
       
@@ -6352,7 +6385,7 @@ if (e.target.closest('.dd-remove-from-playlist')) {
       if (titleInput) titleInput.value = '';
       if (descInput) descInput.value = '';
       this.pendingSongToAdd = null;
-      selectedCoverImageBase64 = null; // NEW: reset after close
+      this.pendingCoverImageBase64 = null; // NEW: reset after close
     }
   },
 
@@ -6381,23 +6414,23 @@ if (e.target.closest('.dd-remove-from-playlist')) {
       
       const playlist = await this.createPlaylist(name, description);
 
-      selectedCoverImageBase64 = null;
+      this.pendingCoverImageBase64 = null;
 
       // Force refresh playlists so the new one exists immediately everywhere
-await this.getUserPlaylists(true);
+      await this.getUserPlaylists(true);
 
-// If the add-to-playlist modal is currently open, repopulate it immediately
-const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+      // If the add-to-playlist modal is currently open, repopulate it immediately
+      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
 
-if (addModalOpen) {
-  await this.populateAddToPlaylistModal();
-}
+      if (addModalOpen) {
+        await this.populateAddToPlaylistModal();
+      }
 
-// Also invalidate any hover-cached dropdowns so they refetch next time
-document.querySelectorAll('.add-to-playlist').forEach(dd => {
-  delete dd.dataset.lastPopulated;
-});
+      // Also invalidate any hover-cached dropdowns so they refetch next time
+      document.querySelectorAll('.add-to-playlist').forEach(dd => {
+        delete dd.dataset.lastPopulated;
+      });
       
       if (saveBtn) saveBtn.textContent = originalText;
       this.closeCreatePlaylistModal();
@@ -6419,6 +6452,7 @@ document.querySelectorAll('.add-to-playlist').forEach(dd => {
       this.showNotification('Error creating playlist', 'error');
     }
   },
+
 
   // ==================== ADD TO PLAYLIST MODAL ====================
 
