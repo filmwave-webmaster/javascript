@@ -6231,6 +6231,7 @@ if (e.target.closest('.playlist-x-button')) {
         setTimeout(() => { this._isPickingCreateCover = false; }, 1500);
         return;
       }
+    }
 
       // Change cover image (edit overlay) - pick file (NO preview; update text only)
      if (e.target.closest('.change-cover-image')) {
