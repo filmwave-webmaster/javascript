@@ -5898,6 +5898,8 @@ const PlaylistManager = {
   currentSongForPlaylist: null,
   selectedPlaylistIds: [],
   originalPlaylistIds: [],
+  pendingCoverImageBase64: null,
+  editingPlaylistId: null,
 
   async init() {
     console.log('🎵 Initializing Playlist Manager');
@@ -5941,6 +5943,24 @@ const PlaylistManager = {
     return response.json();
   },
 
+  async updatePlaylist(playlistId, updates = {}) {
+  if (!this.currentUserId) throw new Error('User not logged in');
+
+  const response = await fetch(`${XANO_PLAYLISTS_API}/Update_Playlist`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      playlist_id: parseInt(playlistId),
+      user_id: this.currentUserId,
+      ...updates
+    })
+  });
+
+  if (!response.ok) throw new Error('Failed to update playlist');
+  return response.json();
+},
+
+  
   async getUserPlaylists(forceRefresh = false) {
   if (!this.currentUserId) return [];
 
@@ -6097,30 +6117,107 @@ const PlaylistManager = {
         return;
       }
 
-      // Change cover image (edit overlay) - delegated (works even if element is added later)
+// Change cover image (edit overlay) - pick file + preview only (save happens on Save button)
 if (e.target.closest('.change-cover-image')) {
   e.preventDefault();
   e.stopPropagation();
+
+  // Find the playlist card being edited (must contain data-playlist-id)
+  const card = e.target.closest('.playlist-card-template');
+  const playlistId = card?.dataset.playlistId;
+
+  if (!playlistId) {
+    console.warn('❌ Could not find playlistId for cover change');
+    return;
+  }
+
+  this.editingPlaylistId = playlistId;
+
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
+
   input.onchange = () => {
     const file = input.files && input.files[0];
     if (!file) return;
+
     if (file.size > 5 * 1024 * 1024) {
       alert("Image too large. Max size is 5MB.");
       return;
     }
+
     const reader = new FileReader();
     reader.onload = () => {
-      selectedCoverImageBase64 = reader.result;
-      console.log("Cover image ready:", selectedCoverImageBase64.slice(0, 50) + "...");
+      // Store pending image for Save button
+      this.pendingCoverImageBase64 = reader.result;
+
+      // Preview immediately (and prevent Webflow srcset overriding)
+      const img = card.querySelector('.playlist-image');
+      if (img) {
+        img.removeAttribute('srcset');
+        img.removeAttribute('sizes');
+        img.src = this.pendingCoverImageBase64;
+
+        requestAnimationFrame(() => {
+          img.removeAttribute('srcset');
+          img.removeAttribute('sizes');
+          img.src = this.pendingCoverImageBase64;
+        });
+      }
+
+      console.log("🖼️ Pending cover image set for playlist:", playlistId);
     };
     reader.readAsDataURL(file);
   };
+
   input.click();
   return;
 }
+// End of change cover image
+
+      // Save playlist edits (name/description/cover) - replace selector with your real Save button class
+if (e.target.closest('.playlist-edit-save-button')) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const playlistId = this.editingPlaylistId;
+  if (!playlistId) {
+    console.warn('❌ No editingPlaylistId set');
+    return;
+  }
+
+  const updates = {};
+
+  // Only send cover if user selected one
+  if (this.pendingCoverImageBase64) {
+    updates.cover_image_url = this.pendingCoverImageBase64;
+  }
+
+  // OPTIONAL: if your overlay has inputs for name/description, wire them here
+  // updates.name = document.querySelector('...')?.value?.trim();
+  // updates.description = document.querySelector('...')?.value?.trim();
+
+  try {
+    await this.updatePlaylist(playlistId, updates);
+
+    // Refresh cached playlists everywhere
+    await this.getUserPlaylists(true);
+    document.querySelectorAll('.add-to-playlist').forEach(dd => {
+      delete dd.dataset.lastPopulated;
+    });
+
+    // Clear pending
+    this.pendingCoverImageBase64 = null;
+
+    this.showNotification('Playlist updated');
+  } catch (err) {
+    console.error('Error saving playlist edits:', err);
+    this.showNotification('Error saving playlist', 'error');
+  }
+
+  return;
+}
+
       
       // Remove from playlist
 if (e.target.closest('.dd-remove-from-playlist')) {
