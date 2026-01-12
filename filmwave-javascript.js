@@ -5866,8 +5866,10 @@ function setupCoverImageUpload(buttonSelector) {
       input.accept = "image/*";
 
       input.onchange = () => {
-        const file = input.files && input.files[0];
-        if (!file) return;
+  console.log("File input changed");
+  const file = input.files && input.files[0];
+  console.log("Selected file:", file);
+  if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
           alert("Image too large. Max size is 5MB.");
