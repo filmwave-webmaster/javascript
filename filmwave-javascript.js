@@ -6917,13 +6917,9 @@ if (e.target.closest('.dd-remove-from-playlist')) {
     
    if (playlistSongs.length === 0) {
   if (templateWrapper) templateWrapper.style.display = 'none';
-  const empty = document.createElement('div');
-  empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
-  empty.innerHTML = '<p>This playlist is empty.</p>';
-  container.appendChild(empty);
+  updateEmptyPlaylistMessage(container);
   return;
 }
-
     
     playlistSongs.sort((a, b) => a.position - b.position);
     
