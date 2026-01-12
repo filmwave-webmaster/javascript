@@ -6098,13 +6098,30 @@ if (e.target.closest('.dd-remove-from-playlist')) {
         const playlistId = card?.dataset.playlistId;
         const title = card?.querySelector('.playlist-title')?.textContent;
         if (playlistId && confirm(`Delete "${title}"?`)) {
-          this.deletePlaylist(playlistId).then(() => {
-            card.remove();
-            this.showNotification('Playlist deleted');
-          }).catch(() => {
-            this.showNotification('Error deleting playlist', 'error');
-          });
-        }
+  this.deletePlaylist(playlistId).then(async () => {
+    // Remove UI card immediately
+    card.remove();
+
+    // Force refresh playlists from Xano so deleted playlist is gone everywhere
+    await this.getUserPlaylists(true);
+
+    // Clear any hover-cached dropdowns so they repopulate next time
+    document.querySelectorAll('.add-to-playlist').forEach(dd => {
+      delete dd.dataset.lastPopulated;
+    });
+
+    // If add-to-playlist modal is open anywhere, rebuild it
+    const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+    const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+    if (addModalOpen) {
+      await this.populateAddToPlaylistModal();
+    }
+
+    this.showNotification('Playlist deleted');
+  }).catch(() => {
+    this.showNotification('Error deleting playlist', 'error');
+  });
+}
         return;
       }
       
