@@ -6206,32 +6206,43 @@ const PlaylistManager = {
         return;
       }
 
-  // Remove from playlist
+ // Remove from playlist
 if (e.target.closest('.dd-remove-from-playlist')) {
   e.preventDefault();
   e.stopPropagation();
+
   const card = e.target.closest('.song-wrapper');
   const songId = card?.dataset.songId || card?.dataset.airtableId;
+
   if (!songId || !this.currentPlaylistId) {
     console.warn('❌ Missing songId or currentPlaylistId', { songId, currentPlaylistId: this.currentPlaylistId });
     return;
   }
+
   try {
     await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
+
     // Remove card from UI
     card.style.opacity = '0';
     setTimeout(() => {
       card.remove();
+
+      // 🔁 Check if playlist is now empty
+      const container = document.querySelector('.playlist-songs-wrapper');
+      if (typeof updateEmptyPlaylistMessage === 'function') {
+        updateEmptyPlaylistMessage(container);
+      }
     }, 300);
+
     this.showNotification('Song removed');
   } catch (err) {
     console.error('Error removing song:', err);
     this.showNotification('Error removing song', 'error');
   }
+
   return;
 }
-  
-      
+     
   // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
   if (e.target.closest('.playlist-x-button')) {
   e.preventDefault();
@@ -6864,6 +6875,26 @@ if (e.target.closest('.dd-remove-from-playlist')) {
       const header = document.querySelector('.playlist-template-title');
       if (header) header.textContent = playlist.name;
     }
+
+  function updateEmptyPlaylistMessage(container) {
+  if (!container) return;
+
+  const songs = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+  const existing = container.querySelector('.empty-playlist-message');
+
+  if (songs.length === 0) {
+    if (!existing) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-playlist-message';
+      empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
+      empty.innerHTML = '<p>This playlist is empty.</p>';
+      container.appendChild(empty);
+    }
+  } else {
+    if (existing) existing.remove();
+  }
+}
+
     
     await this.renderPlaylistSongs(playlistId);
   },
@@ -6884,14 +6915,15 @@ if (e.target.closest('.dd-remove-from-playlist')) {
     container.innerHTML = '';
     if (templateWrapper) container.appendChild(templateWrapper);
     
-    if (playlistSongs.length === 0) {
-      if (templateWrapper) templateWrapper.style.display = 'none';
-      const empty = document.createElement('div');
-      empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
-      empty.innerHTML = '<p>This playlist is empty.</p>';
-      container.appendChild(empty);
-      return;
-    }
+   if (playlistSongs.length === 0) {
+  if (templateWrapper) templateWrapper.style.display = 'none';
+  const empty = document.createElement('div');
+  empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
+  empty.innerHTML = '<p>This playlist is empty.</p>';
+  container.appendChild(empty);
+  return;
+}
+
     
     playlistSongs.sort((a, b) => a.position - b.position);
     
