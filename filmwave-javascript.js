@@ -6144,21 +6144,25 @@ const PlaylistManager = {
 
       // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
       // NOTE: class updated to your actual close button.
-      if (e.target.closest('.playlist-x-button')) {
+      if (e.target.closest('.playlist-edit-x-button') || e.target.closest('.playlist-edit-close-button')) {
   e.preventDefault();
   e.stopPropagation();
 
+  // Clear pending selected image (so it doesn't persist)
   this.pendingCoverImageBase64 = null;
   this.editingPlaylistId = null;
 
-  const overlay = document.querySelector('.playlist-edit-overlay');
+  // Reset the button label back to the original/default text
+  const overlay = e.target.closest('.playlist-edit-overlay') || document.querySelector('.playlist-edit-overlay');
   const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+
   if (textEl && textEl.dataset.originalText) {
     textEl.textContent = textEl.dataset.originalText;
   }
 
   return;
 }
+
 
 
       // Add cover image (create playlist modal) - pick file (NO preview; update text only)
