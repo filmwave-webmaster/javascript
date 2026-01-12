@@ -5907,20 +5907,26 @@ const PlaylistManager = {
     return response.json();
   },
 
-  async getUserPlaylists() {
-    if (!this.currentUserId) return [];
-    
-    try {
-      const response = await fetch(`${XANO_PLAYLISTS_API}/Get_User_Playlists?user_id=${this.currentUserId}`);
-      if (!response.ok) throw new Error('Failed to fetch playlists');
-      const data = await response.json();
-      this.playlists = data;
-      return data;
-    } catch (error) {
-      console.error('Error fetching playlists:', error);
-      return [];
-    }
-  },
+  async getUserPlaylists(forceRefresh = false) {
+  if (!this.currentUserId) return [];
+
+  // Optional caching: if we already have playlists and not forcing, reuse
+  if (!forceRefresh && Array.isArray(this.playlists) && this.playlists.length) {
+    return this.playlists;
+  }
+
+  try {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Get_User_Playlists?user_id=${this.currentUserId}`);
+    if (!response.ok) throw new Error('Failed to fetch playlists');
+    const data = await response.json();
+    this.playlists = data;
+    return data;
+  } catch (error) {
+    console.error('Error fetching playlists:', error);
+    return [];
+  }
+},
+
 
   async getPlaylistById(playlistId) {
     const playlists = await this.getUserPlaylists();
@@ -6196,6 +6202,22 @@ if (e.target.closest('.dd-remove-from-playlist')) {
       if (saveBtn) saveBtn.textContent = 'Creating...';
       
       const playlist = await this.createPlaylist(name, description);
+
+      // Force refresh playlists so the new one exists immediately everywhere
+await this.getUserPlaylists(true);
+
+// If the add-to-playlist modal is currently open, repopulate it immediately
+const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+
+if (addModalOpen) {
+  await this.populateAddToPlaylistModal();
+}
+
+// Also invalidate any hover-cached dropdowns so they refetch next time
+document.querySelectorAll('.add-to-playlist').forEach(dd => {
+  delete dd.dataset.lastPopulated;
+});
       
       if (saveBtn) saveBtn.textContent = originalText;
       this.closeCreatePlaylistModal();
