@@ -4009,6 +4009,11 @@ function initializePlaylistOverlay() {
       if (overlay) {
         showOverlay(overlay);
         console.log('✅ Playlist overlay shown');
+        
+        const overlay = document.querySelector('.playlist-edit-overlay');
+const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+if (textEl) {
+  textEl.dataset.originalText = textEl.textContent;
       }
     });
   });
@@ -6156,18 +6161,20 @@ if (e.target.closest('.playlist-x-button')) {
   e.preventDefault();
   e.stopPropagation();
 
+  // clear pending image
   this.pendingCoverImageBase64 = null;
   this.editingPlaylistId = null;
 
+  // reset button text to original
   const overlay = document.querySelector('.playlist-edit-overlay');
   const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
-
-  if (textEl && textEl.dataset.originalText) {
-    textEl.textContent = textEl.dataset.originalText;
+  if (textEl) {
+    textEl.textContent = textEl.dataset.originalText || textEl.textContent;
   }
 
   return;
 }
+
 
 
       // Add cover image (create playlist modal) - pick file (NO preview; update text only)
@@ -6226,71 +6233,46 @@ if (e.target.closest('.playlist-x-button')) {
       }
 
       // Change cover image (edit overlay) - pick file (NO preview; update text only)
-      if (e.target.closest('.change-cover-image')) {
-        e.preventDefault();
-        e.stopPropagation();
+     if (e.target.closest('.change-cover-image')) {
+  e.preventDefault();
+  e.stopPropagation();
 
-        // NEW: prevent double-trigger / immediate re-open loops
-        if (this._isPickingEditCover) return;
-        this._isPickingEditCover = true;
+  const card = e.target.closest('.playlist-card-template');
+  const playlistId = card?.dataset.playlistId;
+  if (!playlistId) return;
 
-        // Find the playlist card being edited (must contain data-playlist-id)
-        const card = e.target.closest('.playlist-card-template');
-        const playlistId = card?.dataset.playlistId;
+  this.editingPlaylistId = playlistId;
 
-        if (!playlistId) {
-          console.warn('❌ Could not find playlistId for cover change');
-          this._isPickingEditCover = false;
-          return;
-        }
+  const btn = e.target.closest('.change-cover-image');
+  const textEl = btn?.querySelector('.add-image-text');
 
-        this.editingPlaylistId = playlistId;
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
 
-        const btn = e.target.closest('.change-cover-image');
-        const textEl = btn?.querySelector('.add-image-text');
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
 
-        // Store original label once so we can revert later
-        if (textEl && !textEl.dataset.originalText) {
-          textEl.dataset.originalText = textEl.textContent;
-        }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image too large. Max size is 5MB.");
+      return;
+    }
 
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "image/*";
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.pendingCoverImageBase64 = reader.result;
+      if (textEl) textEl.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  };
 
-        input.onchange = () => {
-          const file = input.files && input.files[0];
-          if (!file) {
-            this._isPickingEditCover = false;
-            return;
-          }
+  input.click();
+  return;
+}
 
-          if (file.size > 5 * 1024 * 1024) {
-            alert("Image too large. Max size is 5MB.");
-            this._isPickingEditCover = false;
-            return;
-          }
 
-          const reader = new FileReader();
-          reader.onload = () => {
-            // Store pending image for Save button
-            this.pendingCoverImageBase64 = reader.result;
-
-            // Update button text to filename
-            if (textEl) textEl.textContent = file.name;
-
-            console.log("🖼️ Pending cover image set for playlist:", playlistId);
-            this._isPickingEditCover = false;
-          };
-          reader.readAsDataURL(file);
-        };
-
-        input.click();
-
-        // NEW: safety release in case onchange never fires (cancel)
-        setTimeout(() => { this._isPickingEditCover = false; }, 1500);
-        return;
-      }
+      
       // End of change cover image
 
       // Save playlist edits (name/description/cover)
