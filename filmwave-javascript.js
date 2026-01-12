@@ -6096,6 +6096,31 @@ const PlaylistManager = {
         }
         return;
       }
+
+      // Change cover image (edit overlay) - delegated (works even if element is added later)
+if (e.target.closest('.change-cover-image')) {
+  e.preventDefault();
+  e.stopPropagation();
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image too large. Max size is 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      selectedCoverImageBase64 = reader.result;
+      console.log("Cover image ready:", selectedCoverImageBase64.slice(0, 50) + "...");
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+  return;
+}
       
       // Remove from playlist
 if (e.target.closest('.dd-remove-from-playlist')) {
