@@ -6176,7 +6176,7 @@ if (e.target.closest('.change-cover-image')) {
 // End of change cover image
 
       // Save playlist edits (name/description/cover) - replace selector with your real Save button class
-if (e.target.closest('.playlist-edit-save-button')) {
+if (e.target.closest('.playlist-save-button')) {
   e.preventDefault();
   e.stopPropagation();
 
