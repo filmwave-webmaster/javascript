@@ -5874,52 +5874,6 @@ console.log('💾 localStorage persistence initialized');
  */
 
 /* ============================================================
-   LEGACY / UNUSED (kept to avoid breaking external refs)
-   ============================================================ */
-
-let selectedCoverImageBase64 = null; // legacy (currently unused)
-
-/**
- * Legacy helper (currently not used because calls are disabled below).
- * Kept in case something else references it.
- */
-function setupCoverImageUpload(buttonSelector) {
-  document.querySelectorAll(buttonSelector).forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-
-      input.onchange = () => {
-        console.log('File input changed');
-
-        const file = input.files && input.files[0];
-        console.log('Selected file:', file);
-
-        if (!file) return;
-
-        if (file.size > 5 * 1024 * 1024) {
-          alert('Image too large. Max size is 5MB.');
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = () => {
-          selectedCoverImageBase64 = reader.result;
-          console.log(
-            'Cover image ready:',
-            String(selectedCoverImageBase64).slice(0, 50) + '...'
-          );
-        };
-        reader.readAsDataURL(file);
-      };
-
-      input.click();
-    });
-  });
-}
-
-/* ============================================================
    SHARED HELPERS
    ============================================================ */
 
