@@ -6560,7 +6560,24 @@ if (songInPlaylists.includes(playlist.id)) {
       if (playlist.cover_image_url) {
       console.log("Rendering cover for playlist:", playlist.id, playlist.cover_image_url.slice(0, 50));
       }
-      if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
+     
+      
+      if (image && playlist.cover_image_url) {
+  // If we're using a custom URL/base64, we MUST clear srcset/sizes
+  // or the browser/Webflow will keep using the old responsive srcset image.
+  image.removeAttribute('srcset');
+  image.removeAttribute('sizes');
+
+  image.src = playlist.cover_image_url;
+
+  // Some Webflow re-inits can re-add srcset, so clear again right after.
+  requestAnimationFrame(() => {
+    image.removeAttribute('srcset');
+    image.removeAttribute('sizes');
+    image.src = playlist.cover_image_url;
+  });
+}
+
 
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
       
