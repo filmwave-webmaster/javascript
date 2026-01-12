@@ -4010,11 +4010,10 @@ function initializePlaylistOverlay() {
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
   
-  const overlayEl = document.querySelector('.playlist-edit-overlay');
-  const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
-  if (textEl) {
-    textEl.dataset.originalText = textEl.textContent;
-  }
+  cconst textEl = overlay.querySelector('.change-cover-image .add-image-text');
+if (textEl && !textEl.dataset.originalText) {
+  textEl.dataset.originalText = textEl.textContent;
+}
 }
     });
   });
@@ -4032,9 +4031,14 @@ function initializePlaylistOverlay() {
       const overlay = newCloseBtn.closest('.playlist-edit-overlay');
       
       if (overlay) {
-        hideOverlay(overlay);
-        console.log('✅ Playlist overlay hidden');
-      }
+  const textEl = overlay.querySelector('.change-cover-image .add-image-text');
+  if (textEl && textEl.dataset.originalText) {
+    textEl.textContent = textEl.dataset.originalText;
+  }
+
+  hideOverlay(overlay);
+  console.log('✅ Playlist overlay hidden');
+}
     });
   });
 
