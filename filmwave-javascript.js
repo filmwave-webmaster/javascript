@@ -6144,21 +6144,22 @@ const PlaylistManager = {
 
       // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
       // NOTE: class updated to your actual close button.
-      if (e.target.closest('.playlist-edit-x-button')) {
-        e.preventDefault();
-        e.stopPropagation();
+      if (e.target.closest('.playlist-x-button')) {
+  e.preventDefault();
+  e.stopPropagation();
 
-        this.pendingCoverImageBase64 = null;
-        this.editingPlaylistId = null;
+  this.pendingCoverImageBase64 = null;
+  this.editingPlaylistId = null;
 
-        const overlay = document.querySelector('.playlist-edit-overlay');
-        const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
-        if (textEl) {
-          textEl.textContent = textEl.dataset.originalText || textEl.textContent;
-        }
+  const overlay = document.querySelector('.playlist-edit-overlay');
+  const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+  if (textEl && textEl.dataset.originalText) {
+    textEl.textContent = textEl.dataset.originalText;
+  }
 
-        return;
-      }
+  return;
+}
+
 
       // Add cover image (create playlist modal) - pick file (NO preview; update text only)
       if (e.target.closest('.add-cover-image')) {
