@@ -6150,7 +6150,9 @@ const PlaylistManager = {
 
       // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
       // NOTE: class updated to your actual close button.
-      if (e.target.closest('.playlist-x-button')) {
+      // REPLACE YOUR EXISTING ".playlist-x-button" HANDLER WITH THIS BLOCK:
+
+if (e.target.closest('.playlist-x-button')) {
   e.preventDefault();
   e.stopPropagation();
 
@@ -6159,12 +6161,14 @@ const PlaylistManager = {
 
   const overlay = document.querySelector('.playlist-edit-overlay');
   const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+
   if (textEl && textEl.dataset.originalText) {
     textEl.textContent = textEl.dataset.originalText;
   }
 
   return;
 }
+
 
       // Add cover image (create playlist modal) - pick file (NO preview; update text only)
       if (e.target.closest('.add-cover-image')) {
