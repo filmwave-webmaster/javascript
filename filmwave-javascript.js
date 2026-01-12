@@ -6481,6 +6481,13 @@ if (e.target.closest('.playlist-x-button')) {
       // Force refresh playlists so the new one exists immediately everywhere
       await this.getUserPlaylists(true);
 
+      // If the add-to-playlist modal is open, repopulate it immediately
+      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+      if (addModalOpen) {
+      await this.populateAddToPlaylistModal();
+      }
+
       // Also invalidate any hover-cached dropdowns so they refetch next time
       document.querySelectorAll('.add-to-playlist').forEach(dd => {
         delete dd.dataset.lastPopulated;
