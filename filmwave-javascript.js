@@ -6296,10 +6296,18 @@ const PlaylistManager = {
 
         const updates = {};
 
-        // Only send cover if user selected one
-        if (this.pendingCoverImageBase64) {
-          updates.cover_image_url = this.pendingCoverImageBase64;
-        }
+// ✅ Keep existing name/description so Xano doesn't wipe them
+const existing = await this.getPlaylistById(playlistId);
+if (existing) {
+  updates.name = existing.name || '';
+  updates.description = existing.description || '';
+}
+
+// Only send cover if user selected one
+if (this.pendingCoverImageBase64) {
+  updates.cover_image_url = this.pendingCoverImageBase64;
+}
+
 
         try {
           await this.updatePlaylist(playlistId, updates);
