@@ -6560,22 +6560,7 @@ if (songInPlaylists.includes(playlist.id)) {
       if (playlist.cover_image_url) {
       console.log("Rendering cover for playlist:", playlist.id, playlist.cover_image_url.slice(0, 50));
       }
-      if (image && playlist.cover_image_url) {
-  image.src = playlist.cover_image_url;
-
-  // Re-apply after Webflow/IX2 finishes
-  setTimeout(() => {
-    image.src = playlist.cover_image_url;
-  }, 600);
-}
-
-
-      setTimeout(() => {
-  if (image && playlist.cover_image_url) {
-    console.log('Re-applying image after IX2');
-    image.src = playlist.cover_image_url;
-  }
-}, 500);
+      if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
 
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
       
