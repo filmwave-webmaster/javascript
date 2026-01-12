@@ -33,15 +33,14 @@
  * 20. BPM FILTER SYSTEM                      ~2350
  * 21. DRAG AND DROP - SORTABLE ITEMS         ~2950
  * 22. PLAYLIST EDIT OVERLAY                  ~3150
- * 23. PLAYLIST IMAGE UPLOAD                  ~3250
- * 24. RESTORE PLAYLIST IMAGES                ~3450
- * 25. UNIVERSAL SEARCH FOR NON-MUSIC PAGES   ~3500
- * 26. BARBA.JS & PAGE TRANSITIONS            ~3600
- * 27. FAVORITE BUTTON SYNCING                ~4100
- * 28. LOCALSTORAGE PERSISTENCE               ~4250
- * 29. FILTER STATE SAVE/RESTORE              ~4280
- * 30. FAVORITE SONGS PERSISTENCE             ~4750
- * 31. XANO PLAYLIST SYSTEM                   ~6016
+ * 23. UNIVERSAL SEARCH FOR NON-MUSIC PAGES   ~3500
+ * 24. SCROLL LOCK                            ~4218
+ * 25. BARBA.JS & PAGE TRANSITIONS            ~3600
+ * 26. FAVORITE BUTTON SYNCING                ~4100
+ * 27. LOCALSTORAGE PERSISTENCE               ~4250
+ * 28. FILTER STATE SAVE/RESTORE              ~4280
+ * 29. FAVORITE SONGS PERSISTENCE             ~4750
+ * 30. XANO PLAYLIST SYSTEM                   ~6016
  * 
  * ============================================================
  */
@@ -4090,234 +4089,6 @@ window.addEventListener('load', () => {
 
 /**
  * ============================================================
- * PLAYLIST COVER IMAGE UPLOAD (TWO-STEP PROCESS)
- * ============================================================
- */
-function initPlaylistImageUpload() {
-  console.log('🖼️ Initializing playlist image upload...');
-  
-  const tempImageData = new Map();
-  const profileItems = document.querySelectorAll('.playlist-item');
-  
-  if (profileItems.length === 0) {
-    console.log('ℹ️ No profile items found');
-    return;
-  }
-  
-  profileItems.forEach((profileItem, index) => {
-    if (!profileItem.dataset.id) {
-      profileItem.dataset.id = `playlist-item-${index + 1}`;
-    }
-    const profileItemId = profileItem.dataset.id;
-    
-    const addImageButton = profileItem.querySelector('.add-image');
-    const saveButton = profileItem.querySelector('.playlist-save-button');
-    const playlistImageWrapper = profileItem.querySelector('.playlist-image-wrapper');
-    
-    if (!addImageButton || !playlistImageWrapper) {
-      return;
-    }
-    
-    let playlistImage = playlistImageWrapper.querySelector('.playlist-image');
-    
-    if (!playlistImage) {
-      return;
-    }
-    
-    let fileInput = profileItem.querySelector('input[type="file"].playlist-image-input');
-    
-    if (!fileInput) {
-      fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.classList.add('playlist-image-input');
-      fileInput.style.display = 'none';
-      profileItem.appendChild(fileInput);
-    }
-    
-    const newAddImageButton = addImageButton.cloneNode(true);
-    addImageButton.parentNode.replaceChild(newAddImageButton, addImageButton);
-    
-    // Get the text element from the NEW cloned button
-    const addImageText = newAddImageButton.querySelector('.add-image-text');
-    
-    newAddImageButton.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      fileInput.click();
-    });
-    
-    fileInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      
-      if (!file || !file.type.startsWith('image/')) {
-        return;
-      }
-      
-      // Update filename text on the NEW button
-      if (addImageText) {
-        addImageText.textContent = file.name;
-        console.log(`📝 Updated filename to: ${file.name}`);
-      }
-      
-      const reader = new FileReader();
-      
-      reader.onload = function(event) {
-        tempImageData.set(profileItemId, {
-          dataUrl: event.target.result,
-          filename: file.name
-        });
-        console.log(`💾 Stored temp data for ${profileItemId}`);
-      };
-      
-      reader.readAsDataURL(file);
-    });
-    
-    if (saveButton) {
-      const newSaveButton = saveButton.cloneNode(true);
-      saveButton.parentNode.replaceChild(newSaveButton, saveButton);
-      
-      // Get the button text element
-      const saveButtonText = newSaveButton.textContent.trim();
-      
-      newSaveButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const tempData = tempImageData.get(profileItemId);
-        
-        if (tempData) {
-          console.log(`📷 Applying image for ${profileItemId}`);
-          
-          // Create a temporary image to preload
-          const tempImg = new Image();
-          
-          tempImg.onload = function() {
-            // Once loaded, hide current image
-            playlistImage.style.opacity = '0';
-            
-            // Remove srcset and sizes
-            playlistImage.removeAttribute('srcset');
-            playlistImage.removeAttribute('sizes');
-            
-            // Set the src
-            playlistImage.src = tempData.dataUrl;
-            
-            // Show new image immediately (it's already loaded)
-            playlistImage.style.opacity = '1';
-            
-            console.log('✅ Image updated, srcset removed');
-          };
-          
-          // Start loading the image
-          tempImg.src = tempData.dataUrl;
-          
-          // Try to save to localStorage with error handling
-          try {
-            localStorage.setItem(`playlist-image-${profileItemId}`, tempData.dataUrl);
-            console.log(`💾 Saved to localStorage: ${profileItemId}`);
-            
-            // Check localStorage usage
-            let totalSize = 0;
-            for (let key in localStorage) {
-              if (localStorage.hasOwnProperty(key)) {
-                totalSize += localStorage[key].length + key.length;
-              }
-            }
-            console.log(`📊 Total localStorage usage: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
-            
-          } catch (e) {
-            console.error('❌ localStorage quota exceeded!', e);
-            alert('⚠️ Storage limit reached! Cannot save more images. Consider using smaller images or clearing old data.');
-            
-            // Don't change button text if save failed
-            return;
-          }
-          
-          // Clear temp
-          tempImageData.delete(profileItemId);
-          
-          // Change button text to "Saved"
-          newSaveButton.textContent = 'Saved';
-          
-          // Reset after 3 seconds
-          setTimeout(() => {
-            newSaveButton.textContent = saveButtonText;
-          }, 3000);
-          
-        } else {
-          // Show alert only if no image selected
-          alert('⚠️ Please select an image first');
-        }
-      });
-    }
-  });
-  
-  console.log(`✅ Initialized ${profileItems.length} image upload buttons`);
-}
-
-/**
- * ============================================================
- * RESTORE PLAYLIST IMAGES FROM LOCALSTORAGE
- * ============================================================
- */
-function restorePlaylistImages() {
-  console.log('🔄 Restoring playlist images from localStorage...');
-  
-  const profileItems = document.querySelectorAll('.playlist-item');
-  
-  profileItems.forEach((profileItem, index) => {
-    const profileItemId = profileItem.dataset.id || `playlist-item-${index + 1}`;
-    const savedImage = localStorage.getItem(`playlist-image-${profileItemId}`);
-    
-    if (savedImage) {
-      const playlistImage = profileItem.querySelector('.playlist-image');
-      if (playlistImage) {
-        // Create temp image to preload
-        const tempImg = new Image();
-        
-        tempImg.onload = function() {
-          // Hide current image
-          playlistImage.style.opacity = '0';
-          
-          // Remove srcset so src takes precedence
-          playlistImage.removeAttribute('srcset');
-          playlistImage.removeAttribute('sizes');
-          
-          playlistImage.src = savedImage;
-          
-          // Show immediately (already loaded)
-          playlistImage.style.opacity = '1';
-          
-          console.log(`✅ Restored image for ${profileItemId}`);
-        };
-        
-        // Start preloading
-        tempImg.src = savedImage;
-      }
-    }
-  });
-}
-
-// Initialize
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    initPlaylistImageUpload();
-    restorePlaylistImages();
-  }, 1000);
-});
-
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', function() {
-    setTimeout(() => {
-      initPlaylistImageUpload();
-      restorePlaylistImages();
-    }, 1000);
-  });
-}
-
-/**
- * ============================================================
  * UNIVERSAL SEARCH FOR NON-MUSIC PAGES
  * (Favorites, Playlist Templates, etc.)
  * ============================================================
@@ -4442,6 +4213,71 @@ function initUniversalSearch() {
     console.log('✅ Universal search initialized');
   });
 }
+
+/**
+* =============================================================
+* SCROLL LOCK
+* =============================================================
+*/
+
+(function () {
+  const html = document.documentElement;
+  const body = document.body;
+
+  function lockScroll() {
+    if (body.classList.contains("modal-open")) return;
+
+    const scrollY = window.scrollY || window.pageYOffset;
+    body.dataset.scrollY = String(scrollY);
+
+    html.classList.add("modal-open");
+    body.classList.add("modal-open");
+
+    body.style.top = `-${scrollY}px`;
+  }
+
+  function unlockScroll() {
+    if (!body.classList.contains("modal-open")) return;
+
+    const scrollY = parseInt(body.dataset.scrollY || "0", 10);
+
+    html.classList.remove("modal-open");
+    body.classList.remove("modal-open");
+
+    body.style.top = "";
+    window.scrollTo(0, scrollY);
+  }
+
+  // Watch your two modules for “active” state
+  const selectors = [
+    ".create-playlist-module-wrapper",
+    ".add-to-playlist-module-wrapper"
+  ];
+
+  function isActive(el) {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    // treat visible modules as active (covers flex/block/etc)
+    return cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0";
+  }
+
+  function updateLock() {
+    const anyActive = selectors.some(sel => isActive(document.querySelector(sel)));
+    anyActive ? lockScroll() : unlockScroll();
+  }
+
+  // Observe changes (style/class changes when Webflow shows/hides)
+  const observer = new MutationObserver(updateLock);
+  observer.observe(document.documentElement, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["style", "class"]
+  });
+
+  // Initial run
+  updateLock();
+})();
+
 
 /**
  * ============================================================
