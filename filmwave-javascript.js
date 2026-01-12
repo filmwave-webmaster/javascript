@@ -6352,9 +6352,14 @@ const PlaylistManager = {
       if (imgTextEl) {
         imgTextEl.textContent = imgTextEl.dataset.originalText || imgTextEl.textContent;
       }
-},
+
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      this.showNotification('Error creating playlist', 'error');
+    }
+  },
   
-  // ==================== ADD TO PLAYLIST MODAL ====================
+// ==================== ADD TO PLAYLIST MODAL ====================
 
   openAddToPlaylistModal(songId) {
     this.currentSongForPlaylist = songId;
