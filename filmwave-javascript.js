@@ -4010,7 +4010,7 @@ function initializePlaylistOverlay() {
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
   
-  cconst textEl = overlay.querySelector('.change-cover-image .add-image-text');
+  const textEl = overlay.querySelector('.change-cover-image .add-image-text');
 if (textEl && !textEl.dataset.originalText) {
   textEl.dataset.originalText = textEl.textContent;
 }
