@@ -6275,88 +6275,95 @@ if (e.target.closest('.playlist-x-button')) {
   input.click();
   return;
 }
+ 
+  // End of change cover image
 
+  // Save playlist edits (name/description/cover)
+  if (e.target.closest('.playlist-save-button')) {
+  e.preventDefault();
+  e.stopPropagation();
 
-      
-      // End of change cover image
+  const saveBtn = e.target.closest('.playlist-save-button');
+  const originalSaveText = saveBtn ? saveBtn.textContent : '';
+  if (saveBtn) saveBtn.textContent = 'Saving...';
 
-      // Save playlist edits (name/description/cover)
-      if (e.target.closest('.playlist-save-button')) {
-        e.preventDefault();
-        e.stopPropagation();
+  const playlistId = this.editingPlaylistId;
+  if (!playlistId) {
+    console.warn('❌ No editingPlaylistId set');
+    if (saveBtn) saveBtn.textContent = originalSaveText;
+    return;
+  }
 
-        const playlistId = this.editingPlaylistId;
-        if (!playlistId) {
-          console.warn('❌ No editingPlaylistId set');
-          return;
-        }
+  const updates = {};
 
-        const updates = {};
+  // ✅ Keep existing name/description so Xano doesn't wipe them
+  const existing = await this.getPlaylistById(playlistId);
+  if (existing) {
+    updates.name = existing.name || '';
+    updates.description = existing.description || '';
+  }
 
-// ✅ Keep existing name/description so Xano doesn't wipe them
-const existing = await this.getPlaylistById(playlistId);
-if (existing) {
-  updates.name = existing.name || '';
-  updates.description = existing.description || '';
-}
+  // Only send cover if user selected one
+  if (this.pendingCoverImageBase64) {
+    updates.cover_image_url = this.pendingCoverImageBase64;
+  }
 
-// Only send cover if user selected one
-if (this.pendingCoverImageBase64) {
-  updates.cover_image_url = this.pendingCoverImageBase64;
-}
+  try {
+    await this.updatePlaylist(playlistId, updates);
 
+    // NEW: update the card image immediately after Save (no refresh needed)
+    if (this.pendingCoverImageBase64) {
+      const card =
+        document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`) ||
+        document.querySelector(`.playlist-card-template[data-playlistId="${playlistId}"]`);
 
-        try {
-          await this.updatePlaylist(playlistId, updates);
+      const img = card?.querySelector('.playlist-image');
+      if (img) {
+        img.removeAttribute('srcset');
+        img.removeAttribute('sizes');
+        img.src = this.pendingCoverImageBase64;
 
-          // NEW: update the card image immediately after Save (no refresh needed)
-          if (this.pendingCoverImageBase64) {
-            const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
-            const img = card?.querySelector('.playlist-image');
-            if (img) {
-              img.removeAttribute('srcset');
-              img.removeAttribute('sizes');
-              img.src = this.pendingCoverImageBase64;
-
-              requestAnimationFrame(() => {
-                img.removeAttribute('srcset');
-                img.removeAttribute('sizes');
-                img.src = this.pendingCoverImageBase64;
-              });
-            }
-          }
-
-          // Refresh cached playlists everywhere
-          await this.getUserPlaylists(true);
-          document.querySelectorAll('.add-to-playlist').forEach(dd => {
-            delete dd.dataset.lastPopulated;
-          });
-
-          // If you're on playlists grid page, re-render so everything is consistent
-          if (window.location.pathname.includes('playlists') && !window.location.pathname.includes('playlist-template')) {
-            await this.renderPlaylistsGrid();
-          }
-
-          // Clear pending + reset button text (since we saved)
-          this.pendingCoverImageBase64 = null;
-
-          const overlay = document.querySelector('.playlist-edit-overlay');
-          const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
-          if (textEl) {
-            textEl.textContent = textEl.dataset.originalText || textEl.textContent;
-          }
-
-          this.showNotification('Playlist updated');
-        } catch (err) {
-          console.error('Error saving playlist edits:', err);
-          this.showNotification('Error saving playlist', 'error');
-        }
-
-        return;
+        requestAnimationFrame(() => {
+          img.removeAttribute('srcset');
+          img.removeAttribute('sizes');
+          img.src = this.pendingCoverImageBase64;
+        });
       }
+    }
 
-      // ... (rest of your existing handlers unchanged)
+    // Refresh cached playlists everywhere
+    await this.getUserPlaylists(true);
+    document.querySelectorAll('.add-to-playlist').forEach(dd => {
+      delete dd.dataset.lastPopulated;
     });
+
+    // If you're on playlists grid page, re-render so everything is consistent
+    if (window.location.pathname.includes('playlists') && !window.location.pathname.includes('playlist-template')) {
+      await this.renderPlaylistsGrid();
+    }
+
+    // Clear pending + reset button text (since we saved)
+    this.pendingCoverImageBase64 = null;
+
+    const overlay = document.querySelector('.playlist-edit-overlay');
+    const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+    if (textEl) {
+      textEl.textContent = textEl.dataset.originalText || textEl.textContent;
+    }
+
+    if (saveBtn) saveBtn.textContent = originalSaveText;
+
+    this.showNotification('Playlist updated');
+  } catch (err) {
+    console.error('Error saving playlist edits:', err);
+    if (saveBtn) saveBtn.textContent = originalSaveText;
+    this.showNotification('Error saving playlist', 'error');
+  }
+
+  return;
+}
+
+});
 
     // Add-to-playlist dropdowns
     this.setupAddToPlaylistDropdowns();
