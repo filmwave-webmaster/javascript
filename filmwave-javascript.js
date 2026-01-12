@@ -6092,6 +6092,54 @@ const PlaylistManager = {
         return;
       }
 
+      // Open add-to-playlist modal
+if (e.target.closest('.dd-add-to-playlist')) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const songWrapper = e.target.closest('.song-wrapper');
+  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+
+  console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
+
+  if (songId) {
+    this.openAddToPlaylistModal(songId);
+  } else {
+    console.warn('❌ Could not find songId for add-to-playlist');
+  }
+
+  return;
+}
+
+// Close add-to-playlist modal X button
+if (e.target.closest('.add-to-playlist-x-button')) {
+  e.preventDefault();
+  this.closeAddToPlaylistModal();
+  return;
+}
+
+// Click outside add-to-playlist modal to close
+if (e.target.classList.contains('add-to-playlist-module-wrapper')) {
+  this.closeAddToPlaylistModal();
+  return;
+}
+
+// Select/deselect playlist row
+const playlistRow = e.target.closest('.add-to-playlist-row');
+if (playlistRow && playlistRow.dataset.playlistId) {
+  e.preventDefault();
+  this.togglePlaylistSelection(playlistRow);
+  return;
+}
+
+// Save to selected playlists
+if (e.target.closest('.add-to-playlist-save-button')) {
+  e.preventDefault();
+  this.saveToSelectedPlaylists();
+  return;
+}
+
+
       // Close modal X button
       if (e.target.closest('.create-playlist-x-button')) {
         e.preventDefault();
@@ -6283,15 +6331,18 @@ if (e.target.closest('.playlist-x-button')) {
   e.preventDefault();
   e.stopPropagation();
 
-  const saveBtn = e.target.closest('.playlist-save-button');
-  const originalSaveText = saveBtn ? saveBtn.textContent : '';
-  if (saveBtn) saveBtn.textContent = 'Saving...';
-
   const playlistId = this.editingPlaylistId;
   if (!playlistId) {
     console.warn('❌ No editingPlaylistId set');
-    if (saveBtn) saveBtn.textContent = originalSaveText;
     return;
+  }
+
+  const saveBtn = e.target.closest('.playlist-save-button');
+  const originalSaveText = saveBtn ? saveBtn.textContent : null;
+  if (saveBtn) {
+    saveBtn.textContent = 'Saving...';
+    saveBtn.style.pointerEvents = 'none';
+    saveBtn.style.opacity = '0.7';
   }
 
   const updates = {};
@@ -6304,29 +6355,27 @@ if (e.target.closest('.playlist-x-button')) {
   }
 
   // Only send cover if user selected one
-  if (this.pendingCoverImageBase64) {
-    updates.cover_image_url = this.pendingCoverImageBase64;
+  const newCover = this.pendingCoverImageBase64;
+  if (newCover) {
+    updates.cover_image_url = newCover;
   }
 
   try {
     await this.updatePlaylist(playlistId, updates);
 
-    // NEW: update the card image immediately after Save (no refresh needed)
-    if (this.pendingCoverImageBase64) {
-      const card =
-        document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`) ||
-        document.querySelector(`.playlist-card-template[data-playlistId="${playlistId}"]`);
-
+    // ✅ Update the card image immediately after Save (no refresh needed)
+    if (newCover) {
+      const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
       const img = card?.querySelector('.playlist-image');
       if (img) {
         img.removeAttribute('srcset');
         img.removeAttribute('sizes');
-        img.src = this.pendingCoverImageBase64;
+        img.src = newCover;
 
         requestAnimationFrame(() => {
           img.removeAttribute('srcset');
           img.removeAttribute('sizes');
-          img.src = this.pendingCoverImageBase64;
+          img.src = newCover;
         });
       }
     }
@@ -6351,15 +6400,18 @@ if (e.target.closest('.playlist-x-button')) {
       textEl.textContent = textEl.dataset.originalText || textEl.textContent;
     }
 
-    if (saveBtn) saveBtn.textContent = originalSaveText;
-
     this.showNotification('Playlist updated');
   } catch (err) {
     console.error('Error saving playlist edits:', err);
-    if (saveBtn) saveBtn.textContent = originalSaveText;
     this.showNotification('Error saving playlist', 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.textContent = originalSaveText || 'Save';
+      saveBtn.style.pointerEvents = '';
+      saveBtn.style.opacity = '';
+    }
   }
-
+    
   return;
 }
 
