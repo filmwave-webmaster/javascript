@@ -6036,7 +6036,7 @@ const PlaylistManager = {
 
     // NEW: hook cover image buttons (create + edit)
     setupCoverImageUpload(".add-cover-image");
-    setupCoverImageUpload(".add-image");
+    setupCoverImageUpload(".change-cover-image");
     
     // Consolidated event delegation
     document.body.addEventListener('click', (e) => {
