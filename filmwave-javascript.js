@@ -4007,14 +4007,15 @@ function initializePlaylistOverlay() {
       const overlay = findAssociatedOverlay(newEditIcon);
       
       if (overlay) {
-        showOverlay(overlay);
-        console.log('✅ Playlist overlay shown');
-        
-        const overlay = document.querySelector('.playlist-edit-overlay');
-const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
-if (textEl) {
-  textEl.dataset.originalText = textEl.textContent;
-      }
+  showOverlay(overlay);
+  console.log('✅ Playlist overlay shown');
+  
+  const overlayEl = document.querySelector('.playlist-edit-overlay');
+  const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
+  if (textEl) {
+    textEl.dataset.originalText = textEl.textContent;
+  }
+}
     });
   });
   
@@ -6037,7 +6038,7 @@ const PlaylistManager = {
   },
 
   async reorderPlaylistSongs(playlistId, positions) {
-    const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_PlayLIST_Songs`, {
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_Playlist_Songs`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -6231,7 +6232,6 @@ if (e.target.closest('.playlist-x-button')) {
         setTimeout(() => { this._isPickingCreateCover = false; }, 1500);
         return;
       }
-    }
 
       // Change cover image (edit overlay) - pick file (NO preview; update text only)
      if (e.target.closest('.change-cover-image')) {
