@@ -6144,7 +6144,7 @@ const PlaylistManager = {
 
       // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
       // NOTE: class updated to your actual close button.
-      if (e.target.closest('.playlist-edit-x-button') || e.target.closest('.playlist-edit-close-button')) {
+      if (e.target.closest('.playlist-x-button')) {
   e.preventDefault();
   e.stopPropagation();
 
