@@ -6562,6 +6562,13 @@ if (songInPlaylists.includes(playlist.id)) {
       }
       if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
 
+      setTimeout(() => {
+  if (image && playlist.cover_image_url) {
+    console.log('Re-applying image after IX2');
+    image.src = playlist.cover_image_url;
+  }
+}, 500);
+
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
       
       card.dataset.playlistId = playlist.id;
