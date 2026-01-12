@@ -40,7 +40,7 @@
  * 27. LOCALSTORAGE PERSISTENCE               ~4250
  * 28. FILTER STATE SAVE/RESTORE              ~4280
  * 29. FAVORITE SONGS PERSISTENCE             ~4750
- * 30. XANO PLAYLIST SYSTEM                   ~6016
+ * 30. XANO PLAYLIST SYSTEM                   ~5870
  * 
  * ============================================================
  */
@@ -5869,7 +5869,6 @@ console.log('💾 localStorage persistence initialized');
 /**
  * ============================================================
  * XANO PLAYLIST SYSTEM
- * Visually tidy + organized (NO functionality changes)
  * ============================================================
  */
 
