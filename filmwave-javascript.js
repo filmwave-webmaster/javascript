@@ -6078,66 +6078,66 @@ const PlaylistManager = {
     // Consolidated event delegation
     document.body.addEventListener('click', async (e) => {
 
-      // Create new playlist from dropdown
-      if (e.target.closest('.dd-create-new-playlist')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const songWrapper = e.target.closest('.song-wrapper');
-        if (songWrapper) {
-          this.pendingSongToAdd = {
-            songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
-          };
-        }
-        this.openCreatePlaylistModal();
-        return;
-      }
+    // Create new playlist from dropdown
+    if (e.target.closest('.dd-create-new-playlist')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const songWrapper = e.target.closest('.song-wrapper');
+    if (songWrapper) {
+    this.pendingSongToAdd = {
+    songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId
+    };
+    }
+    this.openCreatePlaylistModal();
+    return;
+    }
 
-      // Open add-to-playlist modal
-if (e.target.closest('.dd-add-to-playlist')) {
-  e.preventDefault();
-  e.stopPropagation();
+    // Open add-to-playlist modal
+    if (e.target.closest('.dd-add-to-playlist')) {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const songWrapper = e.target.closest('.song-wrapper');
-  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+    const songWrapper = e.target.closest('.song-wrapper');
+    const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
 
-  console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
+    console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
 
-  if (songId) {
+    if (songId) {
     this.openAddToPlaylistModal(songId);
-  } else {
+    } else {
     console.warn('❌ Could not find songId for add-to-playlist');
-  }
+    }
 
-  return;
-}
+    return;
+    }
 
-// Close add-to-playlist modal X button
-if (e.target.closest('.add-to-playlist-x-button')) {
-  e.preventDefault();
-  this.closeAddToPlaylistModal();
-  return;
-}
+    // Close add-to-playlist modal X button
+    if (e.target.closest('.add-to-playlist-x-button')) {
+    e.preventDefault();
+    this.closeAddToPlaylistModal();
+    return;
+    }
 
-// Click outside add-to-playlist modal to close
-if (e.target.classList.contains('add-to-playlist-module-wrapper')) {
-  this.closeAddToPlaylistModal();
-  return;
-}
+    // Click outside add-to-playlist modal to close
+    if (e.target.classList.contains('add-to-playlist-module-wrapper')) {
+    this.closeAddToPlaylistModal();
+    return;
+    }
 
-// Select/deselect playlist row
-const playlistRow = e.target.closest('.add-to-playlist-row');
-if (playlistRow && playlistRow.dataset.playlistId) {
-  e.preventDefault();
-  this.togglePlaylistSelection(playlistRow);
-  return;
-}
+    // Select/deselect playlist row
+    const playlistRow = e.target.closest('.add-to-playlist-row');
+    if (playlistRow && playlistRow.dataset.playlistId) {
+    e.preventDefault();
+    this.togglePlaylistSelection(playlistRow);
+    return;
+    }
 
-// Save to selected playlists
-if (e.target.closest('.add-to-playlist-save-button')) {
-  e.preventDefault();
-  this.saveToSelectedPlaylists();
-  return;
-}
+      // Save to selected playlists
+      if (e.target.closest('.add-to-playlist-save-button')) {
+      e.preventDefault();
+      this.saveToSelectedPlaylists();
+      return;
+      }
 
 
       // Close modal X button
@@ -6206,11 +6206,34 @@ if (e.target.closest('.add-to-playlist-save-button')) {
         return;
       }
 
-      // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
-      // NOTE: class updated to your actual close button.
-      // REPLACE YOUR EXISTING ".playlist-x-button" HANDLER WITH THIS BLOCK:
-
-if (e.target.closest('.playlist-x-button')) {
+  // Remove from playlist
+if (e.target.closest('.dd-remove-from-playlist')) {
+  e.preventDefault();
+  e.stopPropagation();
+  const card = e.target.closest('.song-wrapper');
+  const songId = card?.dataset.songId || card?.dataset.airtableId;
+  if (!songId || !this.currentPlaylistId) {
+    console.warn('❌ Missing songId or currentPlaylistId', { songId, currentPlaylistId: this.currentPlaylistId });
+    return;
+  }
+  try {
+    await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
+    // Remove card from UI
+    card.style.opacity = '0';
+    setTimeout(() => {
+      card.remove();
+    }, 300);
+    this.showNotification('Song removed');
+  } catch (err) {
+    console.error('Error removing song:', err);
+    this.showNotification('Error removing song', 'error');
+  }
+  return;
+}
+  
+      
+  // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
+  if (e.target.closest('.playlist-x-button')) {
   e.preventDefault();
   e.stopPropagation();
 
