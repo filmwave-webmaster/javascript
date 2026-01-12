@@ -6352,7 +6352,8 @@ const PlaylistManager = {
       if (imgTextEl) {
         imgTextEl.textContent = imgTextEl.dataset.originalText || imgTextEl.textContent;
       }
-
+},
+  
   // ==================== ADD TO PLAYLIST MODAL ====================
 
   openAddToPlaylistModal(songId) {
