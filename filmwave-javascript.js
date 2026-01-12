@@ -5905,6 +5905,27 @@ function setupCoverImageUpload(buttonSelector) {
   });
 }
 
+function updateEmptyPlaylistMessage(container) {
+  if (!container) return;
+
+  // Remove existing empty message if present
+  const existing = container.querySelector('.empty-playlist-message');
+  if (existing) existing.remove();
+
+  const remaining = container.querySelectorAll(
+    '.song-wrapper:not(.template-wrapper .song-wrapper)'
+  );
+
+  if (remaining.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-playlist-message';
+    empty.style.cssText = 'text-align:center;padding:60px 20px;color:#666;';
+    empty.innerHTML = '<p>This playlist is empty.</p>';
+    container.appendChild(empty);
+  }
+}
+
+
 const PlaylistManager = {
   currentUserId: null,
   playlists: [],
