@@ -6227,10 +6227,15 @@ if (e.target.closest('.dd-remove-from-playlist')) {
     setTimeout(() => {
       card.remove();
 
-      // 🔁 Check if playlist is now empty
+      // ✅ AFTER removal: if no songs left, show the empty message
       const container = document.querySelector('.playlist-songs-wrapper');
-      if (typeof updateEmptyPlaylistMessage === 'function') {
-        updateEmptyPlaylistMessage(container);
+      if (container) {
+        const remaining = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+        if (remaining.length === 0) {
+          const templateWrapper = container.querySelector('.template-wrapper');
+          if (templateWrapper) templateWrapper.style.display = 'none';
+          updateEmptyPlaylistMessage(container);
+        }
       }
     }, 300);
 
@@ -6242,6 +6247,7 @@ if (e.target.closest('.dd-remove-from-playlist')) {
 
   return;
 }
+
      
   // Close playlist edit overlay WITHOUT saving (clear selection + reset text)
   if (e.target.closest('.playlist-x-button')) {
