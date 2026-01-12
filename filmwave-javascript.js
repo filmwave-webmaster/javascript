@@ -6286,15 +6286,24 @@ document.querySelectorAll('.add-to-playlist').forEach(dd => {
   
   const playlists = await this.getUserPlaylists();
   
-  // Get playlists this song is already in
-  const songInPlaylists = [];
-  this.originalPlaylistIds = [];
-    for (const playlist of playlists) {
-      const songs = await this.getPlaylistSongs(playlist.id);
-      if (songs.some(s => s.song_id === this.currentSongForPlaylist)) {
-        songInPlaylists.push(playlist.id);
-      }
-    }
+  // Get playlists this song is already in (PARALLEL - faster)
+const songInPlaylists = [];
+this.originalPlaylistIds = [];
+
+// Fetch all playlist songs in parallel instead of one-by-one
+const songsByPlaylist = await Promise.all(
+  playlists.map(async (playlist) => {
+    const songs = await this.getPlaylistSongs(playlist.id);
+    return { playlistId: playlist.id, songs };
+  })
+);
+
+// Determine which playlists already contain this song
+for (const { playlistId, songs } of songsByPlaylist) {
+  if (songs.some(s => String(s.song_id) === String(this.currentSongForPlaylist))) {
+    songInPlaylists.push(playlistId);
+  }
+}
     
     // Clear existing rows except template
     container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
