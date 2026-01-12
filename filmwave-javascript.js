@@ -6259,6 +6259,8 @@ if (e.target.closest('.dd-remove-from-playlist')) {
       
       const playlist = await this.createPlaylist(name, description);
 
+      selectedCoverImageBase64 = null;
+
       // Force refresh playlists so the new one exists immediately everywhere
 await this.getUserPlaylists(true);
 
@@ -6554,7 +6556,12 @@ if (songInPlaylists.includes(playlist.id)) {
       
       if (title) title.textContent = playlist.name;
       if (detail) detail.textContent = playlist.description || '';
+      
+      if (playlist.cover_image_url) {
+      console.log("Rendering cover for playlist:", playlist.id, playlist.cover_image_url.slice(0, 50));
+      }
       if (image && playlist.cover_image_url) image.src = playlist.cover_image_url;
+
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
       
       card.dataset.playlistId = playlist.id;
