@@ -6951,7 +6951,7 @@ if (parts.length > 0) {
 
     if (playlists.length === 0) return;
 
-    playlists.forEach((playlist) => {
+    for (const playlist of playlists) {
       const card = template.cloneNode(true);
 
       const title = card.querySelector('.playlist-title');
@@ -6994,11 +6994,10 @@ if (parts.length > 0) {
       }
       }
 
-      
       card.style.display = '';
 
       container.appendChild(card);
-    });
+    }
 
     console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
