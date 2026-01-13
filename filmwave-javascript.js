@@ -7030,7 +7030,7 @@ if (parts.length > 0) {
     container.style.pointerEvents = '';
     container.style.minHeight = '';
   }
-}
+},
 
   async initPlaylistTemplatePage() {
     const urlParams = new URLSearchParams(window.location.search);
