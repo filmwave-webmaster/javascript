@@ -4415,14 +4415,6 @@ if (loginForm) {
               console.warn(`⚠️ No value found for [data-ms-member="${field}"]`);
             }
           });
-
-          // Load first-name to localStorage
-          if (window.$memberstackDom) {
-  window.$memberstackDom.getCurrentMember().then(member => {
-    const name = member?.data?.first_name;
-    if (name) localStorage.setItem('ms_first_name', name);
-  });
-}
           
           // Attach logout handler using event delegation (works with dropdowns)
 // First, remove any existing delegated handlers
