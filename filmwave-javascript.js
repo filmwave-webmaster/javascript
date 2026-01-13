@@ -6943,19 +6943,41 @@ if (parts.length > 0) {
   },
 
   async renderPlaylistsGrid() {
-    const container = document.querySelector('.sortable-container');
-    const template = container?.querySelector('.playlist-card-template');
-    if (!container || !template) return;
+  const container = document.querySelector('.sortable-container');
+  const template = container?.querySelector('.playlist-card-template');
+  if (!container || !template) return;
 
+  // ✅ Hold layout + hide while building (prevents “one by one” paint)
+  container.style.minHeight = 'calc(100vh - 210px)';
+  container.style.opacity = '0';
+  container.style.pointerEvents = 'none';
+
+  try {
     const playlists = await this.getUserPlaylists();
 
+    // Clear existing cards except template
     container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
       if (i > 0) card.remove();
     });
 
     template.style.display = 'none';
 
-    if (playlists.length === 0) return;
+    // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
+    const playlistCounts = await Promise.all(
+      playlists.map(async (p) => {
+        try {
+          const songs = await this.getPlaylistSongs(p.id);
+          return { id: Number(p.id), count: songs.length };
+        } catch {
+          return { id: Number(p.id), count: 0 };
+        }
+      })
+    );
+
+    const countsById = new Map(playlistCounts.map(x => [x.id, x.count]));
+
+    // ✅ Build off-DOM, then append once
+    const frag = document.createDocumentFragment();
 
     for (const playlist of playlists) {
       const card = template.cloneNode(true);
@@ -6967,14 +6989,6 @@ if (parts.length > 0) {
 
       if (title) title.textContent = playlist.name;
       if (detail) detail.textContent = playlist.description || '';
-
-      if (playlist.cover_image_url) {
-        console.log(
-          'Rendering cover for playlist:',
-          playlist.id,
-          playlist.cover_image_url.slice(0, 50)
-        );
-      }
 
       if (image && playlist.cover_image_url) {
         clearResponsiveImageAttrs(image);
@@ -6992,18 +7006,31 @@ if (parts.length > 0) {
 
       const countEl = card.querySelector('.playlist-song-count');
       if (countEl) {
-      try {
-      const songs = await this.getPlaylistSongs(playlist.id);
-      countEl.textContent = songs.length;
-      } catch {
-      countEl.textContent = '0';
-      }
+        const count = countsById.get(Number(playlist.id)) ?? 0;
+        countEl.textContent = String(count);
       }
 
       card.style.display = '';
-
-      container.appendChild(card);
+      frag.appendChild(card);
     }
+
+    // ✅ Append everything at once
+    container.appendChild(frag);
+
+    console.log(`✅ Rendered ${playlists.length} playlist cards`);
+
+    reinitWebflowIX2();
+
+    if (typeof initializePlaylistOverlay === 'function') {
+      initializePlaylistOverlay();
+    }
+  } finally {
+    // ✅ Reveal + return container to normal sizing
+    container.style.opacity = '1';
+    container.style.pointerEvents = '';
+    container.style.minHeight = '';
+  }
+}
 
     console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
