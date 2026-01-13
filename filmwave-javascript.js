@@ -6983,6 +6983,18 @@ if (parts.length > 0) {
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
 
       card.dataset.playlistId = playlist.id;
+
+      const countEl = card.querySelector('.playlist-song-count');
+      if (countEl) {
+      try {
+      const songs = await this.getPlaylistSongs(playlist.id);
+      countEl.textContent = songs.length;
+      } catch {
+      countEl.textContent = '0';
+      }
+      }
+
+      
       card.style.display = '';
 
       container.appendChild(card);
