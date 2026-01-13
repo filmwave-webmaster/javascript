@@ -6648,34 +6648,39 @@ const PlaylistManager = {
     this.selectedPlaylistIds = [];
   },
 
-  async populateAddToPlaylistModal() {
-    const container = document.querySelector('.module-bod-container');
-    const template = container?.querySelector('.add-to-playlist-row');
-    if (!container || !template) return;
+ async populateAddToPlaylistModal() {
+  const container = document.querySelector('.module-bod-container');
+  const template = container?.querySelector('.add-to-playlist-row');
+  if (!container || !template) return;
 
-    const playlists = await this.getUserPlaylists();
+  // Hide immediately to prevent icon flash
+  container.style.opacity = '0';
 
-    const songInPlaylists = [];
-    this.originalPlaylistIds = [];
+  // Clear existing rows except template
+  container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
+    if (i > 0) row.remove();
+  });
 
-    const songsByPlaylist = await Promise.all(
-      playlists.map(async (playlist) => {
-        const songs = await this.getPlaylistSongs(playlist.id);
-        return { playlistId: playlist.id, songs };
-      })
-    );
+  // Hide template row immediately
+  template.style.display = 'none';
+
+  const playlists = await this.getUserPlaylists();
+
+  const songInPlaylists = [];
+  this.originalPlaylistIds = [];
+
+  const songsByPlaylist = await Promise.all(
+    playlists.map(async (playlist) => {
+      const songs = await this.getPlaylistSongs(playlist.id);
+      return { playlistId: playlist.id, songs };
+    })
+  );
 
     for (const { playlistId, songs } of songsByPlaylist) {
       if (songs.some((s) => String(s.song_id) === String(this.currentSongForPlaylist))) {
         songInPlaylists.push(playlistId);
       }
     }
-
-    container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
-      if (i > 0) row.remove();
-    });
-
-    template.style.display = 'none';
 
     playlists.forEach((playlist) => {
       const row = template.cloneNode(true);
@@ -6710,6 +6715,7 @@ const PlaylistManager = {
 
       container.appendChild(row);
     });
+   ontainer.style.opacity = '1';
   },
 
   togglePlaylistSelection(row) {
