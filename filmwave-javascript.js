@@ -6727,7 +6727,22 @@ const PlaylistManager = {
 
   async saveToSelectedPlaylists() {
     if (!this.currentSongForPlaylist) {
-      this.closeAddToPlaylistModal();
+      const newlyAddedIds = this.selectedPlaylistIds.filter(
+  id => !this.originalPlaylistIds.includes(id)
+);
+
+if (newlyAddedIds.length > 0) {
+  const names = newlyAddedIds
+    .map(id => this.playlists.find(p => p.id === id)?.name)
+    .filter(Boolean);
+
+  if (names.length > 0) {
+    this.showNotification(`Added to ${names.join(', ')}`);
+  }
+}
+
+this.closeAddToPlaylistModal();
+
       return;
     }
 
@@ -6804,27 +6819,23 @@ const PlaylistManager = {
   },
 
   async handleAddSongToPlaylist(dropdown, playlistId, playlistName) {
-    const songWrapper = dropdown.closest('.song-wrapper');
-    const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
-
-    if (!songId) {
-      this.showNotification('Error: Could not find song', 'error');
-      return;
-    }
-
-    try {
-      const songs = await this.getPlaylistSongs(playlistId);
-      await this.addSongToPlaylist(playlistId, songId, songs.length + 1);
-      const songName =
-      songWrapper?.querySelector('.song-title')?.textContent || 'Song';
-
-      this.showNotification(`"${songName}" added to "${playlistName}"!`);
-
-      document.body.click();
-    } catch (error) {
-      this.showNotification('Error adding song', 'error');
-    }
-  },
+  const songWrapper = dropdown.closest('.song-wrapper');
+  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+  
+  if (!songId) {
+    this.showNotification('Error: Could not find song', 'error');
+    return;
+  }
+  
+  try {
+    const songs = await this.getPlaylistSongs(playlistId);
+    await this.addSongToPlaylist(playlistId, songId, songs.length + 1);
+    this.showNotification(`Added to "${playlistName}"`);
+    document.body.click();
+  } catch (error) {
+    this.showNotification('Error adding song', 'error');
+  }
+},
 
   /* ============================================================
      NOTIFICATIONS
