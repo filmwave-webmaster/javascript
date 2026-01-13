@@ -6725,53 +6725,59 @@ const PlaylistManager = {
     }
   },
 
-  async saveToSelectedPlaylists() {
-    const newlyAddedIds = this.selectedPlaylistIds
-  .map(id => Number(id))
-  .filter(id => !this.originalPlaylistIds.map(x => Number(x)).includes(id));
-
-if (newlyAddedIds.length > 0) {
-  const names = (this.playlists || [])
-    .filter(p => newlyAddedIds.includes(Number(p.id)))
-    .map(p => p.name)
-    .filter(Boolean);
-
-  if (names.length > 0) {
-    this.showNotification(`Added to ${names.join(', ')}`);
-  } else {
-    this.showNotification(`Added to ${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`);
+ async saveToSelectedPlaylists() {
+  if (!this.currentSongForPlaylist) {
+    this.closeAddToPlaylistModal();
+    return;
   }
-}
 
-this.closeAddToPlaylistModal();
-
-      return;
+  try {
+    // Add to newly selected playlists
+    for (const playlistId of this.selectedPlaylistIds) {
+      if (!this.originalPlaylistIds.includes(playlistId)) {
+        const songs = await this.getPlaylistSongs(playlistId);
+        await this.addSongToPlaylist(
+          playlistId,
+          this.currentSongForPlaylist,
+          songs.length + 1
+        );
+      }
     }
 
-    try {
-      for (const playlistId of this.selectedPlaylistIds) {
-        if (!this.originalPlaylistIds.includes(playlistId)) {
-          const songs = await this.getPlaylistSongs(playlistId);
-          await this.addSongToPlaylist(
-            playlistId,
-            this.currentSongForPlaylist,
-            songs.length + 1
-          );
-        }
+    // Remove from deselected playlists
+    for (const playlistId of this.originalPlaylistIds) {
+      if (!this.selectedPlaylistIds.includes(playlistId)) {
+        await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
       }
-
-      for (const playlistId of this.originalPlaylistIds) {
-        if (!this.selectedPlaylistIds.includes(playlistId)) {
-          await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
-        }
-      }
-
-      this.closeAddToPlaylistModal();
-    } catch (error) {
-      console.error('Error saving to playlists:', error);
-      this.showNotification('Error updating playlists', 'error');
     }
-  },
+
+    // ✅ POPUP: newly added playlist names
+    const newlyAddedIds = this.selectedPlaylistIds
+      .map(id => Number(id))
+      .filter(id => !this.originalPlaylistIds.map(x => Number(x)).includes(id));
+
+    if (newlyAddedIds.length > 0) {
+      const names = (this.playlists || [])
+        .filter(p => newlyAddedIds.includes(Number(p.id)))
+        .map(p => p.name)
+        .filter(Boolean);
+
+      if (names.length > 0) {
+        this.showNotification(`Added to ${names.join(', ')}`);
+      } else {
+        this.showNotification(
+          `Added to ${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`
+        );
+      }
+    }
+
+    this.closeAddToPlaylistModal();
+  } catch (error) {
+    console.error('Error saving to playlists:', error);
+    this.showNotification('Error updating playlists', 'error');
+  }
+},
+
 
   /* ============================================================
      DROPDOWNS
