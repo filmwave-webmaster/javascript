@@ -6331,7 +6331,9 @@ const PlaylistManager = {
             }
           }, 300);
 
-          this.showNotification('Song removed');
+          const playlist = await this.getPlaylistById(this.currentPlaylistId);
+          const playlistName = playlist?.name || 'playlist';
+          this.showNotification(`Removed from "${playlistName}"`);
         } catch (err) {
           console.error('Error removing song:', err);
           this.showNotification('Error removing song', 'error');
@@ -6745,11 +6747,31 @@ const PlaylistManager = {
     }
 
     // Remove from deselected playlists
-    for (const playlistId of this.originalPlaylistIds) {
-      if (!this.selectedPlaylistIds.includes(playlistId)) {
-        await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
-      }
-    }
+for (const playlistId of this.originalPlaylistIds) {
+  if (!this.selectedPlaylistIds.includes(playlistId)) {
+    await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
+  }
+}
+
+// ✅ POPUP: removed playlist names
+const removedIds = this.originalPlaylistIds
+  .map(id => Number(id))
+  .filter(id => !this.selectedPlaylistIds.map(x => Number(x)).includes(id));
+
+if (removedIds.length > 0) {
+  const removedNames = (this.playlists || [])
+    .filter(p => removedIds.includes(Number(p.id)))
+    .map(p => p.name)
+    .filter(Boolean);
+
+  if (removedNames.length > 0) {
+    this.showNotification(`Removed from ${removedNames.join(', ')}`);
+  } else {
+    this.showNotification(
+      `Removed from ${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}`
+    );
+  }
+}
 
     // ✅ POPUP: newly added playlist names
     const newlyAddedIds = this.selectedPlaylistIds
