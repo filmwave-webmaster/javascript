@@ -6745,9 +6745,6 @@ if (newlyAddedIds.length > 0) {
 
 this.closeAddToPlaylistModal();
 
-
-this.closeAddToPlaylistModal();
-
       return;
     }
 
