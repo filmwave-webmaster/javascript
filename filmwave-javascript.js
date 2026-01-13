@@ -7032,15 +7032,6 @@ if (parts.length > 0) {
   }
 }
 
-    console.log(`✅ Rendered ${playlists.length} playlist cards`);
-
-    reinitWebflowIX2();
-
-    if (typeof initializePlaylistOverlay === 'function') {
-      initializePlaylistOverlay();
-    }
-  },
-
   async initPlaylistTemplatePage() {
     const urlParams = new URLSearchParams(window.location.search);
     const playlistId = urlParams.get('playlist');
