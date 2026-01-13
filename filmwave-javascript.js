@@ -6715,7 +6715,7 @@ const PlaylistManager = {
 
       container.appendChild(row);
     });
-   ontainer.style.opacity = '1';
+   container.style.opacity = '1';
   },
 
   togglePlaylistSelection(row) {
