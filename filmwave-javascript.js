@@ -6815,7 +6815,11 @@ const PlaylistManager = {
     try {
       const songs = await this.getPlaylistSongs(playlistId);
       await this.addSongToPlaylist(playlistId, songId, songs.length + 1);
-      this.showNotification(`Added to "${playlistName}"`);
+      const songName =
+      songWrapper?.querySelector('.song-title')?.textContent || 'Song';
+
+      this.showNotification(`"${songName}" added to "${playlistName}"!`);
+
       document.body.click();
     } catch (error) {
       this.showNotification('Error adding song', 'error');
