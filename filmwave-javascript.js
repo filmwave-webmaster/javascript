@@ -6947,11 +6947,6 @@ if (parts.length > 0) {
   const template = container?.querySelector('.playlist-card-template');
   if (!container || !template) return;
 
-  // ✅ Hold layout + hide while building (prevents “one by one” paint)
-  container.style.minHeight = 'calc(100vh - 210px)';
-  container.style.opacity = '0';
-  container.style.pointerEvents = 'none';
-
   try {
     const playlists = await this.getUserPlaylists();
 
@@ -7028,7 +7023,6 @@ if (parts.length > 0) {
     // ✅ Reveal + return container to normal sizing
     container.style.opacity = '1';
     container.style.pointerEvents = '';
-    container.style.minHeight = '';
   }
 },
 
