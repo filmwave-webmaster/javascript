@@ -6778,20 +6778,42 @@ if (removedIds.length > 0) {
       .map(id => Number(id))
       .filter(id => !this.originalPlaylistIds.map(x => Number(x)).includes(id));
 
-    if (newlyAddedIds.length > 0) {
-      const names = (this.playlists || [])
-        .filter(p => newlyAddedIds.includes(Number(p.id)))
-        .map(p => p.name)
-        .filter(Boolean);
+    const addedNames = (this.playlists || [])
+  .filter(p => newlyAddedIds.includes(Number(p.id)))
+  .map(p => p.name)
+  .filter(Boolean);
 
-      if (names.length > 0) {
-        this.showNotification(`Added to ${names.join(', ')}`);
-      } else {
-        this.showNotification(
-          `Added to ${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`
-        );
-      }
-    }
+const removedNames = (this.playlists || [])
+  .filter(p => removedIds.includes(Number(p.id)))
+  .map(p => p.name)
+  .filter(Boolean);
+
+const parts = [];
+
+if (removedIds.length > 0) {
+  if (removedNames.length > 0) {
+    parts.push(`Removed from ${removedNames.join(', ')}`);
+  } else {
+    parts.push(
+      `Removed from ${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}`
+    );
+  }
+}
+
+if (newlyAddedIds.length > 0) {
+  if (addedNames.length > 0) {
+    parts.push(`Added to ${addedNames.join(', ')}`);
+  } else {
+    parts.push(
+      `Added to ${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`
+    );
+  }
+}
+
+if (parts.length > 0) {
+  this.showNotification(parts.join(', '));
+}
+
 
     this.closeAddToPlaylistModal();
   } catch (error) {
