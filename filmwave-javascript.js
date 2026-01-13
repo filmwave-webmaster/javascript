@@ -7078,6 +7078,8 @@ if (parts.length > 0) {
 
       populateSongCard(card, song);
 
+      card.dataset.songId = String(song.id);
+
       card.dataset.playlistPosition = ps.position;
       container.appendChild(card);
     });
