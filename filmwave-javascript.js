@@ -6726,20 +6726,25 @@ const PlaylistManager = {
   },
 
   async saveToSelectedPlaylists() {
-    if (!this.currentSongForPlaylist) {
-      const newlyAddedIds = this.selectedPlaylistIds.filter(
-  id => !this.originalPlaylistIds.includes(id)
-);
+    const newlyAddedIds = this.selectedPlaylistIds
+  .map(id => Number(id))
+  .filter(id => !this.originalPlaylistIds.map(x => Number(x)).includes(id));
 
 if (newlyAddedIds.length > 0) {
-  const names = newlyAddedIds
-    .map(id => this.playlists.find(p => p.id === id)?.name)
+  const names = (this.playlists || [])
+    .filter(p => newlyAddedIds.includes(Number(p.id)))
+    .map(p => p.name)
     .filter(Boolean);
 
   if (names.length > 0) {
     this.showNotification(`Added to ${names.join(', ')}`);
+  } else {
+    this.showNotification(`Added to ${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`);
   }
 }
+
+this.closeAddToPlaylistModal();
+
 
 this.closeAddToPlaylistModal();
 
