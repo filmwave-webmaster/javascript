@@ -7078,6 +7078,10 @@ if (parts.length > 0) {
 
       populateSongCard(card, song);
 
+      // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
+      card.dataset.songId = String(ps.song_id);
+      delete card.dataset.airtableId;
+
       card.dataset.songId = String(ps.song_id);
 
       card.dataset.playlistPosition = ps.position;
