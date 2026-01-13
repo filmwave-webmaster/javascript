@@ -6765,10 +6765,10 @@ if (removedIds.length > 0) {
     .filter(Boolean);
 
   if (removedNames.length > 0) {
-    this.showNotification(`Removed from ${removedNames.join(', ')}"`);
+    this.showNotification(`Removed from "${removedNames.join(', ')}"`);
   } else {
     this.showNotification(
-      `Removed from ${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
+      `Removed from "${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
     );
   }
 }
@@ -6792,20 +6792,20 @@ const parts = [];
 
 if (removedIds.length > 0) {
   if (removedNames.length > 0) {
-    parts.push(`Removed from ${removedNames.join(', ')}"`);
+    parts.push(`Removed from "${removedNames.join(', ')}"`);
   } else {
     parts.push(
-      `Removed from ${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
+      `Removed from "${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
     );
   }
 }
 
 if (newlyAddedIds.length > 0) {
   if (addedNames.length > 0) {
-    parts.push(`Added to ${addedNames.join(', ')}"`);
+    parts.push(`Added to "${addedNames.join(', ')}"`);
   } else {
     parts.push(
-      `Added to ${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`
+      `Added to "${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`
     );
   }
 }
