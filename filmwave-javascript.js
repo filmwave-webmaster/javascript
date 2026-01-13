@@ -6299,7 +6299,7 @@ const PlaylistManager = {
         e.stopPropagation();
 
         const card = e.target.closest('.song-wrapper');
-        const songId = card?.dataset.songId || card?.dataset.airtableId;
+        const songId = card?.dataset.songId;
 
         if (!songId || !this.currentPlaylistId) {
           console.warn('❌ Missing songId or currentPlaylistId', {
@@ -7078,7 +7078,7 @@ if (parts.length > 0) {
 
       populateSongCard(card, song);
 
-      card.dataset.songId = String(song.id);
+      card.dataset.songId = String(ps.song_id);
 
       card.dataset.playlistPosition = ps.position;
       container.appendChild(card);
