@@ -6104,18 +6104,16 @@ const PlaylistManager = {
   },
 
   async removeSongFromPlaylist(playlistId, songId) {
-  const url =
-    `${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist` +
-    `?playlist_id=${encodeURIComponent(parseInt(playlistId))}` +
-    `&song_id=${encodeURIComponent(songId)}`;
+    const url =
+      `${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist` +
+      `?playlist_id=${encodeURIComponent(parseInt(playlistId))}` +
+      `&song_id=${encodeURIComponent(songId)}`;
 
-  const response = await fetch(url, {
-    method: 'DELETE',
-  });
+    const response = await fetch(url, { method: 'DELETE' });
 
-  if (!response.ok) throw new Error('Failed to remove song');
-  return response.json();
-},
+    if (!response.ok) throw new Error('Failed to remove song');
+    return response.json();
+  },
 
   async reorderPlaylistSongs(playlistId, positions) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_Playlist_Songs`, {
@@ -6153,7 +6151,7 @@ const PlaylistManager = {
     // Disabled to avoid double-trigger
     // setupCoverImageUpload('.add-cover-image');
     // setupCoverImageUpload('.change-cover-image');
-    
+
     document.body.addEventListener('click', async (e) => {
       /* ----------------------------
          ADD-TO-PLAYLIST (dropdown + modal)
@@ -6294,55 +6292,55 @@ const PlaylistManager = {
          REMOVE SONG FROM PLAYLIST (playlist template)
          ---------------------------- */
 
-     if (e.target.closest('.dd-remove-from-playlist')) {
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation(); // ✅ stop the other remove handler from firing
+      if (e.target.closest('.dd-remove-from-playlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ✅ stop the other remove handler from firing
 
-  const btn = e.target.closest('.dd-remove-from-playlist');
-  const card = btn.closest('.song-wrapper');
-  const songId = card?.dataset.songId;
+        const btn = e.target.closest('.dd-remove-from-playlist');
+        const card = btn.closest('.song-wrapper');
+        const songId = card?.dataset.songId;
 
-  if (!songId || !this.currentPlaylistId) {
-    console.warn('❌ Missing songId or currentPlaylistId', {
-      songId,
-      currentPlaylistId: this.currentPlaylistId,
-    });
-    return;
-  }
+        if (!songId || !this.currentPlaylistId) {
+          console.warn('❌ Missing songId or currentPlaylistId', {
+            songId,
+            currentPlaylistId: this.currentPlaylistId,
+          });
+          return;
+        }
 
-  try {
-    await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
+        try {
+          await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
 
-    card.style.opacity = '0';
+          card.style.opacity = '0';
 
-    setTimeout(() => {
-      card.remove();
+          setTimeout(() => {
+            card.remove();
 
-      const container = document.querySelector('.playlist-songs-wrapper');
-      if (!container) return;
+            const container = document.querySelector('.playlist-songs-wrapper');
+            if (!container) return;
 
-      const remaining = container.querySelectorAll(
-        '.song-wrapper:not(.template-wrapper .song-wrapper)'
-      );
+            const remaining = container.querySelectorAll(
+              '.song-wrapper:not(.template-wrapper .song-wrapper)'
+            );
 
-      if (remaining.length === 0) {
-        const templateWrapper = container.querySelector('.template-wrapper');
-        if (templateWrapper) templateWrapper.style.display = 'none';
-        updateEmptyPlaylistMessage(container);
+            if (remaining.length === 0) {
+              const templateWrapper = container.querySelector('.template-wrapper');
+              if (templateWrapper) templateWrapper.style.display = 'none';
+              updateEmptyPlaylistMessage(container);
+            }
+          }, 300);
+
+          const playlist = await this.getPlaylistById(this.currentPlaylistId);
+          const playlistName = playlist?.name || 'playlist';
+          this.showNotification(`Removed from "${playlistName}"`);
+        } catch (err) {
+          console.error('Error removing song:', err);
+          this.showNotification('Error removing song', 'error');
+        }
+
+        return;
       }
-    }, 300);
-
-    const playlist = await this.getPlaylistById(this.currentPlaylistId);
-    const playlistName = playlist?.name || 'playlist';
-    this.showNotification(`Removed from "${playlistName}"`);
-  } catch (err) {
-    console.error('Error removing song:', err);
-    this.showNotification('Error removing song', 'error');
-  }
-
-  return;
-}
 
       /* ----------------------------
          EDIT OVERLAY (close w/o save)
@@ -6549,7 +6547,6 @@ const PlaylistManager = {
     if (descInput) descInput.value = '';
 
     this.pendingSongToAdd = null;
-
     this.pendingCoverImageBase64 = null;
 
     const textEl = modal.querySelector('.add-cover-image .add-image-text');
@@ -6650,33 +6647,33 @@ const PlaylistManager = {
     this.selectedPlaylistIds = [];
   },
 
- async populateAddToPlaylistModal() {
-  const container = document.querySelector('.module-bod-container');
-  const template = container?.querySelector('.add-to-playlist-row');
-  if (!container || !template) return;
+  async populateAddToPlaylistModal() {
+    const container = document.querySelector('.module-bod-container');
+    const template = container?.querySelector('.add-to-playlist-row');
+    if (!container || !template) return;
 
-  // Hide immediately to prevent icon flash
-  container.style.opacity = '0';
+    // Hide immediately to prevent icon flash
+    container.style.opacity = '0';
 
-  // Clear existing rows except template
-  container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
-    if (i > 0) row.remove();
-  });
+    // Clear existing rows except template
+    container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
+      if (i > 0) row.remove();
+    });
 
-  // Hide template row immediately
-  template.style.display = 'none';
+    // Hide template row immediately
+    template.style.display = 'none';
 
-  const playlists = await this.getUserPlaylists();
+    const playlists = await this.getUserPlaylists();
 
-  const songInPlaylists = [];
-  this.originalPlaylistIds = [];
+    const songInPlaylists = [];
+    this.originalPlaylistIds = [];
 
-  const songsByPlaylist = await Promise.all(
-    playlists.map(async (playlist) => {
-      const songs = await this.getPlaylistSongs(playlist.id);
-      return { playlistId: playlist.id, songs };
-    })
-  );
+    const songsByPlaylist = await Promise.all(
+      playlists.map(async (playlist) => {
+        const songs = await this.getPlaylistSongs(playlist.id);
+        return { playlistId: playlist.id, songs };
+      })
+    );
 
     for (const { playlistId, songs } of songsByPlaylist) {
       if (songs.some((s) => String(s.song_id) === String(this.currentSongForPlaylist))) {
@@ -6717,7 +6714,8 @@ const PlaylistManager = {
 
       container.appendChild(row);
     });
-   container.style.opacity = '1';
+
+    container.style.opacity = '1';
   },
 
   togglePlaylistSelection(row) {
@@ -6735,101 +6733,82 @@ const PlaylistManager = {
     }
   },
 
- async saveToSelectedPlaylists() {
-  if (!this.currentSongForPlaylist) {
-    this.closeAddToPlaylistModal();
-    return;
-  }
-
-  try {
-    // Add to newly selected playlists
-    for (const playlistId of this.selectedPlaylistIds) {
-      if (!this.originalPlaylistIds.includes(playlistId)) {
-        const songs = await this.getPlaylistSongs(playlistId);
-        await this.addSongToPlaylist(
-          playlistId,
-          this.currentSongForPlaylist,
-          songs.length + 1
-        );
-      }
+  async saveToSelectedPlaylists() {
+    if (!this.currentSongForPlaylist) {
+      this.closeAddToPlaylistModal();
+      return;
     }
 
-    // Remove from deselected playlists
-for (const playlistId of this.originalPlaylistIds) {
-  if (!this.selectedPlaylistIds.includes(playlistId)) {
-    await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
-  }
-}
+    try {
+      // Add to newly selected playlists
+      for (const playlistId of this.selectedPlaylistIds) {
+        if (!this.originalPlaylistIds.includes(playlistId)) {
+          const songs = await this.getPlaylistSongs(playlistId);
+          await this.addSongToPlaylist(
+            playlistId,
+            this.currentSongForPlaylist,
+            songs.length + 1
+          );
+        }
+      }
 
-// ✅ POPUP: removed playlist names
-const removedIds = this.originalPlaylistIds
-  .map(id => Number(id))
-  .filter(id => !this.selectedPlaylistIds.map(x => Number(x)).includes(id));
+      // Remove from deselected playlists
+      for (const playlistId of this.originalPlaylistIds) {
+        if (!this.selectedPlaylistIds.includes(playlistId)) {
+          await this.removeSongFromPlaylist(playlistId, this.currentSongForPlaylist);
+        }
+      }
 
-if (removedIds.length > 0) {
-  const removedNames = (this.playlists || [])
-    .filter(p => removedIds.includes(Number(p.id)))
-    .map(p => p.name)
-    .filter(Boolean);
+      const removedIds = this.originalPlaylistIds
+        .map((id) => Number(id))
+        .filter((id) => !this.selectedPlaylistIds.map((x) => Number(x)).includes(id));
 
-  if (removedNames.length > 0) {
-    this.showNotification(`Removed from "${removedNames.join(', ')}"`);
-  } else {
-    this.showNotification(
-      `Removed from "${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
-    );
-  }
-}
+      const newlyAddedIds = this.selectedPlaylistIds
+        .map((id) => Number(id))
+        .filter((id) => !this.originalPlaylistIds.map((x) => Number(x)).includes(id));
 
-    // ✅ POPUP: newly added playlist names
-    const newlyAddedIds = this.selectedPlaylistIds
-      .map(id => Number(id))
-      .filter(id => !this.originalPlaylistIds.map(x => Number(x)).includes(id));
+      const addedNames = (this.playlists || [])
+        .filter((p) => newlyAddedIds.includes(Number(p.id)))
+        .map((p) => p.name)
+        .filter(Boolean);
 
-    const addedNames = (this.playlists || [])
-  .filter(p => newlyAddedIds.includes(Number(p.id)))
-  .map(p => p.name)
-  .filter(Boolean);
+      const removedNames = (this.playlists || [])
+        .filter((p) => removedIds.includes(Number(p.id)))
+        .map((p) => p.name)
+        .filter(Boolean);
 
-const removedNames = (this.playlists || [])
-  .filter(p => removedIds.includes(Number(p.id)))
-  .map(p => p.name)
-  .filter(Boolean);
+      const parts = [];
 
-const parts = [];
+      if (removedIds.length > 0) {
+        if (removedNames.length > 0) {
+          parts.push(`Removed from "${removedNames.join(', ')}"`);
+        } else {
+          parts.push(
+            `Removed from "${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
+          );
+        }
+      }
 
-if (removedIds.length > 0) {
-  if (removedNames.length > 0) {
-    parts.push(`Removed from "${removedNames.join(', ')}"`);
-  } else {
-    parts.push(
-      `Removed from "${removedIds.length} playlist${removedIds.length > 1 ? 's' : ''}"`
-    );
-  }
-}
+      if (newlyAddedIds.length > 0) {
+        if (addedNames.length > 0) {
+          parts.push(`Added to "${addedNames.join(', ')}"`);
+        } else {
+          parts.push(
+            `Added to "${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}"`
+          );
+        }
+      }
 
-if (newlyAddedIds.length > 0) {
-  if (addedNames.length > 0) {
-    parts.push(`Added to "${addedNames.join(', ')}"`);
-  } else {
-    parts.push(
-      `Added to "${newlyAddedIds.length} playlist${newlyAddedIds.length > 1 ? 's' : ''}`
-    );
-  }
-}
+      if (parts.length > 0) {
+        this.showNotification(parts.join(', '));
+      }
 
-if (parts.length > 0) {
-  this.showNotification(parts.join(', '));
-}
-
-
-    this.closeAddToPlaylistModal();
-  } catch (error) {
-    console.error('Error saving to playlists:', error);
-    this.showNotification('Error updating playlists', 'error');
-  }
-},
-
+      this.closeAddToPlaylistModal();
+    } catch (error) {
+      console.error('Error saving to playlists:', error);
+      this.showNotification('Error updating playlists', 'error');
+    }
+  },
 
   /* ============================================================
      DROPDOWNS
@@ -6868,7 +6847,11 @@ if (parts.length > 0) {
       else dropdown.appendChild(item);
     });
 
-    if (playlists.length > 0 && createNewBtn && !dropdown.querySelector('.playlist-dropdown-separator')) {
+    if (
+      playlists.length > 0 &&
+      createNewBtn &&
+      !dropdown.querySelector('.playlist-dropdown-separator')
+    ) {
       const sep = document.createElement('div');
       sep.className = 'playlist-dropdown-separator';
       sep.style.cssText = 'height:1px;background:#e0e0e0;margin:4px 0;';
@@ -6879,23 +6862,23 @@ if (parts.length > 0) {
   },
 
   async handleAddSongToPlaylist(dropdown, playlistId, playlistName) {
-  const songWrapper = dropdown.closest('.song-wrapper');
-  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
-  
-  if (!songId) {
-    this.showNotification('Error: Could not find song', 'error');
-    return;
-  }
-  
-  try {
-    const songs = await this.getPlaylistSongs(playlistId);
-    await this.addSongToPlaylist(playlistId, songId, songs.length + 1);
-    this.showNotification(`Added to "${playlistName}"`);
-    document.body.click();
-  } catch (error) {
-    this.showNotification('Error adding song', 'error');
-  }
-},
+    const songWrapper = dropdown.closest('.song-wrapper');
+    const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+
+    if (!songId) {
+      this.showNotification('Error: Could not find song', 'error');
+      return;
+    }
+
+    try {
+      const songs = await this.getPlaylistSongs(playlistId);
+      await this.addSongToPlaylist(playlistId, songId, songs.length + 1);
+      this.showNotification(`Added to "${playlistName}"`);
+      document.body.click();
+    } catch (error) {
+      this.showNotification('Error adding song', 'error');
+    }
+  },
 
   /* ============================================================
      NOTIFICATIONS
@@ -6945,88 +6928,88 @@ if (parts.length > 0) {
   },
 
   async renderPlaylistsGrid() {
-  const container = document.querySelector('.sortable-container');
-  const template = container?.querySelector('.playlist-card-template');
-  if (!container || !template) return;
+    const container = document.querySelector('.sortable-container');
+    const template = container?.querySelector('.playlist-card-template');
+    if (!container || !template) return;
 
-  try {
-    const playlists = await this.getUserPlaylists();
+    try {
+      const playlists = await this.getUserPlaylists();
 
-    // Clear existing cards except template
-    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-      if (i > 0) card.remove();
-    });
+      // Clear existing cards except template
+      container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+        if (i > 0) card.remove();
+      });
 
-    template.style.display = 'none';
+      template.style.display = 'none';
 
-    // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
-    const playlistCounts = await Promise.all(
-      playlists.map(async (p) => {
-        try {
-          const songs = await this.getPlaylistSongs(p.id);
-          return { id: Number(p.id), count: songs.length };
-        } catch {
-          return { id: Number(p.id), count: 0 };
-        }
-      })
-    );
+      // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
+      const playlistCounts = await Promise.all(
+        playlists.map(async (p) => {
+          try {
+            const songs = await this.getPlaylistSongs(p.id);
+            return { id: Number(p.id), count: songs.length };
+          } catch {
+            return { id: Number(p.id), count: 0 };
+          }
+        })
+      );
 
-    const countsById = new Map(playlistCounts.map(x => [x.id, x.count]));
+      const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
 
-    // ✅ Build off-DOM, then append once
-    const frag = document.createDocumentFragment();
+      // ✅ Build off-DOM, then append once
+      const frag = document.createDocumentFragment();
 
-    for (const playlist of playlists) {
-      const card = template.cloneNode(true);
+      for (const playlist of playlists) {
+        const card = template.cloneNode(true);
 
-      const title = card.querySelector('.playlist-title');
-      const detail = card.querySelector('.playlist-detail');
-      const image = card.querySelector('.playlist-image');
-      const link = card.querySelector('.playlist-link-block');
+        const title = card.querySelector('.playlist-title');
+        const detail = card.querySelector('.playlist-detail');
+        const image = card.querySelector('.playlist-image');
+        const link = card.querySelector('.playlist-link-block');
 
-      if (title) title.textContent = playlist.name;
-      if (detail) detail.textContent = playlist.description || '';
+        if (title) title.textContent = playlist.name;
+        if (detail) detail.textContent = playlist.description || '';
 
-      if (image && playlist.cover_image_url) {
-        clearResponsiveImageAttrs(image);
-        image.src = playlist.cover_image_url;
-
-        requestAnimationFrame(() => {
+        if (image && playlist.cover_image_url) {
           clearResponsiveImageAttrs(image);
           image.src = playlist.cover_image_url;
-        });
+
+          requestAnimationFrame(() => {
+            clearResponsiveImageAttrs(image);
+            image.src = playlist.cover_image_url;
+          });
+        }
+
+        if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+
+        card.dataset.playlistId = playlist.id;
+
+        const countEl = card.querySelector('.playlist-song-count');
+        if (countEl) {
+          const count = countsById.get(Number(playlist.id)) ?? 0;
+          countEl.textContent = String(count);
+        }
+
+        card.style.display = '';
+        frag.appendChild(card);
       }
 
-      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+      // ✅ Append everything at once
+      container.appendChild(frag);
 
-      card.dataset.playlistId = playlist.id;
+      console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
-      const countEl = card.querySelector('.playlist-song-count');
-      if (countEl) {
-        const count = countsById.get(Number(playlist.id)) ?? 0;
-        countEl.textContent = String(count);
+      reinitWebflowIX2();
+
+      if (typeof initializePlaylistOverlay === 'function') {
+        initializePlaylistOverlay();
       }
-
-      card.style.display = '';
-      frag.appendChild(card);
+    } finally {
+      // ✅ Reveal + return container to normal sizing
+      container.style.opacity = '1';
+      container.style.pointerEvents = '';
     }
-
-    // ✅ Append everything at once
-    container.appendChild(frag);
-
-    console.log(`✅ Rendered ${playlists.length} playlist cards`);
-
-    reinitWebflowIX2();
-
-    if (typeof initializePlaylistOverlay === 'function') {
-      initializePlaylistOverlay();
-    }
-  } finally {
-    // ✅ Reveal + return container to normal sizing
-    container.style.opacity = '1';
-    container.style.pointerEvents = '';
-  }
-},
+  },
 
   async initPlaylistTemplatePage() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -7079,11 +7062,12 @@ if (parts.length > 0) {
       card.style.pointerEvents = 'auto';
 
       populateSongCard(card, song);
+
+      // NOTE: leaving your existing dataset assignments as-is (no behavior change)
       card.dataset.songId = ps.id;
 
       const removeBtn = card.querySelector('.dd-remove-from-playlist');
       if (removeBtn) removeBtn.dataset.songId = song.id;
-
 
       // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
       card.dataset.songId = String(ps.song_id);
@@ -7095,7 +7079,9 @@ if (parts.length > 0) {
     if (window.Webflow?.require) reinitWebflowIX2();
 
     setTimeout(() => {
-      const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+      const cards = container.querySelectorAll(
+        '.song-wrapper:not(.template-wrapper .song-wrapper)'
+      );
 
       if (cards.length > 0) loadWaveformBatch(Array.from(cards));
 
