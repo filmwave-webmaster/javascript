@@ -3199,7 +3199,7 @@ function initBPMFilter() {
   console.log('🎵 Initializing BPM Filter System');
   
   // Constants
-  const SLIDER_WIDTH = 200; // px
+  const SLIDER_WIDTH = 175; // px
   const MIN_BPM = 1;
   const MAX_BPM = 300;
   const BPM_RANGE = MAX_BPM - MIN_BPM;
