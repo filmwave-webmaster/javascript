@@ -6115,7 +6115,7 @@ const PlaylistManager = {
 
   if (!response.ok) throw new Error('Failed to remove song');
   return response.json();
-}
+},
 
   async reorderPlaylistSongs(playlistId, positions) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_Playlist_Songs`, {
