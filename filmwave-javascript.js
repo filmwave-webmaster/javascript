@@ -2959,8 +2959,7 @@ function restoreBPMState() {
     const bpmState = filterState.bpm;
     
     // Re-query all DOM elements
-    const track = document.querySelector('.slider-track'); // use your real track class
-    const SLIDER_WIDTH = track?.offsetWidth || 175;
+    const SLIDER_WIDTH = 175;
     const MIN_BPM = 1;
     const MAX_BPM = 300;
     const BPM_RANGE = MAX_BPM - MIN_BPM;
@@ -2979,32 +2978,17 @@ function restoreBPMState() {
     if (!exactToggle || !rangeToggle) return;
     
     // Helper: Update handle position
-   function updateHandlePosition(handle, bpm) {
-  if (!handle) return;
-
-  // ✅ Measure the *actual* track width the handle is supposed to stay inside
-  const track =
-    handle.closest('.slider-range-wrapper, .slider-exact-wrapper')?.querySelector('.slider-track') ||
-    document.querySelector('.slider-track');
-
-  const trackWidth = track?.clientWidth || 175;
-
-  const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
-  const ratio = (value - MIN_BPM) / BPM_RANGE;
-
-  const handleWidth = handle.offsetWidth || 16;
-
-  // Raw pixel location along track
-  const raw = ratio * trackWidth;
-
-  // ✅ Clamp using left-edge positioning
-  const left = Math.min(trackWidth - handleWidth, Math.max(0, raw - handleWidth / 2));
-
-  handle.style.position = 'absolute';
-  handle.style.left = `${left}px`;
-  handle.style.top = '50%';
-  handle.style.transform = 'translateY(-50%)'; // ✅ no horizontal translate
-}
+    function updateHandlePosition(handle, bpm) {
+      if (!handle) return;
+      const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+      const ratio = (value - MIN_BPM) / BPM_RANGE;
+      const pixels = ratio * SLIDER_WIDTH;
+      
+      handle.style.position = 'absolute';
+      handle.style.left = `${pixels}px`;
+      handle.style.top = '50%';
+      handle.style.transform = 'translate(-50%, -50%)';
+    }
     
     // Restore mode
     const mode = bpmState.mode || 'range';
