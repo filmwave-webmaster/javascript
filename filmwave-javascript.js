@@ -6107,13 +6107,15 @@ const PlaylistManager = {
   const url =
     `${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist` +
     `?playlist_id=${encodeURIComponent(parseInt(playlistId))}` +
-    `&song_id=${encodeURIComponent(String(songId))}`;
+    `&song_id=${encodeURIComponent(songId)}`;
 
-  const response = await fetch(url, { method: 'DELETE' });
+  const response = await fetch(url, {
+    method: 'DELETE',
+  });
 
   if (!response.ok) throw new Error('Failed to remove song');
   return response.json();
-},
+}
 
   async reorderPlaylistSongs(playlistId, positions) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Reorder_Playlist_Songs`, {
