@@ -3224,14 +3224,21 @@ function initBPMFilter() {
   /**
    * Update slider handle position
    */
-  function updateHandlePosition(handle, bpm) {
-    if (!handle) return;
-    const pixels = bpmToPixel(bpm);
-    handle.style.position = 'absolute';
-    handle.style.left = `${pixels}px`;
-    handle.style.top = '50%';
-    handle.style.transform = 'translate(-50%, -50%)';
-  }
+ function updateHandlePosition(handle, bpm) {
+  if (!handle) return;
+
+  const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+  const ratio = (value - MIN_BPM) / BPM_RANGE;
+  const rawPixels = ratio * SLIDER_WIDTH;
+
+  const handleWidth = handle.offsetWidth || 16; // fallback
+  const clamped = Math.min(SLIDER_WIDTH, Math.max(0, rawPixels));
+
+  handle.style.position = 'absolute';
+  handle.style.left = `${clamped}px`;
+  handle.style.top = '50%';
+  handle.style.transform = 'translate(-50%, -50%)';
+}
   
   /**
    * Toggle between Exact and Range modes
