@@ -3036,20 +3036,22 @@ function restoreBPMState() {
     
    // Restore values (after DOM paints the correct slider mode)
 requestAnimationFrame(() => {
-  if (bpmState.exact && exactInput && sliderHandleExact) {
-    exactInput.value = bpmState.exact;
-    updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact, 10));
-  }
+  requestAnimationFrame(() => {
+    if (bpmState.exact && exactInput && sliderHandleExact) {
+      exactInput.value = bpmState.exact;
+      updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact, 10));
+    }
 
-  if (bpmState.low && lowInput && sliderHandleLow) {
-    lowInput.value = bpmState.low;
-    updateHandlePosition(sliderHandleLow, parseInt(bpmState.low, 10));
-  }
+    if (bpmState.low && lowInput && sliderHandleLow) {
+      lowInput.value = bpmState.low;
+      updateHandlePosition(sliderHandleLow, parseInt(bpmState.low, 10));
+    }
 
-  if (bpmState.high && highInput && sliderHandleHigh) {
-    highInput.value = bpmState.high;
-    updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high, 10));
-  }
+    if (bpmState.high && highInput && sliderHandleHigh) {
+      highInput.value = bpmState.high;
+      updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high, 10));
+    }
+  });
 });
     
     console.log('✅ BPM state restored:', bpmState);
