@@ -3227,18 +3227,34 @@ function initBPMFilter() {
  function updateHandlePosition(handle, bpm) {
   if (!handle) return;
 
+  const track = document.querySelector('.slider-track');
+  if (!track) return;
+
   const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
   const ratio = (value - MIN_BPM) / BPM_RANGE;
-  const rawPixels = ratio * SLIDER_WIDTH;
 
-  const handleWidth = handle.offsetWidth || 16; // fallback
-  const clamped = Math.min(SLIDER_WIDTH, Math.max(0, rawPixels));
+  const parent = handle.offsetParent || handle.parentElement;
+  if (!parent) return;
+
+  const trackRect = track.getBoundingClientRect();
+  const parentRect = parent.getBoundingClientRect();
+
+  const trackLeft = trackRect.left - parentRect.left;   // should be 0 in your case
+  const trackWidth = trackRect.width;
+
+  const handleWidth = handle.offsetWidth || 10;
+  const minCenter = trackLeft + handleWidth / 2;
+  const maxCenter = trackLeft + trackWidth - handleWidth / 2;
+
+  const rawCenter = trackLeft + ratio * trackWidth;
+  const clampedCenter = Math.max(minCenter, Math.min(maxCenter, rawCenter));
 
   handle.style.position = 'absolute';
-  handle.style.left = `${clamped}px`;
+  handle.style.left = `${clampedCenter}px`;
   handle.style.top = '50%';
   handle.style.transform = 'translate(-50%, -50%)';
 }
+
   
   /**
    * Toggle between Exact and Range modes
