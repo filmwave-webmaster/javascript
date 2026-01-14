@@ -6301,7 +6301,7 @@ const PlaylistManager = {
 
   const btn = e.target.closest('.dd-remove-from-playlist');
   const card = btn.closest('.song-wrapper');
-  const songId = card?.dataset.songId || card?.dataset.airtableId;
+  const songId = card?.dataset.songId;
 
   if (!songId || !this.currentPlaylistId) {
     console.warn('❌ Missing songId or currentPlaylistId', {
@@ -7086,9 +7086,6 @@ if (parts.length > 0) {
 
 
       // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
-      card.dataset.songId = String(ps.id);
-      delete card.dataset.airtableId;
-
       card.dataset.songId = String(ps.song_id);
 
       card.dataset.playlistPosition = ps.position;
