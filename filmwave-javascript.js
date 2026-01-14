@@ -6172,20 +6172,30 @@ const PlaylistManager = {
         return;
       }
 
+
+      // Add to Playlist Module
       if (e.target.closest('.dd-add-to-playlist')) {
-        e.preventDefault();
-        e.stopPropagation();
+  e.preventDefault();
+  e.stopPropagation();
 
-        const songWrapper = e.target.closest('.song-wrapper');
-        const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+  const songWrapper = e.target.closest('.song-wrapper');
+  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
 
-        console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
+  console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
 
-        if (songId) this.openAddToPlaylistModal(songId);
-        else console.warn('❌ Could not find songId for add-to-playlist');
+  if (songId) {
+    // ✅ Capture selected song UI data from the clicked card
+    this._setAddToPlaylistSelectedSongFromCard(songWrapper);
 
-        return;
-      }
+    // ✅ Open modal
+    this.openAddToPlaylistModal(songId);
+  } else {
+    console.warn('❌ Could not find songId for add-to-playlist');
+  }
+
+  return;
+}
+//End
 
       if (e.target.closest('.add-to-playlist-x-button')) {
         e.preventDefault();
@@ -6210,6 +6220,88 @@ const PlaylistManager = {
         this.saveToSelectedPlaylists();
         return;
       }
+
+      /* ----------------------------
+         ADD TO PLAYLIST SONG INFO
+         ---------------------------- */
+
+      _setAddToPlaylistSelectedSongFromCard(songWrapper) {
+  if (!songWrapper) return;
+
+  const title = (songWrapper.querySelector('.song-name')?.textContent || '').trim();
+  const artist = (songWrapper.querySelector('.artist-name')?.textContent || '').trim();
+
+  const coverEl = songWrapper.querySelector('.cover-art');
+  let coverSrc = '';
+
+  // If cover-art is an <img>
+  if (coverEl && coverEl.tagName === 'IMG') {
+    coverSrc = coverEl.getAttribute('src') || '';
+  } else if (coverEl) {
+    // If cover-art is a div with background-image
+    const bg = getComputedStyle(coverEl).backgroundImage || '';
+    // bg looks like: url("https://...")
+    const match = bg.match(/url\(["']?(.*?)["']?\)/i);
+    coverSrc = match?.[1] || '';
+  }
+
+  this._selectedSongForAddToPlaylistUI = {
+    title,
+    artist,
+    coverSrc,
+  };
+},
+
+_renderAddToPlaylistSelectedSongUI() {
+  const modal = document.querySelector('.add-to-playlist-module-wrapper');
+  if (!modal) return;
+
+  const coverTarget = modal.querySelector('.add-to-playlist-song-cover');
+  const textTarget = modal.querySelector('.add-to-playlist-song-text');
+
+  let meta = this._selectedSongForAddToPlaylistUI;
+
+  // Fallback: try to find the card in the DOM based on currentSongForPlaylist
+  if (!meta && this.currentSongForPlaylist) {
+    const id = String(this.currentSongForPlaylist);
+
+    // Try common places where you store ids
+    let card =
+      document.querySelector(`.song-wrapper[data-song-id="${CSS.escape(id)}"]`) ||
+      document.querySelector(`.song-wrapper[data-airtable-id="${CSS.escape(id)}"]`);
+
+    if (card) {
+      this._setAddToPlaylistSelectedSongFromCard(card);
+      meta = this._selectedSongForAddToPlaylistUI;
+    }
+  }
+
+  if (!meta) return;
+
+  const title = meta.title || '';
+  const artist = meta.artist || '';
+  const coverSrc = meta.coverSrc || '';
+
+  // Text format: [song name] by [artist name]
+  if (textTarget) {
+    const text = artist ? `${title} by ${artist}` : title;
+    textTarget.textContent = text;
+  }
+
+  // Cover art
+  if (coverTarget) {
+    if (coverTarget.tagName === 'IMG') {
+      if (coverSrc) coverTarget.src = coverSrc;
+    } else {
+      if (coverSrc) {
+        coverTarget.style.backgroundImage = `url("${coverSrc}")`;
+        coverTarget.style.backgroundSize = 'cover';
+        coverTarget.style.backgroundPosition = 'center';
+        coverTarget.style.backgroundRepeat = 'no-repeat';
+      }
+    }
+  }
+},
 
       /* ----------------------------
          CREATE PLAYLIST MODAL
@@ -6628,16 +6720,22 @@ const PlaylistManager = {
      ADD TO PLAYLIST MODAL
      ============================================================ */
 
+  // Open Add to Playlist Module
   openAddToPlaylistModal(songId) {
-    this.currentSongForPlaylist = songId;
-    this.selectedPlaylistIds = [];
+  this.currentSongForPlaylist = songId;
+  this.selectedPlaylistIds = [];
 
-    const modal = document.querySelector('.add-to-playlist-module-wrapper');
-    if (!modal) return;
+  const modal = document.querySelector('.add-to-playlist-module-wrapper');
+  if (!modal) return;
 
-    modal.style.display = 'flex';
-    this.populateAddToPlaylistModal();
-  },
+  modal.style.display = 'flex';
+
+  // ✅ Paint the selected song into the modal immediately
+  this._renderAddToPlaylistSelectedSongUI();
+
+  this.populateAddToPlaylistModal();
+},
+  //End
 
   closeAddToPlaylistModal() {
     const modal = document.querySelector('.add-to-playlist-module-wrapper');
