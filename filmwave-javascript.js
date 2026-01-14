@@ -2979,16 +2979,36 @@ function restoreBPMState() {
     
     // Helper: Update handle position
     function updateHandlePosition(handle, bpm) {
-      if (!handle) return;
-      const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
-      const ratio = (value - MIN_BPM) / BPM_RANGE;
-      const pixels = ratio * SLIDER_WIDTH;
-      
-      handle.style.position = 'absolute';
-      handle.style.left = `${pixels}px`;
-      handle.style.top = '50%';
-      handle.style.transform = 'translate(-50%, -50%)';
-    }
+  if (!handle) return;
+
+  const value = Math.max(MIN_BPM, Math.min(MAX_BPM, Number(bpm)));
+  const ratio = (value - MIN_BPM) / BPM_RANGE;
+
+  const wrapper = handle.closest('.slider-range-wrapper, .slider-exact-wrapper');
+  const track = wrapper?.querySelector('.slider-track');
+  const parent = handle.offsetParent || wrapper;
+
+  if (!wrapper || !track || !parent) return;
+  if (getComputedStyle(wrapper).display === 'none') return; // don’t measure hidden
+
+  const trackRect = track.getBoundingClientRect();
+  const parentRect = parent.getBoundingClientRect();
+
+  const trackLeft = trackRect.left - parentRect.left;
+  const trackWidth = trackRect.width;
+
+  const handleWidth = handle.offsetWidth || 10;
+  const minLeft = trackLeft + handleWidth / 2;
+  const maxLeft = trackLeft + trackWidth - handleWidth / 2;
+
+  const rawLeft = trackLeft + ratio * trackWidth;
+  const clampedLeft = Math.max(minLeft, Math.min(maxLeft, rawLeft));
+
+  handle.style.position = 'absolute';
+  handle.style.left = `${clampedLeft}px`;
+  handle.style.top = '50%';
+  handle.style.transform = 'translate(-50%, -50%)';
+}
     
     // Restore mode
     const mode = bpmState.mode || 'range';
@@ -3014,21 +3034,23 @@ function restoreBPMState() {
       if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'block';
     }
     
-    // Restore values
-    if (bpmState.exact && exactInput && sliderHandleExact) {
-      exactInput.value = bpmState.exact;
-      updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact));
-    }
-    
-    if (bpmState.low && lowInput && sliderHandleLow) {
-      lowInput.value = bpmState.low;
-      updateHandlePosition(sliderHandleLow, parseInt(bpmState.low));
-    }
-    
-    if (bpmState.high && highInput && sliderHandleHigh) {
-      highInput.value = bpmState.high;
-      updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high));
-    }
+   // Restore values (after DOM paints the correct slider mode)
+requestAnimationFrame(() => {
+  if (bpmState.exact && exactInput && sliderHandleExact) {
+    exactInput.value = bpmState.exact;
+    updateHandlePosition(sliderHandleExact, parseInt(bpmState.exact, 10));
+  }
+
+  if (bpmState.low && lowInput && sliderHandleLow) {
+    lowInput.value = bpmState.low;
+    updateHandlePosition(sliderHandleLow, parseInt(bpmState.low, 10));
+  }
+
+  if (bpmState.high && highInput && sliderHandleHigh) {
+    highInput.value = bpmState.high;
+    updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high, 10));
+  }
+});
     
     console.log('✅ BPM state restored:', bpmState);
     
@@ -3227,35 +3249,35 @@ function initBPMFilter() {
  function updateHandlePosition(handle, bpm) {
   if (!handle) return;
 
-  const track = document.querySelector('.slider-track');
-  if (!track) return;
-
-  const value = Math.max(MIN_BPM, Math.min(MAX_BPM, bpm));
+  const value = Math.max(MIN_BPM, Math.min(MAX_BPM, Number(bpm)));
   const ratio = (value - MIN_BPM) / BPM_RANGE;
 
-  const parent = handle.offsetParent || handle.parentElement;
-  if (!parent) return;
+  const wrapper = handle.closest('.slider-range-wrapper, .slider-exact-wrapper');
+  const track = wrapper?.querySelector('.slider-track');
+  const parent = handle.offsetParent || wrapper;
+
+  if (!wrapper || !track || !parent) return;
+  if (getComputedStyle(wrapper).display === 'none') return; // don’t measure hidden
 
   const trackRect = track.getBoundingClientRect();
   const parentRect = parent.getBoundingClientRect();
 
-  const trackLeft = trackRect.left - parentRect.left;   // should be 0 in your case
+  const trackLeft = trackRect.left - parentRect.left;
   const trackWidth = trackRect.width;
 
   const handleWidth = handle.offsetWidth || 10;
-  const minCenter = trackLeft + handleWidth / 2;
-  const maxCenter = trackLeft + trackWidth - handleWidth / 2;
+  const minLeft = trackLeft + handleWidth / 2;
+  const maxLeft = trackLeft + trackWidth - handleWidth / 2;
 
-  const rawCenter = trackLeft + ratio * trackWidth;
-  const clampedCenter = Math.max(minCenter, Math.min(maxCenter, rawCenter));
+  const rawLeft = trackLeft + ratio * trackWidth;
+  const clampedLeft = Math.max(minLeft, Math.min(maxLeft, rawLeft));
 
   handle.style.position = 'absolute';
-  handle.style.left = `${clampedCenter}px`;
+  handle.style.left = `${clampedLeft}px`;
   handle.style.top = '50%';
   handle.style.transform = 'translate(-50%, -50%)';
 }
 
-  
   /**
    * Toggle between Exact and Range modes
    */
@@ -3337,15 +3359,16 @@ function initBPMFilter() {
     if (!sliderTrack) return;
     
     const rect = sliderTrack.getBoundingClientRect();
-    let newLeft = e.clientX - rect.left;
-    
-    // Clamp to slider bounds
-    newLeft = Math.max(0, Math.min(SLIDER_WIDTH, newLeft));
+let newLeft = e.clientX - rect.left;
+
+// Clamp to REAL track width
+const trackWidth = rect.width;
+newLeft = Math.max(0, Math.min(trackWidth, newLeft));
     
     // Prevent handles from crossing in range mode
     if (currentMode === 'range') {
       if (activeHandle === sliderHandleLow && sliderHandleHigh) {
-        const highPos = parseFloat(sliderHandleHigh.style.left) || SLIDER_WIDTH;
+        const highPos = parseFloat(sliderHandleHigh.style.left) || rect.width;
         newLeft = Math.min(newLeft, highPos);
       } else if (activeHandle === sliderHandleHigh && sliderHandleLow) {
         const lowPos = parseFloat(sliderHandleLow.style.left) || 0;
