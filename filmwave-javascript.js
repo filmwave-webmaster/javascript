@@ -6154,6 +6154,66 @@ const PlaylistManager = {
     // setupCoverImageUpload('.add-cover-image');
     // setupCoverImageUpload('.change-cover-image');
 
+// ✅ CAPTURE-PHASE INTERCEPT: stop other remove handlers from firing first
+if (!this._removeInterceptInstalled) {
+  this._removeInterceptInstalled = true;
+
+  document.body.addEventListener(
+    'click',
+    async (e) => {
+      const btn = e.target.closest('.dd-remove-from-playlist');
+      if (!btn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      const card = btn.closest('.song-wrapper');
+      const songId = card?.dataset.songId;
+
+      if (!songId || !this.currentPlaylistId) {
+        console.warn('❌ Missing songId or currentPlaylistId', {
+          songId,
+          currentPlaylistId: this.currentPlaylistId,
+        });
+        return;
+      }
+
+      try {
+        await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
+
+        card.style.opacity = '0';
+
+        setTimeout(() => {
+          card.remove();
+
+          const container = document.querySelector('.playlist-songs-wrapper');
+          if (!container) return;
+
+          const remaining = container.querySelectorAll(
+            '.song-wrapper:not(.template-wrapper .song-wrapper)'
+          );
+
+          if (remaining.length === 0) {
+            const templateWrapper = container.querySelector('.template-wrapper');
+            if (templateWrapper) templateWrapper.style.display = 'none';
+            updateEmptyPlaylistMessage(container);
+          }
+        }, 300);
+
+        const playlist = await this.getPlaylistById(this.currentPlaylistId);
+        const playlistName = playlist?.name || 'playlist';
+        this.showNotification(`Removed from "${playlistName}"`);
+      } catch (err) {
+        console.error('Error removing song:', err);
+        this.showNotification('Error removing song', 'error');
+      }
+    },
+    true // ✅ capture
+  );
+}
+
+    
     document.body.addEventListener('click', async (e) => {
       /* ----------------------------
          ADD-TO-PLAYLIST (dropdown + modal)
