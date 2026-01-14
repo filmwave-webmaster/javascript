@@ -6222,88 +6222,6 @@ const PlaylistManager = {
       }
 
       /* ----------------------------
-         ADD TO PLAYLIST SONG INFO
-         ---------------------------- */
-
-      _setAddToPlaylistSelectedSongFromCard(songWrapper) {
-  if (!songWrapper) return;
-
-  const title = (songWrapper.querySelector('.song-name')?.textContent || '').trim();
-  const artist = (songWrapper.querySelector('.artist-name')?.textContent || '').trim();
-
-  const coverEl = songWrapper.querySelector('.cover-art');
-  let coverSrc = '';
-
-  // If cover-art is an <img>
-  if (coverEl && coverEl.tagName === 'IMG') {
-    coverSrc = coverEl.getAttribute('src') || '';
-  } else if (coverEl) {
-    // If cover-art is a div with background-image
-    const bg = getComputedStyle(coverEl).backgroundImage || '';
-    // bg looks like: url("https://...")
-    const match = bg.match(/url\(["']?(.*?)["']?\)/i);
-    coverSrc = match?.[1] || '';
-  }
-
-  this._selectedSongForAddToPlaylistUI = {
-    title,
-    artist,
-    coverSrc,
-  };
-},
-
-_renderAddToPlaylistSelectedSongUI() {
-  const modal = document.querySelector('.add-to-playlist-module-wrapper');
-  if (!modal) return;
-
-  const coverTarget = modal.querySelector('.add-to-playlist-song-cover');
-  const textTarget = modal.querySelector('.add-to-playlist-song-text');
-
-  let meta = this._selectedSongForAddToPlaylistUI;
-
-  // Fallback: try to find the card in the DOM based on currentSongForPlaylist
-  if (!meta && this.currentSongForPlaylist) {
-    const id = String(this.currentSongForPlaylist);
-
-    // Try common places where you store ids
-    let card =
-      document.querySelector(`.song-wrapper[data-song-id="${CSS.escape(id)}"]`) ||
-      document.querySelector(`.song-wrapper[data-airtable-id="${CSS.escape(id)}"]`);
-
-    if (card) {
-      this._setAddToPlaylistSelectedSongFromCard(card);
-      meta = this._selectedSongForAddToPlaylistUI;
-    }
-  }
-
-  if (!meta) return;
-
-  const title = meta.title || '';
-  const artist = meta.artist || '';
-  const coverSrc = meta.coverSrc || '';
-
-  // Text format: [song name] by [artist name]
-  if (textTarget) {
-    const text = artist ? `${title} by ${artist}` : title;
-    textTarget.textContent = text;
-  }
-
-  // Cover art
-  if (coverTarget) {
-    if (coverTarget.tagName === 'IMG') {
-      if (coverSrc) coverTarget.src = coverSrc;
-    } else {
-      if (coverSrc) {
-        coverTarget.style.backgroundImage = `url("${coverSrc}")`;
-        coverTarget.style.backgroundSize = 'cover';
-        coverTarget.style.backgroundPosition = 'center';
-        coverTarget.style.backgroundRepeat = 'no-repeat';
-      }
-    }
-  }
-},
-
-      /* ----------------------------
          CREATE PLAYLIST MODAL
          ---------------------------- */
 
@@ -6720,6 +6638,74 @@ _renderAddToPlaylistSelectedSongUI() {
      ADD TO PLAYLIST MODAL
      ============================================================ */
 
+  /* ----------------------------
+   ADD TO PLAYLIST SONG INFO
+   ---------------------------- */
+
+_setAddToPlaylistSelectedSongFromCard(songWrapper) {
+  if (!songWrapper) return;
+
+  const title = (songWrapper.querySelector('.song-name')?.textContent || '').trim();
+  const artist = (songWrapper.querySelector('.artist-name')?.textContent || '').trim();
+
+  const coverEl = songWrapper.querySelector('.cover-art');
+  let coverSrc = '';
+
+  if (coverEl && coverEl.tagName === 'IMG') {
+    coverSrc = coverEl.getAttribute('src') || '';
+  } else if (coverEl) {
+    const bg = getComputedStyle(coverEl).backgroundImage || '';
+    const match = bg.match(/url\(["']?(.*?)["']?\)/i);
+    coverSrc = match?.[1] || '';
+  }
+
+  this._selectedSongForAddToPlaylistUI = { title, artist, coverSrc };
+},
+
+_renderAddToPlaylistSelectedSongUI() {
+  const modal = document.querySelector('.add-to-playlist-module-wrapper');
+  if (!modal) return;
+
+  const coverTarget = modal.querySelector('.add-to-playlist-song-cover');
+  const textTarget = modal.querySelector('.add-to-playlist-song-text');
+
+  let meta = this._selectedSongForAddToPlaylistUI;
+
+  if (!meta && this.currentSongForPlaylist) {
+    const id = String(this.currentSongForPlaylist);
+
+    const card =
+      document.querySelector(`.song-wrapper[data-song-id="${CSS.escape(id)}"]`) ||
+      document.querySelector(`.song-wrapper[data-airtable-id="${CSS.escape(id)}"]`);
+
+    if (card) {
+      this._setAddToPlaylistSelectedSongFromCard(card);
+      meta = this._selectedSongForAddToPlaylistUI;
+    }
+  }
+
+  if (!meta) return;
+
+  const title = meta.title || '';
+  const artist = meta.artist || '';
+  const coverSrc = meta.coverSrc || '';
+
+  if (textTarget) {
+    textTarget.textContent = artist ? `${title} by ${artist}` : title;
+  }
+
+  if (coverTarget) {
+    if (coverTarget.tagName === 'IMG') {
+      if (coverSrc) coverTarget.src = coverSrc;
+    } else if (coverSrc) {
+      coverTarget.style.backgroundImage = `url("${coverSrc}")`;
+      coverTarget.style.backgroundSize = 'cover';
+      coverTarget.style.backgroundPosition = 'center';
+      coverTarget.style.backgroundRepeat = 'no-repeat';
+    }
+  }
+},
+  
   // Open Add to Playlist Module
   openAddToPlaylistModal(songId) {
   this.currentSongForPlaylist = songId;
