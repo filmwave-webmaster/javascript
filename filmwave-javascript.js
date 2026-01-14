@@ -2959,7 +2959,8 @@ function restoreBPMState() {
     const bpmState = filterState.bpm;
     
     // Re-query all DOM elements
-    const SLIDER_WIDTH = 175;
+    const track = document.querySelector('.slider-track'); // use your real track class
+    const SLIDER_WIDTH = track?.offsetWidth || 175;
     const MIN_BPM = 1;
     const MAX_BPM = 300;
     const BPM_RANGE = MAX_BPM - MIN_BPM;
