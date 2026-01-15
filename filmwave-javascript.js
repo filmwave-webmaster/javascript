@@ -6132,23 +6132,34 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
   if (window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED) return;
   window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED = true;
 
-  // ✅ CLICK-TO-OPEN DIALOG (treat dropzone click like .add-cover-image click)
-  document.addEventListener('click', (e) => {
-    const zone = e.target.closest(DROPZONE_SEL);
-    if (!zone) return;
+  // ✅ CLICK-TO-OPEN DIALOG (dropzone opens the SAME picker flow)
+document.addEventListener('click', (e) => {
+  const zone = e.target.closest(DROPZONE_SEL);
+  if (!zone) return;
 
-    const modal = zone.closest('.create-playlist-module-wrapper');
-    if (!modal) return;
+  const modal = zone.closest('.create-playlist-module-wrapper');
+  if (!modal) return;
 
-    // Only when modal is actually open
-    if (getComputedStyle(modal).display === 'none') return;
+  // Only when modal is actually open
+  if (getComputedStyle(modal).display === 'none') return;
 
-    // capture defaults on first interaction
-    getOrStoreDefaultState(modal);
+  // capture defaults on first interaction
+  getOrStoreDefaultState(modal);
 
-    const btn = modal.querySelector('.add-cover-image');
-    if (btn) btn.click(); // ✅ triggers your existing picker flow
+  // ✅ Single source of truth: use your existing pickImageAsBase64() flow
+  pickImageAsBase64({
+    onPicked: ({ base64, file }) => {
+      if (window.PlaylistManager) {
+        window.PlaylistManager.pendingCoverImageBase64 = base64;
+      }
+      updateDropUI(modal, file?.name || 'Image selected');
+      console.log('🖼️ Create playlist cover set via picker:', file?.name);
+    },
+    onCancel: () => {
+      // do nothing
+    },
   });
+});
 
   document.addEventListener('dragover', (e) => {
     const zone = e.target.closest(DROPZONE_SEL);
@@ -6617,38 +6628,18 @@ const PlaylistManager = {
          COVER IMAGE (create playlist)
          ---------------------------- */
 
-      if (e.target.closest('.add-cover-image')) {
-        e.preventDefault();
-        e.stopPropagation();
+     if (e.target.closest('.add-cover-image')) {
+  e.preventDefault();
+  e.stopPropagation();
 
-        if (this._isPickingCreateCover) return;
-        this._isPickingCreateCover = true;
+  const modal = e.target.closest('.create-playlist-module-wrapper');
+  if (!modal) return;
 
-        const btn = e.target.closest('.add-cover-image');
-        const textEl = btn?.querySelector('.add-image-text');
+  const zone = modal.querySelector('.new-playlist-upload-field');
+  if (zone) zone.click(); // ✅ route through the dropzone click handler (single flow)
 
-        if (textEl && !textEl.dataset.originalText) {
-          textEl.dataset.originalText = textEl.textContent;
-        }
-
-        pickImageAsBase64({
-          onPicked: ({ base64, file }) => {
-            this.pendingCoverImageBase64 = base64;
-            if (textEl) textEl.textContent = file.name;
-            console.log('🖼️ Pending cover image set for create playlist');
-            this._isPickingCreateCover = false;
-          },
-          onCancel: () => {
-            this._isPickingCreateCover = false;
-          },
-        });
-
-        setTimeout(() => {
-          this._isPickingCreateCover = false;
-        }, 1500);
-
-        return;
-      }
+  return;
+}
 
       /* ----------------------------
          COVER IMAGE (edit playlist)
