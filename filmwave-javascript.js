@@ -6239,6 +6239,18 @@ const PlaylistManager = {
   selectedCoverImageBase64: null,
   selectedCoverImageName: null,
 
+ /* ----------------------------
+    ADD TO PLAYLIST - RE-ORDER HELPERS
+    ---------------------------- */
+
+    _setLastClickedPlaylistForAddModal(playlistId) {
+    if (!playlistId) return;
+    localStorage.setItem('fw_last_clicked_playlist_id', String(playlistId));
+    },
+    _getLastClickedPlaylistForAddModal() {
+    return localStorage.getItem('fw_last_clicked_playlist_id');
+    },
+  
   /* ----------------------------
      INIT
      ---------------------------- */
@@ -6469,10 +6481,15 @@ const PlaylistManager = {
 
       const playlistRow = e.target.closest('.add-to-playlist-row');
       if (playlistRow && playlistRow.dataset.playlistId) {
-        e.preventDefault();
-        this.togglePlaylistSelection(playlistRow);
-        return;
+      e.preventDefault();
+
+      // ✅ remember last clicked (applies next open, not instantly)
+      this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
+
+      this.togglePlaylistSelection(playlistRow);
+      return;
       }
+
 
       if (e.target.closest('.add-to-playlist-save-button')) {
         e.preventDefault();
@@ -7004,6 +7021,19 @@ _renderAddToPlaylistSelectedSongUI() {
     template.style.display = 'none';
 
     const playlists = await this.getUserPlaylists();
+
+    // ✅ Sort so last clicked playlist appears first (next time modal opens)
+    const lastClickedId = this._getLastClickedPlaylistForAddModal();
+    if (lastClickedId) {
+      playlists.sort((a, b) => {
+        const aIs = String(a.id) === String(lastClickedId);
+        const bIs = String(b.id) === String(lastClickedId);
+        if (aIs && !bIs) return -1;
+        if (!aIs && bIs) return 1;
+        return 0; // keep original order otherwise
+      });
+    }
+
 
     const songInPlaylists = [];
     this.originalPlaylistIds = [];
