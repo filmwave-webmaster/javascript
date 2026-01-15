@@ -6944,16 +6944,16 @@ if (deleteBtn) {
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
       const playlist = await this.createPlaylist(name, description);
-      this._setLastCreatedPlaylistForAddModal(playlist.id); // ✅ keep pin-to-top anywhere
+    this._setLastCreatedPlaylistForAddModal(playlist.id); // keep “pin to top”
 
-// ✅ ONLY auto-select if Add-to-Playlist modal is open OR we came from "create new playlist" inside it
+// ✅ ONLY set auto-select if the Add-to-Playlist modal is currently open
 const addModal = document.querySelector('.add-to-playlist-module-wrapper');
 const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
 
-if (addModalOpen || this.pendingSongToAdd?.songId) {
+if (addModalOpen) {
   this._setLastCreatedPlaylistAutoSelectId(playlist.id);
 } else {
-  // created from playlists page etc — do NOT auto-checkmark later
+  // created from playlists page etc → DO NOT auto-checkmark later
   this._clearLastCreatedPlaylistAutoSelectId();
 }
 
