@@ -6250,7 +6250,20 @@ const PlaylistManager = {
     _getLastClickedPlaylistForAddModal() {
     return localStorage.getItem('fw_last_clicked_playlist_id');
     },
+
+    _setLastCreatedPlaylistForAddModal(playlistId) {
+    if (!playlistId) return;
+    localStorage.setItem('fw_last_created_playlist_id', String(playlistId));
+    },
   
+    _getLastCreatedPlaylistForAddModal() {
+    return localStorage.getItem('fw_last_created_playlist_id');
+    },
+  
+    _clearLastCreatedPlaylistForAddModal() {
+    localStorage.removeItem('fw_last_created_playlist_id');
+    },
+
   /* ----------------------------
      INIT
      ---------------------------- */
@@ -6847,6 +6860,7 @@ const PlaylistManager = {
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
       const playlist = await this.createPlaylist(name, description);
+      this._setLastCreatedPlaylistForAddModal(playlist.id);
 
       await this.getUserPlaylists(true);
 
@@ -7022,18 +7036,28 @@ _renderAddToPlaylistSelectedSongUI() {
 
     const playlists = await this.getUserPlaylists();
 
-    // ✅ Sort so last clicked playlist appears first (next time modal opens)
-    const lastClickedId = this._getLastClickedPlaylistForAddModal();
-    if (lastClickedId) {
-      playlists.sort((a, b) => {
-        const aIs = String(a.id) === String(lastClickedId);
-        const bIs = String(b.id) === String(lastClickedId);
-        if (aIs && !bIs) return -1;
-        if (!aIs && bIs) return 1;
-        return 0; // keep original order otherwise
-      });
-    }
+// ✅ Sort so last clicked playlist appears first (next time modal opens)
+// 1) last created playlist (if any)
+// 2) last clicked playlist (if any)
+// 3) otherwise keep original order
+const lastCreatedId = this._getLastCreatedPlaylistForAddModal();
+const lastClickedId = this._getLastClickedPlaylistForAddModal();
 
+if (lastCreatedId || lastClickedId) {
+  playlists.sort((a, b) => {
+    const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
+    const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
+    if (aCreated && !bCreated) return -1;
+    if (!aCreated && bCreated) return 1;
+
+    const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
+    const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
+    if (aClicked && !bClicked) return -1;
+    if (!aClicked && bClicked) return 1;
+
+    return 0;
+  });
+}
 
     const songInPlaylists = [];
     this.originalPlaylistIds = [];
@@ -7085,6 +7109,8 @@ _renderAddToPlaylistSelectedSongUI() {
       container.appendChild(row);
     });
 
+    this._clearLastCreatedPlaylistForAddModal();
+    
     container.style.opacity = '1';
   },
 
