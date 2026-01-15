@@ -910,10 +910,10 @@ function populateSongCard(cardElement, song) {
         if (stemsList) {
           const stemLinkTemplate = stemsList.querySelector('.stem-link-wrapper');
           if (stemLinkTemplate) {
-            const templateCopy = stemLinkTemplate.cloneNode(true);
+            const templateCopy = stemLinkTemplate.;
             stemsList.innerHTML = '';
             stems.forEach(stem => {
-              const stemRow = templateCopy.cloneNode(true);
+              const stemRow = templateCopy.;
               const link = stemRow.querySelector('.stem-link');
               if (link) {
                 link.textContent = stem.name;
@@ -1459,7 +1459,7 @@ function displaySongs(songs) {
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
   songs.forEach(song => {
-    const newCard = templateCard.cloneNode(true);
+    const newCard = templateCard.;
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
@@ -1506,7 +1506,7 @@ async function displayFeaturedSongs(limit = 6) {
   const featuredSongs = g.MASTER_DATA.slice(-limit).reverse();
   
   featuredSongs.forEach(song => {
-    const newCard = templateCard.cloneNode(true);
+    const newCard = templateCard.;
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
@@ -1572,7 +1572,7 @@ async function displayFavoriteSongs(limit = null) {
   
   // Create song cards
   songsToDisplay.forEach(song => {
-    const newCard = templateCard.cloneNode(true);
+    const newCard = templateCard.;
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
@@ -2896,7 +2896,7 @@ function reinitializeTabs() {
     
     allLinks.forEach((link, linkIndex) => {
       // Remove old listeners by cloning
-      const newLink = link.cloneNode(true);
+      const newLink = link.;
       link.parentNode.replaceChild(newLink, link);
       
       newLink.addEventListener('click', function(e) {
@@ -3801,7 +3801,7 @@ function initializeProfileSortable() {
   // 4. Setup organize/save button
   if (organizeButton) {
     // Clone to remove old listeners
-    const newButton = organizeButton.cloneNode(true);
+    const newButton = organizeButton.;
     organizeButton.parentNode.replaceChild(newButton, organizeButton);
     
     newButton.addEventListener('click', function(e) {
@@ -4044,7 +4044,7 @@ function initializePlaylistOverlay() {
   // Show overlay when edit icon is clicked
   editIcons.forEach(editIcon => {
     // Clone to remove old listeners
-    const newEditIcon = editIcon.cloneNode(true);
+    const newEditIcon = editIcon.;
     editIcon.parentNode.replaceChild(newEditIcon, editIcon);
     
     newEditIcon.addEventListener('click', function(e) {
@@ -4068,7 +4068,7 @@ if (textEl && !textEl.dataset.originalText) {
   
   // Hide overlay when X button is clicked
   closeButtons.forEach(closeBtn => {
-    const newCloseBtn = closeBtn.cloneNode(true);
+    const newCloseBtn = closeBtn.;
     closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
     
     newCloseBtn.addEventListener('click', function(e) {
@@ -4367,7 +4367,7 @@ if (loginForm) {
   console.log('🔐 Attaching login form handler');
   
   // Remove old listener by cloning
-  const newLoginForm = loginForm.cloneNode(true);
+  const newLoginForm = loginForm.;
   loginForm.parentNode.replaceChild(newLoginForm, loginForm);
   
   newLoginForm.addEventListener('submit', function(e) {
@@ -4400,7 +4400,7 @@ if (loginForm) {
   if (signupForm) {
     console.log('📝 Attaching signup form handler');
     
-    const newSignupForm = signupForm.cloneNode(true);
+    const newSignupForm = signupForm.;
     signupForm.parentNode.replaceChild(newSignupForm, signupForm);
     
     newSignupForm.addEventListener('submit', function(e) {
@@ -4835,8 +4835,8 @@ if (typeof barba !== 'undefined') {
         if (!visibleToggle || !hiddenToggle) return;
         
         // Clone to remove old listeners
-        const newVisibleToggle = visibleToggle.cloneNode(true);
-        const newHiddenToggle = hiddenToggle.cloneNode(true);
+        const newVisibleToggle = visibleToggle.;
+        const newHiddenToggle = hiddenToggle.;
         visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
         hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
         
@@ -7174,7 +7174,7 @@ if (lastCreatedId || lastClickedId) {
     }
 
    playlists.forEach((playlist) => {
-  const row = template.cloneNode(true);
+  const row = template.;
   const title = row.querySelector('.add-to-playlist-title');
   const icon = row.querySelector('.add-to-playlist-icon');
 
@@ -7418,239 +7418,190 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
      PAGE FEATURES
      ============================================================ */
 
-  setupPageSpecificFeatures() {
-    if (isPlaylistsGridPage()) this.initPlaylistsPage();
-    if (isPlaylistTemplatePage()) this.initPlaylistTemplatePage();
-  },
+setupPageSpecificFeatures() {
+  if (isPlaylistsGridPage()) this.initPlaylistsPage();
+  if (isPlaylistTemplatePage()) this.initPlaylistTemplatePage();
+},
 
-  async initPlaylistsPage() {
-    if (!this.currentUserId) return;
-    await this.renderPlaylistsGrid();
-  },
+async initPlaylistsPage() {
+  if (!this.currentUserId) return;
+  await this.renderPlaylistsGrid();
+},
 
-  async renderPlaylistsGrid() {
+async renderPlaylistsGrid() {
+  const container = document.querySelector('.sortable-container');
+  const template = container?.querySelector('.playlist-card-template');
+  if (!container || !template) return;
 
-    // ✅ show placeholders immediately using last-known count (do NOT stop rendering if wrapper missing)
-const phWrap = document.querySelector('.playlist-placeholders-wrapper');
+  // ✅ REVERT: show existing placeholders immediately (no cloning, no localStorage)
+  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    el.style.display = ''; // back to CSS default
+  });
 
-if (phWrap) {
-  const phTemplate = phWrap.querySelector('.playlist-placeholder-template');
-
-  if (phTemplate) {
-    const lastCount = parseInt(localStorage.getItem('fw_last_playlist_count') || '0', 10);
-
-    // remove old generated placeholders (keep template)
-    phWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      if (el !== phTemplate) el.remove();
+  try {
+    const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
+      return new Date(b.created_at) - new Date(a.created_at); // newest first
     });
 
-    if (lastCount > 0) {
-      const frag = document.createDocumentFragment();
-      for (let i = 0; i < lastCount; i++) {
-        const ph = phTemplate.cloneNode(true);
-        ph.classList.remove('playlist-placeholder-template');
-        ph.style.display = 'block';
-        frag.appendChild(ph);
-      }
-      phWrap.appendChild(frag);
-    }
-  }
-}
-    
-    const container = document.querySelector('.sortable-container');
-    const template = container?.querySelector('.playlist-card-template');
-    if (!container || !template) return;
-
-    try {
-      const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
-  return new Date(b.created_at) - new Date(a.created_at); // newest first
-});
-      localStorage.setItem('fw_last_playlist_count', String(playlists.length));
-
-      // ✅ Ensure placeholder count matches playlist count (fast)
-const placeholderWrap = document.querySelector('.playlist-placeholders-wrapper');
-
-if (placeholderWrap) {
-  const placeholderTemplate = placeholderWrap.querySelector('.playlist-placeholder-template');
-
-  if (placeholderTemplate) {
-    // remove old generated placeholders (keep template)
-    placeholderWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      if (el !== placeholderTemplate) el.remove();
+    // Clear existing cards except template
+    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+      if (i > 0) card.remove();
     });
 
-    const fragPH = document.createDocumentFragment();
-    for (let i = 0; i < playlists.length - 1; i++) {
-      const ph = placeholderTemplate.cloneNode(true);
-      ph.classList.remove('playlist-placeholder-template');
-      ph.style.display = '';
-      fragPH.appendChild(ph);
-    }
-    placeholderWrap.appendChild(fragPH);
-  }
-}
+    template.style.display = 'none';
 
-// Clear existing cards except template
-container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-  if (i > 0) card.remove();
-});
+    // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
+    const playlistCounts = await Promise.all(
+      playlists.map(async (p) => {
+        try {
+          const songs = await this.getPlaylistSongs(p.id);
+          return { id: Number(p.id), count: songs.length };
+        } catch {
+          return { id: Number(p.id), count: 0 };
+        }
+      })
+    );
 
-template.style.display = 'none';
+    const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
 
-// ✅ Pre-fetch counts in parallel (prevents sequential await lag)
-const playlistCounts = await Promise.all(
-  playlists.map(async (p) => {
-    try {
-      const songs = await this.getPlaylistSongs(p.id);
-      return { id: Number(p.id), count: songs.length };
-    } catch {
-      return { id: Number(p.id), count: 0 };
-    }
-  })
-);
+    // ✅ Build off-DOM, then append once
+    const frag = document.createDocumentFragment();
 
-      const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
+    for (const playlist of playlists) {
+      const card = template.;
 
-      // ✅ Build off-DOM, then append once
-      const frag = document.createDocumentFragment();
+      const title = card.querySelector('.playlist-title');
+      const detail = card.querySelector('.playlist-detail');
+      const image = card.querySelector('.playlist-image');
+      const link = card.querySelector('.playlist-link-block');
 
-      for (const playlist of playlists) {
-        const card = template.cloneNode(true);
+      if (title) title.textContent = playlist.name;
+      if (detail) detail.textContent = playlist.description || '';
 
-        const title = card.querySelector('.playlist-title');
-        const detail = card.querySelector('.playlist-detail');
-        const image = card.querySelector('.playlist-image');
-        const link = card.querySelector('.playlist-link-block');
+      if (image && playlist.cover_image_url) {
+        clearResponsiveImageAttrs(image);
+        image.src = playlist.cover_image_url;
 
-        if (title) title.textContent = playlist.name;
-        if (detail) detail.textContent = playlist.description || '';
-
-        if (image && playlist.cover_image_url) {
+        requestAnimationFrame(() => {
           clearResponsiveImageAttrs(image);
           image.src = playlist.cover_image_url;
-
-          requestAnimationFrame(() => {
-            clearResponsiveImageAttrs(image);
-            image.src = playlist.cover_image_url;
-          });
-        }
-
-        if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
-
-        card.dataset.playlistId = playlist.id;
-
-        const countEl = card.querySelector('.playlist-song-count');
-        if (countEl) {
-          const count = countsById.get(Number(playlist.id)) ?? 0;
-          countEl.textContent = String(count);
-        }
-
-        card.style.display = '';
-        frag.appendChild(card);
+        });
       }
 
-      // ✅ Append everything at once
-      container.appendChild(frag);
+      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
 
-      console.log(`✅ Rendered ${playlists.length} playlist cards`);
+      card.dataset.playlistId = playlist.id;
 
-      reinitWebflowIX2();
-
-      if (typeof initializePlaylistOverlay === 'function') {
-        initializePlaylistOverlay();
+      const countEl = card.querySelector('.playlist-song-count');
+      if (countEl) {
+        const count = countsById.get(Number(playlist.id)) ?? 0;
+        countEl.textContent = String(count);
       }
-    } finally {
-      // ✅ Reveal + return container to normal sizing
-      container.style.opacity = '1';
-      container.style.pointerEvents = '';
 
-      document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-  el.style.display = 'none';
-});
-    }
-  },
-
-  async initPlaylistTemplatePage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const playlistId = urlParams.get('playlist');
-    if (!playlistId) return;
-
-    this.currentPlaylistId = playlistId;
-
-    const playlist = await this.getPlaylistById(playlistId);
-    if (playlist) {
-      const header = document.querySelector('.playlist-template-title');
-      if (header) header.textContent = playlist.name;
+      card.style.display = '';
+      frag.appendChild(card);
     }
 
-    await this.renderPlaylistSongs(playlistId);
-  },
+    container.appendChild(frag);
 
-  async renderPlaylistSongs(playlistId) {
-    const container = document.querySelector('.playlist-songs-wrapper');
-    if (!container) return;
+    console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
-    const g = window.musicPlayerPersistent;
-    if (g.MASTER_DATA.length === 0) await fetchSongs();
+    reinitWebflowIX2();
 
-    const templateWrapper = container.querySelector('.template-wrapper');
-    const templateCard =
-      templateWrapper?.querySelector('.song-wrapper') || container.querySelector('.song-wrapper');
-
-    if (!templateCard) return;
-
-    const playlistSongs = await this.getPlaylistSongs(playlistId);
-
-    container.innerHTML = '';
-    if (templateWrapper) container.appendChild(templateWrapper);
-
-    if (playlistSongs.length === 0) {
-      if (templateWrapper) templateWrapper.style.display = 'none';
-      updateEmptyPlaylistMessage(container);
-      return;
+    if (typeof initializePlaylistOverlay === 'function') {
+      initializePlaylistOverlay();
     }
-
-    playlistSongs.sort((a, b) => a.position - b.position);
-
-    playlistSongs.forEach((ps) => {
-      const song = g.MASTER_DATA.find((s) => s.id === ps.song_id);
-      if (!song) return;
-
-      const card = templateCard.cloneNode(true);
-      card.style.opacity = '1';
-      card.style.pointerEvents = 'auto';
-
-      populateSongCard(card, song);
-
-      // NOTE: leaving your existing dataset assignments as-is (no behavior change)
-      card.dataset.songId = ps.id;
-
-      const removeBtn = card.querySelector('.dd-remove-from-playlist');
-      if (removeBtn) removeBtn.dataset.songId = song.id;
-
-      // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
-      card.dataset.songId = String(ps.song_id);
-
-      card.dataset.playlistPosition = ps.position;
-      container.appendChild(card);
+  } finally {
+    // ✅ Hide ALL placeholders once real cards exist
+    document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      el.style.display = 'none';
     });
 
-    if (window.Webflow?.require) reinitWebflowIX2();
+    container.style.opacity = '1';
+    container.style.pointerEvents = '';
+  }
+},
 
-    setTimeout(() => {
-      const cards = container.querySelectorAll(
-        '.song-wrapper:not(.template-wrapper .song-wrapper)'
-      );
+async initPlaylistTemplatePage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const playlistId = urlParams.get('playlist');
+  if (!playlistId) return;
 
-      if (cards.length > 0) loadWaveformBatch(Array.from(cards));
+  this.currentPlaylistId = playlistId;
 
-      cards.forEach((card) => {
-        const removeBtn = card.querySelector('.dd-remove-from-playlist');
-        if (removeBtn) removeBtn.style.display = 'flex';
-      });
-    }, 100);
-  },
-};
+  const playlist = await this.getPlaylistById(playlistId);
+  if (playlist) {
+    const header = document.querySelector('.playlist-template-title');
+    if (header) header.textContent = playlist.name;
+  }
+
+  await this.renderPlaylistSongs(playlistId);
+},
+
+async renderPlaylistSongs(playlistId) {
+  const container = document.querySelector('.playlist-songs-wrapper');
+  if (!container) return;
+
+  const g = window.musicPlayerPersistent;
+  if (g.MASTER_DATA.length === 0) await fetchSongs();
+
+  const templateWrapper = container.querySelector('.template-wrapper');
+  const templateCard =
+    templateWrapper?.querySelector('.song-wrapper') || container.querySelector('.song-wrapper');
+
+  if (!templateCard) return;
+
+  const playlistSongs = await this.getPlaylistSongs(playlistId);
+
+  container.innerHTML = '';
+  if (templateWrapper) container.appendChild(templateWrapper);
+
+  if (playlistSongs.length === 0) {
+    if (templateWrapper) templateWrapper.style.display = 'none';
+    updateEmptyPlaylistMessage(container);
+    return;
+  }
+
+  playlistSongs.sort((a, b) => a.position - b.position);
+
+  playlistSongs.forEach((ps) => {
+    const song = g.MASTER_DATA.find((s) => s.id === ps.song_id);
+    if (!song) return;
+
+    const card = templateCard.cloneNode(true);
+    card.style.opacity = '1';
+    card.style.pointerEvents = 'auto';
+
+    populateSongCard(card, song);
+
+    // NOTE: leaving your existing dataset assignments as-is (no behavior change)
+    card.dataset.songId = ps.id;
+
+    const removeBtn = card.querySelector('.dd-remove-from-playlist');
+    if (removeBtn) removeBtn.dataset.songId = song.id;
+
+    // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
+    card.dataset.songId = String(ps.song_id);
+
+    card.dataset.playlistPosition = ps.position;
+    container.appendChild(card);
+  });
+
+  if (window.Webflow?.require) reinitWebflowIX2();
+
+  setTimeout(() => {
+    const cards = container.querySelectorAll(
+      '.song-wrapper:not(.template-wrapper .song-wrapper)'
+    );
+
+    if (cards.length > 0) loadWaveformBatch(Array.from(cards));
+
+    cards.forEach((card) => {
+      const removeBtn = card.querySelector('.dd-remove-from-playlist');
+      if (removeBtn) removeBtn.style.display = 'flex';
+    });
+  }, 100);
+},
 
 /* ============================================================
    EXPORT
