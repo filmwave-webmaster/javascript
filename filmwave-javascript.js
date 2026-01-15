@@ -1509,7 +1509,7 @@ async function displayFeaturedSongs(limit = 6) {
   const featuredSongs = g.MASTER_DATA.slice(-limit).reverse();
   
   featuredSongs.forEach(song => {
-    const newCard = templateCard.;
+    const newCard = templateCard.cloneNode(true);
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
