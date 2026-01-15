@@ -6525,9 +6525,19 @@ const PlaylistManager = {
         return;
       }
 
-     if (e.target.closest('.add-to-playlist-save-button')) {
+    if (e.target.closest('.add-to-playlist-save-button')) {
   e.preventDefault();
 
+  // If newly created playlist is selected, treat it as "most recent"
+  const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
+  if (
+    lastCreatedId &&
+    this.selectedPlaylistIds.map(String).includes(String(lastCreatedId))
+  ) {
+    this._setLastClickedPlaylistForAddModal(String(lastCreatedId));
+  }
+
+  // Clear one-time helpers AFTER promotion
   if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
     this._clearLastCreatedPlaylistForAddModal();
   }
