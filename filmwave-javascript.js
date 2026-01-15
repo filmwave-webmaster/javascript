@@ -7605,7 +7605,8 @@ async renderPlaylistSongs(playlistId) {
       if (removeBtn) removeBtn.style.display = 'flex';
     });
   }, 100);
-}
+},
+};
 
 /* ============================================================
    EXPORT
