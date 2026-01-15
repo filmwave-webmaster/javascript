@@ -6850,31 +6850,60 @@ const PlaylistManager = {
 
       await this.getUserPlaylists(true);
 
-      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+     const playlist = await this.createPlaylist(name, description);
 
-      if (addModalOpen) {
-        await this.populateAddToPlaylistModal();
-      }
+// ✅ Refresh playlists
+const refreshed = await this.getUserPlaylists(true);
 
-      invalidateAddToPlaylistDropdownCache();
+// ✅ Move newly created playlist to top (both UI + cache)
+if (playlist?.id && Array.isArray(refreshed)) {
+  const createdId = Number(playlist.id);
+  const created = refreshed.find(p => Number(p.id) === createdId);
+  const rest = refreshed.filter(p => Number(p.id) !== createdId);
+  this.playlists = created ? [created, ...rest] : refreshed;
+}
 
-      if (isPlaylistsGridPage()) {
-        this.playlists = [];
-        await this.renderPlaylistsGrid();
-      }
+// Detect if Add-to-Playlist modal is open
+const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
 
-      if (saveBtn) saveBtn.textContent = originalText;
+// ✅ If created from a song card: add the song FIRST (so modal will show it selected)
+if (this.pendingSongToAdd?.songId) {
+  try {
+    const songs = await this.getPlaylistSongs(playlist.id);
+    await this.addSongToPlaylist(
+      playlist.id,
+      this.pendingSongToAdd.songId,
+      songs.length + 1
+    );
+  } catch (err) {
+    console.error('Error auto-adding song to newly created playlist:', err);
+  }
+}
 
-      this.closeCreatePlaylistModal();
+// ✅ If modal is open, repopulate AFTER auto-add so it shows selected
+if (addModalOpen) {
+  await this.populateAddToPlaylistModal();
+}
 
-      if (this.pendingSongToAdd?.songId) {
-        await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1);
-        this.showNotification('Playlist created and song added!');
-        this.pendingSongToAdd = null;
-      } else {
-        this.showNotification(`Playlist "${name}" created!`);
-      }
+invalidateAddToPlaylistDropdownCache();
+
+// ✅ If on playlists page, render grid with updated this.playlists (new at top)
+if (isPlaylistsGridPage()) {
+  await this.renderPlaylistsGrid();
+}
+
+if (saveBtn) saveBtn.textContent = originalText;
+
+this.closeCreatePlaylistModal();
+
+// ✅ Notifications + clear state
+if (this.pendingSongToAdd?.songId) {
+  this.showNotification('Playlist created and song added!');
+  this.pendingSongToAdd = null;
+} else {
+  this.showNotification(`Playlist "${name}" created!`);
+}
 
       this.pendingCoverImageBase64 = null;
 
