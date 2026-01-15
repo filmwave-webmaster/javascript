@@ -6492,26 +6492,21 @@ const PlaylistManager = {
         return;
       }
 
-      const playlistRow = e.target.closest('.add-to-playlist-row');
-if (playlistRow && playlistRow.dataset.playlistId) {
-  e.preventDefault();
+            const playlistRow = e.target.closest('.add-to-playlist-row');
+      if (playlistRow && playlistRow.dataset.playlistId) {
+        e.preventDefault();
 
-  // ✅ once they actually click a playlist, stop pinning "last created"
-  const playlistRow = e.target.closest('.add-to-playlist-row');
-if (playlistRow && playlistRow.dataset.playlistId) {
-  e.preventDefault();
+        // ✅ once they click anything, stop pinning "last created"
+        if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+          this._clearLastCreatedPlaylistForAddModal();
+        }
 
-  // ✅ once they click anything, stop pinning "last created"
-  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
-    this._clearLastCreatedPlaylistForAddModal();
-  }
+        // ✅ remember last clicked (applies next open)
+        this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
 
-  // ✅ remember last clicked (applies next open, not instantly)
-  this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
-
-  this.togglePlaylistSelection(playlistRow);
-  return;
-}
+        this.togglePlaylistSelection(playlistRow);
+        return;
+      }
 
      if (e.target.closest('.add-to-playlist-save-button')) {
   e.preventDefault();
