@@ -7390,9 +7390,6 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   },
 
   async renderPlaylistsGrid() {
-    const placeholder = document.querySelector('.playlist-placeholder');
-    if (placeholder) placeholder.style.display = 'block';
-    
     const container = document.querySelector('.sortable-container');
     const template = container?.querySelector('.playlist-card-template');
     if (!container || !template) return;
