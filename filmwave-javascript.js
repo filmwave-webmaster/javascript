@@ -7431,7 +7431,9 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   async renderPlaylistsGrid() {
 
     // ✅ show placeholders immediately using last-known count
-const phWrap = document.querySelector('.playlist-placeholders-wrapper') || document;
+const phWrap = document.querySelector('.playlist-placeholders-wrapper');
+if (!phWrap) return; // or just skip placeholders
+
 const phTemplate = phWrap.querySelector('.playlist-placeholder-template');
 
 if (phTemplate) {
