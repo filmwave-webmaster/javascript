@@ -7438,6 +7438,24 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   return new Date(b.created_at) - new Date(a.created_at); // newest first
 });
 
+      // ✅ Ensure placeholder count matches playlist count (fast)
+const placeholderWrap = document.querySelector('.playlist-placeholders-wrapper') || document;
+const placeholderTemplate = placeholderWrap.querySelector('.playlist-placeholder-template');
+if (placeholderTemplate) {
+  // remove old generated placeholders (keep template)
+  placeholderWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    if (el !== placeholderTemplate) el.remove();
+  });
+
+  const fragPH = document.createDocumentFragment();
+  for (let i = 0; i < playlists.length - 1; i++) {
+    const ph = placeholderTemplate.cloneNode(true);
+    ph.classList.remove('playlist-placeholder-template');
+    fragPH.appendChild(ph);
+  }
+  placeholderWrap.appendChild(fragPH);
+}
+
       // Clear existing cards except template
       container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
         if (i > 0) card.remove();
