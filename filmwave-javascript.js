@@ -7041,7 +7041,7 @@ _renderAddToPlaylistSelectedSongUI() {
 },
   //End
 
- closeAddToPlaylistModal() {
+closeAddToPlaylistModal() {
   const modal = document.querySelector('.add-to-playlist-module-wrapper');
   if (modal) modal.style.display = 'none';
 
@@ -7049,12 +7049,10 @@ _renderAddToPlaylistSelectedSongUI() {
   this.selectedPlaylistIds = [];
   this.originalPlaylistIds = [];
 
+  // ✅ clear ONLY the auto-select id when closing (so selection doesn't stick)
   if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
     this._clearLastCreatedPlaylistAutoSelectId();
   }
-}
-
-  // ✅ DO NOT clear fw_last_created_playlist_id here (this keeps it pinned on top)
 },
 
   async populateAddToPlaylistModal() {
