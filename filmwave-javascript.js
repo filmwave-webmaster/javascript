@@ -7085,16 +7085,24 @@ if (lastCreatedId || lastClickedId) {
       }
     }
 
-    playlists.forEach((playlist) => {
-      const row = template.cloneNode(true);
-      const title = row.querySelector('.add-to-playlist-title');
-      const icon = row.querySelector('.add-to-playlist-icon');
+   playlists.forEach((playlist) => {
+  const row = template.cloneNode(true);
+  const title = row.querySelector('.add-to-playlist-title');
+  const icon = row.querySelector('.add-to-playlist-icon');
 
-      if (title) title.textContent = playlist.name;
-      if (icon) icon.style.opacity = '0';
+  if (title) title.textContent = playlist.name;
+  if (icon) icon.style.opacity = '0';
 
-      row.dataset.playlistId = playlist.id;
-      row.style.display = '';
+  row.dataset.playlistId = playlist.id;
+  row.style.display = '';
+
+  // ✅ AUTO-SELECT newly created playlist
+  const lastCreatedId = this._getLastCreatedPlaylistForAddModal();
+  if (lastCreatedId && String(playlist.id) === String(lastCreatedId)) {
+    this.selectedPlaylistIds.push(playlist.id);
+    this.originalPlaylistIds.push(playlist.id);
+    if (icon) icon.style.opacity = '1';
+  }
 
       row.onmouseenter = () => {
         if (!this.selectedPlaylistIds.includes(playlist.id)) {
