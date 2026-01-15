@@ -7430,29 +7430,30 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
 
   async renderPlaylistsGrid() {
 
-    // ✅ show placeholders immediately using last-known count
+    // ✅ show placeholders immediately using last-known count (do NOT stop rendering if wrapper missing)
 const phWrap = document.querySelector('.playlist-placeholders-wrapper');
-if (!phWrap) return; // or just skip placeholders
 
-const phTemplate = phWrap.querySelector('.playlist-placeholder-template');
+if (phWrap) {
+  const phTemplate = phWrap.querySelector('.playlist-placeholder-template');
 
-if (phTemplate) {
-  const lastCount = parseInt(localStorage.getItem('fw_last_playlist_count') || '0', 10);
+  if (phTemplate) {
+    const lastCount = parseInt(localStorage.getItem('fw_last_playlist_count') || '0', 10);
 
-  // remove old generated placeholders (keep template)
-  phWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
-    if (el !== phTemplate) el.remove();
-  });
+    // remove old generated placeholders (keep template)
+    phWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      if (el !== phTemplate) el.remove();
+    });
 
-  if (lastCount > 0) {
-    const frag = document.createDocumentFragment();
-    for (let i = 0; i < lastCount; i++) {
-      const ph = phTemplate.cloneNode(true);
-      ph.classList.remove('playlist-placeholder-template');
-      ph.style.display = '';
-      frag.appendChild(ph);
+    if (lastCount > 0) {
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < lastCount; i++) {
+        const ph = phTemplate.cloneNode(true);
+        ph.classList.remove('playlist-placeholder-template');
+        ph.style.display = '';
+        frag.appendChild(ph);
+      }
+      phWrap.appendChild(frag);
     }
-    phWrap.appendChild(frag);
   }
 }
     
