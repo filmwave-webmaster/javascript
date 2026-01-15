@@ -7473,8 +7473,9 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
       container.style.opacity = '1';
       container.style.pointerEvents = '';
 
-      const placeholder = document.querySelector('.playlist-placeholder');
-      if (placeholder) placeholder.style.display = 'none';
+      document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  el.style.display = 'none';
+});
     }
   },
 
