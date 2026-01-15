@@ -5983,12 +5983,6 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image too large. Max size is 5MB.');
-      if (typeof onCancel === 'function') onCancel();
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof onPicked === 'function') {
@@ -6002,11 +5996,41 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
 }
 
 /* ============================================================
+   IMAGE RESIZE
+   ============================================================ */
+
+async function downsampleImageBase64(dataUrl, {
+  maxWidth = 800,
+  maxHeight = 800,
+  quality = 0.8,
+  mimeType = 'image/jpeg',
+} = {}) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      resolve(canvas.toDataURL(mimeType, quality));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+/* ============================================================
    FILE UPLOAD DRAG AND DROP
    ============================================================ */
 
 (function setupCreatePlaylistDragDropCover() {
-  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
   const DROPZONE_SEL = '.new-playlist-upload-field';
   const TEXT_SEL = '.new-plalyist-upload-field-text';
   const ICON_SEL = '.new-playlist-file-icon';
@@ -6122,16 +6146,18 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       alert('Please drop an image file.');
       return;
     }
-    if (file.size > MAX_BYTES) {
-      alert('Image too large. Max size is 5MB.');
-      return;
-    }
 
     try {
       const base64 = await fileToBase64(file);
 
       if (window.PlaylistManager) {
-        window.PlaylistManager.pendingCoverImageBase64 = base64;
+        downsampleImageBase64(base64, { maxWidth: 800, maxHeight: 800, quality: 0.8 })
+  .then((small) => {
+    window.PlaylistManager.pendingCoverImageBase64 = small;
+  })
+  .catch(() => {
+    window.PlaylistManager.pendingCoverImageBase64 = base64; // fallback
+  });
       }
 
       updateDropUI(modal, file.name);
@@ -6158,7 +6184,13 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     pickImageAsBase64({
       onPicked: ({ base64, file }) => {
         if (window.PlaylistManager) {
-          window.PlaylistManager.pendingCoverImageBase64 = base64;
+          downsampleImageBase64(base64, { maxWidth: 800, maxHeight: 800, quality: 0.8 })
+  .then((small) => {
+    window.PlaylistManager.pendingCoverImageBase64 = small;
+  })
+  .catch(() => {
+    window.PlaylistManager.pendingCoverImageBase64 = base64; // fallback
+  });
         }
         updateDropUI(modal, file?.name || 'Image selected');
         console.log('🖼️ Create playlist cover set via picker:', file?.name);
