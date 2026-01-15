@@ -7096,13 +7096,14 @@ if (lastCreatedId || lastClickedId) {
   row.dataset.playlistId = playlist.id;
   row.style.display = '';
 
-  // ✅ AUTO-SELECT newly created playlist
-  const lastCreatedId = this._getLastCreatedPlaylistForAddModal();
-  if (lastCreatedId && String(playlist.id) === String(lastCreatedId)) {
+ // ✅ AUTO-SELECT newly created playlist (selected yes, original NO)
+const lastCreatedId = this._getLastCreatedPlaylistForAddModal();
+if (lastCreatedId && String(playlist.id) === String(lastCreatedId)) {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
     this.selectedPlaylistIds.push(playlist.id);
-    this.originalPlaylistIds.push(playlist.id);
-    if (icon) icon.style.opacity = '1';
   }
+  if (icon) icon.style.opacity = '1';
+}
 
       row.onmouseenter = () => {
         if (!this.selectedPlaylistIds.includes(playlist.id)) {
