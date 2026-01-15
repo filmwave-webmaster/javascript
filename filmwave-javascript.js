@@ -909,23 +909,20 @@ function populateSongCard(cardElement, song) {
         }
         if (stemsList) {
           const stemLinkTemplate = stemsList.querySelector('.stem-link-wrapper');
-if (stemLinkTemplate) {
-  const templateCopy = stemLinkTemplate.cloneNode(true);
-  stemsList.innerHTML = '';
-
-  stems.forEach((stem) => {
-    const stemRow = templateCopy.cloneNode(true);
-    const link = stemRow.querySelector('.stem-link');
-
-    if (link) {
-      link.textContent = stem.name;
-      link.href = stem.url;
-      link.setAttribute('download', '');
-    }
-
-    stemsList.appendChild(stemRow);
-  });
-}
+          if (stemLinkTemplate) {
+            const templateCopy = stemLinkTemplate.cloneNode(true);
+            stemsList.innerHTML = '';
+            stems.forEach(stem => {
+              const stemRow = templateCopy.cloneNode(true);
+              const link = stemRow.querySelector('.stem-link');
+              if (link) {
+                link.textContent = stem.name;
+                link.href = stem.url;
+                link.setAttribute('download', '');
+              }
+              stemsList.appendChild(stemRow);
+            });
+          }
         }
       } else {
         stemsWrapper.style.display = 'none';
@@ -1461,14 +1458,14 @@ function displaySongs(songs) {
   if (!templateCard) return;
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
- songs.forEach((song) => {
-  const newCard = templateCard.cloneNode(true);
-  newCard.style.opacity = '1';
-  newCard.style.position = 'relative';
-  newCard.style.pointerEvents = 'auto';
-  populateSongCard(newCard, song);
-  container.appendChild(newCard);
-});
+  songs.forEach(song => {
+    const newCard = templateCard.cloneNode(true);
+    newCard.style.opacity = '1';
+    newCard.style.position = 'relative';
+    newCard.style.pointerEvents = 'auto';
+    populateSongCard(newCard, song);
+    container.appendChild(newCard);
+  });
   if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
     window.Webflow.destroy();
     window.Webflow.ready();
@@ -1575,7 +1572,7 @@ async function displayFavoriteSongs(limit = null) {
   
   // Create song cards
   songsToDisplay.forEach(song => {
-    const newCard = templateCard.;
+    const newCard = templateCard.cloneNode(true);
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
@@ -2899,7 +2896,7 @@ function reinitializeTabs() {
     
     allLinks.forEach((link, linkIndex) => {
       // Remove old listeners by cloning
-      const newLink = link.;
+      const newLink = link.cloneNode(true);
       link.parentNode.replaceChild(newLink, link);
       
       newLink.addEventListener('click', function(e) {
@@ -3804,7 +3801,7 @@ function initializeProfileSortable() {
   // 4. Setup organize/save button
   if (organizeButton) {
     // Clone to remove old listeners
-    const newButton = organizeButton.;
+    const newButton = organizeButton.cloneNode(true);
     organizeButton.parentNode.replaceChild(newButton, organizeButton);
     
     newButton.addEventListener('click', function(e) {
@@ -4047,7 +4044,7 @@ function initializePlaylistOverlay() {
   // Show overlay when edit icon is clicked
   editIcons.forEach(editIcon => {
     // Clone to remove old listeners
-    const newEditIcon = editIcon.;
+    const newEditIcon = editIcon.cloneNode(true);
     editIcon.parentNode.replaceChild(newEditIcon, editIcon);
     
     newEditIcon.addEventListener('click', function(e) {
@@ -4071,7 +4068,7 @@ if (textEl && !textEl.dataset.originalText) {
   
   // Hide overlay when X button is clicked
   closeButtons.forEach(closeBtn => {
-    const newCloseBtn = closeBtn.;
+    const newCloseBtn = closeBtn.cloneNode(true);
     closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
     
     newCloseBtn.addEventListener('click', function(e) {
@@ -4370,7 +4367,7 @@ if (loginForm) {
   console.log('🔐 Attaching login form handler');
   
   // Remove old listener by cloning
-  const newLoginForm = loginForm.;
+  const newLoginForm = loginForm.cloneNode(true);
   loginForm.parentNode.replaceChild(newLoginForm, loginForm);
   
   newLoginForm.addEventListener('submit', function(e) {
@@ -4403,7 +4400,7 @@ if (loginForm) {
   if (signupForm) {
     console.log('📝 Attaching signup form handler');
     
-    const newSignupForm = signupForm.;
+    const newSignupForm = signupForm.cloneNode(true);
     signupForm.parentNode.replaceChild(newSignupForm, signupForm);
     
     newSignupForm.addEventListener('submit', function(e) {
@@ -4838,8 +4835,8 @@ if (typeof barba !== 'undefined') {
         if (!visibleToggle || !hiddenToggle) return;
         
         // Clone to remove old listeners
-        const newVisibleToggle = visibleToggle.;
-        const newHiddenToggle = hiddenToggle.;
+        const newVisibleToggle = visibleToggle.cloneNode(true);
+        const newHiddenToggle = hiddenToggle.cloneNode(true);
         visibleToggle.parentNode.replaceChild(newVisibleToggle, visibleToggle);
         hiddenToggle.parentNode.replaceChild(newHiddenToggle, hiddenToggle);
         
@@ -5986,6 +5983,12 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image too large. Max size is 5MB.');
+      if (typeof onCancel === 'function') onCancel();
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof onPicked === 'function') {
@@ -5999,41 +6002,11 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
 }
 
 /* ============================================================
-   IMAGE RESIZE
-   ============================================================ */
-
-async function downsampleImageBase64(dataUrl, {
-  maxWidth = 800,
-  maxHeight = 800,
-  quality = 0.8,
-  mimeType = 'image/jpeg',
-} = {}) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-
-      resolve(canvas.toDataURL(mimeType, quality));
-    };
-    img.onerror = reject;
-    img.src = dataUrl;
-  });
-}
-
-/* ============================================================
    FILE UPLOAD DRAG AND DROP
    ============================================================ */
 
 (function setupCreatePlaylistDragDropCover() {
+  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
   const DROPZONE_SEL = '.new-playlist-upload-field';
   const TEXT_SEL = '.new-plalyist-upload-field-text';
   const ICON_SEL = '.new-playlist-file-icon';
@@ -6149,18 +6122,16 @@ async function downsampleImageBase64(dataUrl, {
       alert('Please drop an image file.');
       return;
     }
+    if (file.size > MAX_BYTES) {
+      alert('Image too large. Max size is 5MB.');
+      return;
+    }
 
     try {
       const base64 = await fileToBase64(file);
 
       if (window.PlaylistManager) {
-        downsampleImageBase64(base64, { maxWidth: 800, maxHeight: 800, quality: 0.8 })
-  .then((small) => {
-    window.PlaylistManager.pendingCoverImageBase64 = small;
-  })
-  .catch(() => {
-    window.PlaylistManager.pendingCoverImageBase64 = base64; // fallback
-  });
+        window.PlaylistManager.pendingCoverImageBase64 = base64;
       }
 
       updateDropUI(modal, file.name);
@@ -6187,13 +6158,7 @@ async function downsampleImageBase64(dataUrl, {
     pickImageAsBase64({
       onPicked: ({ base64, file }) => {
         if (window.PlaylistManager) {
-          downsampleImageBase64(base64, { maxWidth: 800, maxHeight: 800, quality: 0.8 })
-  .then((small) => {
-    window.PlaylistManager.pendingCoverImageBase64 = small;
-  })
-  .catch(() => {
-    window.PlaylistManager.pendingCoverImageBase64 = base64; // fallback
-  });
+          window.PlaylistManager.pendingCoverImageBase64 = base64;
         }
         updateDropUI(modal, file?.name || 'Image selected');
         console.log('🖼️ Create playlist cover set via picker:', file?.name);
@@ -6285,33 +6250,7 @@ const PlaylistManager = {
     _getLastClickedPlaylistForAddModal() {
     return localStorage.getItem('fw_last_clicked_playlist_id');
     },
-
-    _setLastCreatedPlaylistForAddModal(playlistId) {
-    if (!playlistId) return;
-    localStorage.setItem('fw_last_created_playlist_id', String(playlistId));
-    },
   
-    _getLastCreatedPlaylistForAddModal() {
-    return localStorage.getItem('fw_last_created_playlist_id');
-    },
-  
-    _clearLastCreatedPlaylistForAddModal() {
-    localStorage.removeItem('fw_last_created_playlist_id');
-    },
-
-    _setLastCreatedPlaylistAutoSelectId(playlistId) {
-    if (!playlistId) return;
-    localStorage.setItem('fw_last_created_playlist_autoselect_id', String(playlistId));
-    },
-  
-    _getLastCreatedPlaylistAutoSelectId() {
-    return localStorage.getItem('fw_last_created_playlist_autoselect_id');
-    },
-  
-    _clearLastCreatedPlaylistAutoSelectId() {
-    localStorage.removeItem('fw_last_created_playlist_autoselect_id');
-    },
-
   /* ----------------------------
      INIT
      ---------------------------- */
@@ -6477,12 +6416,8 @@ const PlaylistManager = {
      ============================================================ */
 
   setupEventListeners() {
-    // ✅ HARD GUARD: prevents double-install even if this script loads twice
-if (window.__FW_PLAYLIST_CLICK_LISTENERS_INSTALLED) return;
-window.__FW_PLAYLIST_CLICK_LISTENERS_INSTALLED = true;
-
-if (this.listenersInitialized) return;
-this.listenersInitialized = true;
+    if (this.listenersInitialized) return;
+    this.listenersInitialized = true;
 
     // Disabled to avoid double-trigger
     // setupCoverImageUpload('.add-cover-image');
@@ -6544,50 +6479,23 @@ this.listenersInitialized = true;
         return;
       }
 
-            const playlistRow = e.target.closest('.add-to-playlist-row');
+      const playlistRow = e.target.closest('.add-to-playlist-row');
       if (playlistRow && playlistRow.dataset.playlistId) {
-        e.preventDefault();
+      e.preventDefault();
 
-        // ✅ once they click anything, stop pinning "last created"
-        if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
-          this._clearLastCreatedPlaylistForAddModal();
-        }
+      // ✅ remember last clicked (applies next open, not instantly)
+      this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
 
-        if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
-          this._clearLastCreatedPlaylistAutoSelectId();
-        }
-
-        // ✅ remember last clicked (applies next open)
-        this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
-
-        this.togglePlaylistSelection(playlistRow);
-        return;
+      this.togglePlaylistSelection(playlistRow);
+      return;
       }
 
-    if (e.target.closest('.add-to-playlist-save-button')) {
-  e.preventDefault();
 
-  // If newly created playlist is selected, treat it as "most recent"
-  const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
-  if (
-    lastCreatedId &&
-    this.selectedPlaylistIds.map(String).includes(String(lastCreatedId))
-  ) {
-    this._setLastClickedPlaylistForAddModal(String(lastCreatedId));
-  }
-
-  // Clear one-time helpers AFTER promotion
-  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
-    this._clearLastCreatedPlaylistForAddModal();
-  }
-
-  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
-    this._clearLastCreatedPlaylistAutoSelectId();
-  }
-
-  this.saveToSelectedPlaylists();
-  return;
-}
+      if (e.target.closest('.add-to-playlist-save-button')) {
+        e.preventDefault();
+        this.saveToSelectedPlaylists();
+        return;
+      }
 
       /* ----------------------------
          CREATE PLAYLIST MODAL
@@ -6643,36 +6551,28 @@ this.listenersInitialized = true;
          ---------------------------- */
 
       const deleteBtn = e.target.closest('.playlist-delete-button');
-if (deleteBtn) {
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+      if (deleteBtn) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  if (deleteBtn.dataset.busy === 'true') return; // ✅ prevent double fire
-  deleteBtn.dataset.busy = 'true';
+        const card = deleteBtn.closest('.playlist-card-template');
+        const playlistId = card?.dataset.playlistId;
+        const title = card?.querySelector('.playlist-title')?.textContent;
 
-  const card = deleteBtn.closest('.playlist-card-template');
-  const playlistId = card?.dataset.playlistId;
-  const title = card?.querySelector('.playlist-title')?.textContent;
-
-  if (playlistId && confirm(`Delete "${title}"?`)) {
-    this.deletePlaylist(playlistId)
-      .then(async () => {
-        card.remove();
-        await this.getUserPlaylists(true);
-        invalidateAddToPlaylistDropdownCache();
-        this.showNotification('Playlist deleted');
-      })
-      .catch(() => {
-        this.showNotification('Error deleting playlist', 'error');
-        deleteBtn.dataset.busy = 'false';
-      });
-  } else {
-    deleteBtn.dataset.busy = 'false'; // reset if they cancel
-  }
-
-  return;
-}
+        if (playlistId && confirm(`Delete "${title}"?`)) {
+          this.deletePlaylist(playlistId)
+            .then(async () => {
+              card.remove();
+              await this.getUserPlaylists(true);
+              invalidateAddToPlaylistDropdownCache();
+              this.showNotification('Playlist deleted');
+            })
+            .catch(() => {
+              this.showNotification('Error deleting playlist', 'error');
+            });
+        }
+        return;
+      }
 
       /* ----------------------------
          REMOVE SONG FROM PLAYLIST (playlist template)
@@ -6947,20 +6847,11 @@ if (deleteBtn) {
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
       const playlist = await this.createPlaylist(name, description);
-    this._setLastCreatedPlaylistForAddModal(playlist.id); // keep “pin to top”
-
-// ✅ ONLY set auto-select if the Add-to-Playlist modal is currently open
-const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
-
-if (addModalOpen) {
-  this._setLastCreatedPlaylistAutoSelectId(playlist.id);
-} else {
-  // created from playlists page etc → DO NOT auto-checkmark later
-  this._clearLastCreatedPlaylistAutoSelectId();
-}
 
       await this.getUserPlaylists(true);
+
+      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
 
       if (addModalOpen) {
         await this.populateAddToPlaylistModal();
@@ -7105,19 +6996,13 @@ _renderAddToPlaylistSelectedSongUI() {
 },
   //End
 
-closeAddToPlaylistModal() {
-  const modal = document.querySelector('.add-to-playlist-module-wrapper');
-  if (modal) modal.style.display = 'none';
+  closeAddToPlaylistModal() {
+    const modal = document.querySelector('.add-to-playlist-module-wrapper');
+    if (modal) modal.style.display = 'none';
 
-  this.currentSongForPlaylist = null;
-  this.selectedPlaylistIds = [];
-  this.originalPlaylistIds = [];
-
-  // ✅ clear ONLY the auto-select id when closing (so selection doesn't stick)
-  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
-    this._clearLastCreatedPlaylistAutoSelectId();
-  }
-},
+    this.currentSongForPlaylist = null;
+    this.selectedPlaylistIds = [];
+  },
 
   async populateAddToPlaylistModal() {
     const container = document.querySelector('.module-bod-container');
@@ -7137,28 +7022,18 @@ closeAddToPlaylistModal() {
 
     const playlists = await this.getUserPlaylists();
 
-// ✅ Sort so last clicked playlist appears first (next time modal opens)
-// 1) last created playlist (if any)
-// 2) last clicked playlist (if any)
-// 3) otherwise keep original order
-const lastCreatedId = this._getLastCreatedPlaylistForAddModal();
-const lastClickedId = this._getLastClickedPlaylistForAddModal();
+    // ✅ Sort so last clicked playlist appears first (next time modal opens)
+    const lastClickedId = this._getLastClickedPlaylistForAddModal();
+    if (lastClickedId) {
+      playlists.sort((a, b) => {
+        const aIs = String(a.id) === String(lastClickedId);
+        const bIs = String(b.id) === String(lastClickedId);
+        if (aIs && !bIs) return -1;
+        if (!aIs && bIs) return 1;
+        return 0; // keep original order otherwise
+      });
+    }
 
-if (lastCreatedId || lastClickedId) {
-  playlists.sort((a, b) => {
-    const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
-    const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
-    if (aCreated && !bCreated) return -1;
-    if (!aCreated && bCreated) return 1;
-
-    const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
-    const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
-    if (aClicked && !bClicked) return -1;
-    if (!aClicked && bClicked) return 1;
-
-    return 0;
-  });
-}
 
     const songInPlaylists = [];
     this.originalPlaylistIds = [];
@@ -7176,25 +7051,16 @@ if (lastCreatedId || lastClickedId) {
       }
     }
 
-   playlists.forEach((playlist) => {
-  const row = template.cloneNode(true);
-  const title = row.querySelector('.add-to-playlist-title');
-  const icon = row.querySelector('.add-to-playlist-icon');
+    playlists.forEach((playlist) => {
+      const row = template.cloneNode(true);
+      const title = row.querySelector('.add-to-playlist-title');
+      const icon = row.querySelector('.add-to-playlist-icon');
 
-  if (title) title.textContent = playlist.name;
-  if (icon) icon.style.opacity = '0';
+      if (title) title.textContent = playlist.name;
+      if (icon) icon.style.opacity = '0';
 
-  row.dataset.playlistId = playlist.id;
-  row.style.display = '';
-
-// ✅ AUTO-SELECT newly created playlist (one-time via separate key)
-const autoSelectId = this._getLastCreatedPlaylistAutoSelectId();
-if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
-  if (!this.selectedPlaylistIds.includes(playlist.id)) {
-    this.selectedPlaylistIds.push(playlist.id);
-  }
-  if (icon) icon.style.opacity = '1';
-}
+      row.dataset.playlistId = playlist.id;
+      row.style.display = '';
 
       row.onmouseenter = () => {
         if (!this.selectedPlaylistIds.includes(playlist.id)) {
@@ -7211,18 +7077,14 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
       };
 
       if (songInPlaylists.includes(playlist.id)) {
-  if (!this.selectedPlaylistIds.includes(playlist.id)) {
-    this.selectedPlaylistIds.push(playlist.id);
-  }
-  if (!this.originalPlaylistIds.includes(playlist.id)) {
-    this.originalPlaylistIds.push(playlist.id);
-  }
-  if (icon) icon.style.opacity = '1';
-}
+        this.selectedPlaylistIds.push(playlist.id);
+        this.originalPlaylistIds.push(playlist.id);
+        if (icon) icon.style.opacity = '1';
+      }
 
       container.appendChild(row);
     });
-    
+
     container.style.opacity = '1';
   },
 
@@ -7425,190 +7287,180 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
      PAGE FEATURES
      ============================================================ */
 
-setupPageSpecificFeatures() {
-  if (isPlaylistsGridPage()) this.initPlaylistsPage();
-  if (isPlaylistTemplatePage()) this.initPlaylistTemplatePage();
-},
+  setupPageSpecificFeatures() {
+    if (isPlaylistsGridPage()) this.initPlaylistsPage();
+    if (isPlaylistTemplatePage()) this.initPlaylistTemplatePage();
+  },
 
-async initPlaylistsPage() {
-  if (!this.currentUserId) return;
-  await this.renderPlaylistsGrid();
-},
+  async initPlaylistsPage() {
+    if (!this.currentUserId) return;
+    await this.renderPlaylistsGrid();
+  },
 
-async renderPlaylistsGrid() {
-  const container = document.querySelector('.sortable-container');
-  const template = container?.querySelector('.playlist-card-template');
-  if (!container || !template) return;
+  async renderPlaylistsGrid() {
+    const container = document.querySelector('.sortable-container');
+    const template = container?.querySelector('.playlist-card-template');
+    if (!container || !template) return;
 
-  // ✅ REVERT: show existing placeholders immediately (no cloning, no localStorage)
-  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-    el.style.display = ''; // back to CSS default
-  });
+    try {
+      const playlists = await this.getUserPlaylists();
 
-  try {
-    const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
-      return new Date(b.created_at) - new Date(a.created_at); // newest first
-    });
+      // Clear existing cards except template
+      container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+        if (i > 0) card.remove();
+      });
 
-    // Clear existing cards except template
-    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-      if (i > 0) card.remove();
-    });
+      template.style.display = 'none';
 
-    template.style.display = 'none';
+      // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
+      const playlistCounts = await Promise.all(
+        playlists.map(async (p) => {
+          try {
+            const songs = await this.getPlaylistSongs(p.id);
+            return { id: Number(p.id), count: songs.length };
+          } catch {
+            return { id: Number(p.id), count: 0 };
+          }
+        })
+      );
 
-    // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
-    const playlistCounts = await Promise.all(
-      playlists.map(async (p) => {
-        try {
-          const songs = await this.getPlaylistSongs(p.id);
-          return { id: Number(p.id), count: songs.length };
-        } catch {
-          return { id: Number(p.id), count: 0 };
-        }
-      })
-    );
+      const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
 
-    const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
+      // ✅ Build off-DOM, then append once
+      const frag = document.createDocumentFragment();
 
-    // ✅ Build off-DOM, then append once
-    const frag = document.createDocumentFragment();
+      for (const playlist of playlists) {
+        const card = template.cloneNode(true);
 
-    for (const playlist of playlists) {
-      const card = template.cloneNode(true);
+        const title = card.querySelector('.playlist-title');
+        const detail = card.querySelector('.playlist-detail');
+        const image = card.querySelector('.playlist-image');
+        const link = card.querySelector('.playlist-link-block');
 
-      const title = card.querySelector('.playlist-title');
-      const detail = card.querySelector('.playlist-detail');
-      const image = card.querySelector('.playlist-image');
-      const link = card.querySelector('.playlist-link-block');
+        if (title) title.textContent = playlist.name;
+        if (detail) detail.textContent = playlist.description || '';
 
-      if (title) title.textContent = playlist.name;
-      if (detail) detail.textContent = playlist.description || '';
-
-      if (image && playlist.cover_image_url) {
-        clearResponsiveImageAttrs(image);
-        image.src = playlist.cover_image_url;
-
-        requestAnimationFrame(() => {
+        if (image && playlist.cover_image_url) {
           clearResponsiveImageAttrs(image);
           image.src = playlist.cover_image_url;
-        });
+
+          requestAnimationFrame(() => {
+            clearResponsiveImageAttrs(image);
+            image.src = playlist.cover_image_url;
+          });
+        }
+
+        if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+
+        card.dataset.playlistId = playlist.id;
+
+        const countEl = card.querySelector('.playlist-song-count');
+        if (countEl) {
+          const count = countsById.get(Number(playlist.id)) ?? 0;
+          countEl.textContent = String(count);
+        }
+
+        card.style.display = '';
+        frag.appendChild(card);
       }
 
-      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+      // ✅ Append everything at once
+      container.appendChild(frag);
 
-      card.dataset.playlistId = playlist.id;
+      console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
-      const countEl = card.querySelector('.playlist-song-count');
-      if (countEl) {
-        const count = countsById.get(Number(playlist.id)) ?? 0;
-        countEl.textContent = String(count);
+      reinitWebflowIX2();
+
+      if (typeof initializePlaylistOverlay === 'function') {
+        initializePlaylistOverlay();
       }
+    } finally {
+      // ✅ Reveal + return container to normal sizing
+      container.style.opacity = '1';
+      container.style.pointerEvents = '';
+    }
+  },
 
-      card.style.display = '';
-      frag.appendChild(card);
+  async initPlaylistTemplatePage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const playlistId = urlParams.get('playlist');
+    if (!playlistId) return;
+
+    this.currentPlaylistId = playlistId;
+
+    const playlist = await this.getPlaylistById(playlistId);
+    if (playlist) {
+      const header = document.querySelector('.playlist-template-title');
+      if (header) header.textContent = playlist.name;
     }
 
-    container.appendChild(frag);
+    await this.renderPlaylistSongs(playlistId);
+  },
 
-    console.log(`✅ Rendered ${playlists.length} playlist cards`);
+  async renderPlaylistSongs(playlistId) {
+    const container = document.querySelector('.playlist-songs-wrapper');
+    if (!container) return;
 
-    reinitWebflowIX2();
+    const g = window.musicPlayerPersistent;
+    if (g.MASTER_DATA.length === 0) await fetchSongs();
 
-    if (typeof initializePlaylistOverlay === 'function') {
-      initializePlaylistOverlay();
+    const templateWrapper = container.querySelector('.template-wrapper');
+    const templateCard =
+      templateWrapper?.querySelector('.song-wrapper') || container.querySelector('.song-wrapper');
+
+    if (!templateCard) return;
+
+    const playlistSongs = await this.getPlaylistSongs(playlistId);
+
+    container.innerHTML = '';
+    if (templateWrapper) container.appendChild(templateWrapper);
+
+    if (playlistSongs.length === 0) {
+      if (templateWrapper) templateWrapper.style.display = 'none';
+      updateEmptyPlaylistMessage(container);
+      return;
     }
-  } finally {
-    // ✅ Hide ALL placeholders once real cards exist
-    document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      el.style.display = 'none';
-    });
 
-    container.style.opacity = '1';
-    container.style.pointerEvents = '';
-  }
-},
+    playlistSongs.sort((a, b) => a.position - b.position);
 
-async initPlaylistTemplatePage() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const playlistId = urlParams.get('playlist');
-  if (!playlistId) return;
+    playlistSongs.forEach((ps) => {
+      const song = g.MASTER_DATA.find((s) => s.id === ps.song_id);
+      if (!song) return;
 
-  this.currentPlaylistId = playlistId;
+      const card = templateCard.cloneNode(true);
+      card.style.opacity = '1';
+      card.style.pointerEvents = 'auto';
 
-  const playlist = await this.getPlaylistById(playlistId);
-  if (playlist) {
-    const header = document.querySelector('.playlist-template-title');
-    if (header) header.textContent = playlist.name;
-  }
+      populateSongCard(card, song);
 
-  await this.renderPlaylistSongs(playlistId);
-},
+      // NOTE: leaving your existing dataset assignments as-is (no behavior change)
+      card.dataset.songId = ps.id;
 
-async renderPlaylistSongs(playlistId) {
-  const container = document.querySelector('.playlist-songs-wrapper');
-  if (!container) return;
-
-  const g = window.musicPlayerPersistent;
-  if (g.MASTER_DATA.length === 0) await fetchSongs();
-
-  const templateWrapper = container.querySelector('.template-wrapper');
-  const templateCard =
-    templateWrapper?.querySelector('.song-wrapper') || container.querySelector('.song-wrapper');
-
-  if (!templateCard) return;
-
-  const playlistSongs = await this.getPlaylistSongs(playlistId);
-
-  container.innerHTML = '';
-  if (templateWrapper) container.appendChild(templateWrapper);
-
-  if (playlistSongs.length === 0) {
-    if (templateWrapper) templateWrapper.style.display = 'none';
-    updateEmptyPlaylistMessage(container);
-    return;
-  }
-
-  playlistSongs.sort((a, b) => a.position - b.position);
-
-  playlistSongs.forEach((ps) => {
-    const song = g.MASTER_DATA.find((s) => s.id === ps.song_id);
-    if (!song) return;
-
-    const card = templateCard.cloneNode(true);
-    card.style.opacity = '1';
-    card.style.pointerEvents = 'auto';
-
-    populateSongCard(card, song);
-
-    // NOTE: leaving your existing dataset assignments as-is (no behavior change)
-    card.dataset.songId = ps.id;
-
-    const removeBtn = card.querySelector('.dd-remove-from-playlist');
-    if (removeBtn) removeBtn.dataset.songId = song.id;
-
-    // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
-    card.dataset.songId = String(ps.song_id);
-
-    card.dataset.playlistPosition = ps.position;
-    container.appendChild(card);
-  });
-
-  if (window.Webflow?.require) reinitWebflowIX2();
-
-  setTimeout(() => {
-    const cards = container.querySelectorAll(
-      '.song-wrapper:not(.template-wrapper .song-wrapper)'
-    );
-
-    if (cards.length > 0) loadWaveformBatch(Array.from(cards));
-
-    cards.forEach((card) => {
       const removeBtn = card.querySelector('.dd-remove-from-playlist');
-      if (removeBtn) removeBtn.style.display = 'flex';
+      if (removeBtn) removeBtn.dataset.songId = song.id;
+
+      // ✅ IMPORTANT: ensure playlist cards carry the playlist song_id (NOT airtable id)
+      card.dataset.songId = String(ps.song_id);
+
+      card.dataset.playlistPosition = ps.position;
+      container.appendChild(card);
     });
-  }, 100);
-},
+
+    if (window.Webflow?.require) reinitWebflowIX2();
+
+    setTimeout(() => {
+      const cards = container.querySelectorAll(
+        '.song-wrapper:not(.template-wrapper .song-wrapper)'
+      );
+
+      if (cards.length > 0) loadWaveformBatch(Array.from(cards));
+
+      cards.forEach((card) => {
+        const removeBtn = card.querySelector('.dd-remove-from-playlist');
+        if (removeBtn) removeBtn.style.display = 'flex';
+      });
+    }, 100);
+  },
 };
 
 /* ============================================================
