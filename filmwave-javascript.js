@@ -6846,10 +6846,6 @@ const PlaylistManager = {
 
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
-      const playlist = await this.createPlaylist(name, description);
-
-      await this.getUserPlaylists(true);
-
      const playlist = await this.createPlaylist(name, description);
 
 // ✅ Refresh playlists
