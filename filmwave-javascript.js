@@ -6594,28 +6594,36 @@ const PlaylistManager = {
          ---------------------------- */
 
       const deleteBtn = e.target.closest('.playlist-delete-button');
-      if (deleteBtn) {
-        e.preventDefault();
-        e.stopPropagation();
+if (deleteBtn) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 
-        const card = deleteBtn.closest('.playlist-card-template');
-        const playlistId = card?.dataset.playlistId;
-        const title = card?.querySelector('.playlist-title')?.textContent;
+  if (deleteBtn.dataset.busy === 'true') return; // ✅ prevent double fire
+  deleteBtn.dataset.busy = 'true';
 
-        if (playlistId && confirm(`Delete "${title}"?`)) {
-          this.deletePlaylist(playlistId)
-            .then(async () => {
-              card.remove();
-              await this.getUserPlaylists(true);
-              invalidateAddToPlaylistDropdownCache();
-              this.showNotification('Playlist deleted');
-            })
-            .catch(() => {
-              this.showNotification('Error deleting playlist', 'error');
-            });
-        }
-        return;
-      }
+  const card = deleteBtn.closest('.playlist-card-template');
+  const playlistId = card?.dataset.playlistId;
+  const title = card?.querySelector('.playlist-title')?.textContent;
+
+  if (playlistId && confirm(`Delete "${title}"?`)) {
+    this.deletePlaylist(playlistId)
+      .then(async () => {
+        card.remove();
+        await this.getUserPlaylists(true);
+        invalidateAddToPlaylistDropdownCache();
+        this.showNotification('Playlist deleted');
+      })
+      .catch(() => {
+        this.showNotification('Error deleting playlist', 'error');
+        deleteBtn.dataset.busy = 'false';
+      });
+  } else {
+    deleteBtn.dataset.busy = 'false'; // reset if they cancel
+  }
+
+  return;
+}
 
       /* ----------------------------
          REMOVE SONG FROM PLAYLIST (playlist template)
