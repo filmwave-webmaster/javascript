@@ -6011,6 +6011,10 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
   const TEXT_SEL = '.new-plalyist-upload-field-text';
   const ICON_SEL = '.new-playlist-file-icon';
 
+  // Prevent double-install
+  if (window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED) return;
+  window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED = true;
+
   // Utility: detect if a file is an image
   function isImageFile(file) {
     return !!file && typeof file.type === 'string' && file.type.startsWith('image/');
@@ -6026,63 +6030,38 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     });
   }
 
-  // ✅ Capture the ORIGINAL UI state (text, color, icon presence)
+  // ✅ Capture ORIGINAL UI state (text, color, icon display)
   function getOrStoreDefaultState(modal) {
     if (!modal) return null;
 
     const zone = modal.querySelector(DROPZONE_SEL);
     if (!zone) return null;
 
-    // store defaults once on the zone element
     if (!zone.dataset.defaultCaptured) {
       const textEl = modal.querySelector(TEXT_SEL);
       const iconEl = modal.querySelector(ICON_SEL);
 
       zone.dataset.defaultCaptured = 'true';
       zone.dataset.defaultText = textEl ? textEl.textContent : '';
-      zone.dataset.defaultTextColor = textEl
-        ? (getComputedStyle(textEl).color || '')
-        : '';
-      zone.dataset.defaultHasIcon = iconEl ? 'true' : 'false';
+      zone.dataset.defaultTextColor = textEl ? (getComputedStyle(textEl).color || '') : '';
+
+      // Important: store the icon's original display (or empty if none)
+      if (iconEl) {
+        zone.dataset.defaultIconDisplay = iconEl.style.display || '';
+        zone.dataset.defaultHasIcon = 'true';
+      } else {
+        zone.dataset.defaultIconDisplay = '';
+        zone.dataset.defaultHasIcon = 'false';
+      }
     }
 
     return zone;
   }
 
-  // ✅ Reset UI back to original state
-  function resetDropUI(modal) {
-    if (!modal) return;
-
-    const zone = getOrStoreDefaultState(modal);
-    if (!zone) return;
-
-    const textEl = modal.querySelector(TEXT_SEL);
-
-    if (textEl) {
-      textEl.textContent = zone.dataset.defaultText || '';
-      textEl.style.color = zone.dataset.defaultTextColor || '';
-    }
-
-    // If icon was originally present, re-add it if missing
-    const shouldHaveIcon = zone.dataset.defaultHasIcon === 'true';
-    const hasIconNow = !!modal.querySelector(ICON_SEL);
-
-    if (shouldHaveIcon && !hasIconNow) {
-      // Recreate the icon element (same class so your styles apply)
-      const newIcon = document.createElement('div');
-      newIcon.className = ICON_SEL.replace('.', ''); // "new-playlist-file-icon"
-      zone.appendChild(newIcon);
-    }
-  }
-
-  // ✅ Expose reset function so closeCreatePlaylistModal() can call it
-  window.__FW_resetCreatePlaylistDropUI = resetDropUI;
-
-  // UI update inside the Create Playlist modal only
+  // ✅ Update UI inside the Create Playlist modal only
   function updateDropUI(modal, fileName) {
     if (!modal) return;
 
-    // ensure defaults are captured before we mutate UI
     getOrStoreDefaultState(modal);
 
     const textEl = modal.querySelector(TEXT_SEL);
@@ -6092,7 +6071,49 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       textEl.textContent = fileName || 'Image selected';
       textEl.style.color = '#191919';
     }
-    if (iconEl) iconEl.remove();
+
+    // ✅ Hide icon (do NOT remove)
+    if (iconEl) {
+      iconEl.style.display = 'none';
+    }
+  }
+
+  // ✅ Reset UI back to original state (text + icon)
+  function resetDropUI(modal) {
+    if (!modal) return;
+
+    const zone = getOrStoreDefaultState(modal);
+    if (!zone) return;
+
+    const textEl = modal.querySelector(TEXT_SEL);
+    const iconEl = modal.querySelector(ICON_SEL);
+
+    if (textEl) {
+      textEl.textContent = zone.dataset.defaultText || '';
+      textEl.style.color = zone.dataset.defaultTextColor || '';
+    }
+
+    // ✅ Re-show icon (only if it existed originally)
+    if (zone.dataset.defaultHasIcon === 'true') {
+      if (iconEl) {
+        iconEl.style.display = zone.dataset.defaultIconDisplay || '';
+      } else {
+        // If someone removed it, recreate a basic one so the class styling applies
+        const recreated = document.createElement('div');
+        recreated.className = ICON_SEL.replace('.', '');
+        recreated.style.display = zone.dataset.defaultIconDisplay || '';
+        zone.appendChild(recreated);
+      }
+    }
+  }
+
+  // ✅ Expose reset function so closeCreatePlaylistModal() can call it
+  window.__FW_resetCreatePlaylistDropUI = resetDropUI;
+
+  // Highlight helpers (optional, safe)
+  function setDragActive(zone, isActive) {
+    if (!zone) return;
+    zone.classList.toggle('is-drag-active', !!isActive);
   }
 
   // Main: handle dropped file
@@ -6109,7 +6130,6 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     try {
       const base64 = await fileToBase64(file);
 
-      // Store EXACTLY like your existing click uploader does
       if (window.PlaylistManager) {
         window.PlaylistManager.pendingCoverImageBase64 = base64;
       }
@@ -6122,53 +6142,40 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     }
   }
 
-  // Highlight helpers (optional, safe)
-  function setDragActive(zone, isActive) {
+  // ✅ CLICK-TO-OPEN DIALOG (dropzone uses the SAME picker flow)
+  document.addEventListener('click', (e) => {
+    const zone = e.target.closest(DROPZONE_SEL);
     if (!zone) return;
-    zone.classList.toggle('is-drag-active', !!isActive);
-  }
 
-  // Attach listeners once, via event delegation
-  if (window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED) return;
-  window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED = true;
+    const modal = zone.closest('.create-playlist-module-wrapper');
+    if (!modal) return;
 
-  // ✅ CLICK-TO-OPEN DIALOG (dropzone opens the SAME picker flow)
-document.addEventListener('click', (e) => {
-  const zone = e.target.closest(DROPZONE_SEL);
-  if (!zone) return;
+    // Only when modal is actually open
+    if (getComputedStyle(modal).display === 'none') return;
 
-  const modal = zone.closest('.create-playlist-module-wrapper');
-  if (!modal) return;
+    getOrStoreDefaultState(modal);
 
-  // Only when modal is actually open
-  if (getComputedStyle(modal).display === 'none') return;
-
-  // capture defaults on first interaction
-  getOrStoreDefaultState(modal);
-
-  // ✅ Single source of truth: use your existing pickImageAsBase64() flow
-  pickImageAsBase64({
-    onPicked: ({ base64, file }) => {
-      if (window.PlaylistManager) {
-        window.PlaylistManager.pendingCoverImageBase64 = base64;
-      }
-      updateDropUI(modal, file?.name || 'Image selected');
-      console.log('🖼️ Create playlist cover set via picker:', file?.name);
-    },
-    onCancel: () => {
-      // do nothing
-    },
+    pickImageAsBase64({
+      onPicked: ({ base64, file }) => {
+        if (window.PlaylistManager) {
+          window.PlaylistManager.pendingCoverImageBase64 = base64;
+        }
+        updateDropUI(modal, file?.name || 'Image selected');
+        console.log('🖼️ Create playlist cover set via picker:', file?.name);
+      },
+      onCancel: () => {},
+    });
   });
-});
 
   document.addEventListener('dragover', (e) => {
     const zone = e.target.closest(DROPZONE_SEL);
     if (!zone) return;
 
     const modal = zone.closest('.create-playlist-module-wrapper');
-    if (modal && getComputedStyle(modal).display !== 'none') {
-      getOrStoreDefaultState(modal);
-    }
+    if (!modal) return;
+    if (getComputedStyle(modal).display === 'none') return;
+
+    getOrStoreDefaultState(modal);
 
     e.preventDefault(); // required for drop to fire
     setDragActive(zone, true);
@@ -6191,8 +6198,8 @@ document.addEventListener('click', (e) => {
 
     const modal = zone.closest('.create-playlist-module-wrapper');
     if (!modal) return;
+    if (getComputedStyle(modal).display === 'none') return;
 
-    // capture defaults before updates
     getOrStoreDefaultState(modal);
 
     const file = e.dataTransfer?.files?.[0];
@@ -6203,6 +6210,7 @@ document.addEventListener('click', (e) => {
 
   console.log('✅ Create playlist drag/drop cover uploader installed');
 })();
+
 
 /* ============================================================
    PLAYLIST MANAGER
