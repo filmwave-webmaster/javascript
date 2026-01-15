@@ -6493,22 +6493,37 @@ const PlaylistManager = {
       }
 
       const playlistRow = e.target.closest('.add-to-playlist-row');
-      if (playlistRow && playlistRow.dataset.playlistId) {
-      e.preventDefault();
+if (playlistRow && playlistRow.dataset.playlistId) {
+  e.preventDefault();
 
-      // ✅ remember last clicked (applies next open, not instantly)
-      this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
+  // ✅ once they actually click a playlist, stop pinning "last created"
+  const playlistRow = e.target.closest('.add-to-playlist-row');
+if (playlistRow && playlistRow.dataset.playlistId) {
+  e.preventDefault();
 
-      this.togglePlaylistSelection(playlistRow);
-      return;
-      }
+  // ✅ once they click anything, stop pinning "last created"
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
 
+  // ✅ remember last clicked (applies next open, not instantly)
+  this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
 
-      if (e.target.closest('.add-to-playlist-save-button')) {
-        e.preventDefault();
-        this.saveToSelectedPlaylists();
-        return;
-      }
+  this.togglePlaylistSelection(playlistRow);
+  return;
+}
+
+     if (e.target.closest('.add-to-playlist-save-button')) {
+  e.preventDefault();
+
+  // ✅ stop pinning after they commit
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
+
+  this.saveToSelectedPlaylists();
+  return;
+}
 
       /* ----------------------------
          CREATE PLAYLIST MODAL
@@ -7108,8 +7123,6 @@ if (lastCreatedId || lastClickedId) {
 
       container.appendChild(row);
     });
-
-    this._clearLastCreatedPlaylistForAddModal();
     
     container.style.opacity = '1';
   },
