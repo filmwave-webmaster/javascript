@@ -7468,41 +7468,46 @@ if (phWrap) {
       localStorage.setItem('fw_last_playlist_count', String(playlists.length));
 
       // ✅ Ensure placeholder count matches playlist count (fast)
-const placeholderWrap = document.querySelector('.playlist-placeholders-wrapper') || document;
-const placeholderTemplate = placeholderWrap.querySelector('.playlist-placeholder-template');
-if (placeholderTemplate) {
-  // remove old generated placeholders (keep template)
-  placeholderWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
-    if (el !== placeholderTemplate) el.remove();
-  });
+const placeholderWrap = document.querySelector('.playlist-placeholders-wrapper');
 
-  const fragPH = document.createDocumentFragment();
-  for (let i = 0; i < playlists.length - 1; i++) {
-    const ph = placeholderTemplate.cloneNode(true);
-    ph.classList.remove('playlist-placeholder-template');
-    fragPH.appendChild(ph);
+if (placeholderWrap) {
+  const placeholderTemplate = placeholderWrap.querySelector('.playlist-placeholder-template');
+
+  if (placeholderTemplate) {
+    // remove old generated placeholders (keep template)
+    placeholderWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      if (el !== placeholderTemplate) el.remove();
+    });
+
+    const fragPH = document.createDocumentFragment();
+    for (let i = 0; i < playlists.length - 1; i++) {
+      const ph = placeholderTemplate.cloneNode(true);
+      ph.classList.remove('playlist-placeholder-template');
+      ph.style.display = '';
+      fragPH.appendChild(ph);
+    }
+    placeholderWrap.appendChild(fragPH);
   }
-  placeholderWrap.appendChild(fragPH);
 }
 
-      // Clear existing cards except template
-      container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-        if (i > 0) card.remove();
-      });
+// Clear existing cards except template
+container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+  if (i > 0) card.remove();
+});
 
-      template.style.display = 'none';
+template.style.display = 'none';
 
-      // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
-      const playlistCounts = await Promise.all(
-        playlists.map(async (p) => {
-          try {
-            const songs = await this.getPlaylistSongs(p.id);
-            return { id: Number(p.id), count: songs.length };
-          } catch {
-            return { id: Number(p.id), count: 0 };
-          }
-        })
-      );
+// ✅ Pre-fetch counts in parallel (prevents sequential await lag)
+const playlistCounts = await Promise.all(
+  playlists.map(async (p) => {
+    try {
+      const songs = await this.getPlaylistSongs(p.id);
+      return { id: Number(p.id), count: songs.length };
+    } catch {
+      return { id: Number(p.id), count: 0 };
+    }
+  })
+);
 
       const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
 
