@@ -6070,27 +6070,37 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
   function setDragActive(zone, isActive) {
     if (!zone) return;
     zone.classList.toggle('is-drag-active', !!isActive);
-    // If you want inline styling instead of a class, uncomment:
-    // zone.style.outline = isActive ? '2px dashed #191919' : '';
-    // zone.style.outlineOffset = isActive ? '6px' : '';
   }
 
   // Attach listeners once, via event delegation
   if (window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED) return;
   window.__FW_CREATE_PLAYLIST_DROPZONE_INSTALLED = true;
 
+  // ✅ CLICK-TO-OPEN DIALOG (treat dropzone click like .add-cover-image click)
+  document.addEventListener('click', (e) => {
+    const zone = e.target.closest(DROPZONE_SEL);
+    if (!zone) return;
+
+    const modal = zone.closest('.create-playlist-module-wrapper');
+    if (!modal) return;
+
+    // Only when modal is actually open
+    if (getComputedStyle(modal).display === 'none') return;
+
+    const btn = modal.querySelector('.add-cover-image');
+    if (btn) btn.click(); // ✅ triggers your existing picker flow
+  });
+
   document.addEventListener('dragover', (e) => {
     const zone = e.target.closest(DROPZONE_SEL);
     if (!zone) return;
     e.preventDefault(); // required for drop to fire
-    const modal = zone.closest('.create-playlist-module-wrapper') || document;
     setDragActive(zone, true);
   });
 
   document.addEventListener('dragleave', (e) => {
     const zone = e.target.closest(DROPZONE_SEL);
     if (!zone) return;
-    // dragleave can be noisy; still ok
     setDragActive(zone, false);
   });
 
@@ -6792,6 +6802,22 @@ const PlaylistManager = {
       const saveBtn = modal?.querySelector('.create-playlist-save-button');
       if (saveBtn) saveBtn.textContent = 'Save';
     }
+
+    // ✅ Reset the drag/drop upload UI back to default
+const uploadField = modal.querySelector('.new-playlist-upload-field');
+const uploadText = modal.querySelector('.new-plalyist-upload-field-text');
+const uploadIcon = modal.querySelector('.new-playlist-file-icon');
+
+if (uploadText) {
+  // store default once
+  if (!uploadText.dataset.originalText) {
+    uploadText.dataset.originalText = uploadText.textContent;
+  }
+  uploadText.textContent = uploadText.dataset.originalText;
+  uploadText.style.color = '';
+}
+
+if (uploadIcon) uploadIcon.style.display = '';
   },
 
   /* ============================================================
