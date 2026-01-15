@@ -6847,6 +6847,9 @@ const PlaylistManager = {
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
      const playlist = await this.createPlaylist(name, description);
+      if (playlist?.id) {
+  localStorage.setItem('fw_newest_playlist_id', String(playlist.id));
+}
 
       // remember newest playlist so grid can force it to top
 if (playlist?.id) {
@@ -6864,27 +6867,16 @@ if (playlist?.id && Array.isArray(refreshed)) {
   this.playlists = created ? [created, ...rest] : refreshed;
 }
 
-// Detect if Add-to-Playlist modal is open
-const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
-
-// ✅ If created from a song card: add the song FIRST (so modal will show it selected)
 if (this.pendingSongToAdd?.songId) {
-  try {
-    const songs = await this.getPlaylistSongs(playlist.id);
-    await this.addSongToPlaylist(
-      playlist.id,
-      this.pendingSongToAdd.songId,
-      songs.length + 1
-    );
-  } catch (err) {
-    console.error('Error auto-adding song to newly created playlist:', err);
-  }
-}
+  const songId = this.pendingSongToAdd.songId;
 
-// ✅ If modal is open, repopulate AFTER auto-add so it shows selected
-if (addModalOpen) {
+  const songs = await this.getPlaylistSongs(playlist.id);
+  await this.addSongToPlaylist(playlist.id, songId, songs.length + 1);
+
+  this.openAddToPlaylistModal(songId);
   await this.populateAddToPlaylistModal();
+
+  this.pendingSongToAdd = null;
 }
 
 invalidateAddToPlaylistDropdownCache();
@@ -7333,7 +7325,7 @@ _renderAddToPlaylistSelectedSongUI() {
     if (!container || !template) return;
 
     try {
-      const playlists = await this.getUserPlaylists();
+      const playlists = await this.getUserPlaylists(true);
 
       // ✅ If we have a "most recent created" id, force it to top
 const newestId = localStorage.getItem('fw_newest_playlist_id');
