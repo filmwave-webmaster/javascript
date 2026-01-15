@@ -909,20 +909,23 @@ function populateSongCard(cardElement, song) {
         }
         if (stemsList) {
           const stemLinkTemplate = stemsList.querySelector('.stem-link-wrapper');
-          if (stemLinkTemplate) {
-            const templateCopy = stemLinkTemplate.;
-            stemsList.innerHTML = '';
-            stems.forEach(stem => {
-              const stemRow = templateCopy.;
-              const link = stemRow.querySelector('.stem-link');
-              if (link) {
-                link.textContent = stem.name;
-                link.href = stem.url;
-                link.setAttribute('download', '');
-              }
-              stemsList.appendChild(stemRow);
-            });
-          }
+if (stemLinkTemplate) {
+  const templateCopy = stemLinkTemplate.cloneNode(true);
+  stemsList.innerHTML = '';
+
+  stems.forEach((stem) => {
+    const stemRow = templateCopy.cloneNode(true);
+    const link = stemRow.querySelector('.stem-link');
+
+    if (link) {
+      link.textContent = stem.name;
+      link.href = stem.url;
+      link.setAttribute('download', '');
+    }
+
+    stemsList.appendChild(stemRow);
+  });
+}
         }
       } else {
         stemsWrapper.style.display = 'none';
