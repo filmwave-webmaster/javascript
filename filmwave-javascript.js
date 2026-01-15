@@ -7174,7 +7174,7 @@ if (lastCreatedId || lastClickedId) {
     }
 
    playlists.forEach((playlist) => {
-  const row = template.;
+  const row = template.cloneNode(true);
   const title = row.querySelector('.add-to-playlist-title');
   const icon = row.querySelector('.add-to-playlist-icon');
 
@@ -7208,10 +7208,14 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
       };
 
       if (songInPlaylists.includes(playlist.id)) {
-        this.selectedPlaylistIds.push(playlist.id);
-        this.originalPlaylistIds.push(playlist.id);
-        if (icon) icon.style.opacity = '1';
-      }
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    this.selectedPlaylistIds.push(playlist.id);
+  }
+  if (!this.originalPlaylistIds.includes(playlist.id)) {
+    this.originalPlaylistIds.push(playlist.id);
+  }
+  if (icon) icon.style.opacity = '1';
+}
 
       container.appendChild(row);
     });
@@ -7468,7 +7472,7 @@ async renderPlaylistsGrid() {
     const frag = document.createDocumentFragment();
 
     for (const playlist of playlists) {
-      const card = template.;
+      const card = template.cloneNode(true);
 
       const title = card.querySelector('.playlist-title');
       const detail = card.querySelector('.playlist-detail');
