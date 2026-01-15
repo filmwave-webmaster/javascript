@@ -6848,6 +6848,11 @@ const PlaylistManager = {
 
      const playlist = await this.createPlaylist(name, description);
 
+      // remember newest playlist so grid can force it to top
+if (playlist?.id) {
+  localStorage.setItem('fw_newest_playlist_id', String(playlist.id));
+}
+
 // ✅ Refresh playlists
 const refreshed = await this.getUserPlaylists(true);
 
@@ -7329,6 +7334,21 @@ _renderAddToPlaylistSelectedSongUI() {
 
     try {
       const playlists = await this.getUserPlaylists();
+
+      // ✅ If we have a "most recent created" id, force it to top
+const newestId = localStorage.getItem('fw_newest_playlist_id');
+if (newestId) {
+  const id = Number(newestId);
+  playlists.sort((a, b) => {
+    const aIs = Number(a.id) === id;
+    const bIs = Number(b.id) === id;
+    if (aIs && !bIs) return -1;
+    if (!aIs && bIs) return 1;
+    return 0;
+  });
+  // one-time use
+  localStorage.removeItem('fw_newest_playlist_id');
+}
 
       // Clear existing cards except template
       container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
