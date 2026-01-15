@@ -7449,7 +7449,7 @@ if (phWrap) {
       for (let i = 0; i < lastCount; i++) {
         const ph = phTemplate.cloneNode(true);
         ph.classList.remove('playlist-placeholder-template');
-        ph.style.display = '';
+        ph.style.display = 'block';
         frag.appendChild(ph);
       }
       phWrap.appendChild(frag);
