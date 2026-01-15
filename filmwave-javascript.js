@@ -6959,9 +6959,6 @@ if (addModalOpen) {
 
       await this.getUserPlaylists(true);
 
-      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
-
       if (addModalOpen) {
         await this.populateAddToPlaylistModal();
       }
