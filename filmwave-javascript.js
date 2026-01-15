@@ -1461,14 +1461,14 @@ function displaySongs(songs) {
   if (!templateCard) return;
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
-  songs.forEach(song => {
-    const newCard = templateCard.;
-    newCard.style.opacity = '1';
-    newCard.style.position = 'relative';
-    newCard.style.pointerEvents = 'auto';
-    populateSongCard(newCard, song);
-    container.appendChild(newCard);
-  });
+ songs.forEach((song) => {
+  const newCard = templateCard.cloneNode(true);
+  newCard.style.opacity = '1';
+  newCard.style.position = 'relative';
+  newCard.style.pointerEvents = 'auto';
+  populateSongCard(newCard, song);
+  container.appendChild(newCard);
+});
   if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
     window.Webflow.destroy();
     window.Webflow.ready();
