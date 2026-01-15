@@ -7021,12 +7021,18 @@ _renderAddToPlaylistSelectedSongUI() {
   //End
 
   closeAddToPlaylistModal() {
-    const modal = document.querySelector('.add-to-playlist-module-wrapper');
-    if (modal) modal.style.display = 'none';
+  const modal = document.querySelector('.add-to-playlist-module-wrapper');
+  if (modal) modal.style.display = 'none';
 
-    this.currentSongForPlaylist = null;
-    this.selectedPlaylistIds = [];
-  },
+  this.currentSongForPlaylist = null;
+  this.selectedPlaylistIds = [];
+  this.originalPlaylistIds = [];
+
+  // ✅ if they close without saving, don't keep the "new playlist" pinned/selected
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
+},
 
   async populateAddToPlaylistModal() {
     const container = document.querySelector('.module-bod-container');
