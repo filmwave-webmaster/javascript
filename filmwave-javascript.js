@@ -6264,6 +6264,19 @@ const PlaylistManager = {
     localStorage.removeItem('fw_last_created_playlist_id');
     },
 
+    _setLastCreatedPlaylistAutoSelectId(playlistId) {
+    if (!playlistId) return;
+    localStorage.setItem('fw_last_created_playlist_autoselect_id', String(playlistId));
+    },
+  
+    _getLastCreatedPlaylistAutoSelectId() {
+    return localStorage.getItem('fw_last_created_playlist_autoselect_id');
+    },
+  
+    _clearLastCreatedPlaylistAutoSelectId() {
+    localStorage.removeItem('fw_last_created_playlist_autoselect_id');
+    },
+
   /* ----------------------------
      INIT
      ---------------------------- */
@@ -6501,6 +6514,10 @@ const PlaylistManager = {
           this._clearLastCreatedPlaylistForAddModal();
         }
 
+        if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+          this._clearLastCreatedPlaylistAutoSelectId();
+        }
+
         // ✅ remember last clicked (applies next open)
         this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
 
@@ -6511,9 +6528,12 @@ const PlaylistManager = {
      if (e.target.closest('.add-to-playlist-save-button')) {
   e.preventDefault();
 
-  // ✅ stop pinning after they commit
   if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
     this._clearLastCreatedPlaylistForAddModal();
+  }
+
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
   }
 
   this.saveToSelectedPlaylists();
@@ -6871,6 +6891,7 @@ const PlaylistManager = {
 
       const playlist = await this.createPlaylist(name, description);
       this._setLastCreatedPlaylistForAddModal(playlist.id);
+      this._setLastCreatedPlaylistAutoSelectId(playlist.id);
 
       await this.getUserPlaylists(true);
 
@@ -7020,7 +7041,7 @@ _renderAddToPlaylistSelectedSongUI() {
 },
   //End
 
-  closeAddToPlaylistModal() {
+ closeAddToPlaylistModal() {
   const modal = document.querySelector('.add-to-playlist-module-wrapper');
   if (modal) modal.style.display = 'none';
 
@@ -7028,10 +7049,12 @@ _renderAddToPlaylistSelectedSongUI() {
   this.selectedPlaylistIds = [];
   this.originalPlaylistIds = [];
 
-  // ✅ if they close without saving, don't keep the "new playlist" pinned/selected
-  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
-    this._clearLastCreatedPlaylistForAddModal();
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
   }
+}
+
+  // ✅ DO NOT clear fw_last_created_playlist_id here (this keeps it pinned on top)
 },
 
   async populateAddToPlaylistModal() {
@@ -7102,9 +7125,9 @@ if (lastCreatedId || lastClickedId) {
   row.dataset.playlistId = playlist.id;
   row.style.display = '';
 
- // ✅ AUTO-SELECT newly created playlist (selected yes, original NO)
-const lastCreatedId = this._getLastCreatedPlaylistForAddModal();
-if (lastCreatedId && String(playlist.id) === String(lastCreatedId)) {
+// ✅ AUTO-SELECT newly created playlist (one-time via separate key)
+const autoSelectId = this._getLastCreatedPlaylistAutoSelectId();
+if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   if (!this.selectedPlaylistIds.includes(playlist.id)) {
     this.selectedPlaylistIds.push(playlist.id);
   }
