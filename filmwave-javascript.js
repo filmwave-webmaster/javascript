@@ -6442,8 +6442,12 @@ const PlaylistManager = {
      ============================================================ */
 
   setupEventListeners() {
-    if (this.listenersInitialized) return;
-    this.listenersInitialized = true;
+    // ✅ HARD GUARD: prevents double-install even if this script loads twice
+if (window.__FW_PLAYLIST_CLICK_LISTENERS_INSTALLED) return;
+window.__FW_PLAYLIST_CLICK_LISTENERS_INSTALLED = true;
+
+if (this.listenersInitialized) return;
+this.listenersInitialized = true;
 
     // Disabled to avoid double-trigger
     // setupCoverImageUpload('.add-cover-image');
