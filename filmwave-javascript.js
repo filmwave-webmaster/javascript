@@ -6026,8 +6026,65 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     });
   }
 
+  // ✅ Capture the ORIGINAL UI state (text, color, icon presence)
+  function getOrStoreDefaultState(modal) {
+    if (!modal) return null;
+
+    const zone = modal.querySelector(DROPZONE_SEL);
+    if (!zone) return null;
+
+    // store defaults once on the zone element
+    if (!zone.dataset.defaultCaptured) {
+      const textEl = modal.querySelector(TEXT_SEL);
+      const iconEl = modal.querySelector(ICON_SEL);
+
+      zone.dataset.defaultCaptured = 'true';
+      zone.dataset.defaultText = textEl ? textEl.textContent : '';
+      zone.dataset.defaultTextColor = textEl
+        ? (getComputedStyle(textEl).color || '')
+        : '';
+      zone.dataset.defaultHasIcon = iconEl ? 'true' : 'false';
+    }
+
+    return zone;
+  }
+
+  // ✅ Reset UI back to original state
+  function resetDropUI(modal) {
+    if (!modal) return;
+
+    const zone = getOrStoreDefaultState(modal);
+    if (!zone) return;
+
+    const textEl = modal.querySelector(TEXT_SEL);
+
+    if (textEl) {
+      textEl.textContent = zone.dataset.defaultText || '';
+      textEl.style.color = zone.dataset.defaultTextColor || '';
+    }
+
+    // If icon was originally present, re-add it if missing
+    const shouldHaveIcon = zone.dataset.defaultHasIcon === 'true';
+    const hasIconNow = !!modal.querySelector(ICON_SEL);
+
+    if (shouldHaveIcon && !hasIconNow) {
+      // Recreate the icon element (same class so your styles apply)
+      const newIcon = document.createElement('div');
+      newIcon.className = ICON_SEL.replace('.', ''); // "new-playlist-file-icon"
+      zone.appendChild(newIcon);
+    }
+  }
+
+  // ✅ Expose reset function so closeCreatePlaylistModal() can call it
+  window.__FW_resetCreatePlaylistDropUI = resetDropUI;
+
   // UI update inside the Create Playlist modal only
   function updateDropUI(modal, fileName) {
+    if (!modal) return;
+
+    // ensure defaults are captured before we mutate UI
+    getOrStoreDefaultState(modal);
+
     const textEl = modal.querySelector(TEXT_SEL);
     const iconEl = modal.querySelector(ICON_SEL);
 
@@ -6053,7 +6110,6 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       const base64 = await fileToBase64(file);
 
       // Store EXACTLY like your existing click uploader does
-      // (your createPlaylist() uses this.pendingCoverImageBase64)
       if (window.PlaylistManager) {
         window.PlaylistManager.pendingCoverImageBase64 = base64;
       }
@@ -6087,6 +6143,9 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     // Only when modal is actually open
     if (getComputedStyle(modal).display === 'none') return;
 
+    // capture defaults on first interaction
+    getOrStoreDefaultState(modal);
+
     const btn = modal.querySelector('.add-cover-image');
     if (btn) btn.click(); // ✅ triggers your existing picker flow
   });
@@ -6094,6 +6153,12 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
   document.addEventListener('dragover', (e) => {
     const zone = e.target.closest(DROPZONE_SEL);
     if (!zone) return;
+
+    const modal = zone.closest('.create-playlist-module-wrapper');
+    if (modal && getComputedStyle(modal).display !== 'none') {
+      getOrStoreDefaultState(modal);
+    }
+
     e.preventDefault(); // required for drop to fire
     setDragActive(zone, true);
   });
@@ -6113,7 +6178,12 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
 
     setDragActive(zone, false);
 
-    const modal = zone.closest('.create-playlist-module-wrapper') || document;
+    const modal = zone.closest('.create-playlist-module-wrapper');
+    if (!modal) return;
+
+    // capture defaults before updates
+    getOrStoreDefaultState(modal);
+
     const file = e.dataTransfer?.files?.[0];
     if (!file) return;
 
@@ -6719,6 +6789,7 @@ const PlaylistManager = {
     if (!modal) return;
 
     modal.style.display = 'none';
+    if (window.__FW_resetCreatePlaylistDropUI) window.__FW_resetCreatePlaylistDropUI(modal);
 
     const titleInput = modal.querySelector('.playlist-text-field-1');
     const descInput = modal.querySelector('.playlist-text-field-2');
