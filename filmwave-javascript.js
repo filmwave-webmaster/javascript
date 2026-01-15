@@ -7429,6 +7429,31 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   },
 
   async renderPlaylistsGrid() {
+
+    // ✅ show placeholders immediately using last-known count
+const phWrap = document.querySelector('.playlist-placeholders-wrapper') || document;
+const phTemplate = phWrap.querySelector('.playlist-placeholder-template');
+
+if (phTemplate) {
+  const lastCount = parseInt(localStorage.getItem('fw_last_playlist_count') || '0', 10);
+
+  // remove old generated placeholders (keep template)
+  phWrap.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    if (el !== phTemplate) el.remove();
+  });
+
+  if (lastCount > 0) {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < lastCount; i++) {
+      const ph = phTemplate.cloneNode(true);
+      ph.classList.remove('playlist-placeholder-template');
+      ph.style.display = '';
+      frag.appendChild(ph);
+    }
+    phWrap.appendChild(frag);
+  }
+}
+    
     const container = document.querySelector('.sortable-container');
     const template = container?.querySelector('.playlist-card-template');
     if (!container || !template) return;
@@ -7437,6 +7462,7 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
       const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
   return new Date(b.created_at) - new Date(a.created_at); // newest first
 });
+      localStorage.setItem('fw_last_playlist_count', String(playlists.length));
 
       // ✅ Ensure placeholder count matches playlist count (fast)
 const placeholderWrap = document.querySelector('.playlist-placeholders-wrapper') || document;
