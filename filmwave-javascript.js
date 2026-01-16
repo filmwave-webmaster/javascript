@@ -6731,6 +6731,12 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           textEl.textContent = textEl.dataset.originalText || textEl.textContent;
         }
 
+        const nameInput = document.querySelector('.edit-playlist-text-field-1');
+        const descInput = document.querySelector('.playlist-settings-label');
+
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+
         return;
       }
 
@@ -6764,6 +6770,20 @@ if (playlistRow && playlistRow.dataset.playlistId) {
   if (!playlistId) return;
 
   this.editingPlaylistId = playlistId;
+
+  const playlist = await this.getPlaylistById(playlistId);
+
+const nameInput = document.querySelector('.edit-playlist-text-field-1');
+const descInput = document.querySelector('.playlist-settings-label');
+
+if (nameInput) {
+  nameInput.placeholder = playlist?.name || '';
+  nameInput.value = '';
+}
+if (descInput) {
+  descInput.placeholder = playlist?.description || '';
+  descInput.value = '';
+}     
 
   const btn = e.target.closest('.change-cover-image');
   const textEl = btn?.querySelector('.add-image-text');
@@ -6817,6 +6837,11 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         }
 
         const updates = {};
+        const nameInput = document.querySelector('.edit-playlist-text-field-1');
+        const descInput = document.querySelector('.playlist-settings-label');
+
+        if (nameInput?.value.trim()) updates.name = nameInput.value.trim();
+        if (descInput?.value.trim()) updates.description = descInput.value.trim();
 
         const existing = await this.getPlaylistById(playlistId);
         if (existing) {
