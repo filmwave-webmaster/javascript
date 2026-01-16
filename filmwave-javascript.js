@@ -4055,13 +4055,34 @@ function initializePlaylistOverlay() {
       const overlay = findAssociatedOverlay(newEditIcon);
       
       if (overlay) {
+  const card = newEditIcon.closest('.playlist-card-template');
+  if (!card) return;
+
+  const playlistId = card.dataset.playlistId;
+  PlaylistManager.editingPlaylistId = playlistId; // ✅ fix error
+
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
-  
+
+  // Set placeholders for name + description
+  PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
+    const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
+    const descInput = overlay.querySelector('.playlist-settings-label');
+
+    if (nameInput) {
+      nameInput.placeholder = playlist?.name || '';
+      nameInput.value = '';
+    }
+    if (descInput) {
+      descInput.placeholder = playlist?.description || '';
+      descInput.value = '';
+    }
+  });
+
   const textEl = overlay.querySelector('.change-cover-image .add-image-text');
-if (textEl && !textEl.dataset.originalText) {
-  textEl.dataset.originalText = textEl.textContent;
-}
+  if (textEl && !textEl.dataset.originalText) {
+    textEl.dataset.originalText = textEl.textContent;
+  }
 }
     });
   });
