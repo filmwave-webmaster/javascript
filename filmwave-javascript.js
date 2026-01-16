@@ -6753,7 +6753,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         }
 
         const nameInput = document.querySelector('.edit-playlist-text-field-1');
-        const descInput = document.querySelector('.playlist-settings-label');
+        const descInput = document.querySelector('.edit-playlist-text-field-2');
 
         if (nameInput) nameInput.value = '';
         if (descInput) descInput.value = '';
