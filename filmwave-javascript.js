@@ -6893,18 +6893,6 @@ if (descInput) {
             }
           }
 
-          const card = document.querySelector(
-  `.playlist-card-template[data-playlist-id="${playlistId}"]`
-);
-
-if (card) {
-  const titleEl = card.querySelector('.playlist-title');
-  const descEl = card.querySelector('.playlist-detail');
-
-  if (updates.name && titleEl) titleEl.textContent = updates.name;
-  if (updates.description && descEl) descEl.textContent = updates.description;
-}
-
           await this.getUserPlaylists(true);
           invalidateAddToPlaylistDropdownCache();
 
