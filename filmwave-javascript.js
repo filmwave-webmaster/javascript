@@ -6755,32 +6755,43 @@ if (playlistRow && playlistRow.dataset.playlistId) {
          COVER IMAGE (edit playlist)
          ---------------------------- */
 
-      if (e.target.closest('.change-cover-image')) {
-        e.preventDefault();
-        e.stopPropagation();
+     if (e.target.closest('.change-cover-image')) {
+  e.preventDefault();
+  e.stopPropagation();
 
-        const card = e.target.closest('.playlist-card-template');
-        const playlistId = card?.dataset.playlistId;
-        if (!playlistId) return;
+  const card = e.target.closest('.playlist-card-template');
+  const playlistId = card?.dataset.playlistId;
+  if (!playlistId) return;
 
-        this.editingPlaylistId = playlistId;
+  this.editingPlaylistId = playlistId;
 
-        const btn = e.target.closest('.change-cover-image');
-        const textEl = btn?.querySelector('.add-image-text');
+  const btn = e.target.closest('.change-cover-image');
+  const textEl = btn?.querySelector('.add-image-text');
 
-        if (textEl && !textEl.dataset.originalText) {
-          textEl.dataset.originalText = textEl.textContent;
-        }
+  if (textEl && !textEl.dataset.originalText) {
+    textEl.dataset.originalText = textEl.textContent;
+  }
 
-        pickImageAsBase64({
-          onPicked: ({ base64, file }) => {
-            this.pendingCoverImageBase64 = base64;
-            if (textEl) textEl.textContent = file.name;
-          },
+  pickImageAsBase64({
+    onPicked: async ({ base64, file }) => {
+      try {
+        const small = await downsampleImageBase64(base64, {
+          maxWidth: 800,
+          maxHeight: 800,
+          quality: 0.8,
+          mimeType: 'image/jpeg',
         });
-
-        return;
+        this.pendingCoverImageBase64 = small;
+      } catch {
+        this.pendingCoverImageBase64 = base64; // fallback
       }
+
+      if (textEl) textEl.textContent = file?.name || 'Image selected';
+    },
+  });
+
+  return;
+}
 
       /* ----------------------------
          SAVE PLAYLIST EDITS
