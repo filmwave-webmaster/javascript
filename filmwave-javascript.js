@@ -7474,61 +7474,46 @@ template.style.display = 'none';
 
       // ✅ Build off-DOM, then append once
       const frag = document.createDocumentFragment();
-const countTargets = []; // { id, el }
 
-for (const playlist of playlists) {
-  const card = template.cloneNode(true);
-  card.classList.remove('is-template');
+      for (const playlist of playlists) {
+        const card = template.cloneNode(true);
+        card.classList.remove('is-template');
 
-  const title = card.querySelector('.playlist-title');
-  const detail = card.querySelector('.playlist-detail');
-  const image = card.querySelector('.playlist-image');
-  const link = card.querySelector('.playlist-link-block');
+        const title = card.querySelector('.playlist-title');
+        const detail = card.querySelector('.playlist-detail');
+        const image = card.querySelector('.playlist-image');
+        const link = card.querySelector('.playlist-link-block');
 
-  if (title) title.textContent = playlist.name;
-  if (detail) detail.textContent = playlist.description || '';
+        if (title) title.textContent = playlist.name;
+        if (detail) detail.textContent = playlist.description || '';
 
-  if (image && playlist.cover_image_url) {
-    clearResponsiveImageAttrs(image);
-    image.src = playlist.cover_image_url;
+        if (image && playlist.cover_image_url) {
+          clearResponsiveImageAttrs(image);
+          image.src = playlist.cover_image_url;
 
-    requestAnimationFrame(() => {
-      clearResponsiveImageAttrs(image);
-      image.src = playlist.cover_image_url;
-    });
-  }
+          requestAnimationFrame(() => {
+            clearResponsiveImageAttrs(image);
+            image.src = playlist.cover_image_url;
+          });
+        }
 
-  if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+        if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
 
-  card.dataset.playlistId = playlist.id;
+        card.dataset.playlistId = playlist.id;
 
-  const countEl = card.querySelector('.playlist-song-count');
-  if (countEl) {
-    countEl.textContent = '—'; // temporary
-    countTargets.push({ id: playlist.id, el: countEl });
-  }
+        const countEl = card.querySelector('.playlist-song-count');
+        if (countEl) {
+          const count = countsById.get(Number(playlist.id)) ?? 0;
+          countEl.textContent = String(count);
+        }
 
-  card.style.removeProperty('display');
-  card.style.display = 'block'; // change to 'flex' if your card needs flex
-
-  frag.appendChild(card);
-}
-
-container.appendChild(frag);
-
-// ✅ Fill counts AFTER cards render (so UI appears instantly)
-setTimeout(async () => {
-  await Promise.all(
-    countTargets.map(async ({ id, el }) => {
-      try {
-        const songs = await this.getPlaylistSongs(id);
-        el.textContent = String(songs.length);
-      } catch {
-        el.textContent = '0';
+        card.style.removeProperty('display'); // removes inline display:none copied from template
+card.style.display = 'block';         // force visible (use 'flex' if your card needs flex)
+        frag.appendChild(card);
       }
-    })
-  );
-}, 0);
+
+      // ✅ Append everything at once
+      container.appendChild(frag);
 
       console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
