@@ -7453,7 +7453,9 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
         if (i > 0) card.remove();
       });
 
-      template.style.display = 'none';
+//OOMPALOOMPA
+      
+      template.style.display = 'display';
 
       // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
       const playlistCounts = await Promise.all(
