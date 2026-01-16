@@ -7434,86 +7434,101 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   },
 
   async renderPlaylistsGrid() {
-  const container = document.querySelector('.sortable-container');
-  const template = container?.querySelector('.playlist-card-template');
-  if (!container || !template) return;
+    const container = document.querySelector('.sortable-container');
+    const template = container?.querySelector('.playlist-card-template');
+    if (!container || !template) return;
 
-  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-    el.style.display = '';
-  });
+    // Show all placeholders immediately (in case Webflow hid them)
+document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  el.style.display = '';
+});
 
-  try {
-    const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
-      return new Date(b.created_at) - new Date(a.created_at);
-    });
+    try {
+      const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
+  return new Date(b.created_at) - new Date(a.created_at); // newest first
+});
 
-    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-      if (i > 0) card.remove();
-    });
+      // Clear existing cards except template
+      container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+        if (i > 0) card.remove();
+      });
 
-    template.style.display = 'none';
+      template.style.display = 'none';
 
-    const frag = document.createDocumentFragment();
+      // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
+      const playlistCounts = await Promise.all(
+        playlists.map(async (p) => {
+          try {
+            const songs = await this.getPlaylistSongs(p.id);
+            return { id: Number(p.id), count: songs.length };
+          } catch {
+            return { id: Number(p.id), count: 0 };
+          }
+        })
+      );
 
-    // ✅ Render cards immediately WITHOUT counts
-    for (const playlist of playlists) {
-      const card = template.cloneNode(true);
+      const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
 
-      const title = card.querySelector('.playlist-title');
-      const detail = card.querySelector('.playlist-detail');
-      const image = card.querySelector('.playlist-image');
-      const link = card.querySelector('.playlist-link-block');
+      // ✅ Build off-DOM, then append once
+      const frag = document.createDocumentFragment();
 
-      if (title) title.textContent = playlist.name;
-      if (detail) detail.textContent = playlist.description || '';
+      for (const playlist of playlists) {
+        const card = template.cloneNode(true);
 
-      if (image && playlist.cover_image_url) {
-        clearResponsiveImageAttrs(image);
-        image.src = playlist.cover_image_url;
+        const title = card.querySelector('.playlist-title');
+        const detail = card.querySelector('.playlist-detail');
+        const image = card.querySelector('.playlist-image');
+        const link = card.querySelector('.playlist-link-block');
+
+        if (title) title.textContent = playlist.name;
+        if (detail) detail.textContent = playlist.description || '';
+
+        if (image && playlist.cover_image_url) {
+          clearResponsiveImageAttrs(image);
+          image.src = playlist.cover_image_url;
+
+          requestAnimationFrame(() => {
+            clearResponsiveImageAttrs(image);
+            image.src = playlist.cover_image_url;
+          });
+        }
+
+        if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+
+        card.dataset.playlistId = playlist.id;
+
+        const countEl = card.querySelector('.playlist-song-count');
+        if (countEl) {
+          const count = countsById.get(Number(playlist.id)) ?? 0;
+          countEl.textContent = String(count);
+        }
+
+        card.style.display = '';
+        frag.appendChild(card);
       }
 
-      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+      // ✅ Append everything at once
+      container.appendChild(frag);
 
-      card.dataset.playlistId = playlist.id;
+      console.log(`✅ Rendered ${playlists.length} playlist cards`);
 
-      // Show "..." while loading count
-      const countEl = card.querySelector('.playlist-song-count');
-      if (countEl) countEl.textContent = '...';
+      reinitWebflowIX2();
 
-      card.style.display = '';
-      frag.appendChild(card);
-    }
-
-    container.appendChild(frag);
-
-    // ✅ Load counts in background
-    playlists.forEach(async (playlist) => {
-      try {
-        const songs = await this.getPlaylistSongs(playlist.id);
-        const card = container.querySelector(`[data-playlist-id="${playlist.id}"]`);
-        const countEl = card?.querySelector('.playlist-song-count');
-        if (countEl) countEl.textContent = String(songs.length);
-      } catch {
-        const card = container.querySelector(`[data-playlist-id="${playlist.id}"]`);
-        const countEl = card?.querySelector('.playlist-song-count');
-        if (countEl) countEl.textContent = '0';
+      if (typeof initializePlaylistOverlay === 'function') {
+        initializePlaylistOverlay();
       }
-    });
+    } finally {
 
-    console.log(`✅ Rendered ${playlists.length} playlist cards`);
-
-    if (typeof initializePlaylistOverlay === 'function') {
-      initializePlaylistOverlay();
+// Hide all placeholders once real cards exist
+document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  el.style.display = 'none';
+});
+      
+      // ✅ Reveal + return container to normal sizing
+      container.style.opacity = '1';
+      container.style.pointerEvents = '';
     }
-  } finally {
-    document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      el.style.display = 'none';
-    });
-    
-    container.style.opacity = '1';
-    container.style.pointerEvents = '';
-  }
-},
+  },
 
   async initPlaylistTemplatePage() {
     const urlParams = new URLSearchParams(window.location.search);
