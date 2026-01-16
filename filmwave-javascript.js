@@ -7506,7 +7506,8 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
           countEl.textContent = String(count);
         }
 
-        card.style.display = '';
+        card.style.removeProperty('display'); // removes inline display:none copied from template
+card.style.display = 'block';         // force visible (use 'flex' if your card needs flex)
         frag.appendChild(card);
       }
 
