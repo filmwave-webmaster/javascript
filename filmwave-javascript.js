@@ -6310,38 +6310,6 @@ const PlaylistManager = {
     _clearLastCreatedPlaylistAutoSelectId() {
     localStorage.removeItem('fw_last_created_playlist_autoselect_id');
     },  
-
-    _getEditOverlayEls() {
-  const overlay = document.querySelector('.playlist-edit-overlay');
-  if (!overlay) return {};
-
-  // Name input
-  const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
-
-  // Description input
-  // IMPORTANT: your screenshot shows a 2nd text field named "edit-playlist-text-field-2".
-  // If you truly used ".playlist-settings-label" as the description input, it won't behave like an input.
-  const descInput =
-    overlay.querySelector('.edit-playlist-text-field-2') ||
-    overlay.querySelector('.playlist-settings-label');
-
-  return { overlay, nameInput, descInput };
-},
-
-_setEditOverlayPlaceholders({ name = '', description = '' } = {}) {
-  const { nameInput, descInput } = this._getEditOverlayEls();
-
-  if (nameInput) {
-    nameInput.placeholder = name || '';
-    nameInput.value = ''; // always start blank; placeholder shows current value
-  }
-
-  // Only set placeholder/value if this is a real input/textarea
-  if (descInput && ('placeholder' in descInput)) {
-    descInput.placeholder = description || '';
-    descInput.value = '';
-  }
-},
   
   /* ----------------------------
      INIT
@@ -6516,294 +6484,255 @@ _setEditOverlayPlaceholders({ name = '', description = '' } = {}) {
     // setupCoverImageUpload('.change-cover-image');
 
     document.body.addEventListener('click', async (e) => {
+      /* ----------------------------
+         ADD-TO-PLAYLIST (dropdown + modal)
+         ---------------------------- */
 
-  // ✅ OPEN EDIT OVERLAY: set editingPlaylistId from the clicked card
-  // (kept this handler, REMOVED the duplicate one further down)
-  const editIcon = e.target.closest('.playlist-edit-icon'); // <-- make sure this class is real
-  if (editIcon) {
-    e.preventDefault();
-    e.stopPropagation();
+      if (e.target.closest('.dd-create-new-playlist')) {
+        e.preventDefault();
+        e.stopPropagation();
 
-    const card = editIcon.closest('.playlist-card-template');
-    const playlistId = card?.dataset.playlistId;
-
-    console.log('🧩 editIcon click -> playlistId:', playlistId, 'card:', card);
-
-    if (!playlistId) return;
-
-    this.editingPlaylistId = String(playlistId);
-
-    const existing = await this.getPlaylistById(playlistId);
-
-    const overlay = document.querySelector('.playlist-edit-overlay');
-    if (overlay) {
-      overlay.style.display = 'flex';
-      overlay.dataset.playlistId = String(playlistId); // ✅ ADDED LINE (backup source for Save)
-    }
-
-    this._setEditOverlayPlaceholders({
-      name: existing?.name || '',
-      description: existing?.description || '',
-    });
-
-    return;
-  }
-
-  /* ----------------------------
-     ADD-TO-PLAYLIST (dropdown + modal)
-     ---------------------------- */
-
-  if (e.target.closest('.dd-create-new-playlist')) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const songWrapper = e.target.closest('.song-wrapper');
-    if (songWrapper) {
-      this.pendingSongToAdd = {
-        songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId,
-      };
-    }
-
-    this.openCreatePlaylistModal();
-    return;
-  }
-
-  // Add to Playlist Module
-  if (e.target.closest('.dd-add-to-playlist')) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const songWrapper = e.target.closest('.song-wrapper');
-    const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
-
-    console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
-
-    if (songId) {
-      // ✅ Capture selected song UI data from the clicked card
-      this._setAddToPlaylistSelectedSongFromCard(songWrapper);
-
-      // ✅ Open modal
-      this.openAddToPlaylistModal(songId);
-    } else {
-      console.warn('❌ Could not find songId for add-to-playlist');
-    }
-
-    return;
-  }
-  //End
-
-  if (e.target.closest('.add-to-playlist-x-button')) {
-    e.preventDefault();
-    this.closeAddToPlaylistModal();
-    return;
-  }
-
-  if (e.target.classList.contains('add-to-playlist-module-wrapper')) {
-    this.closeAddToPlaylistModal();
-    return;
-  }
-
-  const playlistRow = e.target.closest('.add-to-playlist-row');
-  if (playlistRow && playlistRow.dataset.playlistId) {
-    e.preventDefault();
-
-    // ✅ once they click anything, stop pinning "last created"
-    if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
-      this._clearLastCreatedPlaylistForAddModal();
-    }
-    if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
-      this._clearLastCreatedPlaylistAutoSelectId();
-    }
-
-    // ✅ remember last clicked (applies next open)
-    this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
-
-    this.togglePlaylistSelection(playlistRow);
-    return;
-  }
-
-  if (e.target.closest('.add-to-playlist-save-button')) {
-    e.preventDefault();
-
-    // If newly created playlist is selected, treat it as "most recent"
-    const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
-    if (
-      lastCreatedId &&
-      this.selectedPlaylistIds.map(String).includes(String(lastCreatedId))
-    ) {
-      this._setLastClickedPlaylistForAddModal(String(lastCreatedId));
-    }
-
-    // Clear one-time helpers AFTER promotion
-    if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
-      this._clearLastCreatedPlaylistForAddModal();
-    }
-    if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
-      this._clearLastCreatedPlaylistAutoSelectId();
-    }
-
-    this.saveToSelectedPlaylists();
-    return;
-  }
-
-  /* ----------------------------
-     CREATE PLAYLIST MODAL
-     ---------------------------- */
-
-  if (e.target.closest('.create-playlist-x-button')) {
-    e.preventDefault();
-    this.closeCreatePlaylistModal();
-    return;
-  }
-
-  if (e.target.closest('.create-playlist-button') || e.target.closest('.playlist-add-button')) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    this.pendingSongToAdd = null;
-    this.openCreatePlaylistModal();
-    return;
-  }
-
-  if (e.target.closest('.create-playlist-save-button')) {
-    e.preventDefault();
-    this.handleCreatePlaylist();
-    return;
-  }
-
-  if (e.target.classList.contains('create-playlist-module-wrapper')) {
-    this.closeCreatePlaylistModal();
-    return;
-  }
-
-  /* ----------------------------
-     ADD SONG TO PLAYLIST (hover dropdown item)
-     ---------------------------- */
-
-  const dropdownItem = e.target.closest('.playlist-dropdown-item');
-  if (dropdownItem) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const playlistId = dropdownItem.dataset.playlistId;
-    const playlistName = dropdownItem.textContent;
-    const dropdown = dropdownItem.closest('.add-to-playlist');
-
-    if (dropdown && playlistId) {
-      this.handleAddSongToPlaylist(dropdown, playlistId, playlistName);
-    }
-    return;
-  }
-
-  /* ----------------------------
-     DELETE PLAYLIST
-     ---------------------------- */
-
-  const deleteBtn = e.target.closest('.playlist-delete-button');
-  if (deleteBtn) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const card = deleteBtn.closest('.playlist-card-template');
-    const playlistId = card?.dataset.playlistId;
-    const title = card?.querySelector('.playlist-title')?.textContent;
-
-    if (playlistId && confirm(`Delete "${title}"?`)) {
-      this.deletePlaylist(playlistId)
-        .then(async () => {
-          card.remove();
-          await this.getUserPlaylists(true);
-          invalidateAddToPlaylistDropdownCache();
-          this.showNotification('Playlist deleted');
-        })
-        .catch(() => {
-          this.showNotification('Error deleting playlist', 'error');
-        });
-    }
-    return;
-  }
-
-  /* ----------------------------
-     REMOVE SONG FROM PLAYLIST (playlist template)
-     ---------------------------- */
-
-  if (e.target.closest('.dd-remove-from-playlist')) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation(); // ✅ stop the other remove handler from firing
-
-    const btn = e.target.closest('.dd-remove-from-playlist');
-    const card = btn.closest('.song-wrapper');
-    const songId = card?.dataset.songId;
-
-    if (!songId || !this.currentPlaylistId) {
-      console.warn('❌ Missing songId or currentPlaylistId', {
-        songId,
-        currentPlaylistId: this.currentPlaylistId,
-      });
-      return;
-    }
-
-    try {
-      await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
-
-      card.style.opacity = '0';
-
-      setTimeout(() => {
-        card.remove();
-
-        const container = document.querySelector('.playlist-songs-wrapper');
-        if (!container) return;
-
-        const remaining = container.querySelectorAll(
-          '.song-wrapper:not(.template-wrapper .song-wrapper)'
-        );
-
-        if (remaining.length === 0) {
-          const templateWrapper = container.querySelector('.template-wrapper');
-          if (templateWrapper) templateWrapper.style.display = 'none';
-          updateEmptyPlaylistMessage(container);
+        const songWrapper = e.target.closest('.song-wrapper');
+        if (songWrapper) {
+          this.pendingSongToAdd = {
+            songId: songWrapper.dataset.songId || songWrapper.dataset.airtableId,
+          };
         }
-      }, 300);
 
-      const playlist = await this.getPlaylistById(this.currentPlaylistId);
-      const playlistName = playlist?.name || 'playlist';
-      this.showNotification(`Removed from "${playlistName}"`);
-    } catch (err) {
-      console.error('Error removing song:', err);
-      this.showNotification('Error removing song', 'error');
-    }
+        this.openCreatePlaylistModal();
+        return;
+      }
 
-    return;
+
+      // Add to Playlist Module
+      if (e.target.closest('.dd-add-to-playlist')) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const songWrapper = e.target.closest('.song-wrapper');
+  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+
+  console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
+
+  if (songId) {
+    // ✅ Capture selected song UI data from the clicked card
+    this._setAddToPlaylistSelectedSongFromCard(songWrapper);
+
+    // ✅ Open modal
+    this.openAddToPlaylistModal(songId);
+  } else {
+    console.warn('❌ Could not find songId for add-to-playlist');
   }
-      //--------
-      
+
+  return;
+}
+//End
+
+      if (e.target.closest('.add-to-playlist-x-button')) {
+        e.preventDefault();
+        this.closeAddToPlaylistModal();
+        return;
+      }
+
+      if (e.target.classList.contains('add-to-playlist-module-wrapper')) {
+        this.closeAddToPlaylistModal();
+        return;
+      }
+
+     const playlistRow = e.target.closest('.add-to-playlist-row');
+if (playlistRow && playlistRow.dataset.playlistId) {
+  e.preventDefault();
+
+  // ✅ once they click anything, stop pinning "last created"
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
+  }
+
+  // ✅ remember last clicked (applies next open)
+  this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
+
+  this.togglePlaylistSelection(playlistRow);
+  return;
+}
+
+      if (e.target.closest('.add-to-playlist-save-button')) {
+  e.preventDefault();
+
+  // If newly created playlist is selected, treat it as "most recent"
+  const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
+  if (
+    lastCreatedId &&
+    this.selectedPlaylistIds.map(String).includes(String(lastCreatedId))
+  ) {
+    this._setLastClickedPlaylistForAddModal(String(lastCreatedId));
+  }
+
+  // Clear one-time helpers AFTER promotion
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
+  }
+
+  this.saveToSelectedPlaylists();
+  return;
+}
+
+      /* ----------------------------
+         CREATE PLAYLIST MODAL
+         ---------------------------- */
+
+      if (e.target.closest('.create-playlist-x-button')) {
+        e.preventDefault();
+        this.closeCreatePlaylistModal();
+        return;
+      }
+
+      if (e.target.closest('.create-playlist-button') || e.target.closest('.playlist-add-button')) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.pendingSongToAdd = null;
+        this.openCreatePlaylistModal();
+        return;
+      }
+
+      if (e.target.closest('.create-playlist-save-button')) {
+        e.preventDefault();
+        this.handleCreatePlaylist();
+        return;
+      }
+
+      if (e.target.classList.contains('create-playlist-module-wrapper')) {
+        this.closeCreatePlaylistModal();
+        return;
+      }
+
+      /* ----------------------------
+         ADD SONG TO PLAYLIST (hover dropdown item)
+         ---------------------------- */
+
+      const dropdownItem = e.target.closest('.playlist-dropdown-item');
+      if (dropdownItem) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const playlistId = dropdownItem.dataset.playlistId;
+        const playlistName = dropdownItem.textContent;
+        const dropdown = dropdownItem.closest('.add-to-playlist');
+
+        if (dropdown && playlistId) {
+          this.handleAddSongToPlaylist(dropdown, playlistId, playlistName);
+        }
+        return;
+      }
+
+      /* ----------------------------
+         DELETE PLAYLIST
+         ---------------------------- */
+
+      const deleteBtn = e.target.closest('.playlist-delete-button');
+      if (deleteBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const card = deleteBtn.closest('.playlist-card-template');
+        const playlistId = card?.dataset.playlistId;
+        const title = card?.querySelector('.playlist-title')?.textContent;
+
+        if (playlistId && confirm(`Delete "${title}"?`)) {
+          this.deletePlaylist(playlistId)
+            .then(async () => {
+              card.remove();
+              await this.getUserPlaylists(true);
+              invalidateAddToPlaylistDropdownCache();
+              this.showNotification('Playlist deleted');
+            })
+            .catch(() => {
+              this.showNotification('Error deleting playlist', 'error');
+            });
+        }
+        return;
+      }
+
+      /* ----------------------------
+         REMOVE SONG FROM PLAYLIST (playlist template)
+         ---------------------------- */
+
+      if (e.target.closest('.dd-remove-from-playlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ✅ stop the other remove handler from firing
+
+        const btn = e.target.closest('.dd-remove-from-playlist');
+        const card = btn.closest('.song-wrapper');
+        const songId = card?.dataset.songId;
+
+        if (!songId || !this.currentPlaylistId) {
+          console.warn('❌ Missing songId or currentPlaylistId', {
+            songId,
+            currentPlaylistId: this.currentPlaylistId,
+          });
+          return;
+        }
+
+        try {
+          await this.removeSongFromPlaylist(this.currentPlaylistId, songId);
+
+          card.style.opacity = '0';
+
+          setTimeout(() => {
+            card.remove();
+
+            const container = document.querySelector('.playlist-songs-wrapper');
+            if (!container) return;
+
+            const remaining = container.querySelectorAll(
+              '.song-wrapper:not(.template-wrapper .song-wrapper)'
+            );
+
+            if (remaining.length === 0) {
+              const templateWrapper = container.querySelector('.template-wrapper');
+              if (templateWrapper) templateWrapper.style.display = 'none';
+              updateEmptyPlaylistMessage(container);
+            }
+          }, 300);
+
+          const playlist = await this.getPlaylistById(this.currentPlaylistId);
+          const playlistName = playlist?.name || 'playlist';
+          this.showNotification(`Removed from "${playlistName}"`);
+        } catch (err) {
+          console.error('Error removing song:', err);
+          this.showNotification('Error removing song', 'error');
+        }
+
+        return;
+      }
+
       /* ----------------------------
          EDIT OVERLAY (close w/o save)
          ---------------------------- */
 
-     if (e.target.closest('.playlist-x-button')) {
-  e.preventDefault();
-  e.stopPropagation();
+      if (e.target.closest('.playlist-x-button')) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  // clear pending cover change if they close without saving
-  this.pendingCoverImageBase64 = null;
-  this.editingPlaylistId = null;
+        this.pendingCoverImageBase64 = null;
+        this.editingPlaylistId = null;
 
-  const { overlay, nameInput, descInput } = this._getEditOverlayEls();
+        const overlay = document.querySelector('.playlist-edit-overlay');
+        const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
 
-  // reset the "change cover image" button text (your existing behavior)
-  const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
-  if (textEl) {
-    textEl.textContent = textEl.dataset.originalText || textEl.textContent;
-  }
+        if (textEl) {
+          textEl.textContent = textEl.dataset.originalText || textEl.textContent;
+        }
 
-  // ✅ Clear typed text so it doesn't stick if they didn't save
-  if (nameInput) nameInput.value = '';
-  if (descInput && ('value' in descInput)) descInput.value = '';
-
-  return;
-}
+        return;
+      }
 
       /* ----------------------------
          COVER IMAGE (create playlist)
@@ -6869,26 +6798,14 @@ _setEditOverlayPlaceholders({ name = '', description = '' } = {}) {
          ---------------------------- */
 
       if (e.target.closest('.playlist-save-button')) {
-  e.preventDefault();
-  e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-  // ✅ Fallback: if editingPlaylistId somehow wasn't set, grab it from overlay
-  if (!this.editingPlaylistId) {
-    const overlay = document.querySelector('.playlist-edit-overlay');
-    const pidFromOverlay = overlay?.dataset?.playlistId;
-
-    console.log('🧯 save fallback -> overlay dataset playlistId:', pidFromOverlay);
-
-    if (pidFromOverlay) {
-      this.editingPlaylistId = String(pidFromOverlay);
-    }
-  }
-
-  const playlistId = this.editingPlaylistId;
-  if (!playlistId) {
-    console.warn('❌ No editingPlaylistId set');
-    return;
-  }
+        const playlistId = this.editingPlaylistId;
+        if (!playlistId) {
+          console.warn('❌ No editingPlaylistId set');
+          return;
+        }
 
         const saveBtn = e.target.closest('.playlist-save-button');
         const originalSaveText = saveBtn ? saveBtn.textContent : null;
@@ -6901,28 +6818,17 @@ _setEditOverlayPlaceholders({ name = '', description = '' } = {}) {
 
         const updates = {};
 
-const existing = await this.getPlaylistById(playlistId);
-const { nameInput, descInput } = this._getEditOverlayEls();
+        const existing = await this.getPlaylistById(playlistId);
+        if (existing) {
+          updates.name = existing.name || '';
+          updates.description = existing.description || '';
+        }
 
-// If user typed something, use it. If they left blank, keep existing.
-const typedName = (nameInput?.value || '').trim();
-const typedDesc =
-  descInput && ('value' in descInput) ? (descInput.value || '').trim() : '';
-
-updates.name = typedName || existing?.name || '';
-updates.description = typedDesc || existing?.description || '';
-
-// cover image (your existing behavior)
-const newCover = this.pendingCoverImageBase64;
-if (newCover) updates.cover_image_url = newCover;
+        const newCover = this.pendingCoverImageBase64;
+        if (newCover) updates.cover_image_url = newCover;
 
         try {
           await this.updatePlaylist(playlistId, updates);
-
-          // ✅ reset inputs back to blank (placeholders will reflect saved values next time)
-const { nameInput, descInput } = this._getEditOverlayEls();
-if (nameInput) nameInput.value = '';
-if (descInput && ('value' in descInput)) descInput.value = '';
 
           if (newCover) {
             const card = document.querySelector(
@@ -6971,8 +6877,6 @@ if (descInput && ('value' in descInput)) descInput.value = '';
 
         return;
       }
-      //---------
- 
     });
 
     this.setupAddToPlaylistDropdowns();
