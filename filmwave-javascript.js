@@ -7428,7 +7428,9 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
     if (!container || !template) return;
 
     try {
-      const playlists = await this.getUserPlaylists();
+      const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
+  return new Date(b.created_at) - new Date(a.created_at); // newest first
+});
 
       // Clear existing cards except template
       container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
