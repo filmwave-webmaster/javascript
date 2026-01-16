@@ -6857,13 +6857,6 @@ if (descInput) {
           saveBtn.style.opacity = '0.7';
         }
 
-        const updates = {};
-        const nameInput = document.querySelector('.edit-playlist-text-field-1');
-        const descInput = document.querySelector('.playlist-settings-label');
-
-        if (nameInput?.value.trim()) updates.name = nameInput.value.trim();
-        if (descInput?.value.trim()) updates.description = descInput.value.trim();
-
         const overlay = document.querySelector('.playlist-edit-overlay');
 const nameInput = overlay?.querySelector('.edit-playlist-text-field-1');
 const descInput = overlay?.querySelector('.edit-playlist-text-field-2');
