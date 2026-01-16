@@ -6857,14 +6857,21 @@ if (descInput) {
           saveBtn.style.opacity = '0.7';
         }
 
-        const overlay = document.querySelector('.playlist-edit-overlay');
+        const overlay = e.target.closest('.playlist-edit-overlay');
 const nameInput = overlay?.querySelector('.edit-playlist-text-field-1');
 const descInput = overlay?.querySelector('.edit-playlist-text-field-2');
 
-const updates = {};
+// start from existing values so we never blank them
+const existing = await this.getPlaylistById(playlistId);
 
-if (nameInput) updates.name = (nameInput.value.trim() || nameInput.placeholder || '').trim();
-if (descInput) updates.description = (descInput.value.trim() || descInput.placeholder || '').trim();
+const updates = {
+  name: existing?.name || '',
+  description: existing?.description || '',
+};
+
+// only override if user typed something
+if (nameInput && nameInput.value.trim()) updates.name = nameInput.value.trim();
+if (descInput && descInput.value.trim()) updates.description = descInput.value.trim();
 
         const newCover = this.pendingCoverImageBase64;
         if (newCover) updates.cover_image_url = newCover;
