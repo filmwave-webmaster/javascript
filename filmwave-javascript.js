@@ -6280,9 +6280,36 @@ const PlaylistManager = {
     if (!playlistId) return;
     localStorage.setItem('fw_last_clicked_playlist_id', String(playlistId));
     },
+  
     _getLastClickedPlaylistForAddModal() {
     return localStorage.getItem('fw_last_clicked_playlist_id');
     },
+
+    _setLastCreatedPlaylistForAddModal(playlistId) {
+    if (!playlistId) return;
+    localStorage.setItem('fw_last_created_playlist_id', String(playlistId));
+    },
+  
+    _getLastCreatedPlaylistForAddModal() {
+    return localStorage.getItem('fw_last_created_playlist_id');
+    },
+  
+    _clearLastCreatedPlaylistForAddModal() {
+    localStorage.removeItem('fw_last_created_playlist_id');
+    },
+
+    _setLastCreatedPlaylistAutoSelectId(playlistId) {
+    if (!playlistId) return;
+    localStorage.setItem('fw_last_created_playlist_autoselect_id', String(playlistId));
+    },
+  
+    _getLastCreatedPlaylistAutoSelectId() {
+    return localStorage.getItem('fw_last_created_playlist_autoselect_id');
+    },
+  
+    _clearLastCreatedPlaylistAutoSelectId() {
+    localStorage.removeItem('fw_last_created_playlist_autoselect_id');
+    },  
   
   /* ----------------------------
      INIT
@@ -6512,23 +6539,48 @@ const PlaylistManager = {
         return;
       }
 
-      const playlistRow = e.target.closest('.add-to-playlist-row');
-      if (playlistRow && playlistRow.dataset.playlistId) {
-      e.preventDefault();
+     const playlistRow = e.target.closest('.add-to-playlist-row');
+if (playlistRow && playlistRow.dataset.playlistId) {
+  e.preventDefault();
 
-      // ✅ remember last clicked (applies next open, not instantly)
-      this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
+  // ✅ once they click anything, stop pinning "last created"
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
+  }
 
-      this.togglePlaylistSelection(playlistRow);
-      return;
-      }
+  // ✅ remember last clicked (applies next open)
+  this._setLastClickedPlaylistForAddModal(playlistRow.dataset.playlistId);
 
+  this.togglePlaylistSelection(playlistRow);
+  return;
+}
 
       if (e.target.closest('.add-to-playlist-save-button')) {
-        e.preventDefault();
-        this.saveToSelectedPlaylists();
-        return;
-      }
+  e.preventDefault();
+
+  // If newly created playlist is selected, treat it as "most recent"
+  const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
+  if (
+    lastCreatedId &&
+    this.selectedPlaylistIds.map(String).includes(String(lastCreatedId))
+  ) {
+    this._setLastClickedPlaylistForAddModal(String(lastCreatedId));
+  }
+
+  // Clear one-time helpers AFTER promotion
+  if (typeof this._clearLastCreatedPlaylistForAddModal === 'function') {
+    this._clearLastCreatedPlaylistForAddModal();
+  }
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
+  }
+
+  this.saveToSelectedPlaylists();
+  return;
+}
 
       /* ----------------------------
          CREATE PLAYLIST MODAL
@@ -6879,16 +6931,27 @@ const PlaylistManager = {
 
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
-      const playlist = await this.createPlaylist(name, description);
+     const playlist = await this.createPlaylist(name, description);
 
-      await this.getUserPlaylists(true);
+// ✅ Pin “last created” to top (next time the add modal opens)
+this._setLastCreatedPlaylistForAddModal(playlist.id);
 
-      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
-      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
+// ✅ ONLY set auto-select if the Add-to-Playlist modal is currently open
+const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
 
-      if (addModalOpen) {
-        await this.populateAddToPlaylistModal();
-      }
+if (addModalOpen) {
+  this._setLastCreatedPlaylistAutoSelectId(playlist.id);
+} else {
+  // created from playlists page etc → DO NOT auto-checkmark later
+  this._clearLastCreatedPlaylistAutoSelectId();
+}
+
+await this.getUserPlaylists(true);
+
+if (addModalOpen) {
+  await this.populateAddToPlaylistModal();
+}
 
       invalidateAddToPlaylistDropdownCache();
 
@@ -7030,12 +7093,18 @@ _renderAddToPlaylistSelectedSongUI() {
   //End
 
   closeAddToPlaylistModal() {
-    const modal = document.querySelector('.add-to-playlist-module-wrapper');
-    if (modal) modal.style.display = 'none';
+  const modal = document.querySelector('.add-to-playlist-module-wrapper');
+  if (modal) modal.style.display = 'none';
 
-    this.currentSongForPlaylist = null;
-    this.selectedPlaylistIds = [];
-  },
+  this.currentSongForPlaylist = null;
+  this.selectedPlaylistIds = [];
+  this.originalPlaylistIds = [];
+
+  // ✅ clear ONLY the auto-select id when closing (so selection doesn't stick)
+  if (typeof this._clearLastCreatedPlaylistAutoSelectId === 'function') {
+    this._clearLastCreatedPlaylistAutoSelectId();
+  }
+},
 
   async populateAddToPlaylistModal() {
     const container = document.querySelector('.module-bod-container');
@@ -7055,18 +7124,28 @@ _renderAddToPlaylistSelectedSongUI() {
 
     const playlists = await this.getUserPlaylists();
 
-    // ✅ Sort so last clicked playlist appears first (next time modal opens)
-    const lastClickedId = this._getLastClickedPlaylistForAddModal();
-    if (lastClickedId) {
-      playlists.sort((a, b) => {
-        const aIs = String(a.id) === String(lastClickedId);
-        const bIs = String(b.id) === String(lastClickedId);
-        if (aIs && !bIs) return -1;
-        if (!aIs && bIs) return 1;
-        return 0; // keep original order otherwise
-      });
-    }
+    // ✅ Sort order priority:
+// 1) last created playlist (if any)
+// 2) last clicked playlist (if any)
+// 3) otherwise keep original order
+const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
+const lastClickedId = this._getLastClickedPlaylistForAddModal?.();
 
+if (lastCreatedId || lastClickedId) {
+  playlists.sort((a, b) => {
+    const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
+    const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
+    if (aCreated && !bCreated) return -1;
+    if (!aCreated && bCreated) return 1;
+
+    const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
+    const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
+    if (aClicked && !bClicked) return -1;
+    if (!aClicked && bClicked) return 1;
+
+    return 0;
+  });
+}
 
     const songInPlaylists = [];
     this.originalPlaylistIds = [];
@@ -7095,6 +7174,15 @@ _renderAddToPlaylistSelectedSongUI() {
       row.dataset.playlistId = playlist.id;
       row.style.display = '';
 
+      // ✅ AUTO-SELECT newly created playlist (one-time via separate key)
+const autoSelectId = this._getLastCreatedPlaylistAutoSelectId?.();
+if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    this.selectedPlaylistIds.push(playlist.id);
+  }
+  if (icon) icon.style.opacity = '1';
+}
+
       row.onmouseenter = () => {
         if (!this.selectedPlaylistIds.includes(playlist.id)) {
           const i = row.querySelector('.add-to-playlist-icon');
@@ -7109,11 +7197,15 @@ _renderAddToPlaylistSelectedSongUI() {
         }
       };
 
-      if (songInPlaylists.includes(playlist.id)) {
-        this.selectedPlaylistIds.push(playlist.id);
-        this.originalPlaylistIds.push(playlist.id);
-        if (icon) icon.style.opacity = '1';
-      }
+     if (songInPlaylists.includes(playlist.id)) {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    this.selectedPlaylistIds.push(playlist.id);
+  }
+  if (!this.originalPlaylistIds.includes(playlist.id)) {
+    this.originalPlaylistIds.push(playlist.id);
+  }
+  if (icon) icon.style.opacity = '1';
+}
 
       container.appendChild(row);
     });
