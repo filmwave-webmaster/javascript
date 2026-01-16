@@ -6310,6 +6310,38 @@ const PlaylistManager = {
     _clearLastCreatedPlaylistAutoSelectId() {
     localStorage.removeItem('fw_last_created_playlist_autoselect_id');
     },  
+
+    _getEditOverlayEls() {
+  const overlay = document.querySelector('.playlist-edit-overlay');
+  if (!overlay) return {};
+
+  // Name input
+  const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
+
+  // Description input
+  // IMPORTANT: your screenshot shows a 2nd text field named "edit-playlist-text-field-2".
+  // If you truly used ".playlist-settings-label" as the description input, it won't behave like an input.
+  const descInput =
+    overlay.querySelector('.edit-playlist-text-field-2') ||
+    overlay.querySelector('.playlist-settings-label');
+
+  return { overlay, nameInput, descInput };
+},
+
+_setEditOverlayPlaceholders({ name = '', description = '' } = {}) {
+  const { nameInput, descInput } = this._getEditOverlayEls();
+
+  if (nameInput) {
+    nameInput.placeholder = name || '';
+    nameInput.value = ''; // always start blank; placeholder shows current value
+  }
+
+  // Only set placeholder/value if this is a real input/textarea
+  if (descInput && ('placeholder' in descInput)) {
+    descInput.placeholder = description || '';
+    descInput.value = '';
+  }
+},
   
   /* ----------------------------
      INIT
@@ -6714,25 +6746,63 @@ if (playlistRow && playlistRow.dataset.playlistId) {
       }
 
       /* ----------------------------
+         OPEN EDIT OVERLAY AND SET PLACEHOLDERS
+         ---------------------------- */
+      
+      // ✅ OPEN EDIT OVERLAY + set placeholders from the clicked playlist card
+const editIcon = e.target.closest('.playlist-edit-icon');
+if (editIcon) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const card = editIcon.closest('.playlist-card-template');
+  const playlistId = card?.dataset.playlistId;
+  if (!playlistId) return;
+
+  this.editingPlaylistId = playlistId;
+
+  // pull current name/description from your cached playlists
+  const existing = await this.getPlaylistById(playlistId);
+
+  // show overlay
+  const overlay = document.querySelector('.playlist-edit-overlay');
+  if (overlay) overlay.style.display = 'flex';
+
+  // set placeholders to current values
+  this._setEditOverlayPlaceholders({
+    name: existing?.name || '',
+    description: existing?.description || '',
+  });
+
+  return;
+}
+      
+      /* ----------------------------
          EDIT OVERLAY (close w/o save)
          ---------------------------- */
 
-      if (e.target.closest('.playlist-x-button')) {
-        e.preventDefault();
-        e.stopPropagation();
+     if (e.target.closest('.playlist-x-button')) {
+  e.preventDefault();
+  e.stopPropagation();
 
-        this.pendingCoverImageBase64 = null;
-        this.editingPlaylistId = null;
+  // clear pending cover change if they close without saving
+  this.pendingCoverImageBase64 = null;
+  this.editingPlaylistId = null;
 
-        const overlay = document.querySelector('.playlist-edit-overlay');
-        const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+  const { overlay, nameInput, descInput } = this._getEditOverlayEls();
 
-        if (textEl) {
-          textEl.textContent = textEl.dataset.originalText || textEl.textContent;
-        }
+  // reset the "change cover image" button text (your existing behavior)
+  const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
+  if (textEl) {
+    textEl.textContent = textEl.dataset.originalText || textEl.textContent;
+  }
 
-        return;
-      }
+  // ✅ Clear typed text so it doesn't stick if they didn't save
+  if (nameInput) nameInput.value = '';
+  if (descInput && ('value' in descInput)) descInput.value = '';
+
+  return;
+}
 
       /* ----------------------------
          COVER IMAGE (create playlist)
@@ -6818,17 +6888,28 @@ if (playlistRow && playlistRow.dataset.playlistId) {
 
         const updates = {};
 
-        const existing = await this.getPlaylistById(playlistId);
-        if (existing) {
-          updates.name = existing.name || '';
-          updates.description = existing.description || '';
-        }
+const existing = await this.getPlaylistById(playlistId);
+const { nameInput, descInput } = this._getEditOverlayEls();
 
-        const newCover = this.pendingCoverImageBase64;
-        if (newCover) updates.cover_image_url = newCover;
+// If user typed something, use it. If they left blank, keep existing.
+const typedName = (nameInput?.value || '').trim();
+const typedDesc =
+  descInput && ('value' in descInput) ? (descInput.value || '').trim() : '';
+
+updates.name = typedName || existing?.name || '';
+updates.description = typedDesc || existing?.description || '';
+
+// cover image (your existing behavior)
+const newCover = this.pendingCoverImageBase64;
+if (newCover) updates.cover_image_url = newCover;
 
         try {
           await this.updatePlaylist(playlistId, updates);
+
+          // ✅ reset inputs back to blank (placeholders will reflect saved values next time)
+const { nameInput, descInput } = this._getEditOverlayEls();
+if (nameInput) nameInput.value = '';
+if (descInput && ('value' in descInput)) descInput.value = '';
 
           if (newCover) {
             const card = document.querySelector(
