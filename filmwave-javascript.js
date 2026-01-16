@@ -4067,7 +4067,7 @@ function initializePlaylistOverlay() {
   // Set placeholders for name + description
   PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
     const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
-    const descInput = overlay.querySelector('.playlist-settings-label');
+    const descInput = overlay.querySelector('.edit-playlist-text-field-2');
 
     if (nameInput) {
       nameInput.placeholder = playlist?.name || '';
