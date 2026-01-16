@@ -7435,7 +7435,7 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
 
   async renderPlaylistsGrid() {
     const container = document.querySelector('.sortable-container');
-    const template = container?.querySelector('.playlist-card-template');
+    const template = container?.querySelector('.playlist-card-template.is-template');
     if (!container || !template) return;
 
     // Show all placeholders immediately (in case Webflow hid them)
@@ -7448,14 +7448,15 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
   return new Date(b.created_at) - new Date(a.created_at); // newest first
 });
 
-      // Clear existing cards except template
-     container.querySelectorAll('.playlist-card-template.is-template').forEach((card) => {
-      card.style.display = 'none';
-    });
+     // ✅ Clear existing rendered cards (keep ONLY the template)
+container.querySelectorAll('.playlist-card-template').forEach((card) => {
+  if (!card.classList.contains('is-template')) {
+    card.remove();
+  }
+});
 
-//OOMPALOOMPA
-      
-      template.style.display = 'none';
+// ✅ Hide the template
+template.style.display = 'none';
 
       // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
       const playlistCounts = await Promise.all(
