@@ -7427,6 +7427,11 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
     const template = container?.querySelector('.playlist-card-template');
     if (!container || !template) return;
 
+    // Show all placeholders immediately (in case Webflow hid them)
+document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  el.style.display = '';
+});
+
     try {
       const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
   return new Date(b.created_at) - new Date(a.created_at); // newest first
@@ -7502,6 +7507,12 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
         initializePlaylistOverlay();
       }
     } finally {
+
+// Hide all placeholders once real cards exist
+document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  el.style.display = 'none';
+});
+      
       // ✅ Reveal + return container to normal sizing
       container.style.opacity = '1';
       container.style.pointerEvents = '';
