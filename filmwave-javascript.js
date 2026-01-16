@@ -4064,25 +4064,6 @@ function initializePlaylistOverlay() {
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
 
-  const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
-const descInput = overlay.querySelector('.edit-playlist-text-field-2');
-
-[nameInput, descInput].forEach((input) => {
-  if (!input) return;
-
-  // make placeholder gray
-  input.style.color = '#cccccc';
-
-  input.addEventListener('input', () => {
-    // when user types, switch back to normal color
-    if (input.value.length > 0) {
-      input.style.color = '';
-    } else {
-      input.style.color = '#cccccc';
-    }
-  });
-});      
-
   // Set placeholders for name + description
   PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
     const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
