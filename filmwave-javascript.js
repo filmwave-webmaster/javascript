@@ -6880,6 +6880,7 @@ if (newCover && String(newCover).trim().length > 20) {
 
         try {
           await this.updatePlaylist(playlistId, updates);
+          this.pendingCoverImageBase64 = null;
 
           const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
 if (card) {
