@@ -6878,11 +6878,6 @@ if (descInput && descInput.value.trim()) updates.description = descInput.value.t
 const newCover = this.pendingCoverImageBase64;
 if (newCover) updates.cover_image_url = newCover;
 
-        const newCover = this.pendingCoverImageBase64;
-if (newCover && String(newCover).trim().length > 20) {
-  updates.cover_image_url = newCover; // ✅ only when an actual image is picked
-}
-
         try {
           await this.updatePlaylist(playlistId, updates);
           this.pendingCoverImageBase64 = null;
