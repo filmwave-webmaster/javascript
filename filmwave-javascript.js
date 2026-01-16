@@ -5983,12 +5983,6 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image too large. Max size is 5MB.');
-      if (typeof onCancel === 'function') onCancel();
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof onPicked === 'function') {
@@ -6002,11 +5996,41 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
 }
 
 /* ============================================================
+   DOWNSAMPLE IMAGES
+   ============================================================ */
+
+  async function downsampleImageBase64(dataUrl, {
+  maxWidth = 800,
+  maxHeight = 800,
+  quality = 0.8,
+  mimeType = 'image/jpeg',
+} = {}) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      resolve(canvas.toDataURL(mimeType, quality));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+/* ============================================================
    FILE UPLOAD DRAG AND DROP
    ============================================================ */
 
 (function setupCreatePlaylistDragDropCover() {
-  const MAX_BYTES = 5 * 1024 * 1024; // 5MB
   const DROPZONE_SEL = '.new-playlist-upload-field';
   const TEXT_SEL = '.new-plalyist-upload-field-text';
   const ICON_SEL = '.new-playlist-file-icon';
@@ -6122,16 +6146,18 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
       alert('Please drop an image file.');
       return;
     }
-    if (file.size > MAX_BYTES) {
-      alert('Image too large. Max size is 5MB.');
-      return;
-    }
 
     try {
       const base64 = await fileToBase64(file);
 
       if (window.PlaylistManager) {
-        window.PlaylistManager.pendingCoverImageBase64 = base64;
+        downsampleImageBase64(base64, { maxWidth: 800, maxHeight: 800, quality: 0.8 })
+  .then((small) => {
+    window.PlaylistManager.pendingCoverImageBase64 = small;
+  })
+  .catch(() => {
+    window.PlaylistManager.pendingCoverImageBase64 = base64; // fallback
+  });
       }
 
       updateDropUI(modal, file.name);
@@ -6158,7 +6184,14 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
     pickImageAsBase64({
       onPicked: ({ base64, file }) => {
         if (window.PlaylistManager) {
-          window.PlaylistManager.pendingCoverImageBase64 = base64;
+          downsampleImageBase64(base64, { maxWidth: 800, maxHeight: 800, quality: 0.8 })
+  .then((small) => {
+    window.PlaylistManager.pendingCoverImageBase64 = small;
+  })
+  .catch(() => {
+    window.PlaylistManager.pendingCoverImageBase64 = base64; // fallback
+  });
+
         }
         updateDropUI(modal, file?.name || 'Image selected');
         console.log('🖼️ Create playlist cover set via picker:', file?.name);
@@ -6846,57 +6879,35 @@ const PlaylistManager = {
 
       if (saveBtn) saveBtn.textContent = 'Creating...';
 
-     const playlist = await this.createPlaylist(name, description);
-      if (playlist?.id) {
-  localStorage.setItem('fw_newest_playlist_id', String(playlist.id));
-}
+      const playlist = await this.createPlaylist(name, description);
 
-      // remember newest playlist so grid can force it to top
-if (playlist?.id) {
-  localStorage.setItem('fw_newest_playlist_id', String(playlist.id));
-}
+      await this.getUserPlaylists(true);
 
-// ✅ Refresh playlists
-const refreshed = await this.getUserPlaylists(true);
+      const addModal = document.querySelector('.add-to-playlist-module-wrapper');
+      const addModalOpen = addModal && getComputedStyle(addModal).display !== 'none';
 
-// ✅ Move newly created playlist to top (both UI + cache)
-if (playlist?.id && Array.isArray(refreshed)) {
-  const createdId = Number(playlist.id);
-  const created = refreshed.find(p => Number(p.id) === createdId);
-  const rest = refreshed.filter(p => Number(p.id) !== createdId);
-  this.playlists = created ? [created, ...rest] : refreshed;
-}
+      if (addModalOpen) {
+        await this.populateAddToPlaylistModal();
+      }
 
-if (this.pendingSongToAdd?.songId) {
-  const songId = this.pendingSongToAdd.songId;
+      invalidateAddToPlaylistDropdownCache();
 
-  const songs = await this.getPlaylistSongs(playlist.id);
-  await this.addSongToPlaylist(playlist.id, songId, songs.length + 1);
+      if (isPlaylistsGridPage()) {
+        this.playlists = [];
+        await this.renderPlaylistsGrid();
+      }
 
-  this.openAddToPlaylistModal(songId);
-  await this.populateAddToPlaylistModal();
+      if (saveBtn) saveBtn.textContent = originalText;
 
-  this.pendingSongToAdd = null;
-}
+      this.closeCreatePlaylistModal();
 
-invalidateAddToPlaylistDropdownCache();
-
-// ✅ If on playlists page, render grid with updated this.playlists (new at top)
-if (isPlaylistsGridPage()) {
-  await this.renderPlaylistsGrid();
-}
-
-if (saveBtn) saveBtn.textContent = originalText;
-
-this.closeCreatePlaylistModal();
-
-// ✅ Notifications + clear state
-if (this.pendingSongToAdd?.songId) {
-  this.showNotification('Playlist created and song added!');
-  this.pendingSongToAdd = null;
-} else {
-  this.showNotification(`Playlist "${name}" created!`);
-}
+      if (this.pendingSongToAdd?.songId) {
+        await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1);
+        this.showNotification('Playlist created and song added!');
+        this.pendingSongToAdd = null;
+      } else {
+        this.showNotification(`Playlist "${name}" created!`);
+      }
 
       this.pendingCoverImageBase64 = null;
 
@@ -7325,22 +7336,7 @@ _renderAddToPlaylistSelectedSongUI() {
     if (!container || !template) return;
 
     try {
-      const playlists = await this.getUserPlaylists(true);
-
-      // ✅ If we have a "most recent created" id, force it to top
-const newestId = localStorage.getItem('fw_newest_playlist_id');
-if (newestId) {
-  const id = Number(newestId);
-  playlists.sort((a, b) => {
-    const aIs = Number(a.id) === id;
-    const bIs = Number(b.id) === id;
-    if (aIs && !bIs) return -1;
-    if (!aIs && bIs) return 1;
-    return 0;
-  });
-  // one-time use
-  localStorage.removeItem('fw_newest_playlist_id');
-}
+      const playlists = await this.getUserPlaylists();
 
       // Clear existing cards except template
       container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
