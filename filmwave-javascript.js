@@ -7455,7 +7455,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
 
 //OOMPALOOMPA
       
-      template.style.display = 'display';
+      template.style.display = 'block';
 
       // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
       const playlistCounts = await Promise.all(
