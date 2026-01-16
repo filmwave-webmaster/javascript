@@ -4064,6 +4064,26 @@ function initializePlaylistOverlay() {
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
 
+  // enable placeholder-clear-on-focus
+const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
+const descInput = overlay.querySelector('.edit-playlist-text-field-2');
+
+[nameInput, descInput].forEach((input) => {
+  if (!input) return;
+
+  if (!input.dataset.originalPlaceholder) {
+    input.dataset.originalPlaceholder = input.placeholder || '';
+  }
+
+  input.addEventListener('focus', () => {
+    if (!input.value) input.placeholder = '';
+  });
+
+  input.addEventListener('blur', () => {
+    if (!input.value) input.placeholder = input.dataset.originalPlaceholder || '';
+  });
+});      
+
   // Set placeholders for name + description
   PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
     const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
