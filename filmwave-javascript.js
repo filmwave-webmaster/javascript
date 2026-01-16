@@ -7449,9 +7449,9 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
 });
 
       // Clear existing cards except template
-      container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-        if (i > 0) card.remove();
-      });
+     container.querySelectorAll('.playlist-card-template.is-template').forEach((card) => {
+      card.style.display = 'none';
+    });
 
 //OOMPALOOMPA
       
@@ -7476,6 +7476,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
 
       for (const playlist of playlists) {
         const card = template.cloneNode(true);
+        card.classList.remove('is-template');
 
         const title = card.querySelector('.playlist-title');
         const detail = card.querySelector('.playlist-detail');
