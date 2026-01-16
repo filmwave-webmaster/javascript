@@ -6864,17 +6864,29 @@ if (descInput) {
         if (nameInput?.value.trim()) updates.name = nameInput.value.trim();
         if (descInput?.value.trim()) updates.description = descInput.value.trim();
 
-        const existing = await this.getPlaylistById(playlistId);
-        if (existing) {
-          updates.name = existing.name || '';
-          updates.description = existing.description || '';
-        }
+        const overlay = document.querySelector('.playlist-edit-overlay');
+const nameInput = overlay?.querySelector('.edit-playlist-text-field-1');
+const descInput = overlay?.querySelector('.edit-playlist-text-field-2');
+
+const updates = {};
+
+if (nameInput) updates.name = (nameInput.value.trim() || nameInput.placeholder || '').trim();
+if (descInput) updates.description = (descInput.value.trim() || descInput.placeholder || '').trim();
 
         const newCover = this.pendingCoverImageBase64;
         if (newCover) updates.cover_image_url = newCover;
 
         try {
           await this.updatePlaylist(playlistId, updates);
+
+          const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
+if (card) {
+  const titleEl = card.querySelector('.playlist-title');
+  const detailEl = card.querySelector('.playlist-detail');
+
+  if (titleEl && updates.name) titleEl.textContent = updates.name;
+  if (detailEl) detailEl.textContent = updates.description || '';
+}
 
           if (newCover) {
             const card = document.querySelector(
