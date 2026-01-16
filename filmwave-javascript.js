@@ -6776,9 +6776,8 @@ _setEditOverlayPlaceholders({ name = '', description = '' } = {}) {
 
     return;
   }
-
-});
- 
+      //--------
+      
       /* ----------------------------
          EDIT OVERLAY (close w/o save)
          ---------------------------- */
@@ -6972,6 +6971,8 @@ if (descInput && ('value' in descInput)) descInput.value = '';
 
         return;
       }
+      //---------
+ 
     });
 
     this.setupAddToPlaylistDropdowns();
