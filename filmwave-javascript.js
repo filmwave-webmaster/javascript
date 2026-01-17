@@ -4008,6 +4008,9 @@ window.addEventListener('load', () => {
  */
 
 function initializePlaylistOverlay() {
+  if (window.__FW_PLAYLIST_OVERLAY_INIT_DONE) return;
+  window.__FW_PLAYLIST_OVERLAY_INIT_DONE = true;
+
   const editIcons = document.querySelectorAll('.playlist-edit-icon');
   const closeButtons = document.querySelectorAll('.playlist-x-button');
   const overlays = document.querySelectorAll('.playlist-edit-overlay');
