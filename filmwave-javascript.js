@@ -6904,8 +6904,8 @@ if (card) {
 
           this.showNotification('Playlist updated');
           
-         const overlay = document.querySelector('.playlist-edit-overlay');
-const closeBtn = overlay ? overlay.querySelector('.playlist-x-button') : null;
+         const overlayToClose = document.querySelector('.playlist-edit-overlay');
+const closeBtn = overlayToClose ? overlayToClose.querySelector('.playlist-x-button') : null;
 if (closeBtn) closeBtn.click();
 
 this.editingPlaylistId = null;
