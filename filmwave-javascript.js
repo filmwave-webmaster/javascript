@@ -6816,6 +6816,8 @@ if (descInput) {
         e.stopPropagation();
 
         const playlistId = this.editingPlaylistId;
+        const savingCard = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
+        if (savingCard) savingCard.style.opacity = '0.6';
         if (!playlistId) {
           console.warn('❌ No editingPlaylistId set');
           return;
@@ -6857,6 +6859,8 @@ if (newCover) updates.cover_image_url = newCover;
 
           const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
 if (card) {
+  card.style.opacity = '0.6'; // ⬅ start “saving” visual state
+
   const titleEl = card.querySelector('.playlist-title');
   const detailEl = card.querySelector('.playlist-detail');
 
@@ -6881,11 +6885,12 @@ if (card) {
             }
           }
 
-          await this.getUserPlaylists(true);
           invalidateAddToPlaylistDropdownCache();
 
           if (isPlaylistsGridPage()) {
-            await this.renderPlaylistsGrid();
+          // ✅ do NOT re-render the whole grid (prevents flash)
+          // refresh cache only
+          await this.getUserPlaylists(true);
           }
 
           this.pendingCoverImageBase64 = null;
@@ -6898,6 +6903,32 @@ if (card) {
           }
 
           this.showNotification('Playlist updated');
+          
+         // FORCE CLOSE EDIT OVERLAY
+const overlayEl =
+  e.target.closest('.playlist-edit-overlay') ||
+  document.querySelector('.playlist-edit-overlay');
+
+const wrappersToHide = [
+  overlayEl,
+  overlayEl?.closest('.playlist-edit-overlay-wrapper'),
+  overlayEl?.closest('.playlist-edit-module-wrapper'),
+  overlayEl?.closest('.playlist-edit-modal-wrapper'),
+  overlayEl?.closest('.w-modal'),
+  overlayEl?.closest('.w-lightbox-backdrop')
+].filter(Boolean);
+
+wrappersToHide.forEach((el) => {
+  el.style.display = 'none';
+  el.style.opacity = '0';
+  el.style.pointerEvents = 'none';
+  el.classList.remove('open', 'is-open', 'is-active', 'active', 'w--open');
+});
+
+this.editingPlaylistId = null;
+this.pendingCoverImageBase64 = null;
+
+          
         } catch (err) {
           console.error('Error saving playlist edits:', err);
           this.showNotification('Error saving playlist', 'error');
@@ -6907,6 +6938,7 @@ if (card) {
             saveBtn.style.pointerEvents = '';
             saveBtn.style.opacity = '';
           }
+          if (savingCard) savingCard.style.opacity = '';
         }
 
         return;
@@ -7472,10 +7504,20 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
     const template = container?.querySelector('.playlist-card-template.is-template');
     if (!container || !template) return;
 
-    // Show all placeholders immediately (in case Webflow hid them)
-document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-  el.style.display = '';
-});
+    // Show placeholders ONLY on first page load (prevent flashing during saves/re-renders)
+if (!window.__fw_placeholders_shown_once) {
+  window.__fw_placeholders_shown_once = true;
+
+  // Show all placeholders immediately (in case Webflow hid them)
+  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    el.style.display = '';
+  });
+} else {
+  // Never show placeholders again after initial load
+  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    el.style.display = 'none';
+  });
+}
 
 try {
   const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
