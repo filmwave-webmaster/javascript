@@ -3886,7 +3886,7 @@ function toggleEditMode(container, button) {
       });
       console.log('✅ Closed', openOverlays.length, 'open overlays');
       
-      PlaylistManager.saveOrder(container);
+      saveOrder(container);
       console.log('🔒 Edit mode disabled, order saved');
     } catch (e) {
       console.error('❌ Error disabling edit mode:', e);
@@ -3950,8 +3950,8 @@ function assignDataIds(container) {
   });
 }
 
-async saveOrder(container) {
-  const items = container.querySelectorAll('.playlist-item');
+async function saveOrder(container) {
+  const items = container.querySelectorAll('.playlist-item, .playlist-card-template');
   const positions = Array.from(items).map((item, index) => ({
     id: parseInt(item.dataset.playlistId),
     position: index
