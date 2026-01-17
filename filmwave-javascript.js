@@ -3765,7 +3765,7 @@ function initializeProfileSortable() {
   assignDataIds(container);
   
   // 2. Restore saved order
-  restoreOrder(container);
+  //restoreOrder(container);
   
   // 3. Initialize SortableJS (starts disabled)
   if (typeof Sortable !== 'undefined') {
