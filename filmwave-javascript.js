@@ -3950,73 +3950,25 @@ function assignDataIds(container) {
   });
 }
 
-// Save order to localStorage
-function saveOrder(container) {
+async saveOrder(container) {
   const items = container.querySelectorAll('.playlist-item');
-  const order = Array.from(items).map(item => item.getAttribute('data-id'));
-  
-  const storageKey = 'playlist-item-order';
-  localStorage.setItem(storageKey, JSON.stringify(order));
-  
-  console.log('💾 Saved order:', order);
-  
-  // Optional: Save to backend
-  // saveOrderToBackend(order);
-}
-
-// Restore order from localStorage
-function restoreOrder(container) {
-  const storageKey = 'playlist-item-order';
-  const savedOrder = localStorage.getItem(storageKey);
-  
-  if (!savedOrder) {
-    console.log('ℹ️ No saved order found');
-    return;
-  }
-  
-  const order = JSON.parse(savedOrder);
-  console.log('🔄 Restoring order:', order);
-  
-  const items = container.querySelectorAll('.playlist-item');
-  const itemMap = {};
-  items.forEach(item => {
-    const id = item.getAttribute('data-id');
-    if (id) itemMap[id] = item;
-  });
-  
-  order.forEach(id => {
-    if (itemMap[id]) {
-      container.appendChild(itemMap[id]);
-    }
-  });
-  
-  console.log('✅ Order restored');
-}
-
-// Optional: Save to backend
-async function saveOrderToBackend(order) {
-  if (!window.$memberstackDom) return;
+  const positions = Array.from(items).map((item, index) => ({
+    id: parseInt(item.dataset.playlistId),
+    position: index
+  }));
   
   try {
-    const { data: member } = await window.$memberstackDom.getCurrentMember();
-    if (!member) return;
-    
-    const response = await fetch('YOUR_XANO_ENDPOINT/profile-order', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        memberId: member.id,
-        itemOrder: order
-      })
+    const response = await fetch(`${XANO_PLAYLISTS_API}/Update_Playlist_Positions`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positions })
     });
     
-    if (response.ok) {
-      console.log('✅ Order saved to backend');
-    }
+    if (!response.ok) throw new Error('Failed to update positions');
+    
+    console.log('💾 Saved order to Xano:', positions);
   } catch (err) {
-    console.error('❌ Failed to save to backend:', err);
+    console.error('❌ Error saving order:', err);
   }
 }
 
