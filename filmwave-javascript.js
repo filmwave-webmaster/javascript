@@ -3790,12 +3790,12 @@ function initializeProfileSortable() {
       // });
 
       onEnd: function(evt) {
-  console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
-
-  if (isEditMode) {
-    saveOrder(container);
-  }
-}
+        console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
+         if (isEditMode) {
+        saveOrder(container);
+        }
+      }, 
+    });
       
       console.log('✅ Sortable profile items initialized (locked)');
       console.log('📌 Sortable instance:', sortableInstance);
