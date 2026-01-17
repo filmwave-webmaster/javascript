@@ -3937,7 +3937,7 @@ function toggleEditIcons(show) {
 // Update button text based on mode
 function updateButtonState(button, editing) {
   if (editing) {
-    button.textContent = 'Save';
+    button.textContent = 'Done';
     button.classList.add('is-saving');
   } else {
     button.textContent = 'Edit';
