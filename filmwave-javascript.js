@@ -4111,20 +4111,35 @@ function findAssociatedOverlay(editIcon) {
   return overlay;
 }
 
-// Show overlay with fade in
 function showOverlay(overlay) {
+  // ✅ undo forced-close inline styles so overlay can open again
+  const wrappersToReset = [
+    overlay,
+    overlay?.closest('.playlist-edit-overlay-wrapper'),
+    overlay?.closest('.playlist-edit-module-wrapper'),
+    overlay?.closest('.playlist-edit-modal-wrapper'),
+    overlay?.closest('.w-modal'),
+    overlay?.closest('.w-lightbox-backdrop')
+  ].filter(Boolean);
+
+  wrappersToReset.forEach((el) => {
+    el.style.display = '';
+    el.style.opacity = '';
+    el.style.pointerEvents = '';
+  });
+
   // Set display first
   overlay.style.display = 'flex'; // or 'block' depending on your layout
 
   const overlayEl = document.querySelector('.playlist-edit-overlay');
-const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
-if (textEl && !textEl.dataset.originalText) {
-  textEl.dataset.originalText = textEl.textContent;
-}
-  
+  const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
+  if (textEl && !textEl.dataset.originalText) {
+    textEl.dataset.originalText = textEl.textContent;
+  }
+
   // Force reflow to ensure display is applied
   overlay.offsetHeight;
-  
+
   // Add visible class for fade in
   overlay.classList.add('is-visible');
 }
@@ -6243,7 +6258,88 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
    PLAYLIST MANAGER
    ============================================================ */
 
+/* ----------------------------
+   HELPERS
+   ---------------------------- */
+
+function FW_getVisiblePlaylistCards(container) {
+  return Array.from(container.querySelectorAll('.playlist-card-template'))
+    .filter((el) => !el.classList.contains('is-template'));
+}
+
+function FW_flipAnimate(container, mutateFn) {
+  const cards = FW_getVisiblePlaylistCards(container);
+  const first = new Map(cards.map((el) => [el, el.getBoundingClientRect()]));
+
+  mutateFn();
+
+  const cardsAfter = FW_getVisiblePlaylistCards(container);
+  const last = new Map(cardsAfter.map((el) => [el, el.getBoundingClientRect()]));
+
+  // Apply FLIP
+  cardsAfter.forEach((el) => {
+    const f = first.get(el);
+    const l = last.get(el);
+    if (!f || !l) return;
+
+    const dx = f.left - l.left;
+    const dy = f.top - l.top;
+
+    if (dx || dy) {
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      el.style.transition = 'transform 0s';
+      el.getBoundingClientRect(); // force reflow
+      el.style.transition = 'transform 250ms ease';
+      el.style.transform = '';
+    }
+  });
+
+  // Cleanup transitions after
+  setTimeout(() => {
+    cardsAfter.forEach((el) => {
+      el.style.transition = '';
+      el.style.transform = '';
+    });
+  }, 300);
+}
+
+function FW_buildPlaylistCardFromTemplate({ template, playlist, count = 0 }) {
+  const card = template.cloneNode(true);
+  card.classList.remove('is-template');
+
+  const title = card.querySelector('.playlist-title');
+  const detail = card.querySelector('.playlist-detail');
+  const image = card.querySelector('.playlist-image');
+  const link = card.querySelector('.playlist-link-block');
+
+  if (title) title.textContent = playlist.name;
+  if (detail) detail.textContent = playlist.description || '';
+
+  if (image && playlist.cover_image_url) {
+    clearResponsiveImageAttrs(image);
+    image.src = playlist.cover_image_url;
+
+    requestAnimationFrame(() => {
+      clearResponsiveImageAttrs(image);
+      image.src = playlist.cover_image_url;
+    });
+  }
+
+  if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+
+  card.dataset.playlistId = playlist.id;
+
+  const countEl = card.querySelector('.playlist-song-count');
+  if (countEl) countEl.textContent = String(count);
+
+  card.style.removeProperty('display');
+  card.style.display = 'block';
+
+  return card;
+}
+
 const PlaylistManager = {
+  
   /* ----------------------------
      STATE
      ---------------------------- */
@@ -6639,13 +6735,23 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         const title = card?.querySelector('.playlist-title')?.textContent;
 
         if (playlistId && confirm(`Delete "${title}"?`)) {
-          this.deletePlaylist(playlistId)
-            .then(async () => {
-              card.remove();
-              await this.getUserPlaylists(true);
-              invalidateAddToPlaylistDropdownCache();
-              this.showNotification('Playlist deleted');
-            })
+         this.deletePlaylist(playlistId)
+  .then(async () => {
+    const container = document.querySelector('.sortable-container');
+
+    if (container && card) {
+      FW_flipAnimate(container, () => {
+        card.remove();
+      });
+    } else if (card) {
+      card.remove();
+    }
+
+    await this.getUserPlaylists(true);
+    invalidateAddToPlaylistDropdownCache();
+    this.showNotification('Playlist deleted');
+  })
+           
             .catch(() => {
               this.showNotification('Error deleting playlist', 'error');
             });
@@ -7033,9 +7139,39 @@ if (addModalOpen) {
       invalidateAddToPlaylistDropdownCache();
 
       if (isPlaylistsGridPage()) {
-        this.playlists = [];
-        await this.renderPlaylistsGrid();
+  const container = document.querySelector('.sortable-container');
+  const template = container?.querySelector('.playlist-card-template.is-template');
+
+  if (container && template) {
+    // ✅ keep everything visible, insert new card, shuffle animation
+    FW_flipAnimate(container, () => {
+      const newCard = FW_buildPlaylistCardFromTemplate({
+        template,
+        playlist,
+        count: 0,
+      });
+
+      // insert at top (after template)
+      if (template.nextSibling) {
+        container.insertBefore(newCard, template.nextSibling);
+      } else {
+        container.appendChild(newCard);
       }
+    });
+
+    reinitWebflowIX2();
+    if (typeof initializePlaylistOverlay === 'function') {
+      initializePlaylistOverlay();
+    }
+
+    // keep cache fresh (no grid rebuild)
+    await this.getUserPlaylists(true);
+  } else {
+    // fallback
+    this.playlists = [];
+    await this.renderPlaylistsGrid();
+  }
+}
 
       if (saveBtn) saveBtn.textContent = originalText;
 
