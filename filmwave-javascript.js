@@ -6573,7 +6573,12 @@ const PlaylistManager = {
     // setupCoverImageUpload('.add-cover-image');
     // setupCoverImageUpload('.change-cover-image');
 
-    document.body.addEventListener('click', async (e) => {
+    // ✅ ensure ONLY ONE body click listener exists
+    if (window.__FW_PLAYLIST_BODY_CLICK_HANDLER) {
+     document.body.removeEventListener('click', window.__FW_PLAYLIST_BODY_CLICK_HANDLER);
+    }
+
+    window.__FW_PLAYLIST_BODY_CLICK_HANDLER = async (e) => {
       /* ----------------------------
          ADD-TO-PLAYLIST (dropdown + modal)
          ---------------------------- */
@@ -7063,7 +7068,8 @@ this.pendingCoverImageBase64 = null;
 
         return;
       }
-    });
+        };
+    document.body.addEventListener('click', window.__FW_PLAYLIST_BODY_CLICK_HANDLER);
 
     this.setupAddToPlaylistDropdowns();
 
