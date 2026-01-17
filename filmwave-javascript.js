@@ -3783,11 +3783,19 @@ function initializeProfileSortable() {
           console.log('🎯 Drag started');
         },
         
-        onEnd: function(evt) {
-          console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
+      //  onEnd: function(evt) {
+      //   console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
           // Don't auto-save - user needs to click "Save"
-        }
-      });
+      //  }
+      // });
+
+      onEnd: function(evt) {
+  console.log('🔄 Item moved from index', evt.oldIndex, 'to', evt.newIndex);
+
+  if (isEditMode) {
+    saveOrder(container);
+  }
+}
       
       console.log('✅ Sortable profile items initialized (locked)');
       console.log('📌 Sortable instance:', sortableInstance);
