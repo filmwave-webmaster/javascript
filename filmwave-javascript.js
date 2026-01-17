@@ -6904,12 +6904,30 @@ if (card) {
 
           this.showNotification('Playlist updated');
           
-         const overlayToClose = document.querySelector('.playlist-edit-overlay');
-const closeBtn = overlayToClose ? overlayToClose.querySelector('.playlist-x-button') : null;
-if (closeBtn) closeBtn.click();
+         // FORCE CLOSE EDIT OVERLAY
+const overlayEl =
+  e.target.closest('.playlist-edit-overlay') ||
+  document.querySelector('.playlist-edit-overlay');
+
+const wrappersToHide = [
+  overlayEl,
+  overlayEl?.closest('.playlist-edit-overlay-wrapper'),
+  overlayEl?.closest('.playlist-edit-module-wrapper'),
+  overlayEl?.closest('.playlist-edit-modal-wrapper'),
+  overlayEl?.closest('.w-modal'),
+  overlayEl?.closest('.w-lightbox-backdrop')
+].filter(Boolean);
+
+wrappersToHide.forEach((el) => {
+  el.style.display = 'none';
+  el.style.opacity = '0';
+  el.style.pointerEvents = 'none';
+  el.classList.remove('open', 'is-open', 'is-active', 'active', 'w--open');
+});
 
 this.editingPlaylistId = null;
 this.pendingCoverImageBase64 = null;
+
           
         } catch (err) {
           console.error('Error saving playlist edits:', err);
