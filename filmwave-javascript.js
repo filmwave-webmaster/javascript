@@ -6904,13 +6904,12 @@ if (card) {
 
           this.showNotification('Playlist updated');
           
-          // ✅ Close using the same path as the X button (prevents Webflow/IX2 conflicts)
-const closeBtn = document.querySelector('.playlist-x-button');
+         const overlay = document.querySelector('.playlist-edit-overlay');
+const closeBtn = overlay ? overlay.querySelector('.playlist-x-button') : null;
 if (closeBtn) closeBtn.click();
 
 this.editingPlaylistId = null;
 this.pendingCoverImageBase64 = null;
-
           
         } catch (err) {
           console.error('Error saving playlist edits:', err);
