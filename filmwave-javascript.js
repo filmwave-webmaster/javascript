@@ -6566,8 +6566,8 @@ const PlaylistManager = {
      ============================================================ */
 
   setupEventListeners() {
-    if (this.listenersInitialized) return;
-    this.listenersInitialized = true;
+    if (window.__FW_PLAYLIST_BODY_LISTENER_INSTALLED) return;
+    window.__FW_PLAYLIST_BODY_LISTENER_INSTALLED = true;
 
     // Disabled to avoid double-trigger
     // setupCoverImageUpload('.add-cover-image');
@@ -6726,38 +6726,52 @@ if (playlistRow && playlistRow.dataset.playlistId) {
          ---------------------------- */
 
       const deleteBtn = e.target.closest('.playlist-delete-button');
-      if (deleteBtn) {
-        e.preventDefault();
-        e.stopPropagation();
+     if (deleteBtn) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation(); // ✅ prevents a second body listener from also firing
 
-        const card = deleteBtn.closest('.playlist-card-template');
-        const playlistId = card?.dataset.playlistId;
-        const title = card?.querySelector('.playlist-title')?.textContent;
+  const card = deleteBtn.closest('.playlist-card-template');
+  const playlistId = card?.dataset.playlistId;
+  const title = card?.querySelector('.playlist-title')?.textContent;
 
-        if (playlistId && confirm(`Delete "${title}"?`)) {
-         this.deletePlaylist(playlistId)
-  .then(async () => {
-    const container = document.querySelector('.sortable-container');
+  // ✅ prevent double-click / double-fire
+  if (deleteBtn.dataset.isDeleting === '1') return;
+  deleteBtn.dataset.isDeleting = '1';
 
-    if (container && card) {
-      FW_flipAnimate(container, () => {
-        card.remove();
-      });
-    } else if (card) {
-      card.remove();
-    }
+  if (playlistId && confirm(`Delete "${title}"?`)) {
+    this.deletePlaylist(playlistId)
+      .then(async () => {
+        const container = document.querySelector('.sortable-container');
 
-    await this.getUserPlaylists(true);
-    invalidateAddToPlaylistDropdownCache();
-    this.showNotification('Playlist deleted');
-  })
-           
-            .catch(() => {
-              this.showNotification('Error deleting playlist', 'error');
-            });
+        if (container && card) {
+          FW_flipAnimate(container, () => {
+            card.remove();
+          });
+        } else if (card) {
+          card.remove();
         }
-        return;
-      }
+
+        await this.getUserPlaylists(true);
+        invalidateAddToPlaylistDropdownCache();
+        this.showNotification('Playlist deleted');
+
+        // ✅ reset flag
+        deleteBtn.dataset.isDeleting = '0';
+      })
+      .catch(() => {
+        this.showNotification('Error deleting playlist', 'error');
+
+        // ✅ reset flag on error too
+        deleteBtn.dataset.isDeleting = '0';
+      });
+  } else {
+    // user cancelled confirm → allow future deletes
+    deleteBtn.dataset.isDeleting = '0';
+  }
+
+  return;
+}
 
       /* ----------------------------
          REMOVE SONG FROM PLAYLIST (playlist template)
