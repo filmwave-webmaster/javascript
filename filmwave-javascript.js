@@ -6857,6 +6857,8 @@ if (newCover) updates.cover_image_url = newCover;
 
           const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
 if (card) {
+  card.style.opacity = '0.6'; // ⬅ start “saving” visual state
+
   const titleEl = card.querySelector('.playlist-title');
   const detailEl = card.querySelector('.playlist-detail');
 
@@ -6881,11 +6883,12 @@ if (card) {
             }
           }
 
-          await this.getUserPlaylists(true);
           invalidateAddToPlaylistDropdownCache();
 
           if (isPlaylistsGridPage()) {
-            await this.renderPlaylistsGrid();
+          // ✅ do NOT re-render the whole grid (prevents flash)
+          // refresh cache only
+          await this.getUserPlaylists(true);
           }
 
           this.pendingCoverImageBase64 = null;
