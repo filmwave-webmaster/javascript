@@ -4111,20 +4111,35 @@ function findAssociatedOverlay(editIcon) {
   return overlay;
 }
 
-// Show overlay with fade in
 function showOverlay(overlay) {
+  // ✅ undo forced-close inline styles so overlay can open again
+  const wrappersToReset = [
+    overlay,
+    overlay?.closest('.playlist-edit-overlay-wrapper'),
+    overlay?.closest('.playlist-edit-module-wrapper'),
+    overlay?.closest('.playlist-edit-modal-wrapper'),
+    overlay?.closest('.w-modal'),
+    overlay?.closest('.w-lightbox-backdrop')
+  ].filter(Boolean);
+
+  wrappersToReset.forEach((el) => {
+    el.style.display = '';
+    el.style.opacity = '';
+    el.style.pointerEvents = '';
+  });
+
   // Set display first
   overlay.style.display = 'flex'; // or 'block' depending on your layout
 
   const overlayEl = document.querySelector('.playlist-edit-overlay');
-const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
-if (textEl && !textEl.dataset.originalText) {
-  textEl.dataset.originalText = textEl.textContent;
-}
-  
+  const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
+  if (textEl && !textEl.dataset.originalText) {
+    textEl.dataset.originalText = textEl.textContent;
+  }
+
   // Force reflow to ensure display is applied
   overlay.offsetHeight;
-  
+
   // Add visible class for fade in
   overlay.classList.add('is-visible');
 }
