@@ -6816,6 +6816,8 @@ if (descInput) {
         e.stopPropagation();
 
         const playlistId = this.editingPlaylistId;
+        const savingCard = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
+        if (savingCard) savingCard.style.opacity = '0.6';
         if (!playlistId) {
           console.warn('❌ No editingPlaylistId set');
           return;
@@ -6910,6 +6912,7 @@ if (card) {
             saveBtn.style.pointerEvents = '';
             saveBtn.style.opacity = '';
           }
+          if (savingCard) savingCard.style.opacity = '';
         }
 
         return;
