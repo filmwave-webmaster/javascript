@@ -3840,6 +3840,12 @@ function toggleEditMode(container, button) {
   }
   
   isEditMode = !isEditMode;
+
+  const wrapper = document.querySelector('.sortable-container-wrapper');
+  if (wrapper) {
+    if (isEditMode) wrapper.classList.add('is-edit-mode');
+    else wrapper.classList.remove('is-edit-mode');
+  }
   
   if (isEditMode) {
     // UNLOCK - Enter edit mode
