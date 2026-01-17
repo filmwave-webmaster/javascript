@@ -7456,21 +7456,19 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
   el.style.display = '';
 });
 
-    try {
-      const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
-  // Sort by position first, then by created_at for items with same position
-  if (a.position !== b.position) {
-    return a.position - b.position;
-  }
-  return new Date(b.created_at) - new Date(a.created_at);
-});
+try {
+  const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
+    // Sort by position first, then by created_at for items with same position
+    if (a.position !== b.position) {
+      return a.position - b.position;
+    }
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
 
-     // ✅ Clear existing rendered cards (keep ONLY the template)
-container.querySelectorAll('.playlist-card-template').forEach((card) => {
-  if (!card.classList.contains('is-template')) {
-    card.remove();
-  }
-});
+  // Clear existing cards except template
+  container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+    if (i > 0) card.remove();
+  });
 
 // ✅ Hide the template
 template.style.display = 'none';
