@@ -6903,6 +6903,12 @@ if (card) {
           }
 
           this.showNotification('Playlist updated');
+          
+          const overlayToClose = document.querySelector('.playlist-edit-overlay');
+          if (overlayToClose) overlayToClose.style.display = 'none';
+          this.editingPlaylistId = null;
+          this.pendingCoverImageBase64 = null;
+          
         } catch (err) {
           console.error('Error saving playlist edits:', err);
           this.showNotification('Error saving playlist', 'error');
