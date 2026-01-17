@@ -95,6 +95,9 @@ window.addEventListener('load', () => {
   }
 });
 
+// Fix playlist delete "okay" button bubbling
+window.__FW_DELETE_CONFIRM_ACTIVE = false;
+
 /**
  * ============================================================
  * UTILITY FUNCTIONS
@@ -6734,17 +6737,22 @@ if (playlistRow && playlistRow.dataset.playlistId) {
      if (deleteBtn) {
   e.preventDefault();
   e.stopPropagation();
-  e.stopImmediatePropagation(); // ✅ prevents a second body listener from also firing
+  e.stopImmediatePropagation();
+
+  // hard guard: only allow one confirm at a time
+  if (window.__FW_DELETE_CONFIRM_ACTIVE) return;
+  window.__FW_DELETE_CONFIRM_ACTIVE = true;
 
   const card = deleteBtn.closest('.playlist-card-template');
   const playlistId = card?.dataset.playlistId;
   const title = card?.querySelector('.playlist-title')?.textContent;
 
-  // ✅ prevent double-click / double-fire
-  if (deleteBtn.dataset.isDeleting === '1') return;
-  deleteBtn.dataset.isDeleting = '1';
+  const ok = playlistId && confirm(`Delete "${title}"?`);
 
-  if (playlistId && confirm(`Delete "${title}"?`)) {
+  // release guard immediately after confirm
+  window.__FW_DELETE_CONFIRM_ACTIVE = false;
+
+  if (ok) {
     this.deletePlaylist(playlistId)
       .then(async () => {
         const container = document.querySelector('.sortable-container');
@@ -6760,19 +6768,10 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         await this.getUserPlaylists(true);
         invalidateAddToPlaylistDropdownCache();
         this.showNotification('Playlist deleted');
-
-        // ✅ reset flag
-        deleteBtn.dataset.isDeleting = '0';
       })
       .catch(() => {
         this.showNotification('Error deleting playlist', 'error');
-
-        // ✅ reset flag on error too
-        deleteBtn.dataset.isDeleting = '0';
       });
-  } else {
-    // user cancelled confirm → allow future deletes
-    deleteBtn.dataset.isDeleting = '0';
   }
 
   return;
