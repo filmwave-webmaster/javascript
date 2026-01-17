@@ -3886,7 +3886,7 @@ function toggleEditMode(container, button) {
       });
       console.log('✅ Closed', openOverlays.length, 'open overlays');
       
-      saveOrder(container);
+      PlaylistManager.saveOrder(container);
       console.log('🔒 Edit mode disabled, order saved');
     } catch (e) {
       console.error('❌ Error disabling edit mode:', e);
