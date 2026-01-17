@@ -3951,11 +3951,18 @@ function assignDataIds(container) {
 }
 
 async function saveOrder(container) {
-  const items = container.querySelectorAll('.playlist-item, .playlist-card-template');
-  const positions = Array.from(items).map((item, index) => ({
-    id: parseInt(item.dataset.playlistId),
-    position: index
-  }));
+  const items = container.querySelectorAll('.playlist-card-template');
+  const positions = Array.from(items)
+    .filter((item, index) => {
+      // Skip first item (template) OR items without playlistId
+      return index > 0 && item.dataset.playlistId;
+    })
+    .map((item, index) => ({
+      id: parseInt(item.dataset.playlistId),
+      position: index
+    }));
+  
+  console.log('💾 Saving positions:', positions);
   
   try {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Update_Playlist_Positions`, {
@@ -3966,7 +3973,7 @@ async function saveOrder(container) {
     
     if (!response.ok) throw new Error('Failed to update positions');
     
-    console.log('💾 Saved order to Xano:', positions);
+    console.log('✅ Saved order to Xano');
   } catch (err) {
     console.error('❌ Error saving order:', err);
   }
