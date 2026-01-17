@@ -7458,7 +7458,11 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
 
     try {
       const playlists = (await this.getUserPlaylists()).slice().sort((a, b) => {
-  return new Date(b.created_at) - new Date(a.created_at); // newest first
+  // Sort by position first, then by created_at for items with same position
+  if (a.position !== b.position) {
+    return a.position - b.position;
+  }
+  return new Date(b.created_at) - new Date(a.created_at);
 });
 
      // ✅ Clear existing rendered cards (keep ONLY the template)
