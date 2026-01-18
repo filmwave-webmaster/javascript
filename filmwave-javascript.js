@@ -7025,13 +7025,20 @@ if (card) {
             textEl.textContent = textEl.dataset.originalText || textEl.textContent;
           }
 
-          this.showNotification('Playlist updated');
-          
-         // FORCE CLOSE EDIT OVERLAY
+         this.showNotification('Playlist updated');
+
+// ✅ reset cover filename text back to default BEFORE closing
 const overlayEl =
   e.target.closest('.playlist-edit-overlay') ||
   document.querySelector('.playlist-edit-overlay');
 
+const textElAfterSave = overlayEl?.querySelector('.change-cover-image .add-image-text');
+if (textElAfterSave) {
+  textElAfterSave.textContent =
+    textElAfterSave.dataset.originalText || textElAfterSave.textContent;
+}
+
+// FORCE CLOSE EDIT OVERLAY
 const wrappersToHide = [
   overlayEl,
   overlayEl?.closest('.playlist-edit-overlay-wrapper'),
@@ -7050,7 +7057,6 @@ wrappersToHide.forEach((el) => {
 
 this.editingPlaylistId = null;
 this.pendingCoverImageBase64 = null;
-
           
         } catch (err) {
           console.error('Error saving playlist edits:', err);
