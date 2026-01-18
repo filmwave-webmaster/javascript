@@ -4037,20 +4037,20 @@ function initializePlaylistOverlay() {
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
 
-  // Set placeholders for name + description
-  PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
-    const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
-    const descInput = overlay.querySelector('.edit-playlist-text-field-2');
+ // Set REAL editable values for name + description (no placeholders)
+PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
+  const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
+  const descInput = overlay.querySelector('.edit-playlist-text-field-2');
 
-    if (nameInput) {
-      nameInput.placeholder = playlist?.name || '';
-      nameInput.value = '';
-    }
-    if (descInput) {
-      descInput.placeholder = playlist?.description || '';
-      descInput.value = '';
-    }
-  });
+  if (nameInput) {
+    nameInput.placeholder = '';
+    nameInput.value = playlist?.name || '';
+  }
+  if (descInput) {
+    descInput.placeholder = '';
+    descInput.value = playlist?.description || '';
+  }
+});
 
   const textEl = overlay.querySelector('.change-cover-image .add-image-text');
   if (textEl && !textEl.dataset.originalText) {
@@ -6951,9 +6951,8 @@ const updates = {
   cover_image_url: existing?.cover_image_url || '', // ✅ preserve image
 };
 
-// Only override if user typed something
-if (nameInput && nameInput.value.trim()) updates.name = nameInput.value.trim();
-if (descInput && descInput.value.trim()) updates.description = descInput.value.trim();
+if (nameInput) updates.name = nameInput.value.trim();
+if (descInput) updates.description = descInput.value.trim();
 
 // Only override cover if user picked a new one
 const newCover = this.pendingCoverImageBase64;
