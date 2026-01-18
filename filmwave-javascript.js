@@ -4119,6 +4119,10 @@ function findAssociatedOverlay(editIcon) {
 }
 
 function showOverlay(overlay) {
+  if (overlay.__fwHideTimer) {
+  clearTimeout(overlay.__fwHideTimer);
+  overlay.__fwHideTimer = null;
+}
   // ✅ undo forced-close inline styles so overlay can open again
   const wrappersToReset = [
     overlay,
@@ -4153,12 +4157,19 @@ function showOverlay(overlay) {
 
 // Hide overlay with fade out
 function hideOverlay(overlay) {
+  // cancel any previous hide timer for this overlay
+  if (overlay.__fwHideTimer) {
+    clearTimeout(overlay.__fwHideTimer);
+    overlay.__fwHideTimer = null;
+  }
+
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
-  
+
   // Wait for transition to complete before hiding
-  setTimeout(() => {
+  overlay.__fwHideTimer = setTimeout(() => {
     overlay.style.display = 'none';
+    overlay.__fwHideTimer = null;
   }, 300); // Match the CSS transition duration
 }
 
