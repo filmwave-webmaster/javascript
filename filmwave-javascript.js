@@ -4013,6 +4013,12 @@ function initializePlaylistOverlay() {
     console.log('ℹ️ No playlist edit icons found');
     return;
   }
+
+  function closeAllPlaylistOverlays() {
+  document.querySelectorAll('.playlist-edit-overlay.is-visible').forEach((ov) => {
+    hideOverlay(ov);
+  });
+}
   
   // Show overlay when edit icon is clicked
   editIcons.forEach(editIcon => {
@@ -4034,6 +4040,7 @@ function initializePlaylistOverlay() {
   const playlistId = card.dataset.playlistId;
   PlaylistManager.editingPlaylistId = playlistId; // ✅ fix error
 
+  closeAllPlaylistOverlays();
   showOverlay(overlay);
   console.log('✅ Playlist overlay shown');
 
