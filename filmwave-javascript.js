@@ -7856,18 +7856,30 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
    GLOBAL ONE-TIME LISTENERS
    ============================================================ */
 
-document.addEventListener('click', (e) => {
-  const list = e.target.closest('.options-dropdown-list');
-  if (!list) return;
+document.addEventListener(
+  'click',
+  (e) => {
+    const list = e.target.closest('.options-dropdown-list');
+    if (!list) return;
 
-  const dropdown = list.closest('.options-dropdown');
-  const toggle = dropdown?.querySelector('.options-dropdown-toggle');
-  if (!toggle) return;
+    const dropdown = list.closest('.options-dropdown');
+    if (!dropdown) return;
 
-  if (dropdown.classList.contains('w--open')) {
-    toggle.click();
-  }
-});
+    // Webflow open state
+    dropdown.classList.remove('w--open');
+
+    const toggle = dropdown.querySelector('.options-dropdown-toggle');
+    const wrapper = dropdown.closest('.w-dropdown');
+
+    if (toggle) toggle.classList.remove('w--open');
+    if (wrapper) wrapper.classList.remove('w--open');
+
+    // Webflow also sets inline styles on the list sometimes
+    list.style.display = 'none';
+  },
+  true // ✅ capture phase
+);
+
 
 
 /* ============================================================
