@@ -7853,6 +7853,31 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
 };
 
 /* ============================================================
+   GLOBAL ONE-TIME LISTENERS
+   ============================================================ */
+document.addEventListener('click', (e) => {
+  const item = e.target.closest('.options-dropdown-list *');
+  if (!item) return;
+
+  const list = item.closest('.options-dropdown-list');
+  if (!list) return;
+
+  const dropdown = list.closest('.options-dropdown');
+  const toggle = dropdown?.querySelector('.options-dropdown-toggle');
+
+  list.style.display = 'none';
+  list.classList.remove('open', 'is-open', 'is-active', 'active', 'w--open');
+
+  if (dropdown) {
+    dropdown.classList.remove('open', 'is-open', 'is-active', 'active', 'w--open');
+  }
+
+  if (toggle) {
+    toggle.classList.remove('open', 'is-open', 'is-active', 'active', 'w--open');
+  }
+});
+
+/* ============================================================
    EXPORT
    ============================================================ */
 
