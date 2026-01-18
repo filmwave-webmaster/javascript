@@ -7862,25 +7862,30 @@ document.addEventListener(
     const list = e.target.closest('.options-dropdown-list');
     if (!list) return;
 
-    const dropdown = list.closest('.options-dropdown');
-    if (!dropdown) return;
+    // Find the Webflow dropdown root (usually has .w-dropdown)
+    const dropdownRoot =
+      list.closest('.w-dropdown') ||
+      list.closest('.options-dropdown');
 
-    // Webflow open state
-    dropdown.classList.remove('w--open');
+    if (!dropdownRoot) return;
 
-    const toggle = dropdown.querySelector('.options-dropdown-toggle');
-    const wrapper = dropdown.closest('.w-dropdown');
+    // Let the clicked item’s handler run first, then close the dropdown
+    setTimeout(() => {
+      dropdownRoot.classList.remove('w--open');
 
-    if (toggle) toggle.classList.remove('w--open');
-    if (wrapper) wrapper.classList.remove('w--open');
+      const toggle = dropdownRoot.querySelector('.w-dropdown-toggle, .options-dropdown-toggle');
+      const wfList = dropdownRoot.querySelector('.w-dropdown-list, .options-dropdown-list');
 
-    // Webflow also sets inline styles on the list sometimes
-    list.style.display = 'none';
+      if (toggle) toggle.classList.remove('w--open');
+      if (wfList) {
+        wfList.classList.remove('w--open');
+        // ✅ IMPORTANT: clear any inline display we might have accidentally set earlier
+        wfList.style.display = '';
+      }
+    }, 0);
   },
-  true // ✅ capture phase
+  true // capture phase
 );
-
-
 
 /* ============================================================
    EXPORT
