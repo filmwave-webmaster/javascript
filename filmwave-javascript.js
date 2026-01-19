@@ -7935,29 +7935,12 @@ async function initDashboardTiles() {
     
     console.log(`🎵 Tile ${index}: ${fields['Song Title']}`);
     
-    // Find or create the background tile image
-    const imageWrapper = tile.querySelector('.db-tile-image-wrapper');
-    let tileImage = tile.querySelector('.db-tile-image');
-    
-    console.log(`   Found .db-tile-image-wrapper:`, !!imageWrapper);
-    console.log(`   Found .db-tile-image:`, !!tileImage);
-    
-    if (imageWrapper && !tileImage && fields['Cover Art']) {
-      // Create the image element if it doesn't exist
-      tileImage = document.createElement('img');
-      tileImage.className = 'db-tile-image';
-      tileImage.style.width = '100%';
-      tileImage.style.height = '100%';
-      tileImage.style.objectFit = 'cover';
-      imageWrapper.appendChild(tileImage);
-      console.log(`   ✅ Created .db-tile-image element`);
-    }
-    
     // Set the background tile image
+    const tileImage = tile.querySelector('.db-tile-image');
     if (tileImage && fields['Cover Art']) {
       tileImage.src = fields['Cover Art'][0].url;
       tileImage.alt = fields['Song Title'] || 'Album art';
-      console.log(`   ✅ Set tile image src`);
+      console.log(`   ✅ Set tile image`);
     }
     
     // Set the small cover art image
