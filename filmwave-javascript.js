@@ -7935,27 +7935,24 @@ async function initDashboardTiles() {
     
     console.log(`🎵 Tile ${index}: ${fields['Song Title']}`);
     
-    // Find the db-tile-image and set background image with delay to override Webflow
-    const tileImage = tile.querySelector('.db-tile-image');
-    
-    if (tileImage && fields['Cover Art']) {
-      const imageUrl = fields['Cover Art'][0].url;
-      
-      // Set immediately
-      tileImage.style.setProperty('background-image', `url(${imageUrl})`, 'important');
-      
-      // Set again after delay to override Webflow
-      setTimeout(() => {
-        tileImage.style.setProperty('background-image', `url(${imageUrl})`, 'important');
-      }, 100);
-      
-      console.log(`   ✅ Set background image`);
-    }
-
-    // Set cover art image
+    // Set cover art image (small image in corner)
     const coverArt = tile.querySelector('.db-player-song-cover');
     if (coverArt && fields['Cover Art']) {
       coverArt.src = fields['Cover Art'][0].url;
+      console.log(`   ✅ Set cover art image`);
+    }
+    
+    // Set background tile image (large background)
+    const tileImage = tile.querySelector('.db-tile-image');
+    if (tileImage && fields['Cover Art']) {
+      tileImage.src = fields['Cover Art'][0].url;
+      
+      // Set again after delay to override Webflow
+      setTimeout(() => {
+        tileImage.src = fields['Cover Art'][0].url;
+      }, 100);
+      
+      console.log(`   ✅ Set tile background image`);
     }
 
     // Set song info
@@ -8023,8 +8020,17 @@ async function initDashboardTiles() {
           g.standaloneAudio.currentTime = seekTime;
           wavesurfer.seekTo(progress);
         } else {
-          // Otherwise start playing from clicked position
-          playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, progress);
+          // Start playing from clicked position - need to pass seekTime in seconds
+          wavesurfer.once('ready', () => {
+            const seekTime = progress * wavesurfer.getDuration();
+            playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
+          });
+          
+          // If already ready, play immediately
+          if (wavesurfer.getDuration() > 0) {
+            const seekTime = progress * wavesurfer.getDuration();
+            playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
+          }
         }
       });
     }
