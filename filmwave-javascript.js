@@ -354,11 +354,12 @@ async function initMusicPage() {
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
-      initDashboardWelcome();
-      initDashboardTiles();
-      initDashboardPlaylists();
+      setTimeout(() => {
+        initDashboardWelcome();
+        initDashboardTiles();
+        initDashboardPlaylists();
+      }, 600);
     }
-  }
 }
 
 /**
@@ -4862,9 +4863,11 @@ if (typeof barba !== 'undefined') {
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
-      initDashboardWelcome();
-      initDashboardTiles();
-      initDashboardPlaylists();
+      setTimeout(() => {
+        initDashboardWelcome();
+        initDashboardTiles();
+        initDashboardPlaylists();
+      }, 600);
     }
     
     if (g.currentSongData) {
