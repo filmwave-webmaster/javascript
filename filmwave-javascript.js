@@ -111,34 +111,22 @@ function initDashboardWelcome() {
 
   // Check localStorage first
   const cachedName = localStorage.getItem('userFirstName');
+  const currentName = nameSpan.textContent.trim();
   
+  console.log('📝 Current name in span:', currentName);
+  console.log('💾 Cached name:', cachedName);
+
   if (cachedName && cachedName !== 'friend') {
-    // Use cached name immediately and prevent flash
+    // Use cached name to prevent flash
     nameSpan.textContent = cachedName;
-    welcomeText.style.visibility = 'visible';
-    console.log('✅ Using cached name:', cachedName);
-  } else {
-    // Hide until we get the real name
-    welcomeText.style.visibility = 'hidden';
+    console.log('✅ Set cached name:', cachedName);
   }
-
-  // Watch for Memberstack to change the text
-  const observer = new MutationObserver((mutations) => {
-    const currentText = nameSpan.textContent;
-    
-    if (currentText && currentText !== 'friend' && currentText !== cachedName) {
-      console.log('👀 Detected name change to:', currentText);
-      localStorage.setItem('userFirstName', currentText);
-      welcomeText.style.visibility = 'visible';
-      observer.disconnect(); // Stop watching
-    }
-  });
-
-  observer.observe(nameSpan, { 
-    childList: true, 
-    characterData: true, 
-    subtree: true 
-  });
+  
+  // If current name is valid and different from cache, update cache
+  if (currentName && currentName !== 'friend' && currentName !== cachedName) {
+    localStorage.setItem('userFirstName', currentName);
+    console.log('💾 Saved new name to cache:', currentName);
+  }
 }
 
 /**
