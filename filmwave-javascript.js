@@ -4724,21 +4724,15 @@ if (typeof barba !== 'undefined') {
 
  // Remove sidebar on pages that shouldn't have it
 const sidebar = document.querySelector('.sidebar-nav');
-// Check for backend-specific elements instead of data attribute
-const shouldHaveSidebar = !!(
-  document.querySelector('.db-dashboard-wrapper') ||
-  document.querySelector('.db-sortable-container') ||
-  document.querySelector('.favorite-songs-wrapper') ||
-  document.querySelector('.music-list-wrapper')
-);
+const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 
 if (sidebar) {
   if (!shouldHaveSidebar) {
     sidebar.style.display = 'none';
-    console.log('🚫 Hiding sidebar on non-sidebar page');
+    console.log('🚫 Hiding sidebar on non-dashboard page');
   } else {
     sidebar.style.display = 'flex';
-    console.log('✅ Showing sidebar on sidebar page');
+    console.log('✅ Showing sidebar on dashboard page');
   }
 }
   
