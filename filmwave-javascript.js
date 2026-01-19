@@ -4612,6 +4612,25 @@ function forceWebflowRestart() {
   console.log('✅ Webflow IX engine restarted');
 }
 
+// Hide sidebar instantly on non-dashboard link clicks
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href]');
+  if (!link) return;
+  
+  const href = link.getAttribute('href');
+  if (!href || href.startsWith('#')) return;
+  
+  // Check if link goes to non-dashboard page
+  const isDashboardLink = href.includes('/dashboard/');
+  const sidebar = document.querySelector('.sidebar-nav');
+  
+  if (sidebar && !isDashboardLink) {
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.pointerEvents = 'none';
+    console.log('🚫 Hiding sidebar on link click');
+  }
+}, true); // Use capture phase to run before Barba
+
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
@@ -4625,17 +4644,6 @@ if (typeof barba !== 'undefined') {
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
   g.filtersInitialized = false;
-
-  // Hide sidebar immediately if leaving to a non-dashboard page
-  const nextUrl = data.next.url.path;
-  const willHaveSidebar = nextUrl.startsWith('/dashboard/');
-  const sidebar = document.querySelector('.sidebar-nav');
-  
-  if (sidebar && !willHaveSidebar) {
-    sidebar.style.visibility = 'hidden';
-    sidebar.style.pointerEvents = 'none';
-    console.log('🚫 Hiding sidebar in beforeLeave');
-  }
   
   // Clean up waveforms from ANY page (music page OR home page with featured songs)
   if (isMusicPage || hasFeaturedSongs) {
@@ -4683,16 +4691,6 @@ if (typeof barba !== 'undefined') {
   }
        
   style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
-
-  // Handle sidebar visibility BEFORE the new page appears
-  const sidebar = document.querySelector('.sidebar-nav');
-  const willHaveSidebar = data.next.url.path.startsWith('/dashboard/');
-  
-  if (sidebar && !willHaveSidebar) {
-    sidebar.style.visibility = 'hidden';
-    sidebar.style.pointerEvents = 'none';
-    console.log('🚫 Hiding sidebar before transition');
-  }
 
   if (!isMusicPage) {
     document.body.style.overflow = 'visible';
