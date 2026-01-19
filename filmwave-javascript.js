@@ -7934,33 +7934,38 @@ async function initDashboardTiles() {
     const fields = song.fields;
     
     console.log(`🎵 Tile ${index}: ${fields['Song Title']}`);
-    console.log(`   Cover Art URL:`, fields['Cover Art']?.[0]?.url);
+    
+    // Find or create the background tile image
+    const imageWrapper = tile.querySelector('.db-tile-image-wrapper');
+    let tileImage = tile.querySelector('.db-tile-image');
+    
+    console.log(`   Found .db-tile-image-wrapper:`, !!imageWrapper);
+    console.log(`   Found .db-tile-image:`, !!tileImage);
+    
+    if (imageWrapper && !tileImage && fields['Cover Art']) {
+      // Create the image element if it doesn't exist
+      tileImage = document.createElement('img');
+      tileImage.className = 'db-tile-image';
+      tileImage.style.width = '100%';
+      tileImage.style.height = '100%';
+      tileImage.style.objectFit = 'cover';
+      imageWrapper.appendChild(tileImage);
+      console.log(`   ✅ Created .db-tile-image element`);
+    }
+    
+    // Set the background tile image
+    if (tileImage && fields['Cover Art']) {
+      tileImage.src = fields['Cover Art'][0].url;
+      tileImage.alt = fields['Song Title'] || 'Album art';
+      console.log(`   ✅ Set tile image src`);
+    }
     
     // Set the small cover art image
     const coverArt = tile.querySelector('.db-player-song-cover');
     if (coverArt && fields['Cover Art']) {
       coverArt.src = fields['Cover Art'][0].url;
+      coverArt.alt = fields['Song Title'] || 'Album art';
       console.log(`   ✅ Set cover art image`);
-    }
-    
-    // Set the background tile image (large background)
-    const tileImage = tile.querySelector('.db-tile-image');
-    console.log(`   Found .db-tile-image:`, !!tileImage);
-    
-    if (tileImage && fields['Cover Art']) {
-      const imageUrl = fields['Cover Art'][0].url;
-      tileImage.src = imageUrl;
-      
-      // Force load with multiple attempts
-      setTimeout(() => {
-        tileImage.src = imageUrl;
-      }, 50);
-      
-      setTimeout(() => {
-        tileImage.src = imageUrl;
-      }, 200);
-      
-      console.log(`   ✅ Set tile background image to:`, imageUrl.substring(0, 60) + '...');
     }
 
     // Set song info
@@ -8075,7 +8080,7 @@ async function initDashboardTiles() {
       });
     }
 
-    // Setup play button - find both play icon and play container
+    // Setup play button
     const playIcon = tile.querySelector('.db-play-icon');
     const pauseIcon = tile.querySelector('.db-pause-icon');
     const playContainer = tile.querySelector('.db-play-container');
@@ -8085,8 +8090,6 @@ async function initDashboardTiles() {
     if (playIcon) playIcon.style.display = 'block';
     if (pauseIcon) pauseIcon.style.display = 'none';
     
-    console.log(`   Play elements found - icon: ${!!playIcon}, pause: ${!!pauseIcon}`);
-    
     // Add click handlers to all play elements
     [playIcon, pauseIcon, playContainer, playButton].forEach(element => {
       if (element) {
@@ -8094,7 +8097,6 @@ async function initDashboardTiles() {
         element.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('▶️ Play button clicked for:', fields['Song Title']);
           
           const wsData = g.waveformData.find(w => w.songId === song.id);
           
@@ -8124,7 +8126,6 @@ async function initDashboardTiles() {
       songName.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('🎵 Song name clicked:', fields['Song Title']);
         
         const wsData = g.waveformData.find(w => w.songId === song.id);
         
