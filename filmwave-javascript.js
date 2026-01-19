@@ -7927,10 +7927,14 @@ async function initDashboardTiles() {
     const song = songs[index];
     const fields = song.fields;
     
-    // Find the db-tile-image and set background image
+    console.log(`🎵 Tile ${index}:`, fields['Song Title'], fields['Cover Art']?.[0]?.url);
+    
+    // Find the db-tile-image and set background image with !important
     const tileImage = tile.querySelector('.db-tile-image');
     if (tileImage && fields['Cover Art']) {
-      tileImage.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
+      const imageUrl = fields['Cover Art'][0].url;
+      tileImage.style.setProperty('background-image', `url(${imageUrl})`, 'important');
+      console.log(`✅ Set background image for tile ${index}`);
     }
 
     // Set cover art image
@@ -7988,27 +7992,34 @@ async function initDashboardTiles() {
       waveformContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('🎵 Waveform clicked');
         playStandaloneSong(song, wavesurfer, waveformContainer);
       });
     }
 
-    // Setup play button
+    // Setup play button - find both play icon and play container
+    const playIcon = tile.querySelector('.db-play-icon');
+    const playContainer = tile.querySelector('.db-play-container');
     const playButton = tile.querySelector('.db-player-play-button');
-    if (playButton) {
-      playButton.style.cursor = 'pointer';
-      
-      playButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const waveformContainer = tile.querySelector('.db-waveform');
-        const wsData = g.allWavesurfers.find(w => w.songId === song.id);
-        
-        if (wsData) {
-          playStandaloneSong(song, wsData.instance, waveformContainer);
-        }
-      });
-    }
+    
+    // Add click handlers to all play elements
+    [playIcon, playContainer, playButton].forEach(element => {
+      if (element) {
+        element.style.cursor = 'pointer';
+        element.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('▶️ Play button clicked');
+          
+          const waveformContainer = tile.querySelector('.db-waveform');
+          const wsData = g.allWavesurfers.find(w => w.songId === song.id);
+          
+          if (wsData) {
+            playStandaloneSong(song, wsData.instance, waveformContainer);
+          }
+        });
+      }
+    });
 
     // Song name click to play
     if (songName) {
@@ -8016,6 +8027,7 @@ async function initDashboardTiles() {
       songName.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('🎵 Song name clicked');
         
         const waveformContainer = tile.querySelector('.db-waveform');
         const wsData = g.allWavesurfers.find(w => w.songId === song.id);
