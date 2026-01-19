@@ -7927,12 +7927,18 @@ async function initDashboardTiles() {
     const song = songs[index];
     const fields = song.fields;
     
-    // Find the masonry divs - there are multiple per tile (masonry-1 through masonry-6)
+    // Find the masonry divs and set background image
     const masonryDivs = tile.querySelectorAll('[class*="masonry-"]');
     if (masonryDivs.length > 0 && fields['Cover Art']) {
       masonryDivs.forEach(div => {
         div.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
       });
+    }
+
+    // Set cover art image
+    const coverArt = tile.querySelector('.db-player-song-cover');
+    if (coverArt && fields['Cover Art']) {
+      coverArt.src = fields['Cover Art'][0].url;
     }
 
     // Set song info
