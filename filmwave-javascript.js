@@ -8215,13 +8215,6 @@ async function initDashboardPlaylists() {
     return;
   }
 
-  // Check if playlists are already rendered
-  const existingCards = container.querySelectorAll('.playlist-card-template:not(.is-template)');
-  if (existingCards.length > 0) {
-    console.log('♻️ Dashboard playlists already rendered, skipping');
-    return;
-  }
-
   const template = container.querySelector('.playlist-card-template');
   if (!template) {
     console.log('❌ No playlist template found');
