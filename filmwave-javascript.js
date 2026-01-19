@@ -4625,6 +4625,17 @@ if (typeof barba !== 'undefined') {
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
   g.filtersInitialized = false;
+
+  // Hide sidebar immediately if leaving to a non-dashboard page
+  const nextUrl = data.next.url.path;
+  const willHaveSidebar = nextUrl.startsWith('/dashboard/');
+  const sidebar = document.querySelector('.sidebar-nav');
+  
+  if (sidebar && !willHaveSidebar) {
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.pointerEvents = 'none';
+    console.log('🚫 Hiding sidebar in beforeLeave');
+  }
   
   // Clean up waveforms from ANY page (music page OR home page with featured songs)
   if (isMusicPage || hasFeaturedSongs) {
