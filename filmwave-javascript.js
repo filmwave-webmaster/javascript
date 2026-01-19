@@ -110,7 +110,7 @@ async function initDashboardWelcome() {
   const cachedName = localStorage.getItem('userFirstName');
   
   if (cachedName) {
-    // Set cached name immediately - no hiding, no waiting
+    // Set cached name immediately
     welcomeText.textContent = `Welcome, ${cachedName}!`;
     console.log('✅ Set cached name:', cachedName);
     return;
@@ -4951,9 +4951,6 @@ if (typeof barba !== 'undefined') {
 
    // Call shared Memberstack handler function
       initializeMemberstackHandlers();
-
-      // Initialize welcome text on any page that has it
-      initDashboardWelcome();
       
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
