@@ -7930,9 +7930,16 @@ async function initDashboardTiles() {
 
   console.log(`📊 Total songs in MASTER_DATA: ${g.MASTER_DATA.length}`);
 
-  // Get 6 random songs
-  const shuffled = [...g.MASTER_DATA].sort(() => Math.random() - 0.5);
-  const songs = shuffled.slice(0, 6);
+  // Use cached random selection if available, otherwise create new one
+  if (!g.dashboardTileSongs || g.dashboardTileSongs.length === 0) {
+    const shuffled = [...g.MASTER_DATA].sort(() => Math.random() - 0.5);
+    g.dashboardTileSongs = shuffled.slice(0, 6);
+    console.log('🎲 Generated new random tile selection');
+  } else {
+    console.log('♻️ Using cached tile selection');
+  }
+
+  const songs = g.dashboardTileSongs;
 
   tiles.forEach((tile, index) => {
     if (index >= songs.length) return;
