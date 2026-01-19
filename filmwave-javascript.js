@@ -7934,6 +7934,7 @@ async function initDashboardTiles() {
     const fields = song.fields;
     
     console.log(`🎵 Tile ${index}: ${fields['Song Title']}`);
+    console.log(`   Cover Art URL:`, fields['Cover Art']?.[0]?.url);
     
     // Set the small cover art image
     const coverArt = tile.querySelector('.db-player-song-cover');
@@ -7944,15 +7945,22 @@ async function initDashboardTiles() {
     
     // Set the background tile image (large background)
     const tileImage = tile.querySelector('.db-tile-image');
+    console.log(`   Found .db-tile-image:`, !!tileImage);
+    
     if (tileImage && fields['Cover Art']) {
-      tileImage.src = fields['Cover Art'][0].url;
+      const imageUrl = fields['Cover Art'][0].url;
+      tileImage.src = imageUrl;
       
-      // Set again after delay to override Webflow
+      // Force load with multiple attempts
       setTimeout(() => {
-        tileImage.src = fields['Cover Art'][0].url;
-      }, 100);
+        tileImage.src = imageUrl;
+      }, 50);
       
-      console.log(`   ✅ Set tile background image`);
+      setTimeout(() => {
+        tileImage.src = imageUrl;
+      }, 200);
+      
+      console.log(`   ✅ Set tile background image to:`, imageUrl.substring(0, 60) + '...');
     }
 
     // Set song info
@@ -8017,36 +8025,51 @@ async function initDashboardTiles() {
         console.log('🎵 Waveform clicked for:', fields['Song Title'], 'at position:', progress);
         
         const isCurrentSong = g.currentSongData?.id === song.id;
-        const isPlaying = g.standaloneAudio && !g.standaloneAudio.paused;
+        const isAnyPlaying = g.standaloneAudio && !g.standaloneAudio.paused;
         
-        // If currently playing THIS song, seek within it
-        if (isCurrentSong && g.standaloneAudio && isPlaying) {
-          const seekTime = progress * g.standaloneAudio.duration;
-          g.standaloneAudio.currentTime = seekTime;
-          wavesurfer.seekTo(progress);
-        } 
-        // If this song is loaded but paused, just seek without playing
-        else if (isCurrentSong && g.standaloneAudio && !isPlaying) {
-          const seekTime = progress * g.standaloneAudio.duration;
-          g.standaloneAudio.currentTime = seekTime;
-          wavesurfer.seekTo(progress);
-        }
-        // If a DIFFERENT song is playing or paused, start this song from clicked position
-        else {
-          // Pause any currently playing song first
-          if (g.standaloneAudio) {
-            g.standaloneAudio.pause();
-          }
+        // If NO song is playing anywhere - just seek without playing
+        if (!isAnyPlaying) {
+          console.log('   No song playing - seeking without autoplay');
           
-          // Start playing from clicked position
           if (wavesurfer.getDuration() > 0) {
-            const seekTime = progress * wavesurfer.getDuration();
-            playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
+            wavesurfer.seekTo(progress);
           } else {
             wavesurfer.once('ready', () => {
+              wavesurfer.seekTo(progress);
+            });
+          }
+          
+          // Load the song but don't play
+          if (!isCurrentSong) {
+            const seekTime = progress * (wavesurfer.getDuration() || 0);
+            playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, false);
+          }
+        }
+        // If a song IS playing somewhere
+        else {
+          // If clicking on the currently playing song - just seek
+          if (isCurrentSong) {
+            console.log('   Seeking within currently playing song');
+            const seekTime = progress * g.standaloneAudio.duration;
+            g.standaloneAudio.currentTime = seekTime;
+            wavesurfer.seekTo(progress);
+          }
+          // If clicking on a different song - pause old, play new from position
+          else {
+            console.log('   Switching to new song and playing from position');
+            if (g.standaloneAudio) {
+              g.standaloneAudio.pause();
+            }
+            
+            if (wavesurfer.getDuration() > 0) {
               const seekTime = progress * wavesurfer.getDuration();
               playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
-            });
+            } else {
+              wavesurfer.once('ready', () => {
+                const seekTime = progress * wavesurfer.getDuration();
+                playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
+              });
+            }
           }
         }
       });
@@ -8062,7 +8085,7 @@ async function initDashboardTiles() {
     if (playIcon) playIcon.style.display = 'block';
     if (pauseIcon) pauseIcon.style.display = 'none';
     
-    console.log(`   Play elements found - icon: ${!!playIcon}, pause: ${!!pauseIcon}, container: ${!!playContainer}, button: ${!!playButton}`);
+    console.log(`   Play elements found - icon: ${!!playIcon}, pause: ${!!pauseIcon}`);
     
     // Add click handlers to all play elements
     [playIcon, pauseIcon, playContainer, playButton].forEach(element => {
