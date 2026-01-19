@@ -7935,19 +7935,18 @@ async function initDashboardTiles() {
     console.log(`   Cover Art:`, fields['Cover Art']?.[0]?.url);
     console.log(`   Audio URL:`, fields['R2 Audio URL']);
     
-    // Find the db-tile-image and set background image with !important
+    // Find the db-tile-image and set background image
     const tileImage = tile.querySelector('.db-tile-image');
     console.log(`   Found .db-tile-image:`, !!tileImage);
     
     if (tileImage && fields['Cover Art']) {
       const imageUrl = fields['Cover Art'][0].url;
       tileImage.style.setProperty('background-image', `url(${imageUrl})`, 'important');
-      console.log(`   ✅ Set background image: ${imageUrl.substring(0, 50)}...`);
+      console.log(`   ✅ Set background image`);
     }
 
     // Set cover art image
     const coverArt = tile.querySelector('.db-player-song-cover');
-    console.log(`   Found .db-player-song-cover:`, !!coverArt);
     if (coverArt && fields['Cover Art']) {
       coverArt.src = fields['Cover Art'][0].url;
     }
@@ -7990,10 +7989,12 @@ async function initDashboardTiles() {
         wavesurfer.load(fields['R2 Audio URL']);
       }
 
-      g.allWavesurfers.push({
-        instance: wavesurfer,
+      g.allWavesurfers.push(wavesurfer);
+      
+      g.waveformData.push({
+        wavesurfer: wavesurfer,
         songId: song.id,
-        container: waveformContainer
+        cardElement: tile
       });
 
       // Waveform click to play
@@ -8002,7 +8003,7 @@ async function initDashboardTiles() {
         e.preventDefault();
         e.stopPropagation();
         console.log('🎵 Waveform clicked for:', fields['Song Title']);
-        playStandaloneSong(song, wavesurfer, waveformContainer);
+        playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile);
       });
     }
 
@@ -8023,12 +8024,12 @@ async function initDashboardTiles() {
           console.log('▶️ Play button clicked for:', fields['Song Title']);
           
           const waveformContainer = tile.querySelector('.db-waveform');
-          const wsData = g.allWavesurfers.find(w => w.songId === song.id);
+          const wsData = g.waveformData.find(w => w.songId === song.id);
           
           console.log('   Found waveform data:', !!wsData);
           
           if (wsData) {
-            playStandaloneSong(song, wsData.instance, waveformContainer);
+            playStandaloneSong(fields['R2 Audio URL'], song, wsData.wavesurfer, tile);
           }
         });
       }
@@ -8042,11 +8043,10 @@ async function initDashboardTiles() {
         e.stopPropagation();
         console.log('🎵 Song name clicked:', fields['Song Title']);
         
-        const waveformContainer = tile.querySelector('.db-waveform');
-        const wsData = g.allWavesurfers.find(w => w.songId === song.id);
+        const wsData = g.waveformData.find(w => w.songId === song.id);
         
         if (wsData) {
-          playStandaloneSong(song, wsData.instance, waveformContainer);
+          playStandaloneSong(fields['R2 Audio URL'], song, wsData.wavesurfer, tile);
         }
       });
     }
