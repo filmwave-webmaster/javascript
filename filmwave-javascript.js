@@ -4729,10 +4729,10 @@ const shouldHaveSidebar = !!document.querySelector('[data-has-sidebar]');
 if (sidebar) {
   if (!shouldHaveSidebar) {
     sidebar.style.display = 'none';
-    console.log('🚫 Hiding sidebar on non-sidebar page');
+    console.log('🚫 Hiding sidebar');
   } else {
-    sidebar.style.display = 'flex'; // or 'block' - check what it should be in Webflow
-    console.log('✅ Showing sidebar on sidebar page');
+    sidebar.style.removeProperty('display');
+    console.log('✅ Showing sidebar');
   }
 }
   
