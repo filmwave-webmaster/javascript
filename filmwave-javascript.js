@@ -7905,8 +7905,11 @@ console.log('🎵 Playlist System loaded');
    ============================================================ */
 
 async function initDashboardTiles() {
-  const tiles = document.querySelectorAll('.db-tile-row-1, .db-tile-row-2, .db-tile-row-3');
-  if (tiles.length === 0) return;
+  const tiles = document.querySelectorAll('.masonry-song-tile');
+  if (tiles.length === 0) {
+    console.log('ℹ️ No dashboard tiles found');
+    return;
+  }
 
   const g = window.musicPlayerPersistent;
   
@@ -7924,15 +7927,17 @@ async function initDashboardTiles() {
     const song = songs[index];
     const fields = song.fields;
     
-    // Find masonry div and set background image
-    const masonryDiv = tile.querySelector('.masonry-1, .masonry-2, .masonry-3, .masonry-4, .masonry-5');
-    if (masonryDiv && fields['Cover Art']) {
-      masonryDiv.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
+    // Find the masonry divs - there are multiple per tile (masonry-1 through masonry-6)
+    const masonryDivs = tile.querySelectorAll('[class*="masonry-"]');
+    if (masonryDivs.length > 0 && fields['Cover Art']) {
+      masonryDivs.forEach(div => {
+        div.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
+      });
     }
 
     // Set song info
-    const songName = tile.querySelector('.db-player-song-name');
-    const artistName = tile.querySelector('.db-artist-name');
+    const songName = tile.querySelector('.player-song-name');
+    const artistName = tile.querySelector('.player-artist-name');
     if (songName) songName.textContent = fields['Song Title'] || 'Unknown';
     if (artistName) artistName.textContent = fields['Artist'] || 'Unknown';
 
@@ -7984,7 +7989,7 @@ async function initDashboardTiles() {
     }
 
     // Setup play button
-    const playButton = tile.querySelector('.db-player-play-button');
+    const playButton = tile.querySelector('.player-play-button');
     if (playButton) {
       playButton.style.cursor = 'pointer';
       
@@ -8018,5 +8023,5 @@ async function initDashboardTiles() {
     }
   });
 
-  console.log('✅ Dashboard tiles initialized');
+  console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
