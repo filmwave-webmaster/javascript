@@ -4447,10 +4447,8 @@ window.addEventListener('load', () => {
   setTimeout(() => {
     initializeMemberstackHandlers();
     
-    // Cache user name after Memberstack populates it
-    if (!!document.querySelector('.db-dashboard-wrapper')) {
-      initDashboardWelcome();
-    }
+    // Initialize welcome text on any page that has it
+    initDashboardWelcome();
   }, 500);
 });
 
@@ -4967,17 +4965,11 @@ if (typeof barba !== 'undefined') {
         console.log('✅ Password toggle initialized');
       });
 
-    // Call shared Memberstack handler function
+   // Call shared Memberstack handler function
       initializeMemberstackHandlers();
       
-      console.log('🎯 ABOUT TO CHECK FOR DASHBOARD');
-      console.log('🎯 Dashboard exists?', !!document.querySelector('.db-dashboard-wrapper'));
-      
-// Cache user name after Memberstack populates it  
-if (!!document.querySelector('.db-dashboard-wrapper')) {
-  console.log('🎯 CALLING initDashboardWelcome NOW');
-  initDashboardWelcome();
-}
+      // Initialize welcome text on any page that has it
+      initDashboardWelcome();
       
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
