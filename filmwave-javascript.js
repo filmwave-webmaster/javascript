@@ -4723,16 +4723,18 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
 
   // Remove sidebar on pages that shouldn't have it
-  const sidebar = document.querySelector('.sidebar-nav');
-  const shouldHaveSidebar = !!document.querySelector('[data-has-sidebar]'); // or check for specific page classes
-  
-  if (sidebar && !shouldHaveSidebar) {
+const sidebar = document.querySelector('.sidebar-nav');
+const shouldHaveSidebar = !!document.querySelector('[data-has-sidebar]');
+
+if (sidebar) {
+  if (!shouldHaveSidebar) {
     sidebar.style.display = 'none';
     console.log('🚫 Hiding sidebar on non-sidebar page');
-  } else if (sidebar && shouldHaveSidebar) {
-    sidebar.style.display = '';
+  } else {
+    sidebar.style.display = 'flex'; // or 'block' - check what it should be in Webflow
     console.log('✅ Showing sidebar on sidebar page');
   }
+}
   
   window.scrollTo(0, 0);
   
