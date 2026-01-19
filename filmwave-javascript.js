@@ -4673,6 +4673,16 @@ if (typeof barba !== 'undefined') {
        
   style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
+  // Handle sidebar visibility BEFORE the new page appears
+  const sidebar = document.querySelector('.sidebar-nav');
+  const willHaveSidebar = data.next.url.path.startsWith('/dashboard/');
+  
+  if (sidebar && !willHaveSidebar) {
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.pointerEvents = 'none';
+    console.log('🚫 Hiding sidebar before transition');
+  }
+
   if (!isMusicPage) {
     document.body.style.overflow = 'visible';
     document.documentElement.style.overflow = 'visible';
@@ -4721,44 +4731,6 @@ if (typeof barba !== 'undefined') {
   console.log('🚪 BARBA AFTER FIRED');
   
   const g = window.musicPlayerPersistent;
-
- // Show/hide sidebar based on page
-let sidebar = document.querySelector('.sidebar-nav');
-const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-
-if (shouldHaveSidebar && !sidebar) {
-  console.log('📥 Sidebar needed but missing - extracting from new page');
-  
-  // Get the sidebar from the incoming page HTML
-  const parser = new DOMParser();
-  const newDoc = parser.parseFromString(data.next.html, 'text/html');
-  const newSidebar = newDoc.querySelector('.sidebar-nav');
-  
-  if (newSidebar) {
-    // Insert it into the current page (before the barba container)
-    const container = document.querySelector('[data-barba="container"]');
-    if (container) {
-      container.parentNode.insertBefore(newSidebar, container);
-      sidebar = newSidebar;
-      console.log('✅ Sidebar inserted');
-      
-      // Initialize welcome text for the new sidebar
-      initDashboardWelcome();
-    }
-  }
-}
-
-if (sidebar) {
-  if (!shouldHaveSidebar) {
-    sidebar.style.visibility = 'hidden';
-    sidebar.style.pointerEvents = 'none';
-    console.log('🚫 Hiding sidebar');
-  } else {
-    sidebar.style.visibility = 'visible';
-    sidebar.style.pointerEvents = 'auto';
-    console.log('✅ Showing sidebar');
-  }
-}
   
   window.scrollTo(0, 0);
   
