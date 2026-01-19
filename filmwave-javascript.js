@@ -4722,17 +4722,23 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
 
-  // Remove sidebar on pages that shouldn't have it
+ // Remove sidebar on pages that shouldn't have it
 const sidebar = document.querySelector('.sidebar-nav');
-const shouldHaveSidebar = !!document.querySelector('[data-has-sidebar]');
+// Check for backend-specific elements instead of data attribute
+const shouldHaveSidebar = !!(
+  document.querySelector('.db-dashboard-wrapper') ||
+  document.querySelector('.db-sortable-container') ||
+  document.querySelector('.favorite-songs-wrapper') ||
+  document.querySelector('.music-list-wrapper')
+);
 
 if (sidebar) {
   if (!shouldHaveSidebar) {
     sidebar.style.display = 'none';
-    console.log('🚫 Hiding sidebar');
+    console.log('🚫 Hiding sidebar on non-sidebar page');
   } else {
-    sidebar.style.removeProperty('display');
-    console.log('✅ Showing sidebar');
+    sidebar.style.display = 'flex';
+    console.log('✅ Showing sidebar on sidebar page');
   }
 }
   
