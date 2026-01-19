@@ -7922,25 +7922,26 @@ async function initDashboardTiles() {
     if (index >= songs.length) return;
     
     const song = songs[index];
+    const fields = song.fields;
     
     // Find masonry div and set background image
     const masonryDiv = tile.querySelector('.masonry-1, .masonry-2, .masonry-3, .masonry-4, .masonry-5');
-    if (masonryDiv && song.albumArt) {
-      masonryDiv.style.backgroundImage = `url(${song.albumArt})`;
+    if (masonryDiv && fields['Cover Art']) {
+      masonryDiv.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
     }
 
     // Set song info
     const songName = tile.querySelector('.db-player-song-name');
     const artistName = tile.querySelector('.db-artist-name');
-    if (songName) songName.textContent = song.name || 'Unknown';
-    if (artistName) artistName.textContent = song.artist || 'Unknown';
+    if (songName) songName.textContent = fields['Song Title'] || 'Unknown';
+    if (artistName) artistName.textContent = fields['Artist'] || 'Unknown';
 
     // Store song data
     tile.dataset.songId = song.id;
 
     // Setup waveform container
     const waveformContainer = tile.querySelector('.db-waveform');
-    if (waveformContainer) {
+    if (waveformContainer && fields['R2 Audio URL']) {
       waveformContainer.innerHTML = '';
       waveformContainer.dataset.songId = song.id;
       
@@ -7959,10 +7960,12 @@ async function initDashboardTiles() {
         interact: true
       });
 
-      if (song.peaks && Array.isArray(song.peaks)) {
-        wavesurfer.load(song.audioFile, song.peaks);
+      const peaksData = fields['Peaks'] ? JSON.parse(fields['Peaks']) : null;
+      
+      if (peaksData && Array.isArray(peaksData)) {
+        wavesurfer.load(fields['R2 Audio URL'], peaksData);
       } else {
-        wavesurfer.load(song.audioFile);
+        wavesurfer.load(fields['R2 Audio URL']);
       }
 
       g.allWavesurfers.push({
