@@ -107,29 +107,29 @@ function initDashboardWelcome() {
   const nameSpan = welcomeText.querySelector('[data-ms-member="first-name"]');
   if (!nameSpan) return;
 
+  // Always hide first
+  welcomeText.style.opacity = '0';
+
   // Check localStorage first
   const cachedName = localStorage.getItem('userFirstName');
   
   if (cachedName) {
     // Use cached name immediately
     nameSpan.textContent = cachedName;
-    welcomeText.style.visibility = 'visible';
+    welcomeText.style.opacity = '1';
     console.log('✅ Using cached name:', cachedName);
-  } else {
-    // Hide until we get the name
-    welcomeText.style.visibility = 'hidden';
-    console.log('⏳ No cached name, hiding welcome text');
   }
 
-  // After initMemberstackHandlers runs, cache the name
+  // Wait a bit for Memberstack to finish, then cache and show
   setTimeout(() => {
     const currentName = nameSpan.textContent;
     if (currentName && currentName !== 'friend') {
       localStorage.setItem('userFirstName', currentName);
-      welcomeText.style.visibility = 'visible';
-      console.log('💾 Cached name from Memberstack:', currentName);
+      nameSpan.textContent = currentName;
+      welcomeText.style.opacity = '1';
+      console.log('💾 Cached name:', currentName);
     }
-  }, 500);
+  }, 100);
 }
 
 /**
