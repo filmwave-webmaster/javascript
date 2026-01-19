@@ -111,22 +111,25 @@ function initDashboardWelcome() {
 
   // Check localStorage first
   const cachedName = localStorage.getItem('userFirstName');
-  const currentName = nameSpan.textContent.trim();
   
-  console.log('📝 Current name in span:', currentName);
   console.log('💾 Cached name:', cachedName);
 
   if (cachedName && cachedName !== 'friend') {
-    // Use cached name to prevent flash
+    // IMMEDIATELY replace whatever is there with cached name
     nameSpan.textContent = cachedName;
-    console.log('✅ Set cached name:', cachedName);
+    console.log('✅ Set cached name immediately:', cachedName);
   }
   
-  // If current name is valid and different from cache, update cache
-  if (currentName && currentName !== 'friend' && currentName !== cachedName) {
-    localStorage.setItem('userFirstName', currentName);
-    console.log('💾 Saved new name to cache:', currentName);
-  }
+  // Cache whatever name appears after a delay (for first-time visitors)
+  setTimeout(() => {
+    const currentName = nameSpan.textContent.trim();
+    console.log('📝 Current name after delay:', currentName);
+    
+    if (currentName && currentName !== 'friend' && currentName !== cachedName) {
+      localStorage.setItem('userFirstName', currentName);
+      console.log('💾 Saved new name to cache:', currentName);
+    }
+  }, 600);
 }
 
 /**
