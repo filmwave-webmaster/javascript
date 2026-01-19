@@ -1042,6 +1042,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updatePlayerCoverArtIcons(true);
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
+    document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: true } }));
   });
   
   audio.addEventListener('pause', () => {
@@ -1049,6 +1050,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     updatePlayPauseIcons(cardElement, false);
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
+    document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: false } }));
   });
   
   audio.addEventListener('ended', () => {
@@ -7932,16 +7934,21 @@ async function initDashboardTiles() {
     const fields = song.fields;
     
     console.log(`🎵 Tile ${index}: ${fields['Song Title']}`);
-    console.log(`   Cover Art:`, fields['Cover Art']?.[0]?.url);
-    console.log(`   Audio URL:`, fields['R2 Audio URL']);
     
-    // Find the db-tile-image and set background image
+    // Find the db-tile-image and set background image with delay to override Webflow
     const tileImage = tile.querySelector('.db-tile-image');
-    console.log(`   Found .db-tile-image:`, !!tileImage);
     
     if (tileImage && fields['Cover Art']) {
       const imageUrl = fields['Cover Art'][0].url;
+      
+      // Set immediately
       tileImage.style.setProperty('background-image', `url(${imageUrl})`, 'important');
+      
+      // Set again after delay to override Webflow
+      setTimeout(() => {
+        tileImage.style.setProperty('background-image', `url(${imageUrl})`, 'important');
+      }, 100);
+      
       console.log(`   ✅ Set background image`);
     }
 
@@ -7997,25 +8004,45 @@ async function initDashboardTiles() {
         cardElement: tile
       });
 
-      // Waveform click to play
+      // Waveform click to play/seek
       waveformContainer.style.cursor = 'pointer';
       waveformContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('🎵 Waveform clicked for:', fields['Song Title']);
-        playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile);
+        
+        // Calculate click position for seeking
+        const bounds = waveformContainer.getBoundingClientRect();
+        const x = e.clientX - bounds.left;
+        const progress = x / bounds.width;
+        
+        console.log('🎵 Waveform clicked for:', fields['Song Title'], 'at position:', progress);
+        
+        // If currently playing this song, seek
+        if (g.currentSongData?.id === song.id && g.standaloneAudio) {
+          const seekTime = progress * g.standaloneAudio.duration;
+          g.standaloneAudio.currentTime = seekTime;
+          wavesurfer.seekTo(progress);
+        } else {
+          // Otherwise start playing from clicked position
+          playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, progress);
+        }
       });
     }
 
     // Setup play button - find both play icon and play container
     const playIcon = tile.querySelector('.db-play-icon');
+    const pauseIcon = tile.querySelector('.db-pause-icon');
     const playContainer = tile.querySelector('.db-play-container');
     const playButton = tile.querySelector('.db-player-play-button');
     
-    console.log(`   Play elements found - icon: ${!!playIcon}, container: ${!!playContainer}, button: ${!!playButton}`);
+    // Set initial icon state
+    if (playIcon) playIcon.style.display = 'block';
+    if (pauseIcon) pauseIcon.style.display = 'none';
+    
+    console.log(`   Play elements found - icon: ${!!playIcon}, pause: ${!!pauseIcon}, container: ${!!playContainer}, button: ${!!playButton}`);
     
     // Add click handlers to all play elements
-    [playIcon, playContainer, playButton].forEach(element => {
+    [playIcon, pauseIcon, playContainer, playButton].forEach(element => {
       if (element) {
         element.style.cursor = 'pointer';
         element.addEventListener('click', (e) => {
@@ -8026,10 +8053,21 @@ async function initDashboardTiles() {
           const waveformContainer = tile.querySelector('.db-waveform');
           const wsData = g.waveformData.find(w => w.songId === song.id);
           
-          console.log('   Found waveform data:', !!wsData);
-          
-          if (wsData) {
+          // If currently playing this song, pause it
+          if (g.currentSongData?.id === song.id && g.standaloneAudio && !g.standaloneAudio.paused) {
+            g.standaloneAudio.pause();
+            if (playIcon) playIcon.style.display = 'block';
+            if (pauseIcon) pauseIcon.style.display = 'none';
+          } else if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.paused) {
+            // Resume if paused
+            g.standaloneAudio.play();
+            if (playIcon) playIcon.style.display = 'none';
+            if (pauseIcon) pauseIcon.style.display = 'block';
+          } else if (wsData) {
+            // Play new song
             playStandaloneSong(fields['R2 Audio URL'], song, wsData.wavesurfer, tile);
+            if (playIcon) playIcon.style.display = 'none';
+            if (pauseIcon) pauseIcon.style.display = 'block';
           }
         });
       }
@@ -8050,6 +8088,28 @@ async function initDashboardTiles() {
         }
       });
     }
+  });
+
+  // Listen for play/pause events to update icons
+  document.addEventListener('audioStateChange', (e) => {
+    const { songId, isPlaying } = e.detail;
+    
+    tiles.forEach(tile => {
+      if (tile.dataset.songId === songId) {
+        const playIcon = tile.querySelector('.db-play-icon');
+        const pauseIcon = tile.querySelector('.db-pause-icon');
+        
+        if (playIcon) playIcon.style.display = isPlaying ? 'none' : 'block';
+        if (pauseIcon) pauseIcon.style.display = isPlaying ? 'block' : 'none';
+      } else {
+        // Reset other tiles to play icon
+        const playIcon = tile.querySelector('.db-play-icon');
+        const pauseIcon = tile.querySelector('.db-pause-icon');
+        
+        if (playIcon) playIcon.style.display = 'block';
+        if (pauseIcon) pauseIcon.style.display = 'none';
+      }
+    });
   });
 
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
