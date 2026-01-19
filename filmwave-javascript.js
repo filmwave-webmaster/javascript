@@ -41,6 +41,7 @@
  * 28. FILTER STATE SAVE/RESTORE              ~4280
  * 29. FAVORITE SONGS PERSISTENCE             ~4750
  * 30. XANO PLAYLIST SYSTEM                   ~5870
+ * 31. DASHBOARD TILES                        ~7900
  * 
  * ============================================================
  */
@@ -313,6 +314,8 @@ async function initMusicPage() {
       }
     }, 200);
   }
+  // Initialize dashboard tiles
+  await initDashboardTiles();
 }
 
 /**
@@ -4809,6 +4812,9 @@ if (typeof barba !== 'undefined') {
     console.log('⚠️ No song containers found on this page');
   }
 }, 300);
+
+    // Initialize dashboard tiles
+initDashboardTiles();
     
     if (g.currentSongData) {
       updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
@@ -7893,3 +7899,121 @@ document.addEventListener(
 
 window.PlaylistManager = PlaylistManager;
 console.log('🎵 Playlist System loaded');
+
+/* ============================================================
+   31. DASHBOARD TILES
+   ============================================================ */
+
+async function initDashboardTiles() {
+  const tiles = document.querySelectorAll('.db-tile-row-1, .db-tile-row-2, .db-tile-row-3');
+  if (tiles.length === 0) return;
+
+  const g = window.musicPlayerPersistent;
+  
+  // Ensure songs are loaded
+  if (g.MASTER_DATA.length === 0) {
+    await fetchSongs();
+  }
+
+  // Get first 6 songs
+  const songs = g.MASTER_DATA.slice(0, 6);
+
+  tiles.forEach((tile, index) => {
+    if (index >= songs.length) return;
+    
+    const song = songs[index];
+    
+    // Find masonry div and set background image
+    const masonryDiv = tile.querySelector('.masonry-1, .masonry-2, .masonry-3, .masonry-4, .masonry-5');
+    if (masonryDiv && song.albumArt) {
+      masonryDiv.style.backgroundImage = `url(${song.albumArt})`;
+    }
+
+    // Set song info
+    const songName = tile.querySelector('.db-player-song-name');
+    const artistName = tile.querySelector('.db-artist-name');
+    if (songName) songName.textContent = song.name || 'Unknown';
+    if (artistName) artistName.textContent = song.artist || 'Unknown';
+
+    // Store song data
+    tile.dataset.songId = song.id;
+
+    // Setup waveform container
+    const waveformContainer = tile.querySelector('.db-waveform');
+    if (waveformContainer) {
+      waveformContainer.innerHTML = '';
+      waveformContainer.dataset.songId = song.id;
+      
+      // Initialize waveform
+      const wavesurfer = WaveSurfer.create({
+        container: waveformContainer,
+        waveColor: '#808080',
+        progressColor: '#ffffff',
+        cursorColor: 'transparent',
+        barWidth: 2,
+        barGap: 2,
+        barRadius: 2,
+        height: waveformContainer.offsetHeight || 60,
+        normalize: true,
+        backend: 'WebAudio',
+        interact: true
+      });
+
+      if (song.peaks && Array.isArray(song.peaks)) {
+        wavesurfer.load(song.audioFile, song.peaks);
+      } else {
+        wavesurfer.load(song.audioFile);
+      }
+
+      g.allWavesurfers.push({
+        instance: wavesurfer,
+        songId: song.id,
+        container: waveformContainer
+      });
+
+      // Waveform click to play
+      waveformContainer.style.cursor = 'pointer';
+      waveformContainer.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        playStandaloneSong(song, wavesurfer, waveformContainer);
+      });
+    }
+
+    // Setup play button
+    const playButton = tile.querySelector('.db-player-play-button');
+    if (playButton) {
+      playButton.style.cursor = 'pointer';
+      
+      playButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const waveformContainer = tile.querySelector('.db-waveform');
+        const wsData = g.allWavesurfers.find(w => w.songId === song.id);
+        
+        if (wsData) {
+          playStandaloneSong(song, wsData.instance, waveformContainer);
+        }
+      });
+    }
+
+    // Song name click to play
+    if (songName) {
+      songName.style.cursor = 'pointer';
+      songName.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const waveformContainer = tile.querySelector('.db-waveform');
+        const wsData = g.allWavesurfers.find(w => w.songId === song.id);
+        
+        if (wsData) {
+          playStandaloneSong(song, wsData.instance, waveformContainer);
+        }
+      });
+    }
+  });
+
+  console.log('✅ Dashboard tiles initialized');
+}
