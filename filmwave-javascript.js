@@ -101,12 +101,21 @@ window.addEventListener('load', () => {
    DASHBOARD WELCOME TEXT - GENERATE FROM MEMBERSTACK
    ============================================================ */
 async function initDashboardWelcome() {
+  const cachedName = localStorage.getItem('userFirstName');
+  
   // Wait for sidebar to exist (max 1 second)
   let attempts = 0;
   let welcomeText = null;
   
   while (!welcomeText && attempts < 10) {
     welcomeText = document.querySelector('.dashboard-welcome-text');
+    if (welcomeText && cachedName) {
+      // Set cached name IMMEDIATELY when found
+      welcomeText.textContent = `Welcome, ${cachedName}!`;
+      welcomeText.style.opacity = '1';
+      console.log('✅ Set cached name immediately');
+      return; // Exit early - no need to fetch from Memberstack
+    }
     if (!welcomeText) {
       await new Promise(resolve => setTimeout(resolve, 100));
       attempts++;
@@ -115,18 +124,7 @@ async function initDashboardWelcome() {
   
   if (!welcomeText) return;
 
-  console.log('🏁 initDashboardWelcome CALLED');
-
-  // Check localStorage first
-  const cachedName = localStorage.getItem('userFirstName');
-  
-  if (cachedName) {
-    // Use cached name immediately - no flash
-    welcomeText.textContent = `Welcome, ${cachedName}!`;
-    welcomeText.style.opacity = '1';
-    console.log('✅ Using cached name:', cachedName);
-    return;
-  }
+  console.log('🏁 initDashboardWelcome CALLED (no cache)');
 
   // No cache - hide until we fetch
   welcomeText.style.opacity = '0';
