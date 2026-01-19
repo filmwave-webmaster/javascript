@@ -8170,8 +8170,17 @@ async function initDashboardPlaylists() {
 
   console.log('🎵 Initializing dashboard playlists...');
 
-  // Hide template
-  template.style.setProperty('display', 'none', 'important');
+// Hide template by adding a class
+template.style.setProperty('display', 'none', 'important');
+template.classList.add('hidden-template');
+
+// Add this CSS to force hide
+const style = document.createElement('style');
+style.textContent = '.hidden-template { display: none !important; }';
+if (!document.getElementById('hidden-template-style')) {
+  style.id = 'hidden-template-style';
+  document.head.appendChild(style);
+}
 
   // Show placeholders while loading
   container.querySelectorAll('.playlist-placeholder').forEach((el) => {
