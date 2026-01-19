@@ -354,12 +354,10 @@ async function initMusicPage() {
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
-      setTimeout(() => {
-        initDashboardWelcome();
-        initDashboardTiles();
-        initDashboardPlaylists();
-      }, 600);
+      initDashboardTiles();
+      initDashboardPlaylists();
     }
+  }
 }
 
 /**
@@ -4430,6 +4428,11 @@ window.addEventListener('load', () => {
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
     initializeMemberstackHandlers();
+    
+    // Cache user name after Memberstack populates it
+    if (!!document.querySelector('.db-dashboard-wrapper')) {
+      initDashboardWelcome();
+    }
   }, 500);
 });
 
@@ -4863,11 +4866,8 @@ if (typeof barba !== 'undefined') {
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
-      setTimeout(() => {
-        initDashboardWelcome();
-        initDashboardTiles();
-        initDashboardPlaylists();
-      }, 600);
+      initDashboardTiles();
+      initDashboardPlaylists();
     }
     
     if (g.currentSongData) {
@@ -4959,6 +4959,11 @@ if (typeof barba !== 'undefined') {
 
       // Call shared Memberstack handler function
       initializeMemberstackHandlers();
+
+// Cache user name after Memberstack populates it  
+if (!!document.querySelector('.db-dashboard-wrapper')) {
+  initDashboardWelcome();
+}
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
          
