@@ -98,43 +98,55 @@ window.addEventListener('load', () => {
 });
 
 /* ============================================================
-   DASHBOARD WELCOME TEXT - CACHE USER NAME
+   DASHBOARD WELCOME TEXT - GENERATE FROM XANO
    ============================================================ */
-function initDashboardWelcome() {
+async function initDashboardWelcome() {
   const welcomeText = document.querySelector('.dashboard-welcome-text');
   if (!welcomeText) return;
 
-  const nameSpan = welcomeText.querySelector('[data-ms-member="first-name"]');
-  if (!nameSpan) return;
-
   console.log('🏁 initDashboardWelcome CALLED');
 
-  // Check localStorage first
-  const cachedName = localStorage.getItem('userFirstName');
-  
-  console.log('💾 Cached name:', cachedName);
+  // Hide initially
+  welcomeText.style.opacity = '0';
 
-  if (cachedName && cachedName !== 'friend') {
-    // IMMEDIATELY set cached name and show
-    nameSpan.textContent = cachedName;
-    welcomeText.style.opacity = '1';
-    console.log('✅ Set cached name immediately:', cachedName);
-  } else {
-    // No cache - hide until we get the real name
-    welcomeText.style.opacity = '0';
-  }
-  
-  // Wait for Memberstack to populate, then cache and show
-  setTimeout(() => {
-    const currentName = nameSpan.textContent.trim();
-    console.log('📝 Current name after delay:', currentName);
-    
-    if (currentName && currentName !== 'friend') {
-      localStorage.setItem('userFirstName', currentName);
-      welcomeText.style.opacity = '1';
-      console.log('💾 Saved and showing:', currentName);
+  try {
+    // Get user ID from Memberstack
+    const member = await window._memberstack.getCurrentMember();
+    const userId = member?.data?.id;
+
+    if (!userId) {
+      console.log('❌ No user ID found');
+      return;
     }
-  }, 100);
+
+    console.log('👤 User ID:', userId);
+
+    // Fetch user data from Xano
+    const response = await fetch(`${XANO_PLAYLISTS_API}/user/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch user data');
+
+    const userData = await response.json();
+    const firstName = userData.first_name;
+
+    if (firstName) {
+      // Generate the welcome message
+      welcomeText.textContent = `Welcome, ${firstName}!`;
+      welcomeText.style.opacity = '1';
+      console.log('✅ Welcome message set:', firstName);
+    }
+
+  } catch (error) {
+    console.error('❌ Error loading welcome message:', error);
+    // Fallback - just show without name
+    welcomeText.textContent = 'Welcome!';
+    welcomeText.style.opacity = '1';
+  }
 }
 
 /**
