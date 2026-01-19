@@ -8150,3 +8150,121 @@ async function initDashboardTiles() {
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
 
+/* ============================================================
+   32. DASHBOARD PLAYLISTS
+   ============================================================ */
+
+async function initDashboardPlaylists() {
+  const container = document.querySelector('.db-sortable-container');
+  if (!container) {
+    console.log('ℹ️ No dashboard playlists container found');
+    return;
+  }
+
+  const template = container.querySelector('.playlist-card-template');
+  if (!template) {
+    console.log('❌ No playlist template found');
+    return;
+  }
+
+  console.log('🎵 Initializing dashboard playlists...');
+
+  // Hide template
+  template.style.display = 'none';
+
+  // Show placeholders while loading
+  container.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    el.style.display = '';
+  });
+
+  try {
+    const allPlaylists = await PlaylistManager.getUserPlaylists();
+    console.log('📊 Total playlists:', allPlaylists.length);
+    
+    const playlists = allPlaylists.sort((a, b) => {
+      if (a.position !== b.position) {
+        return a.position - b.position;
+      }
+      return new Date(b.created_at) - new Date(a.created_at);
+    }).slice(0, 4);
+
+    console.log('📊 Showing first 4 playlists');
+
+    // Clear existing cards except template
+    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
+      if (i > 0) card.remove();
+    });
+
+    // Pre-fetch counts in parallel
+    const playlistCounts = await Promise.all(
+      playlists.map(async (p) => {
+        try {
+          const songs = await PlaylistManager.getPlaylistSongs(p.id);
+          return { id: Number(p.id), count: songs.length };
+        } catch {
+          return { id: Number(p.id), count: 0 };
+        }
+      })
+    );
+
+    const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
+
+    // Build off-DOM, then append once
+    const frag = document.createDocumentFragment();
+
+    for (const playlist of playlists) {
+      const card = template.cloneNode(true);
+      card.classList.remove('is-template');
+
+      const title = card.querySelector('.playlist-title');
+      const detail = card.querySelector('.playlist-detail');
+      const image = card.querySelector('.playlist-image');
+      const link = card.querySelector('.playlist-link-block');
+
+      if (title) title.textContent = playlist.name;
+      if (detail) detail.textContent = playlist.description || '';
+
+      if (image && playlist.cover_image_url) {
+        image.src = playlist.cover_image_url;
+
+        requestAnimationFrame(() => {
+          image.src = playlist.cover_image_url;
+        });
+      }
+
+      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+
+      card.dataset.playlistId = playlist.id;
+
+      const countEl = card.querySelector('.playlist-song-count');
+      if (countEl) {
+        const count = countsById.get(Number(playlist.id)) ?? 0;
+        countEl.textContent = String(count);
+      }
+
+      card.style.removeProperty('display');
+      card.style.display = 'block';
+      frag.appendChild(card);
+    }
+
+    // Append everything at once
+    container.appendChild(frag);
+
+    console.log(`✅ Rendered ${playlists.length} dashboard playlist cards`);
+
+    if (window.Webflow?.require) {
+      try {
+        const ix2 = window.Webflow.require('ix2');
+        if (ix2 && ix2.init) ix2.init();
+      } catch (e) {}
+    }
+  } finally {
+    // Hide all placeholders once real cards exist
+    container.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      el.style.display = 'none';
+    });
+
+    container.style.opacity = '1';
+    container.style.pointerEvents = '';
+  }
+}
