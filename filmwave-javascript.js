@@ -97,6 +97,47 @@ window.addEventListener('load', () => {
   }
 });
 
+/* ============================================================
+   DASHBOARD WELCOME TEXT - CACHE USER NAME
+   ============================================================ */
+async function initDashboardWelcome() {
+  const welcomeText = document.querySelector('.dashboard-welcome-text');
+  if (!welcomeText) return;
+
+  const nameSpan = welcomeText.querySelector('[data-ms-member="first-name"]');
+  if (!nameSpan) return;
+
+  // Hide initially
+  welcomeText.style.visibility = 'hidden';
+
+  // Check localStorage first
+  const cachedName = localStorage.getItem('userFirstName');
+  
+  if (cachedName) {
+    // Use cached name immediately
+    nameSpan.textContent = cachedName;
+    welcomeText.style.visibility = 'visible';
+  }
+
+  // Wait for Memberstack to load and update cache
+  window._memberstack.onReady.then(async (member) => {
+    if (member && member.firstName) {
+      const firstName = member.firstName;
+      
+      // Update localStorage
+      localStorage.setItem('userFirstName', firstName);
+      
+      // Update display if different
+      if (nameSpan.textContent !== firstName) {
+        nameSpan.textContent = firstName;
+      }
+      
+      // Make visible
+      welcomeText.style.visibility = 'visible';
+    }
+  });
+}
+
 /**
  * ============================================================
  * UTILITY FUNCTIONS
@@ -316,6 +357,7 @@ async function initMusicPage() {
     }, 200);
     
     // Initialize dashboard components
+    await initDashboardWelcome();
     await initDashboardTiles();
     await initDashboardPlaylists();
   }
@@ -4818,11 +4860,14 @@ if (typeof barba !== 'undefined') {
   }
 }, 300);
 
-    // Initialize dashboard tiles
-initDashboardTiles();
-
-    // Initialize dashboard playlists
-initDashboardPlaylists();
+    // Initialize dashboard components only if on dashboard page
+    const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
+    
+    if (isDashboardPage) {
+      await initDashboardWelcome();
+      await initDashboardTiles();
+      await initDashboardPlaylists();
+    }
     
     if (g.currentSongData) {
       updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
