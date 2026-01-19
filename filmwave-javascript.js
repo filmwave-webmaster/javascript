@@ -7935,7 +7935,14 @@ async function initDashboardTiles() {
     
     console.log(`🎵 Tile ${index}: ${fields['Song Title']}`);
     
-    // Set ONLY the background tile image (large background)
+    // Set the small cover art image
+    const coverArt = tile.querySelector('.db-player-song-cover');
+    if (coverArt && fields['Cover Art']) {
+      coverArt.src = fields['Cover Art'][0].url;
+      console.log(`   ✅ Set cover art image`);
+    }
+    
+    // Set the background tile image (large background)
     const tileImage = tile.querySelector('.db-tile-image');
     if (tileImage && fields['Cover Art']) {
       tileImage.src = fields['Cover Art'][0].url;
@@ -7991,7 +7998,9 @@ async function initDashboardTiles() {
       g.waveformData.push({
         wavesurfer: wavesurfer,
         songId: song.id,
-        cardElement: tile
+        cardElement: tile,
+        audioUrl: fields['R2 Audio URL'],
+        songData: song
       });
 
       // Waveform click to play/seek
@@ -8007,22 +8016,25 @@ async function initDashboardTiles() {
         
         console.log('🎵 Waveform clicked for:', fields['Song Title'], 'at position:', progress);
         
+        const isCurrentSong = g.currentSongData?.id === song.id;
+        const isPlaying = g.standaloneAudio && !g.standaloneAudio.paused;
+        
         // If currently playing THIS song, seek within it
-        if (g.currentSongData?.id === song.id && g.standaloneAudio && !g.standaloneAudio.paused) {
+        if (isCurrentSong && g.standaloneAudio && isPlaying) {
           const seekTime = progress * g.standaloneAudio.duration;
           g.standaloneAudio.currentTime = seekTime;
           wavesurfer.seekTo(progress);
         } 
         // If this song is loaded but paused, just seek without playing
-        else if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.paused) {
+        else if (isCurrentSong && g.standaloneAudio && !isPlaying) {
           const seekTime = progress * g.standaloneAudio.duration;
           g.standaloneAudio.currentTime = seekTime;
           wavesurfer.seekTo(progress);
         }
-        // If a DIFFERENT song is playing or no song is playing, start this song from clicked position
+        // If a DIFFERENT song is playing or paused, start this song from clicked position
         else {
-          // Pause any currently playing song
-          if (g.standaloneAudio && !g.standaloneAudio.paused) {
+          // Pause any currently playing song first
+          if (g.standaloneAudio) {
             g.standaloneAudio.pause();
           }
           
@@ -8061,7 +8073,6 @@ async function initDashboardTiles() {
           e.stopPropagation();
           console.log('▶️ Play button clicked for:', fields['Song Title']);
           
-          const waveformContainer = tile.querySelector('.db-waveform');
           const wsData = g.waveformData.find(w => w.songId === song.id);
           
           // If currently playing this song, pause it
