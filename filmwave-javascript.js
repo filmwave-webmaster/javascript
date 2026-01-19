@@ -101,7 +101,18 @@ window.addEventListener('load', () => {
    DASHBOARD WELCOME TEXT - GENERATE FROM MEMBERSTACK
    ============================================================ */
 async function initDashboardWelcome() {
-  const welcomeText = document.querySelector('.dashboard-welcome-text');
+  // Wait for sidebar to exist (max 1 second)
+  let attempts = 0;
+  let welcomeText = null;
+  
+  while (!welcomeText && attempts < 10) {
+    welcomeText = document.querySelector('.dashboard-welcome-text');
+    if (!welcomeText) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+  }
+  
   if (!welcomeText) return;
 
   console.log('🏁 initDashboardWelcome CALLED');
@@ -110,11 +121,11 @@ async function initDashboardWelcome() {
   const cachedName = localStorage.getItem('userFirstName');
   
   if (cachedName) {
-    // Use cached name immediately - no delay
+    // Use cached name immediately - no flash
     welcomeText.textContent = `Welcome, ${cachedName}!`;
     welcomeText.style.opacity = '1';
     console.log('✅ Using cached name:', cachedName);
-    return; // Don't fetch from Memberstack if we have cache
+    return;
   }
 
   // No cache - hide until we fetch
@@ -134,15 +145,11 @@ async function initDashboardWelcome() {
     console.log('👤 First name from Memberstack:', firstName);
 
     if (firstName) {
-      // Save to cache
       localStorage.setItem('userFirstName', firstName);
-      
-      // Generate the welcome message
       welcomeText.textContent = `Welcome, ${firstName}!`;
       welcomeText.style.opacity = '1';
       console.log('✅ Welcome message set and cached:', firstName);
     } else {
-      // Fallback
       welcomeText.textContent = 'Welcome!';
       welcomeText.style.opacity = '1';
     }
@@ -153,6 +160,7 @@ async function initDashboardWelcome() {
     welcomeText.style.opacity = '1';
   }
 }
+
 /**
  * ============================================================
  * UTILITY FUNCTIONS
