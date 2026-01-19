@@ -4722,16 +4722,16 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
 
- // Remove sidebar on pages that shouldn't have it
+ // Show/hide sidebar based on page
 const sidebar = document.querySelector('.sidebar-nav');
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 
 if (sidebar) {
   if (!shouldHaveSidebar) {
-    sidebar.style.display = 'none';
+    sidebar.classList.add('hide-sidebar');
     console.log('🚫 Hiding sidebar on non-dashboard page');
   } else {
-    sidebar.style.display = 'flex';
+    sidebar.classList.remove('hide-sidebar');
     console.log('✅ Showing sidebar on dashboard page');
   }
 }
