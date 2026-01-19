@@ -4978,9 +4978,6 @@ if (typeof barba !== 'undefined') {
    // Call shared Memberstack handler function
       initializeMemberstackHandlers();
       
-      // Initialize welcome text on any page that has it
-      initDashboardWelcome();
-      
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
          
