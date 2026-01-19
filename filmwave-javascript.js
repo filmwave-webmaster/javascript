@@ -8256,4 +8256,15 @@ async function initDashboardPlaylists() {
       try {
         const ix2 = window.Webflow.require('ix2');
         if (ix2 && ix2.init) ix2.init();
-      }
+      } catch (e) {}
+    }
+  } finally {
+    // Hide all placeholders once real cards exist
+    document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      el.style.display = 'none';
+    });
+
+    container.style.opacity = '1';
+    container.style.pointerEvents = '';
+  }
+}
