@@ -101,56 +101,44 @@ window.addEventListener('load', () => {
    DASHBOARD WELCOME TEXT - CACHE USER NAME
    ============================================================ */
 function initDashboardWelcome() {
-  console.log('🏁 initDashboardWelcome CALLED');
-  
   const welcomeText = document.querySelector('.dashboard-welcome-text');
-  console.log('📝 welcomeText element:', welcomeText);
-  
-  if (!welcomeText) {
-    console.log('❌ No welcomeText found, exiting');
-    return;
-  }
+  if (!welcomeText) return;
 
   const nameSpan = welcomeText.querySelector('[data-ms-member="first-name"]');
-  console.log('📝 nameSpan element:', nameSpan);
-  console.log('📝 nameSpan text:', nameSpan?.textContent);
-  
-  if (!nameSpan) {
-    console.log('❌ No nameSpan found, exiting');
-    return;
-  }
+  if (!nameSpan) return;
 
-  // Always hide first
-  welcomeText.style.opacity = '0';
-  console.log('👁️ Set opacity to 0');
+  console.log('🏁 initDashboardWelcome CALLED');
 
   // Check localStorage first
   const cachedName = localStorage.getItem('userFirstName');
-  console.log('💾 Cached name:', cachedName);
   
-  if (cachedName) {
-    // Use cached name immediately
+  if (cachedName && cachedName !== 'friend') {
+    // Use cached name immediately and prevent flash
     nameSpan.textContent = cachedName;
-    welcomeText.style.opacity = '1';
+    welcomeText.style.visibility = 'visible';
     console.log('✅ Using cached name:', cachedName);
+  } else {
+    // Hide until we get the real name
+    welcomeText.style.visibility = 'hidden';
   }
 
-  // Wait a bit for Memberstack to finish, then cache and show
-  setTimeout(() => {
-    console.log('⏰ Timeout fired (100ms)');
-    const currentName = nameSpan.textContent;
-    console.log('📝 Current name in span:', currentName);
+  // Watch for Memberstack to change the text
+  const observer = new MutationObserver((mutations) => {
+    const currentText = nameSpan.textContent;
     
-    if (currentName && currentName !== 'friend') {
-      localStorage.setItem('userFirstName', currentName);
-      nameSpan.textContent = currentName;
-      welcomeText.style.opacity = '1';
-      console.log('💾 Cached name:', currentName);
-      console.log('✅ Set opacity to 1');
-    } else {
-      console.log('⚠️ Name is "friend" or empty, not caching');
+    if (currentText && currentText !== 'friend' && currentText !== cachedName) {
+      console.log('👀 Detected name change to:', currentText);
+      localStorage.setItem('userFirstName', currentText);
+      welcomeText.style.visibility = 'visible';
+      observer.disconnect(); // Stop watching
     }
-  }, 100);
+  });
+
+  observer.observe(nameSpan, { 
+    childList: true, 
+    characterData: true, 
+    subtree: true 
+  });
 }
 
 /**
@@ -4980,13 +4968,10 @@ if (typeof barba !== 'undefined') {
 
      // Call shared Memberstack handler function
       initializeMemberstackHandlers();
-      
-      // Cache user name after Memberstack populates it (delayed to let Memberstack finish)
-      setTimeout(() => {
-        if (!!document.querySelector('.db-dashboard-wrapper')) {
-          initDashboardWelcome();
-        }
-      }, 300);
+// Cache user name after Memberstack populates it  
+if (!!document.querySelector('.db-dashboard-wrapper')) {
+  initDashboardWelcome();
+}
       
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
