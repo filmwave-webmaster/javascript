@@ -98,7 +98,7 @@ window.addEventListener('load', () => {
 });
 
 /* ============================================================
-   DASHBOARD WELCOME TEXT - GENERATE FROM XANO
+   DASHBOARD WELCOME TEXT - GENERATE FROM MEMBERSTACK
    ============================================================ */
 async function initDashboardWelcome() {
   const welcomeText = document.querySelector('.dashboard-welcome-text');
@@ -110,40 +110,32 @@ async function initDashboardWelcome() {
   welcomeText.style.opacity = '0';
 
   try {
-    // Get user ID from Memberstack
-    const member = await window._memberstack.getCurrentMember();
-    const userId = member?.data?.id;
-
-    if (!userId) {
-      console.log('❌ No user ID found');
+    // Use $memberstackDom instead of _memberstack
+    if (!window.$memberstackDom) {
+      console.log('⚠️ Memberstack not ready yet');
+      welcomeText.textContent = 'Welcome!';
+      welcomeText.style.opacity = '1';
       return;
     }
 
-    console.log('👤 User ID:', userId);
+    const { data: member } = await window.$memberstackDom.getCurrentMember();
+    const firstName = member?.customFields?.['first-name'];
 
-    // Fetch user data from Xano
-    const response = await fetch(`${XANO_PLAYLISTS_API}/user/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch user data');
-
-    const userData = await response.json();
-    const firstName = userData.first_name;
+    console.log('👤 First name from Memberstack:', firstName);
 
     if (firstName) {
       // Generate the welcome message
       welcomeText.textContent = `Welcome, ${firstName}!`;
       welcomeText.style.opacity = '1';
       console.log('✅ Welcome message set:', firstName);
+    } else {
+      // Fallback
+      welcomeText.textContent = 'Welcome!';
+      welcomeText.style.opacity = '1';
     }
 
   } catch (error) {
     console.error('❌ Error loading welcome message:', error);
-    // Fallback - just show without name
     welcomeText.textContent = 'Welcome!';
     welcomeText.style.opacity = '1';
   }
