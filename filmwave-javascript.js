@@ -8171,7 +8171,7 @@ async function initDashboardPlaylists() {
   console.log('🎵 Initializing dashboard playlists...');
 
   // Hide template
-  template.style.display = 'none';
+  template.style.setProperty('display', 'none', 'important');
 
   // Show placeholders while loading
   container.querySelectorAll('.playlist-placeholder').forEach((el) => {
@@ -8226,12 +8226,14 @@ async function initDashboardPlaylists() {
       if (detail) detail.textContent = playlist.description || '';
 
       if (image && playlist.cover_image_url) {
-        image.src = playlist.cover_image_url;
+  clearResponsiveImageAttrs(image);
+  image.src = playlist.cover_image_url;
 
-        requestAnimationFrame(() => {
-          image.src = playlist.cover_image_url;
-        });
-      }
+  requestAnimationFrame(() => {
+    clearResponsiveImageAttrs(image);
+    image.src = playlist.cover_image_url;
+  });
+}
 
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
 
