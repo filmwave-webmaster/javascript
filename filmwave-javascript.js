@@ -4723,8 +4723,16 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
 
  // Show/hide sidebar based on page
-const sidebar = document.querySelector('.sidebar-nav');
+let sidebar = document.querySelector('.sidebar-nav');
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+
+// If we need a sidebar but don't have one, we need to reload to get it from Barba
+if (shouldHaveSidebar && !sidebar) {
+  console.log('⚠️ Sidebar needed but missing - this shouldn\'t happen with proper Barba setup');
+  // The sidebar should exist if data-barba-prevent works correctly
+  // If we're here, it means we navigated from a page without sidebar
+  // and Barba prevented it from being added
+}
 
 if (sidebar) {
   if (!shouldHaveSidebar) {
