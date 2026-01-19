@@ -7921,6 +7921,13 @@ async function initDashboardTiles() {
     return;
   }
 
+  // Check if tiles already have data
+  const firstTile = tiles[0];
+  if (firstTile && firstTile.dataset.songId) {
+    console.log('♻️ Dashboard tiles already initialized, skipping');
+    return;
+  }
+
   const g = window.musicPlayerPersistent;
   
   // Ensure songs are loaded
@@ -8166,6 +8173,13 @@ async function initDashboardPlaylists() {
   const container = document.querySelector('.db-sortable-container');
   if (!container) {
     console.log('ℹ️ No dashboard playlists container found');
+    return;
+  }
+
+  // Check if playlists are already rendered
+  const existingCards = container.querySelectorAll('.playlist-card-template:not(.is-template)');
+  if (existingCards.length > 0) {
+    console.log('♻️ Dashboard playlists already rendered, skipping');
     return;
   }
 
