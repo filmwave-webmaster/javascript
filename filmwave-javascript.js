@@ -356,10 +356,14 @@ async function initMusicPage() {
       }
     }, 200);
     
-    // Initialize dashboard components
-    await initDashboardWelcome();
-    await initDashboardTiles();
-    await initDashboardPlaylists();
+    // Initialize dashboard components only if on dashboard page
+    const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
+    
+    if (isDashboardPage) {
+      initDashboardWelcome();
+      initDashboardTiles();
+      initDashboardPlaylists();
+    }
   }
 }
 
