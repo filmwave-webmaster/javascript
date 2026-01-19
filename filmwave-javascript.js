@@ -359,10 +359,11 @@ async function initMusicPage() {
       }
     }, 200);
     
-    // Initialize dashboard components only if on dashboard page
+    
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
+      initDashboardWelcome();
       initDashboardTiles();
       initDashboardPlaylists();
     }
@@ -4875,6 +4876,7 @@ if (typeof barba !== 'undefined') {
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
+      initDashboardWelcome();
       initDashboardTiles();
       initDashboardPlaylists();
     }
