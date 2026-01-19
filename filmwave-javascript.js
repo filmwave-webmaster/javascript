@@ -7905,7 +7905,7 @@ console.log('🎵 Playlist System loaded');
    ============================================================ */
 
 async function initDashboardTiles() {
-  const tiles = document.querySelectorAll('.masonry-song-tile');
+  const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
   if (tiles.length === 0) {
     console.log('ℹ️ No dashboard tiles found');
     return;
@@ -7927,12 +7927,10 @@ async function initDashboardTiles() {
     const song = songs[index];
     const fields = song.fields;
     
-    // Find the masonry divs and set background image
-    const masonryDivs = tile.querySelectorAll('[class*="masonry-"]');
-    if (masonryDivs.length > 0 && fields['Cover Art']) {
-      masonryDivs.forEach(div => {
-        div.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
-      });
+    // Find the db-tile-image and set background image
+    const tileImage = tile.querySelector('.db-tile-image');
+    if (tileImage && fields['Cover Art']) {
+      tileImage.style.backgroundImage = `url(${fields['Cover Art'][0].url})`;
     }
 
     // Set cover art image
@@ -7942,8 +7940,8 @@ async function initDashboardTiles() {
     }
 
     // Set song info
-    const songName = tile.querySelector('.player-song-name');
-    const artistName = tile.querySelector('.player-artist-name');
+    const songName = tile.querySelector('.db-player-song-name');
+    const artistName = tile.querySelector('.db-artist-name');
     if (songName) songName.textContent = fields['Song Title'] || 'Unknown';
     if (artistName) artistName.textContent = fields['Artist'] || 'Unknown';
 
@@ -7995,7 +7993,7 @@ async function initDashboardTiles() {
     }
 
     // Setup play button
-    const playButton = tile.querySelector('.player-play-button');
+    const playButton = tile.querySelector('.db-player-play-button');
     if (playButton) {
       playButton.style.cursor = 'pointer';
       
