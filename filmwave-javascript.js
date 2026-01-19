@@ -101,61 +101,35 @@ window.addEventListener('load', () => {
    DASHBOARD WELCOME TEXT - GENERATE FROM MEMBERSTACK
    ============================================================ */
 async function initDashboardWelcome() {
-  const cachedName = localStorage.getItem('userFirstName');
-  
-  // Wait for sidebar to exist (max 1 second)
-  let attempts = 0;
-  let welcomeText = null;
-  
-  while (!welcomeText && attempts < 10) {
-    welcomeText = document.querySelector('.dashboard-welcome-text');
-    if (welcomeText && cachedName) {
-      // Set cached name IMMEDIATELY when found
-      welcomeText.textContent = `Welcome, ${cachedName}!`;
-      welcomeText.style.opacity = '1';
-      console.log('✅ Set cached name immediately');
-      return; // Exit early - no need to fetch from Memberstack
-    }
-    if (!welcomeText) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      attempts++;
-    }
-  }
-  
+  const welcomeText = document.querySelector('.dashboard-welcome-text');
   if (!welcomeText) return;
 
-  console.log('🏁 initDashboardWelcome CALLED (no cache)');
+  console.log('🏁 initDashboardWelcome CALLED');
 
-  // No cache - hide until we fetch
-  welcomeText.style.opacity = '0';
+  // Check localStorage first
+  const cachedName = localStorage.getItem('userFirstName');
+  
+  if (cachedName) {
+    // Set cached name immediately - no hiding, no waiting
+    welcomeText.textContent = `Welcome, ${cachedName}!`;
+    console.log('✅ Set cached name:', cachedName);
+    return;
+  }
 
+  // No cache - fetch from Memberstack
   try {
-    if (!window.$memberstackDom) {
-      console.log('⚠️ Memberstack not ready yet');
-      welcomeText.textContent = 'Welcome!';
-      welcomeText.style.opacity = '1';
-      return;
-    }
+    if (!window.$memberstackDom) return;
 
     const { data: member } = await window.$memberstackDom.getCurrentMember();
     const firstName = member?.customFields?.['first-name'];
 
-    console.log('👤 First name from Memberstack:', firstName);
-
     if (firstName) {
       localStorage.setItem('userFirstName', firstName);
       welcomeText.textContent = `Welcome, ${firstName}!`;
-      welcomeText.style.opacity = '1';
-      console.log('✅ Welcome message set and cached:', firstName);
-    } else {
-      welcomeText.textContent = 'Welcome!';
-      welcomeText.style.opacity = '1';
+      console.log('✅ Set and cached name:', firstName);
     }
-
   } catch (error) {
-    console.error('❌ Error loading welcome message:', error);
-    welcomeText.textContent = 'Welcome!';
-    welcomeText.style.opacity = '1';
+    console.error('❌ Error:', error);
   }
 }
 
@@ -4977,6 +4951,9 @@ if (typeof barba !== 'undefined') {
 
    // Call shared Memberstack handler function
       initializeMemberstackHandlers();
+
+      // Initialize welcome text on any page that has it
+      initDashboardWelcome();
       
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
