@@ -8333,3 +8333,26 @@ async function initDashboardPlaylists() {
     container.style.pointerEvents = '';
   }
 }
+
+/* ============================================================
+   33. DASHBOARD PAGE TWEAKS
+   ============================================================ */
+
+const input = document.querySelector('.ai-text-field');
+const fullText = "Add link to Youtube, Spotify, Soundcloud etc.";
+
+function updatePlaceholder() {
+  if (!input) return;
+  const approxCharWidth = 8; // px per character (rough)
+  const maxChars = Math.floor(input.clientWidth / approxCharWidth);
+
+  if (fullText.length > maxChars && maxChars > 3) {
+    input.placeholder = fullText.slice(0, maxChars - 3) + "...";
+  } else {
+    input.placeholder = fullText;
+  }
+}
+
+window.addEventListener('resize', updatePlaceholder);
+updatePlaceholder();
+
