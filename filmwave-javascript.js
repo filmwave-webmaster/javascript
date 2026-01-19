@@ -4868,9 +4868,9 @@ if (typeof barba !== 'undefined') {
     const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
     
     if (isDashboardPage) {
-      await initDashboardWelcome();
-      await initDashboardTiles();
-      await initDashboardPlaylists();
+      initDashboardWelcome();
+      initDashboardTiles();
+      initDashboardPlaylists();
     }
     
     if (g.currentSongData) {
