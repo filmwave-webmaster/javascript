@@ -4859,15 +4859,6 @@ if (typeof barba !== 'undefined') {
     console.log('⚠️ No song containers found on this page');
   }
 }, 300);
-
-    // Initialize dashboard components only if on dashboard page
-    const isDashboardPage = !!document.querySelector('.db-dashboard-wrapper');
-    
-    if (isDashboardPage) {
-      initDashboardWelcome();
-      initDashboardTiles();
-      initDashboardPlaylists();
-    }
     
     if (g.currentSongData) {
       updateMasterPlayerInfo(g.currentSongData, g.currentWavesurfer);
