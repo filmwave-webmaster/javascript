@@ -100,7 +100,7 @@ window.addEventListener('load', () => {
 /* ============================================================
    DASHBOARD WELCOME TEXT - CACHE USER NAME
    ============================================================ */
-async function initDashboardWelcome() {
+function initDashboardWelcome() {
   const welcomeText = document.querySelector('.dashboard-welcome-text');
   if (!welcomeText) return;
 
@@ -111,34 +111,25 @@ async function initDashboardWelcome() {
   const cachedName = localStorage.getItem('userFirstName');
   
   if (cachedName) {
-    // Use cached name immediately and show
+    // Use cached name immediately
     nameSpan.textContent = cachedName;
     welcomeText.style.visibility = 'visible';
+    console.log('✅ Using cached name:', cachedName);
   } else {
-    // No cached name, hide until we get it
+    // Hide until we get the name
     welcomeText.style.visibility = 'hidden';
+    console.log('⏳ No cached name, hiding welcome text');
   }
 
-  // Wait for Memberstack to load and update cache
-  try {
-    const member = await window._memberstack.getCurrentMember();
-    if (member && member.firstName) {
-      const firstName = member.firstName;
-      
-      // Update localStorage
-      localStorage.setItem('userFirstName', firstName);
-      
-      // Update display
-      nameSpan.textContent = firstName;
+  // After initMemberstackHandlers runs, cache the name
+  setTimeout(() => {
+    const currentName = nameSpan.textContent;
+    if (currentName && currentName !== 'friend') {
+      localStorage.setItem('userFirstName', currentName);
       welcomeText.style.visibility = 'visible';
+      console.log('💾 Cached name from Memberstack:', currentName);
     }
-  } catch (error) {
-    console.log('Could not fetch member data:', error);
-    // If we have cached name, keep showing it
-    if (cachedName) {
-      welcomeText.style.visibility = 'visible';
-    }
-  }
+  }, 500);
 }
 
 /**
