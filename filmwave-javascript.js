@@ -7924,8 +7924,9 @@ async function initDashboardTiles() {
 
   console.log(`📊 Total songs in MASTER_DATA: ${g.MASTER_DATA.length}`);
 
-  // Get first 6 songs
-  const songs = g.MASTER_DATA.slice(0, 6);
+  // Get 6 random songs
+  const shuffled = [...g.MASTER_DATA].sort(() => Math.random() - 0.5);
+  const songs = shuffled.slice(0, 6);
 
   tiles.forEach((tile, index) => {
     if (index >= songs.length) return;
