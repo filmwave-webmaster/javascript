@@ -115,21 +115,26 @@ function initDashboardWelcome() {
   console.log('💾 Cached name:', cachedName);
 
   if (cachedName && cachedName !== 'friend') {
-    // IMMEDIATELY replace whatever is there with cached name
+    // IMMEDIATELY set cached name and show
     nameSpan.textContent = cachedName;
+    welcomeText.style.opacity = '1';
     console.log('✅ Set cached name immediately:', cachedName);
+  } else {
+    // No cache - hide until we get the real name
+    welcomeText.style.opacity = '0';
   }
   
-  // Cache whatever name appears after a delay (for first-time visitors)
+  // Wait for Memberstack to populate, then cache and show
   setTimeout(() => {
     const currentName = nameSpan.textContent.trim();
     console.log('📝 Current name after delay:', currentName);
     
-    if (currentName && currentName !== 'friend' && currentName !== cachedName) {
+    if (currentName && currentName !== 'friend') {
       localStorage.setItem('userFirstName', currentName);
-      console.log('💾 Saved new name to cache:', currentName);
+      welcomeText.style.opacity = '1';
+      console.log('💾 Saved and showing:', currentName);
     }
-  }, 600);
+  }, 100);
 }
 
 /**
