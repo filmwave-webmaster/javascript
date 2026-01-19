@@ -101,17 +101,32 @@ window.addEventListener('load', () => {
    DASHBOARD WELCOME TEXT - CACHE USER NAME
    ============================================================ */
 function initDashboardWelcome() {
+  console.log('🏁 initDashboardWelcome CALLED');
+  
   const welcomeText = document.querySelector('.dashboard-welcome-text');
-  if (!welcomeText) return;
+  console.log('📝 welcomeText element:', welcomeText);
+  
+  if (!welcomeText) {
+    console.log('❌ No welcomeText found, exiting');
+    return;
+  }
 
   const nameSpan = welcomeText.querySelector('[data-ms-member="first-name"]');
-  if (!nameSpan) return;
+  console.log('📝 nameSpan element:', nameSpan);
+  console.log('📝 nameSpan text:', nameSpan?.textContent);
+  
+  if (!nameSpan) {
+    console.log('❌ No nameSpan found, exiting');
+    return;
+  }
 
   // Always hide first
   welcomeText.style.opacity = '0';
+  console.log('👁️ Set opacity to 0');
 
   // Check localStorage first
   const cachedName = localStorage.getItem('userFirstName');
+  console.log('💾 Cached name:', cachedName);
   
   if (cachedName) {
     // Use cached name immediately
@@ -122,12 +137,18 @@ function initDashboardWelcome() {
 
   // Wait a bit for Memberstack to finish, then cache and show
   setTimeout(() => {
+    console.log('⏰ Timeout fired (100ms)');
     const currentName = nameSpan.textContent;
+    console.log('📝 Current name in span:', currentName);
+    
     if (currentName && currentName !== 'friend') {
       localStorage.setItem('userFirstName', currentName);
       nameSpan.textContent = currentName;
       welcomeText.style.opacity = '1';
       console.log('💾 Cached name:', currentName);
+      console.log('✅ Set opacity to 1');
+    } else {
+      console.log('⚠️ Name is "friend" or empty, not caching');
     }
   }, 100);
 }
