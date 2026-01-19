@@ -8170,17 +8170,10 @@ async function initDashboardPlaylists() {
 
   console.log('🎵 Initializing dashboard playlists...');
 
-// Hide template by adding a class
-template.style.setProperty('display', 'none', 'important');
-template.classList.add('hidden-template');
-
-// Add this CSS to force hide
-const style = document.createElement('style');
-style.textContent = '.hidden-template { display: none !important; }';
-if (!document.getElementById('hidden-template-style')) {
-  style.id = 'hidden-template-style';
-  document.head.appendChild(style);
-}
+  // Remove template from DOM temporarily
+  const templateParent = template.parentNode;
+  const templateNextSibling = template.nextSibling;
+  template.remove();
 
   // Show placeholders while loading
   container.querySelectorAll('.playlist-placeholder').forEach((el) => {
@@ -8200,9 +8193,9 @@ if (!document.getElementById('hidden-template-style')) {
 
     console.log('📊 Showing first 4 playlists');
 
-    // Clear existing cards except template
-    container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-      if (i > 0) card.remove();
+    // Clear existing cards
+    container.querySelectorAll('.playlist-card-template').forEach((card) => {
+      card.remove();
     });
 
     // Pre-fetch counts in parallel
@@ -8235,14 +8228,14 @@ if (!document.getElementById('hidden-template-style')) {
       if (detail) detail.textContent = playlist.description || '';
 
       if (image && playlist.cover_image_url) {
-  clearResponsiveImageAttrs(image);
-  image.src = playlist.cover_image_url;
+        clearResponsiveImageAttrs(image);
+        image.src = playlist.cover_image_url;
 
-  requestAnimationFrame(() => {
-    clearResponsiveImageAttrs(image);
-    image.src = playlist.cover_image_url;
-  });
-}
+        requestAnimationFrame(() => {
+          clearResponsiveImageAttrs(image);
+          image.src = playlist.cover_image_url;
+        });
+      }
 
       if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
 
