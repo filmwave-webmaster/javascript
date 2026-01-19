@@ -4620,14 +4620,19 @@ document.addEventListener('click', (e) => {
   const href = link.getAttribute('href');
   if (!href || href.startsWith('#')) return;
   
+  // Don't process if clicking a link inside the sidebar itself
+  const sidebar = document.querySelector('.sidebar-nav');
+  if (link.closest('.sidebar-nav')) {
+    console.log('🔗 Clicked sidebar link, checking destination');
+  }
+  
   // Check if link goes to non-dashboard page
   const isDashboardLink = href.includes('/dashboard/');
-  const sidebar = document.querySelector('.sidebar-nav');
   
   if (sidebar && !isDashboardLink) {
     sidebar.style.visibility = 'hidden';
     sidebar.style.pointerEvents = 'none';
-    console.log('🚫 Hiding sidebar on link click');
+    console.log('🚫 Hiding sidebar on link click to:', href);
   }
 }, true); // Use capture phase to run before Barba
 
