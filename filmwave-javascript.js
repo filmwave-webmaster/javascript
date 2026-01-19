@@ -8156,24 +8156,17 @@ async function initDashboardTiles() {
    ============================================================ */
 
 async function initDashboardPlaylists() {
-  console.log('🔍 START - Templates at beginning:', document.querySelectorAll('.playlist-card-template').length);
-  
   const container = document.querySelector('.db-sortable-container');
   if (!container) {
     console.log('ℹ️ No dashboard playlists container found');
     return;
   }
-  
-  console.log('🔍 Container children at start:', Array.from(container.children).map(c => c.className));
 
   const template = container.querySelector('.playlist-card-template');
   if (!template) {
     console.log('❌ No playlist template found');
     return;
   }
-  
-  console.log('🔍 Template found, has .is-template:', template.classList.contains('is-template'));
-  console.log('🔍 Template display:', window.getComputedStyle(template).display);
 
   console.log('🎵 Initializing dashboard playlists...');
 
@@ -8181,9 +8174,7 @@ async function initDashboardPlaylists() {
   const templateParent = template.parentNode;
   const templateNextSibling = template.nextSibling;
   template.remove();
-  
-  console.log('🔍 After removing template, container children:', Array.from(container.children).map(c => c.className));
-  console.log('🔍 Templates remaining:', document.querySelectorAll('.playlist-card-template').length);
+
   // Show placeholders while loading
   container.querySelectorAll('.playlist-placeholder').forEach((el) => {
     el.style.display = '';
