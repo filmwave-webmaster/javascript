@@ -4728,10 +4728,12 @@ const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 
 if (sidebar) {
   if (!shouldHaveSidebar) {
-    sidebar.classList.add('hide-sidebar');
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.pointerEvents = 'none';
     console.log('🚫 Hiding sidebar on non-dashboard page');
   } else {
-    sidebar.classList.remove('hide-sidebar');
+    sidebar.style.visibility = 'visible';
+    sidebar.style.pointerEvents = 'auto';
     console.log('✅ Showing sidebar on dashboard page');
   }
 }
