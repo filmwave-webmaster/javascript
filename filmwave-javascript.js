@@ -8155,7 +8155,7 @@ async function initDashboardTiles() {
    ============================================================ */
 
 async function initDashboardPlaylists() {
-  const container = document.querySelector('.dashboard-playlists-grid');
+  const container = document.querySelector('.dashboard-playlists-grid, .sortable-container');
   if (!container) {
     console.log('ℹ️ No dashboard playlists grid found');
     return;
@@ -8178,12 +8178,17 @@ async function initDashboardPlaylists() {
   });
 
   try {
-    const playlists = (await PlaylistManager.getUserPlaylists()).slice(0, 4).sort((a, b) => {
+    const allPlaylists = await PlaylistManager.getUserPlaylists();
+    console.log('📊 Total playlists:', allPlaylists.length);
+    
+    const playlists = allPlaylists.sort((a, b) => {
       if (a.position !== b.position) {
         return a.position - b.position;
       }
       return new Date(b.created_at) - new Date(a.created_at);
-    });
+    }).slice(0, 4);
+
+    console.log('📊 Showing first 4 playlists');
 
     // Clear existing cards except template
     container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
@@ -8251,15 +8256,4 @@ async function initDashboardPlaylists() {
       try {
         const ix2 = window.Webflow.require('ix2');
         if (ix2 && ix2.init) ix2.init();
-      } catch (e) {}
-    }
-  } finally {
-    // Hide all placeholders once real cards exist
-    document.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      el.style.display = 'none';
-    });
-
-    container.style.opacity = '1';
-    container.style.pointerEvents = '';
-  }
-}
+      }
