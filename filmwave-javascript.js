@@ -107,35 +107,38 @@ async function initDashboardWelcome() {
   const nameSpan = welcomeText.querySelector('[data-ms-member="first-name"]');
   if (!nameSpan) return;
 
-  // Hide initially
-  welcomeText.style.visibility = 'hidden';
-
   // Check localStorage first
   const cachedName = localStorage.getItem('userFirstName');
   
   if (cachedName) {
-    // Use cached name immediately
+    // Use cached name immediately and show
     nameSpan.textContent = cachedName;
     welcomeText.style.visibility = 'visible';
+  } else {
+    // No cached name, hide until we get it
+    welcomeText.style.visibility = 'hidden';
   }
 
   // Wait for Memberstack to load and update cache
-  window._memberstack.onReady.then(async (member) => {
+  try {
+    const member = await window._memberstack.getCurrentMember();
     if (member && member.firstName) {
       const firstName = member.firstName;
       
       // Update localStorage
       localStorage.setItem('userFirstName', firstName);
       
-      // Update display if different
-      if (nameSpan.textContent !== firstName) {
-        nameSpan.textContent = firstName;
-      }
-      
-      // Make visible
+      // Update display
+      nameSpan.textContent = firstName;
       welcomeText.style.visibility = 'visible';
     }
-  });
+  } catch (error) {
+    console.log('Could not fetch member data:', error);
+    // If we have cached name, keep showing it
+    if (cachedName) {
+      welcomeText.style.visibility = 'visible';
+    }
+  }
 }
 
 /**
