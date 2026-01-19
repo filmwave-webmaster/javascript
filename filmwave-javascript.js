@@ -287,7 +287,7 @@ async function initMusicPage() {
   } else {
     initMasterPlayer();
     updateMasterPlayerVisibility();
-    PlaylistManager.init();
+    await PlaylistManager.init();
     
     setTimeout(() => {
       const hasFeaturedSongs = !!document.querySelector('.featured-songs-wrapper');
@@ -314,10 +314,11 @@ async function initMusicPage() {
         }, 100);
       }
     }, 200);
+    
+    // Initialize dashboard components
+    await initDashboardTiles();
+    await initDashboardPlaylists();
   }
-  // Initialize dashboard tiles
-  await initDashboardTiles();
-  await initDashboardPlaylists();
 }
 
 /**
