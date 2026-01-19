@@ -7969,8 +7969,8 @@ async function initDashboardTiles() {
       // Initialize waveform
       const wavesurfer = WaveSurfer.create({
         container: waveformContainer,
-        waveColor: 'rgba(255, 255, 255, 0.25)',
-        progressColor: 'rgba(255, 255, 255, 1)',
+        waveColor: '#808080',
+        progressColor: '#ffffff',
         cursorColor: 'transparent',
         barWidth: 2,
         barGap: 2,
