@@ -106,11 +106,21 @@ async function initDashboardWelcome() {
 
   console.log('🏁 initDashboardWelcome CALLED');
 
-  // Hide initially
+  // Check localStorage first
+  const cachedName = localStorage.getItem('userFirstName');
+  
+  if (cachedName) {
+    // Use cached name immediately - no delay
+    welcomeText.textContent = `Welcome, ${cachedName}!`;
+    welcomeText.style.opacity = '1';
+    console.log('✅ Using cached name:', cachedName);
+    return; // Don't fetch from Memberstack if we have cache
+  }
+
+  // No cache - hide until we fetch
   welcomeText.style.opacity = '0';
 
   try {
-    // Use $memberstackDom instead of _memberstack
     if (!window.$memberstackDom) {
       console.log('⚠️ Memberstack not ready yet');
       welcomeText.textContent = 'Welcome!';
@@ -124,10 +134,13 @@ async function initDashboardWelcome() {
     console.log('👤 First name from Memberstack:', firstName);
 
     if (firstName) {
+      // Save to cache
+      localStorage.setItem('userFirstName', firstName);
+      
       // Generate the welcome message
       welcomeText.textContent = `Welcome, ${firstName}!`;
       welcomeText.style.opacity = '1';
-      console.log('✅ Welcome message set:', firstName);
+      console.log('✅ Welcome message set and cached:', firstName);
     } else {
       // Fallback
       welcomeText.textContent = 'Welcome!';
@@ -140,7 +153,6 @@ async function initDashboardWelcome() {
     welcomeText.style.opacity = '1';
   }
 }
-
 /**
  * ============================================================
  * UTILITY FUNCTIONS
