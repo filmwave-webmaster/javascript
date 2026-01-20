@@ -4756,13 +4756,17 @@ if (sidebar && !g.sidebarClone) {
 if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
   data.next.container.insertBefore(g.sidebarClone.cloneNode(true), data.next.container.firstChild);
   console.log('✅ Injected sidebar');
-  setTimeout(() => initDashboardWelcome(), 100);
 }
 
 // Remove sidebar if present but not needed
 if (!shouldHaveSidebar && sidebar) {
   sidebar.remove();
   console.log('🚫 Removed sidebar');
+}
+
+// Initialize welcome message on all dashboard pages
+if (shouldHaveSidebar) {
+  setTimeout(() => initDashboardWelcome(), 100);
 }
 // === END SIDEBAR MANAGEMENT ===
   
