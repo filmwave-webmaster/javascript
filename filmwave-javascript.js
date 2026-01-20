@@ -4721,6 +4721,20 @@ if (typeof barba !== 'undefined') {
   console.log('🚪 BARBA AFTER FIRED');
   
   const g = window.musicPlayerPersistent;
+
+  // Remove sidebar on pages that shouldn't have it
+const sidebar = document.querySelector('.sidebar-nav');
+const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+
+if (sidebar) {
+  if (!shouldHaveSidebar) {
+    sidebar.style.display = 'none';
+    console.log('🚫 Hiding sidebar on non-dashboard page');
+  } else {
+    sidebar.style.display = 'flex';
+    console.log('✅ Showing sidebar on dashboard page');
+  }
+}
   
   window.scrollTo(0, 0);
   
