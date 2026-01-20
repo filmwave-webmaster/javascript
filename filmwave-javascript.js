@@ -73,8 +73,7 @@ if (!window.musicPlayerPersistent) {
     autoPlayNext: false,
     wasPlayingBeforeHidden: false,
     filteredSongIds: [],  
-    filteredSongIds: [],
-    sidebarClone: null
+    filteredSongIds: []
   };
 }
 
@@ -4661,17 +4660,6 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
-
-       const g = window.musicPlayerPersistent;
-  
-  // Capture sidebar from incoming page BEFORE Barba processes it
-  const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
-  
-  if (incomingSidebar && !g.sidebarClone) {
-    g.sidebarClone = incomingSidebar.cloneNode(true);
-    console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
-  }
-      
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
        
