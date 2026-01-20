@@ -4739,6 +4739,13 @@ if (typeof barba !== 'undefined') {
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 let sidebar = document.querySelector('.sidebar-nav');
 
+console.log('🔍 SIDEBAR CHECK:', {
+  path: window.location.pathname,
+  shouldHaveSidebar,
+  sidebarExists: !!sidebar,
+  hasClone: !!g.sidebarClone
+});
+
 // Store clone if we find a sidebar and don't have one yet
 if (sidebar && !g.sidebarClone) {
   g.sidebarClone = sidebar.cloneNode(true);
@@ -4748,10 +4755,15 @@ if (sidebar && !g.sidebarClone) {
 // If we need sidebar but don't have one, inject it
 if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
   document.body.insertBefore(g.sidebarClone.cloneNode(true), document.body.firstChild);
+  sidebar = document.querySelector('.sidebar-nav'); // Update reference
   console.log('✅ Injected sidebar');
   
   // Re-initialize welcome text
   setTimeout(() => initDashboardWelcome(), 100);
+} else if (shouldHaveSidebar && !sidebar && !g.sidebarClone) {
+  console.log('⚠️ Need sidebar but no clone available yet');
+} else if (shouldHaveSidebar && sidebar) {
+  console.log('✅ Sidebar already present');
 }
 
 // Remove sidebar if we have one but shouldn't
