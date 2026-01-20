@@ -4612,30 +4612,6 @@ function forceWebflowRestart() {
   console.log('✅ Webflow IX engine restarted');
 }
 
-// Hide sidebar instantly on non-dashboard link clicks
-document.addEventListener('click', (e) => {
-  const link = e.target.closest('a[href]');
-  if (!link) return;
-  
-  const href = link.getAttribute('href');
-  if (!href || href.startsWith('#')) return;
-  
-  // Don't process if clicking a link inside the sidebar itself
-  const sidebar = document.querySelector('.sidebar-nav');
-  if (link.closest('.sidebar-nav')) {
-    console.log('🔗 Clicked sidebar link, checking destination');
-  }
-  
-  // Check if link goes to non-dashboard page
-  const isDashboardLink = href.includes('/dashboard/');
-  
-  if (sidebar && !isDashboardLink) {
-    sidebar.style.visibility = 'hidden';
-    sidebar.style.pointerEvents = 'none';
-    console.log('🚫 Hiding sidebar on link click to:', href);
-  }
-}, true); // Use capture phase to run before Barba
-
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
@@ -4643,29 +4619,6 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
     beforeLeave(data) {
-  // IMMEDIATELY hide sidebar ONLY if leaving dashboard AND going to non-dashboard
-  const sidebar = document.querySelector('.sidebar-nav');
-  const isLeavingDashboard = window.location.pathname.startsWith('/dashboard/');
-  
-  // Check where we're going
-  let isGoingToDashboard = false;
-  if (data.trigger === 'barba' && data.next) {
-    const nextPath = data.next.url?.path || data.next.url?.href || '';
-    isGoingToDashboard = nextPath.includes('/dashboard/');
-    console.log('🔍 Navigation check:', { 
-      from: window.location.pathname, 
-      to: nextPath, 
-      isGoingToDashboard 
-    });
-  }
-  
-  if (sidebar && isLeavingDashboard && !isGoingToDashboard) {
-    sidebar.style.display = 'none';
-    console.log('🚫 [BEFORE LEAVE] Hiding sidebar - leaving dashboard for non-dashboard page');
-  } else if (sidebar && isGoingToDashboard) {
-    console.log('✅ [BEFORE LEAVE] Keeping sidebar - staying in dashboard');
-  }
-      
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
@@ -4708,16 +4661,6 @@ if (typeof barba !== 'undefined') {
      beforeEnter(data) {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-
-  // HIDE SIDEBAR IMMEDIATELY if going to non-dashboard page
-  const sidebar = document.querySelector('.sidebar-nav');
-  const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-  
-  if (sidebar && !shouldHaveSidebar) {
-    sidebar.style.visibility = 'hidden';
-    sidebar.style.pointerEvents = 'none';
-    console.log('🚫 [BEFORE ENTER] Hiding sidebar immediately');
-  }
        
   // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
@@ -4778,45 +4721,6 @@ if (typeof barba !== 'undefined') {
   console.log('🚪 BARBA AFTER FIRED');
   
   const g = window.musicPlayerPersistent;
-
-  // In after() hook - only show sidebar, don't hide
-let sidebar = document.querySelector('.sidebar-nav');
-const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-
-if (shouldHaveSidebar && !sidebar) {
-  console.log('📥 Sidebar needed but missing - extracting from new page');
-  
-  // Get the sidebar from the incoming page HTML
-  const parser = new DOMParser();
-  const newDoc = parser.parseFromString(data.next.html, 'text/html');
-  const newSidebar = newDoc.querySelector('.sidebar-nav');
-  
-  if (newSidebar) {
-    // Insert it into the current page (before the barba container)
-    const container = document.querySelector('[data-barba="container"]');
-    if (container) {
-      container.parentNode.insertBefore(newSidebar, container);
-      sidebar = newSidebar;
-      console.log('✅ Sidebar inserted');
-      
-      // Initialize welcome text for the new sidebar
-      initDashboardWelcome();
-    }
-  }
-}
-
-// Handle sidebar visibility - both showing AND hiding
-if (sidebar) {
-  if (shouldHaveSidebar) {
-    sidebar.style.visibility = 'visible';
-    sidebar.style.pointerEvents = 'auto';
-    console.log('✅ Showing sidebar');
-  } else {
-    sidebar.style.visibility = 'hidden';
-    sidebar.style.pointerEvents = 'none';
-    console.log('🚫 Hiding sidebar (not a dashboard page)');
-  }
-}
   
   window.scrollTo(0, 0);
   
