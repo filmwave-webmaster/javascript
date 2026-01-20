@@ -4737,36 +4737,16 @@ if (typeof barba !== 'undefined') {
 
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-let sidebar = document.querySelector('.sidebar-nav');
+const sidebar = document.querySelector('.sidebar-nav');
 
-// Extract sidebar from incoming page
-const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
-if (incomingSidebar && !g.sidebarClone) {
-  g.sidebarClone = incomingSidebar.cloneNode(true);
-  console.log('💾 Captured sidebar from incoming page');
-}
-
-// Store clone if we find a sidebar in current DOM
-if (sidebar && !g.sidebarClone) {
-  g.sidebarClone = sidebar.cloneNode(true);
-  console.log('💾 Stored sidebar clone from current page');
-}
-
-// Inject sidebar if needed but missing
-if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
-  data.next.container.insertBefore(g.sidebarClone.cloneNode(true), data.next.container.firstChild);
-  console.log('✅ Injected sidebar');
-}
-
-// Remove sidebar if present but not needed
-if (!shouldHaveSidebar && sidebar) {
-  sidebar.remove();
-  console.log('🚫 Removed sidebar');
-}
-
-// Initialize welcome message on all dashboard pages
-if (shouldHaveSidebar) {
-  setTimeout(() => initDashboardWelcome(), 100);
+if (shouldHaveSidebar && sidebar) {
+  sidebar.style.visibility = 'visible';
+  // Welcome message will load from cache instantly
+  setTimeout(() => initDashboardWelcome(), 10);
+  console.log('✅ Sidebar visible');
+} else if (!shouldHaveSidebar && sidebar) {
+  sidebar.style.visibility = 'hidden';
+  console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT ===
   
