@@ -4772,10 +4772,17 @@ if (shouldHaveSidebar && !sidebar) {
   }
 }
 
-if (sidebar && shouldHaveSidebar) {
-  sidebar.style.visibility = 'visible';
-  sidebar.style.pointerEvents = 'auto';
-  console.log('✅ Showing sidebar');
+// Handle sidebar visibility - both showing AND hiding
+if (sidebar) {
+  if (shouldHaveSidebar) {
+    sidebar.style.visibility = 'visible';
+    sidebar.style.pointerEvents = 'auto';
+    console.log('✅ Showing sidebar');
+  } else {
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.pointerEvents = 'none';
+    console.log('🚫 Hiding sidebar (not a dashboard page)');
+  }
 }
   
   window.scrollTo(0, 0);
