@@ -72,7 +72,9 @@ if (!window.musicPlayerPersistent) {
     isTransitioning: false,
     autoPlayNext: false,
     wasPlayingBeforeHidden: false,
-    filteredSongIds: []  
+    filteredSongIds: [],  
+    filteredSongIds: [],
+    sidebarClone: null
   };
 }
 
@@ -4722,19 +4724,32 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
 
-  // Remove sidebar on pages that shouldn't have it
-const sidebar = document.querySelector('.sidebar-nav');
-const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-
-if (sidebar) {
-  if (!shouldHaveSidebar) {
-    sidebar.style.display = 'none';
-    console.log('🚫 Hiding sidebar on non-dashboard page');
-  } else {
-    sidebar.style.display = 'flex';
-    console.log('✅ Showing sidebar on dashboard page');
+ // === SIDEBAR MANAGEMENT ===
+  const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+  let sidebar = document.querySelector('.sidebar-nav');
+  
+  // Store the sidebar clone on first encounter
+  if (sidebar && !g.sidebarClone) {
+    g.sidebarClone = sidebar.cloneNode(true);
+    console.log('💾 Stored sidebar clone');
   }
-}
+  
+  // Inject sidebar if needed but missing
+  if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
+    const container = data.next.container;
+    container.insertBefore(g.sidebarClone.cloneNode(true), container.firstChild);
+    sidebar = document.querySelector('.sidebar-nav'); // Update reference
+    console.log('✅ Injected sidebar');
+    
+    // Re-initialize welcome text after injection
+    setTimeout(() => initDashboardWelcome(), 100);
+  }
+  
+  // Remove sidebar if present but not needed
+  if (!shouldHaveSidebar && sidebar) {
+    sidebar.remove();
+    console.log('🚫 Removed sidebar');
+  }
   
   window.scrollTo(0, 0);
   
