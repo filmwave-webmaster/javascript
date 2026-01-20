@@ -4735,6 +4735,13 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
 
+// Debug what's in the incoming page
+console.log('🔍 DEBUG data.next.container:', {
+  exists: !!data.next.container,
+  hasSidebar: !!data.next.container?.querySelector('.sidebar-nav'),
+  containerHTML: data.next.container?.innerHTML?.substring(0, 500)
+});
+
 // Extract sidebar from incoming page BEFORE checking current DOM
 const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
 if (incomingSidebar && !g.sidebarClone) {
