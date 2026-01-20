@@ -4671,7 +4671,6 @@ if (typeof barba !== 'undefined') {
     g.sidebarClone = incomingSidebar.cloneNode(true);
     console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
   }
-},
       
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
