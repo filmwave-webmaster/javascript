@@ -4728,17 +4728,25 @@ if (typeof barba !== 'undefined') {
   const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
   let sidebar = document.querySelector('.sidebar-nav');
   
-  // Store the sidebar clone on first encounter
-  if (sidebar && !g.sidebarClone) {
-    g.sidebarClone = sidebar.cloneNode(true);
-    console.log('💾 Stored sidebar clone');
+  // Check if the NEW page has a sidebar in its container
+  const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
+  
+  // Store the sidebar clone - either from existing DOM or incoming page
+  if (!g.sidebarClone) {
+    if (sidebar) {
+      g.sidebarClone = sidebar.cloneNode(true);
+      console.log('💾 Stored sidebar clone from existing DOM');
+    } else if (incomingSidebar) {
+      g.sidebarClone = incomingSidebar.cloneNode(true);
+      console.log('💾 Stored sidebar clone from incoming page');
+    }
   }
   
   // Inject sidebar if needed but missing
   if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
     const container = data.next.container;
     container.insertBefore(g.sidebarClone.cloneNode(true), container.firstChild);
-    sidebar = document.querySelector('.sidebar-nav'); // Update reference
+    sidebar = document.querySelector('.sidebar-nav');
     console.log('✅ Injected sidebar');
     
     // Re-initialize welcome text after injection
