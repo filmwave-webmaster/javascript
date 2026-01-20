@@ -4685,6 +4685,16 @@ if (typeof barba !== 'undefined') {
      beforeEnter(data) {
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
+
+  // HIDE SIDEBAR IMMEDIATELY if going to non-dashboard page
+  const sidebar = document.querySelector('.sidebar-nav');
+  const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+  
+  if (sidebar && !shouldHaveSidebar) {
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.pointerEvents = 'none';
+    console.log('🚫 [BEFORE ENTER] Hiding sidebar immediately');
+  }
        
   // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
