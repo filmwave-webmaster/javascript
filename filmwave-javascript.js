@@ -4741,8 +4741,7 @@ const sidebar = document.querySelector('.sidebar-nav');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
-  // Welcome message will load from cache instantly
-  setTimeout(() => initDashboardWelcome(), 10);
+  initDashboardWelcome();
   console.log('✅ Sidebar visible');
 } else if (!shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
