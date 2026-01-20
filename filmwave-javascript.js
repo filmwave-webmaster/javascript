@@ -4643,15 +4643,27 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
     beforeLeave(data) {
-  // IMMEDIATELY hide sidebar if leaving dashboard
+  // IMMEDIATELY hide sidebar ONLY if leaving dashboard AND going to non-dashboard
   const sidebar = document.querySelector('.sidebar-nav');
   const isLeavingDashboard = window.location.pathname.startsWith('/dashboard/');
-  const nextUrl = data.trigger === 'barba' ? data.next?.url?.href : null;
-  const isGoingToDashboard = nextUrl && nextUrl.includes('/dashboard/');
+  
+  // Check where we're going
+  let isGoingToDashboard = false;
+  if (data.trigger === 'barba' && data.next) {
+    const nextPath = data.next.url?.path || data.next.url?.href || '';
+    isGoingToDashboard = nextPath.includes('/dashboard/');
+    console.log('🔍 Navigation check:', { 
+      from: window.location.pathname, 
+      to: nextPath, 
+      isGoingToDashboard 
+    });
+  }
   
   if (sidebar && isLeavingDashboard && !isGoingToDashboard) {
-    sidebar.style.display = 'none'; // Use display instead of visibility for instant effect
-    console.log('🚫 [BEFORE LEAVE] Hiding sidebar instantly');
+    sidebar.style.display = 'none';
+    console.log('🚫 [BEFORE LEAVE] Hiding sidebar - leaving dashboard for non-dashboard page');
+  } else if (sidebar && isGoingToDashboard) {
+    console.log('✅ [BEFORE LEAVE] Keeping sidebar - staying in dashboard');
   }
       
   const g = window.musicPlayerPersistent;
