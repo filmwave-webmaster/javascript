@@ -4736,39 +4736,30 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
 
  // === SIDEBAR MANAGEMENT ===
-  const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-  let sidebar = document.querySelector('.sidebar-nav');
+const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+let sidebar = document.querySelector('.sidebar-nav');
+
+// Store clone if we find a sidebar and don't have one yet
+if (sidebar && !g.sidebarClone) {
+  g.sidebarClone = sidebar.cloneNode(true);
+  console.log('💾 Stored sidebar clone');
+}
+
+// If we need sidebar but don't have one, inject it
+if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
+  document.body.insertBefore(g.sidebarClone.cloneNode(true), document.body.firstChild);
+  console.log('✅ Injected sidebar');
   
-  // Check if the NEW page has a sidebar in its container
-  const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
-  
-  // Store the sidebar clone - either from existing DOM or incoming page
-  if (!g.sidebarClone) {
-    if (sidebar) {
-      g.sidebarClone = sidebar.cloneNode(true);
-      console.log('💾 Stored sidebar clone from existing DOM');
-    } else if (incomingSidebar) {
-      g.sidebarClone = incomingSidebar.cloneNode(true);
-      console.log('💾 Stored sidebar clone from incoming page');
-    }
-  }
-  
-  // Inject sidebar if needed but missing
-  if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
-    const container = data.next.container;
-    container.insertBefore(g.sidebarClone.cloneNode(true), container.firstChild);
-    sidebar = document.querySelector('.sidebar-nav');
-    console.log('✅ Injected sidebar');
-    
-    // Re-initialize welcome text after injection
-    setTimeout(() => initDashboardWelcome(), 100);
-  }
-  
-  // Remove sidebar if present but not needed
-  if (!shouldHaveSidebar && sidebar) {
-    sidebar.remove();
-    console.log('🚫 Removed sidebar');
-  }
+  // Re-initialize welcome text
+  setTimeout(() => initDashboardWelcome(), 100);
+}
+
+// Remove sidebar if we have one but shouldn't
+if (!shouldHaveSidebar && sidebar) {
+  sidebar.remove();
+  console.log('🚫 Removed sidebar');
+}
+// === END SIDEBAR MANAGEMENT ===
   
   window.scrollTo(0, 0);
   
