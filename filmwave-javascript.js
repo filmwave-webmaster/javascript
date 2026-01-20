@@ -357,8 +357,8 @@ async function initMusicPage() {
     
     if (isDashboardPage) {
       initDashboardWelcome();
-      //initDashboardTiles();
-      //initDashboardPlaylists();
+      initDashboardTiles();
+      initDashboardPlaylists();
     }
   }
 }
@@ -4736,14 +4736,6 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT ===
-
-  // Initialize dashboard components if on dashboard page
-if (window.location.pathname === '/dashboard/dashboard') {
-  setTimeout(() => {
-    initDashboardTiles();
-    initDashboardPlaylists();
-  }, 300);
-}      
   
   window.scrollTo(0, 0);
   
