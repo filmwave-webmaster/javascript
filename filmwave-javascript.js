@@ -4735,52 +4735,31 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
 
-// Debug what's in the incoming page
-console.log('🔍 DEBUG data.next.container:', {
-  exists: !!data.next.container,
-  hasSidebar: !!data.next.container?.querySelector('.sidebar-nav'),
-  containerHTML: data.next.container?.innerHTML?.substring(0, 500)
-});
+// === SIDEBAR MANAGEMENT ===
+const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+let sidebar = document.querySelector('.sidebar-nav');
 
-// Extract sidebar from incoming page BEFORE checking current DOM
+// Extract sidebar from incoming page
 const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
 if (incomingSidebar && !g.sidebarClone) {
   g.sidebarClone = incomingSidebar.cloneNode(true);
   console.log('💾 Captured sidebar from incoming page');
-}        
+}
 
- // === SIDEBAR MANAGEMENT ===
-const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-let sidebar = document.querySelector('.sidebar-nav');
-
-console.log('🔍 SIDEBAR CHECK:', {
-  path: window.location.pathname,
-  shouldHaveSidebar,
-  sidebarExists: !!sidebar,
-  hasClone: !!g.sidebarClone
-});
-
-// Store clone if we find a sidebar and don't have one yet
+// Store clone if we find a sidebar in current DOM
 if (sidebar && !g.sidebarClone) {
   g.sidebarClone = sidebar.cloneNode(true);
-  console.log('💾 Stored sidebar clone');
+  console.log('💾 Stored sidebar clone from current page');
 }
 
-// If we need sidebar but don't have one, inject it
+// Inject sidebar if needed but missing
 if (shouldHaveSidebar && !sidebar && g.sidebarClone) {
-  document.body.insertBefore(g.sidebarClone.cloneNode(true), document.body.firstChild);
-  sidebar = document.querySelector('.sidebar-nav'); // Update reference
+  data.next.container.insertBefore(g.sidebarClone.cloneNode(true), data.next.container.firstChild);
   console.log('✅ Injected sidebar');
-  
-  // Re-initialize welcome text
   setTimeout(() => initDashboardWelcome(), 100);
-} else if (shouldHaveSidebar && !sidebar && !g.sidebarClone) {
-  console.log('⚠️ Need sidebar but no clone available yet');
-} else if (shouldHaveSidebar && sidebar) {
-  console.log('✅ Sidebar already present');
 }
 
-// Remove sidebar if we have one but shouldn't
+// Remove sidebar if present but not needed
 if (!shouldHaveSidebar && sidebar) {
   sidebar.remove();
   console.log('🚫 Removed sidebar');
