@@ -4643,6 +4643,17 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
     beforeLeave(data) {
+  // IMMEDIATELY hide sidebar if leaving dashboard
+  const sidebar = document.querySelector('.sidebar-nav');
+  const isLeavingDashboard = window.location.pathname.startsWith('/dashboard/');
+  const nextUrl = data.trigger === 'barba' ? data.next?.url?.href : null;
+  const isGoingToDashboard = nextUrl && nextUrl.includes('/dashboard/');
+  
+  if (sidebar && isLeavingDashboard && !isGoingToDashboard) {
+    sidebar.style.display = 'none'; // Use display instead of visibility for instant effect
+    console.log('🚫 [BEFORE LEAVE] Hiding sidebar instantly');
+  }
+      
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
