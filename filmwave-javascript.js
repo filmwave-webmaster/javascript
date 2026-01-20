@@ -4736,6 +4736,13 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT ===
+
+  // Initialize dashboard components
+const isDashboardPage = window.location.pathname === '/dashboard/dashboard';
+if (isDashboardPage) {
+  initDashboardTiles();
+  initDashboardPlaylists();
+}      
   
   window.scrollTo(0, 0);
   
