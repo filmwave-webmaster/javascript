@@ -4447,16 +4447,25 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
+    // Hide search immediately
+    const hideSearch = () => {
+      const searchInput = document.querySelector('.music-area-container .text-field');
+      if (searchInput) searchInput.style.opacity = '0';
+    };
+    hideSearch();
+    
     setTimeout(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
       if (searchInput) {
         searchInput.value = autoSearchGenre;
+        searchInput.style.transition = 'opacity 0.15s ease';
+        searchInput.style.opacity = '1';
         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
         
         sessionStorage.removeItem('autoSearchGenre');
       }
-    }, 200);
+    }, 50);
   }
 }
   
