@@ -1527,9 +1527,6 @@ function displaySongs(songs) {
   const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
   if (!templateCard) return;
   
-  const templateWrapper = container.querySelector('.template-wrapper');
-  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
-  if (!templateCard) return;
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
   songs.forEach(song => {
@@ -1547,7 +1544,7 @@ function displaySongs(songs) {
   }
   setTimeout(() => initializeWaveforms(), 100);
 
-/ ✅ NEW: Hide placeholders and fade in songs
+// ✅ NEW: Hide placeholders and fade in songs
   setTimeout(() => {
     document.querySelectorAll('.loading-placeholder').forEach(el => {
       el.style.display = 'none';
