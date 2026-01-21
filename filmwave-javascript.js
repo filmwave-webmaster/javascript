@@ -8428,18 +8428,37 @@ function applyNavResizeOnScroll() {
 
   const compact = window.scrollY > 0;
 
+  // ensure smooth animation
+  nav.style.transition = 'height 200ms ease';
+  wrap.style.transition = 'margin-top 200ms ease';
+  logo.style.transition = 'width 200ms ease';
+
   if (compact) {
     nav.style.height = '60px';
     wrap.style.marginTop = '60px';
     logo.style.width = '150px';
   } else {
+    // reset to Webflow values
     nav.style.height = '';
     wrap.style.marginTop = '';
     logo.style.width = '';
   }
 }
 
+// bind scroll ONCE
 if (!window.__navResizeScrollBound) {
   window.__navResizeScrollBound = true;
   window.addEventListener('scroll', applyNavResizeOnScroll, { passive: true });
 }
+
+// first page load
+document.addEventListener('DOMContentLoaded', applyNavResizeOnScroll);
+
+// after every Barba transition (you dispatch this already)
+window.addEventListener('barbaAfterTransition', () => {
+  // force re-apply after DOM + Webflow churn
+  applyNavResizeOnScroll();
+  requestAnimationFrame(applyNavResizeOnScroll);
+  setTimeout(applyNavResizeOnScroll, 50);
+  setTimeout(applyNavResizeOnScroll, 200);
+});
