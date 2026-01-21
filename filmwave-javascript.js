@@ -4746,28 +4746,48 @@ if (isDashboardPage) {
 
 // === FILTER PILL CODE ===          
 
-// Genre filter button handling
-const filterButtons = document.querySelectorAll('.db-filter-pill');
-console.log('🔍 Found genre filter buttons:', filterButtons.length);
+// Genre filter button handling - ONLY on dashboard
+  const filterButtons = document.querySelectorAll('.db-filter-pill');
+  console.log('🔍 Found genre filter buttons:', filterButtons.length);
 
-filterButtons.forEach(button => {
-  button.style.cursor = 'pointer';
-  button.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const genre = button.textContent.trim();
-    
-    console.log('🎯 Filter button clicked:', genre);
-    
-    // Store the genre in sessionStorage
-    sessionStorage.setItem('autoSearchGenre', genre);
-    console.log('💾 Stored in sessionStorage:', genre);
-    
-    // Navigate to music page
-    console.log('🚀 Navigating to /music');
-    window.location.href = '/music';
+  filterButtons.forEach(button => {
+    button.style.cursor = 'pointer';
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const genre = button.textContent.trim();
+      
+      console.log('🎯 Filter button clicked:', genre);
+      
+      sessionStorage.setItem('autoSearchGenre', genre);
+      console.log('💾 Stored in sessionStorage:', genre);
+      
+      console.log('🚀 Navigating to /music');
+      window.location.href = '/music';
+    });
   });
-});
+}
+
+// On music page, check for auto-search - ALWAYS runs
+if (window.location.pathname === '/music') {
+  const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
+  console.log('🔍 Checking for auto-search genre:', autoSearchGenre);
+  
+  if (autoSearchGenre) {
+    setTimeout(() => {
+      const searchInput = document.querySelector('.music-area-container .text-field');
+      console.log('🔍 Search input found:', !!searchInput);
+      
+      if (searchInput) {
+        searchInput.value = autoSearchGenre;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log('✅ Auto-searched for:', autoSearchGenre);
+        
+        sessionStorage.removeItem('autoSearchGenre');
+      }
+    }, 500);
+  }
+}
 
 // === END FILTER PILL CODE ===        
   
