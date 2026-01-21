@@ -8416,16 +8416,33 @@ async function initDashboardPlaylists() {
    32. NAVIGATION HEIGHT CHANGE
    ============================================================ */
 
-window.addEventListener('scroll', () => {
-  const nav = document.querySelector('.navigation');
-  const wrap = document.querySelector('.global-nav-wrapper');
-  const logo = document.querySelector('.nav-logo');
-  if (!nav || !wrap || !logo) return;
+function initNavResizeOnScroll() {
+  // prevent duplicates
+  if (window.__navResizeScrollBound) return;
+  window.__navResizeScrollBound = true;
 
-  const compact = window.scrollY > 0;
+  function apply() {
+    const nav = document.querySelector('.navigation');
+    const wrap = document.querySelector('.global-nav-wrapper');
+    const logo = document.querySelector('.nav-logo');
+    if (!nav || !wrap || !logo) return;
 
-  nav.style.height = compact ? '60px' : '105px';
-  wrap.style.paddingTop = compact ? '60px' : '105px';
-  logo.style.width = compact ? '125px' : '200px';
-});
+    const compact = window.scrollY > 0;
 
+    nav.style.height = compact ? '60px' : '105px';
+    wrap.style.paddingTop = compact ? '60px' : '105px';
+    logo.style.width = compact ? '125px' : '200px';
+  }
+
+  // bind once
+  window.addEventListener('scroll', apply, { passive: true });
+
+  // run immediately (important after transitions)
+  apply();
+}
+
+// first load
+document.addEventListener('DOMContentLoaded', initNavResizeOnScroll);
+
+// barba transitions (you already dispatch this event)
+document.addEventListener('barbaAfterTransition', initNavResizeOnScroll);
