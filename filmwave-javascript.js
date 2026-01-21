@@ -1514,14 +1514,19 @@ function displaySongs(songs) {
   const container = document.querySelector('.music-list-wrapper');
   if (!container) return;
 
-  // ✅ Show placeholders if flag is set
-  if (sessionStorage.getItem('showPlaceholders') === 'true') {
+  // ✅ If auto-search is pending, keep container hidden
+  const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
+  if (autoSearchGenre) {
     container.style.opacity = '0';
     container.style.visibility = 'hidden';
+    console.log('🔒 Container hidden - auto-search pending');
+  }
+
+  // Show placeholders if flag is set
+  if (sessionStorage.getItem('showPlaceholders') === 'true') {
     document.querySelectorAll('.loading-placeholder').forEach(el => {
       el.style.display = '';
     });
-    // DON'T remove flag yet - wait until after filtering
   }
   
   const templateWrapper = container.querySelector('.template-wrapper');
@@ -1545,13 +1550,18 @@ function displaySongs(songs) {
   }
   setTimeout(() => initializeWaveforms(), 100);
 
-  // ✅ Hide placeholders and fade in songs AFTER filtering completes
+  // Hide placeholders (but keep container hidden if auto-search is active)
   setTimeout(() => {
     document.querySelectorAll('.loading-placeholder').forEach(el => {
       el.style.display = 'none';
     });
-    container.style.opacity = '1';
-    container.style.visibility = 'visible';
+    
+    // ✅ Only show container if NO auto-search is pending
+    if (!sessionStorage.getItem('autoSearchGenre')) {
+      container.style.opacity = '1';
+      container.style.visibility = 'visible';
+    }
+    
     sessionStorage.removeItem('showPlaceholders');
   }, 800);
 }
@@ -4841,17 +4851,21 @@ if (isDashboardPage) {
   initDashboardTiles();
   initDashboardPlaylists();
   
-  // === FILTER PILL CODE ===          
+// === FILTER PILL CODE ===          
 // Genre filter button handling - ONLY on dashboard
 const filterButtons = document.querySelectorAll('.db-filter-pill');
 console.log('🔍 Found genre filter buttons:', filterButtons.length);
 
 filterButtons.forEach(button => {
-  button.style.cursor = 'pointer';
-  button.addEventListener('click', (e) => {
+  // Remove old listeners by cloning
+  const newButton = button.cloneNode(true);
+  button.parentNode.replaceChild(newButton, button);
+  
+  newButton.style.cursor = 'pointer';
+  newButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const genre = button.textContent.trim();
+    const genre = newButton.textContent.trim();
     
     console.log('🎯 Filter button clicked:', genre);
     
@@ -4868,7 +4882,6 @@ filterButtons.forEach(button => {
     window.location.href = '/music';
   });
 });
-}
 // === END FILTER PILL CODE ===   
   
   window.scrollTo(0, 0);
