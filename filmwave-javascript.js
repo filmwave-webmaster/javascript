@@ -56,6 +56,12 @@ if (window.location.pathname === '/music' && sessionStorage.getItem('autoSearchG
     parsed.searchQuery = '';
     localStorage.setItem('musicFilters', JSON.stringify(parsed));
   }
+  
+  // Hide search field immediately via CSS injection
+  const style = document.createElement('style');
+  style.id = 'temp-search-hide';
+  style.textContent = '.music-area-container .text-field { opacity: 0 !important; }';
+  document.head.appendChild(style);
 }
 
 /**
@@ -4440,7 +4446,7 @@ function initUniversalSearch() {
 window.addEventListener('load', () => {
   initMusicPage();
 
- // Check for auto-search on initial load
+// Check for auto-search on initial load
 if (window.location.pathname === '/music') {
   const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
   console.log('🔍 [LOAD] Checking for auto-search genre:', autoSearchGenre);
@@ -4466,6 +4472,10 @@ if (window.location.pathname === '/music') {
         // Reveal the field
         searchInput.style.transition = 'opacity 0.2s ease';
         searchInput.style.opacity = '1';
+        
+        // Remove the temporary hide style
+        const tempStyle = document.getElementById('temp-search-hide');
+        if (tempStyle) tempStyle.remove();
         
         sessionStorage.removeItem('autoSearchGenre');
       }
