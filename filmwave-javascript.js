@@ -5030,6 +5030,9 @@ setTimeout(applyNavResizeOnScroll, 50);
           }
         } catch (e) {}
       }
+
+  applyNavResizeOnScroll();
+  setTimeout(applyNavResizeOnScroll, 50);
       
     }, 600);
     
