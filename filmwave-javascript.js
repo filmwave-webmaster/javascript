@@ -8472,14 +8472,40 @@ async function initDashboardPlaylists() {
   }
 }
 
-} finally {
-    container.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      el.style.display = 'none';
-    });
-    container.style.opacity = '1';
-    container.style.pointerEvents = '';
+/**
+ * ============================================================
+ * DASHBOARD FILTER PILLBOX BUTTONS
+ * ============================================================
+ */
+function initDashboardFilterPills() {
+  const filterButtons = document.querySelectorAll('.db-filter-pill');
+  console.log('🔍 Initializing genre filter buttons:', filterButtons.length);
+  
+  if (filterButtons.length === 0) {
+    console.log('ℹ️ No filter pills found on this page');
+    return;
   }
   
-  // Initialize filter pills
-  setTimeout(() => initDashboardFilterPills(), 500);
+  filterButtons.forEach(button => {
+    // Remove old listeners by cloning
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    
+    newButton.style.cursor = 'pointer';
+    newButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const genre = newButton.textContent.trim();
+      
+      console.log('🎯 Filter button clicked:', genre);
+      
+      window.musicPlayerPersistent.MASTER_DATA = [];
+      sessionStorage.setItem('showPlaceholders', 'true');
+      sessionStorage.setItem('autoSearchGenre', genre);
+      
+      window.location.href = '/music';
+    });
+  });
+  
+  console.log('✅ Filter pills initialized');
 }
