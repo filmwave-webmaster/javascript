@@ -56,6 +56,7 @@ if (window.location.pathname === '/music' && sessionStorage.getItem('autoSearchG
     parsed.searchQuery = '';
     localStorage.setItem('musicFilters', JSON.stringify(parsed));
   }
+}
 
 /**
  * ============================================================
