@@ -47,6 +47,16 @@
  * ============================================================
  */
 
+// Clear search field immediately if auto-search is pending
+if (window.location.pathname === '/music' && sessionStorage.getItem('autoSearchGenre')) {
+  window.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.querySelector('.music-area-container .text-field');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+  });
+}
+
 /**
  * ============================================================
  * GLOBAL STATE - Persists across Barba page transitions
