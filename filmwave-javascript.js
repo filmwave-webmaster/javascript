@@ -8440,7 +8440,7 @@ async function initDashboardPlaylists() {
         transition: margin-top 200ms ease !important;
       }
       .${COMPACT_CLASS} .nav-logo {
-        width: 160px !important;
+        width: 150px !important;
         transition: width 200ms ease !important;
       }
 
