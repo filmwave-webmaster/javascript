@@ -1514,13 +1514,14 @@ function displaySongs(songs) {
   const container = document.querySelector('.music-list-wrapper');
   if (!container) return;
 
-  // ✅ NEW: Show placeholders if flag is set
+  // ✅ Show placeholders if flag is set
   if (sessionStorage.getItem('showPlaceholders') === 'true') {
     container.style.opacity = '0';
+    container.style.visibility = 'hidden';
     document.querySelectorAll('.loading-placeholder').forEach(el => {
       el.style.display = '';
     });
-    sessionStorage.removeItem('showPlaceholders');
+    // DON'T remove flag yet - wait until after filtering
   }
   
   const templateWrapper = container.querySelector('.template-wrapper');
@@ -1544,13 +1545,15 @@ function displaySongs(songs) {
   }
   setTimeout(() => initializeWaveforms(), 100);
 
-// ✅ NEW: Hide placeholders and fade in songs
+  // ✅ Hide placeholders and fade in songs AFTER filtering completes
   setTimeout(() => {
     document.querySelectorAll('.loading-placeholder').forEach(el => {
       el.style.display = 'none';
     });
     container.style.opacity = '1';
-  }, 200);
+    container.style.visibility = 'visible';
+    sessionStorage.removeItem('showPlaceholders');
+  }, 800);
 }
 
 /**
@@ -4465,25 +4468,24 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
-    // Hide search immediately
-    const hideSearch = () => {
-      const searchInput = document.querySelector('.music-area-container .text-field');
-      if (searchInput) searchInput.style.opacity = '0';
-    };
-    hideSearch();
-    
     setTimeout(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
       if (searchInput) {
         searchInput.value = autoSearchGenre;
-        searchInput.style.transition = 'opacity 0.15s ease';
-        searchInput.style.opacity = '1';
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
+        
+        // ✅ TRIGGER THE FILTER IMMEDIATELY
+        if (typeof applyFilters === 'function') {
+          applyFilters();
+          console.log('✅ [LOAD] Applied filter for:', autoSearchGenre);
+        } else {
+          // Fallback: manually dispatch input event
+          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+          console.log('✅ [LOAD] Dispatched input event for:', autoSearchGenre);
+        }
         
         sessionStorage.removeItem('autoSearchGenre');
       }
-    }, 50);
+    }, 200); // Increased delay to ensure filters are initialized
   }
 }
   
