@@ -4997,8 +4997,8 @@ if (document.querySelector('.sortable-container') && typeof PlaylistManager !== 
 }
 
 // Call Navigation height change
-applyNavResizeOnScroll();
-setTimeout(applyNavResizeOnScroll, 50);
+applyNavResizeOnScroll('after-200');
+setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
       
 }, 200);
     
@@ -5031,8 +5031,9 @@ setTimeout(applyNavResizeOnScroll, 50);
         } catch (e) {}
       }
 
-  applyNavResizeOnScroll();
-  setTimeout(applyNavResizeOnScroll, 50);
+// Call Navigation height change
+applyNavResizeOnScroll('after-200');
+setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
       
     }, 600);
     
@@ -8423,15 +8424,24 @@ async function initDashboardPlaylists() {
    32. NAVIGATION HEIGHT CHANGE
    ============================================================ */
 
-function applyNavResizeOnScroll() {
+function applyNavResizeOnScroll(tag = '') {
   const nav = document.querySelector('.navigation');
   const wrap = document.querySelector('.global-nav-wrapper');
   const logo = document.querySelector('.nav-logo');
+
+  console.log('🧭 applyNavResizeOnScroll fired', tag, {
+    path: window.location.pathname,
+    scrollY: window.scrollY,
+    nav: !!nav,
+    wrap: !!wrap,
+    logo: !!logo,
+  });
+
   if (!nav || !wrap || !logo) return;
 
   const compact = window.scrollY > 0;
 
-  // ensure smooth animation
+  // smooth animation via inline transitions
   nav.style.transition = 'height 200ms ease';
   wrap.style.transition = 'margin-top 200ms ease';
   logo.style.transition = 'width 200ms ease';
@@ -8446,22 +8456,79 @@ function applyNavResizeOnScroll() {
     wrap.style.marginTop = '';
     logo.style.width = '';
   }
+
+  console.log('✅ applied', tag, {
+    nav_style_height: nav.style.height,
+    wrap_style_marginTop: wrap.style.marginTop,
+    logo_style_width: logo.style.width,
+    nav_computed_height: getComputedStyle(nav).height,
+    wrap_computed_marginTop: getComputedStyle(wrap).marginTop,
+    logo_computed_width: getComputedStyle(logo).width,
+  });
 }
 
 // bind scroll ONCE
 if (!window.__navResizeScrollBound) {
   window.__navResizeScrollBound = true;
-  window.addEventListener('scroll', applyNavResizeOnScroll, { passive: true });
+  window.addEventListener('scroll', () => applyNavResizeOnScroll('scroll'), { passive: true });
 }
 
-// first page load
-document.addEventListener('DOMContentLoaded', applyNavResizeOnScroll);
-
-// after every Barba transition (you dispatch this already)
-window.addEventListener('barbaAfterTransition', () => {
-  // force re-apply after DOM + Webflow churn
-  applyNavResizeOnScroll();
-  requestAnimationFrame(applyNavResizeOnScroll);
-  setTimeout(applyNavResizeOnScroll, 50);
-  setTimeout(applyNavResizeOnScroll, 200);
+// run on first load
+document.addEventListener('DOMContentLoaded', () => {
+  applyNavResizeOnScroll('domcontentloaded');
+  requestAnimationFrame(() => applyNavResizeOnScroll('domcontentloaded+raf'));
+  setTimeout(() => applyNavResizeOnScroll('domcontentloaded+50'), 50);
 });
+
+// run after every Barba transition (you already dispatch this event)
+window.addEventListener('barbaAfterTransition', () => {
+  applyNavResizeOnScroll('barbaAfterTransition');
+  requestAnimationFrame(() => applyNavResizeOnScroll('barbaAfterTransition+raf'));
+  setTimeout(() => applyNavResizeOnScroll('barbaAfterTransition+50'), 50);
+  setTimeout(() => applyNavResizeOnScroll('barbaAfterTransition+200'), 200);
+  setTimeout(() => applyNavResizeOnScroll('barbaAfterTransition+600'), 600);
+});
+
+// watch for something overwriting nav/wrap/logo style/class
+(function watchNavMutations() {
+  if (window.__watchNavMutationsInstalled) return;
+  window.__watchNavMutationsInstalled = true;
+
+  function attach() {
+    const nav = document.querySelector('.navigation');
+    const wrap = document.querySelector('.global-nav-wrapper');
+    const logo = document.querySelector('.nav-logo');
+    if (!nav || !wrap || !logo) return;
+
+    if (window.__navMutationObserver) {
+      try { window.__navMutationObserver.disconnect(); } catch (e) {}
+    }
+
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts) {
+        if (m.type === 'attributes') {
+          console.log('🧨 NAV MUTATION', {
+            target: m.target.className,
+            attr: m.attributeName,
+            nav_style_height: nav.style.height,
+            wrap_style_marginTop: wrap.style.marginTop,
+            logo_style_width: logo.style.width,
+            nav_computed_height: getComputedStyle(nav).height,
+            wrap_computed_marginTop: getComputedStyle(wrap).marginTop,
+            logo_computed_width: getComputedStyle(logo).width,
+          });
+        }
+      }
+    });
+
+    obs.observe(nav, { attributes: true, attributeFilter: ['style', 'class'] });
+    obs.observe(wrap, { attributes: true, attributeFilter: ['style', 'class'] });
+    obs.observe(logo, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    window.__navMutationObserver = obs;
+    console.log('👀 Nav mutation observer attached');
+  }
+
+  document.addEventListener('DOMContentLoaded', attach);
+  window.addEventListener('barbaAfterTransition', attach);
+})();
