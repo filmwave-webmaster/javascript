@@ -5128,7 +5128,7 @@ if (isDashboardPage) {
     
   }, 200);
 }
-    }]
+    }
   });
 }
 
