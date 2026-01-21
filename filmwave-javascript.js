@@ -8416,33 +8416,41 @@ async function initDashboardPlaylists() {
    32. NAVIGATION HEIGHT CHANGE
    ============================================================ */
 
-function initNavResizeOnScroll() {
+function applyNavResizeOnScroll() {
+  const nav = document.querySelector('.navigation');
+  const wrap = document.querySelector('.global-nav-wrapper');
+  const logo = document.querySelector('.nav-logo');
+  if (!nav || !wrap || !logo) return;
+
+  const compact = window.scrollY > 0;
+
+  if (compact) {
+    nav.style.height = '60px';
+    wrap.style.paddingTop = '60px';
+    logo.style.width = '125px';
+  } else {
+    nav.style.height = '';
+    wrap.style.paddingTop = '';
+    logo.style.width = '';
+  }
+}
+
+function bindNavResizeOnScrollOnce() {
   if (window.__navResizeScrollBound) return;
   window.__navResizeScrollBound = true;
 
-  function apply() {
-    const nav = document.querySelector('.navigation');
-    const wrap = document.querySelector('.global-nav-wrapper');
-    const logo = document.querySelector('.nav-logo');
-    if (!nav || !wrap || !logo) return;
-
-    const compact = window.scrollY > 0;
-
-    if (compact) {
-      nav.style.height = '60px';
-      wrap.style.paddingTop = '60px';
-      logo.style.width = '150px';
-    } else {
-      // 🔑 let Webflow values take over
-      nav.style.height = '';
-      wrap.style.paddingTop = '';
-      logo.style.width = '';
-    }
-  }
-
-  window.addEventListener('scroll', apply, { passive: true });
-  apply();
+  window.addEventListener('scroll', applyNavResizeOnScroll, { passive: true });
 }
 
-document.addEventListener('DOMContentLoaded', initNavResizeOnScroll);
-document.addEventListener('barbaAfterTransition', initNavResizeOnScroll);
+// first load
+document.addEventListener('DOMContentLoaded', () => {
+  bindNavResizeOnScrollOnce();
+  applyNavResizeOnScroll();
+});
+
+// barba transitions (YOU dispatch this on window)
+window.addEventListener('barbaAfterTransition', () => {
+  bindNavResizeOnScrollOnce();
+  applyNavResizeOnScroll();
+});
+
