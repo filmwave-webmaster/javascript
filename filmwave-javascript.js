@@ -8233,8 +8233,17 @@ async function initDashboardTiles() {
     });
   });
 
-  document.querySelector('.db-song-tiles').style.visibility = 'visible';
-  document.querySelector('.db-song-tiles-placeholder').style.visibility = 'hidden';
+  const real = document.querySelector('.db-song-tiles');
+const ph = document.querySelector('.db-song-tiles-placeholder');
+
+if (real) {
+  real.style.height = 'auto';
+  real.style.overflow = 'visible';
+}
+if (ph) {
+  ph.style.height = '0';
+  ph.style.overflow = 'hidden';
+}
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
