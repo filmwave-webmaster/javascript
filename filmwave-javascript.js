@@ -7974,9 +7974,6 @@ document.addEventListener(
 window.PlaylistManager = PlaylistManager;
 console.log('🎵 Playlist System loaded');
 
-
-
-
 /* ============================================================
    31. DASHBOARD TILES
    ============================================================ */
