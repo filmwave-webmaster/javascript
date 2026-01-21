@@ -7974,9 +7974,17 @@ document.addEventListener(
 window.PlaylistManager = PlaylistManager;
 console.log('🎵 Playlist System loaded');
 
+
+
+
 /* ============================================================
    31. DASHBOARD TILES
    ============================================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ph = document.querySelector('.db-song-tiles-placeholder');
+  if (ph) ph.style.display = 'flex';
+});
 
 async function initDashboardTiles() {
   const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
