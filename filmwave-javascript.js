@@ -8430,11 +8430,11 @@ function applyNavResizeOnScroll() {
 
   if (compact) {
     nav.style.height = '60px';
-    wrap.style.paddingTop = '60px';
+    wrap.style.marginTop = '60px';
     logo.style.width = '150px';
   } else {
     nav.style.height = '';
-    wrap.style.paddingTop = '';
+    wrap.style.marginTop = '';
     logo.style.width = '';
   }
 }
