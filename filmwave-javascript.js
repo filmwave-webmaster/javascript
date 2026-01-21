@@ -4742,7 +4742,45 @@ const isDashboardPage = window.location.pathname === '/dashboard/dashboard';
 if (isDashboardPage) {
   initDashboardTiles();
   initDashboardPlaylists();
-}      
+} 
+
+// === FILTER PILL CODE ===          
+
+// Genre filter button handling
+document.querySelectorAll('.db-filter-pill').forEach(button => {
+  button.style.cursor = 'pointer';
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    const genre = button.textContent.trim();
+    
+    // Store the genre in sessionStorage
+    sessionStorage.setItem('autoSearchGenre', genre);
+    
+    // Navigate to music page
+    window.location.href = '/music';
+  });
+});
+
+// On music page, check for auto-search
+if (window.location.pathname === '/music') {
+  const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
+  
+  if (autoSearchGenre) {
+    setTimeout(() => {
+      const searchInput = document.querySelector('.music-area-container .text-field');
+      if (searchInput) {
+        searchInput.value = autoSearchGenre;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log('✅ Auto-searched for:', autoSearchGenre);
+        
+        // Clear it so it doesn't persist
+        sessionStorage.removeItem('autoSearchGenre');
+      }
+    }, 500);
+  }
+}
+
+// === END FILTER PILL CODE ===        
   
   window.scrollTo(0, 0);
   
