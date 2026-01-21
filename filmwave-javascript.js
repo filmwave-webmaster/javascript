@@ -1552,8 +1552,6 @@ function displaySongs(songs) {
     container.style.opacity = '1';
   }, 200);
 }
-  
-}
 
 /**
  * ============================================================
