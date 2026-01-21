@@ -82,8 +82,7 @@ if (!window.musicPlayerPersistent) {
     filtersInitialized: false,
     isTransitioning: false,
     autoPlayNext: false,
-    wasPlayingBeforeHidden: false,
-    filteredSongIds: [],  
+    wasPlayingBeforeHidden: false, 
     filteredSongIds: []
   };
 }
@@ -5075,10 +5074,11 @@ filterButtons.forEach(button => {
         } catch (e) {}
       }
       
-    }, 600);
+     }, 600);
     
   }, 200);
-    }
+}
+    }]
   });
 }
 
