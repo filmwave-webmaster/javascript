@@ -7979,6 +7979,13 @@ console.log('🎵 Playlist System loaded');
    ============================================================ */
 
 async function initDashboardTiles() {
+  // ✅ PLACEHOLDER SWAP (START) — put this at the very top of the function
+  const realWrap = document.querySelector('.db-song-tiles');
+  const placeholderWrap = document.querySelector('.db-song-tiles-placeholder');
+  if (realWrap) realWrap.style.display = 'none';
+  if (placeholderWrap) placeholderWrap.style.display = 'block';
+  // ✅ PLACEHOLDER SWAP (END)
+
   const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
   console.log(`🔍 Found ${tiles.length} dashboard tiles`);
   
@@ -8205,6 +8212,11 @@ async function initDashboardTiles() {
       });
     }
   });
+
+  // ✅ PLACEHOLDER SWAP (FINAL) — put this right before the final console.log
+  if (placeholderWrap) placeholderWrap.style.display = 'none';
+  if (realWrap) realWrap.style.display = 'block';
+  // ✅ PLACEHOLDER SWAP (END)
 
   // Listen for play/pause events to update icons
   document.addEventListener('audioStateChange', (e) => {
