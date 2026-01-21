@@ -4794,24 +4794,34 @@ if (isDashboardPage) {
   
   // === FILTER PILL CODE ===          
   // Genre filter button handling - ONLY on dashboard
-  const filterButtons = document.querySelectorAll('.db-filter-pill');
-  console.log('🔍 Found genre filter buttons:', filterButtons.length);
-  filterButtons.forEach(button => {
-    button.style.cursor = 'pointer';
-    button.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const genre = button.textContent.trim();
-      
-      console.log('🎯 Filter button clicked:', genre);
-      
-      sessionStorage.setItem('autoSearchGenre', genre);
-      console.log('💾 Stored in sessionStorage:', genre);
-      
-      console.log('🚀 Navigating to /music');
-      window.location.href = '/music';
-    });
+const filterButtons = document.querySelectorAll('.db-filter-pill');
+console.log('🔍 Found genre filter buttons:', filterButtons.length);
+
+filterButtons.forEach(button => {
+  button.style.cursor = 'pointer';
+  
+  // Remove any existing listeners by cloning
+  const newButton = button.cloneNode(true);
+  button.parentNode.replaceChild(newButton, button);
+  
+  newButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent double-clicks
+    if (newButton.dataset.clicking) return;
+    newButton.dataset.clicking = 'true';
+    
+    const genre = newButton.textContent.trim();
+    console.log('🎯 Filter button clicked:', genre);
+    
+    sessionStorage.setItem('autoSearchGenre', genre);
+    console.log('💾 Stored in sessionStorage:', genre);
+    
+    console.log('🚀 Navigating to /music');
+    window.location.href = '/music';
   });
+});
 }
 
 // On music page, check for auto-search - ALWAYS runs
