@@ -4451,23 +4451,25 @@ if (window.location.pathname === '/music') {
     const observer = new MutationObserver(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
       if (searchInput) {
+        // Set value but DON'T trigger search yet
         searchInput.value = autoSearchGenre;
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
-        
-        // Remove the temporary hide style
-        const tempStyle = document.getElementById('temp-search-hide');
-        if (tempStyle) tempStyle.remove();
+        console.log('✅ [LOAD] Set search value:', autoSearchGenre);
         
         sessionStorage.removeItem('autoSearchGenre');
         observer.disconnect();
+        
+        // Trigger search after a delay to let loading placeholder show
+        setTimeout(() => {
+          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+          console.log('✅ [LOAD] Triggered search');
+        }, 300);
       }
     });
     
     observer.observe(document.body, { childList: true, subtree: true });
     
     // Fallback timeout
-    setTimeout(() => observer.disconnect(), 2000);
+    setTimeout(() => observer.disconnect(), 500);
   }
 }
   
