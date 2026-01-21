@@ -4449,37 +4449,31 @@ window.addEventListener('load', () => {
 // Check for auto-search on initial load
 if (window.location.pathname === '/music') {
   const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
-  console.log('🔍 [LOAD] Checking for auto-search genre:', autoSearchGenre);
-  
-  // Hide search field immediately if auto-filling
-  if (autoSearchGenre) {
-    const searchInput = document.querySelector('.music-area-container .text-field');
-    if (searchInput) {
-      searchInput.style.opacity = '0';
-    }
-  }
   
   if (autoSearchGenre) {
-    setTimeout(() => {
+    console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
+    
+    // Use MutationObserver to catch the field as soon as it exists
+    const observer = new MutationObserver(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
-      console.log('🔍 [LOAD] Search input found:', !!searchInput);
-      
       if (searchInput) {
         searchInput.value = autoSearchGenre;
         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
-        
-        // Reveal the field
-        searchInput.style.transition = 'opacity 0.2s ease';
-        searchInput.style.opacity = '1';
         
         // Remove the temporary hide style
         const tempStyle = document.getElementById('temp-search-hide');
         if (tempStyle) tempStyle.remove();
         
         sessionStorage.removeItem('autoSearchGenre');
+        observer.disconnect();
       }
-    }, 100);
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Fallback timeout
+    setTimeout(() => observer.disconnect(), 2000);
   }
 }
   
