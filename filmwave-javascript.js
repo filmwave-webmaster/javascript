@@ -4785,27 +4785,21 @@ if (isDashboardPage) {
   initDashboardPlaylists();
   
   // === FILTER PILL CODE ===          
-  // Genre filter button handling - ONLY on dashboard
+ // Genre filter button handling - ONLY on dashboard
 const filterButtons = document.querySelectorAll('.db-filter-pill');
 console.log('🔍 Found genre filter buttons:', filterButtons.length);
 
 filterButtons.forEach(button => {
   button.style.cursor = 'pointer';
-  
-  // Remove any existing listeners by cloning
-  const newButton = button.cloneNode(true);
-  button.parentNode.replaceChild(newButton, button);
-  
-  newButton.addEventListener('click', (e) => {
+  button.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const genre = button.textContent.trim();
     
-    // Prevent double-clicks
-    if (newButton.dataset.clicking) return;
-    newButton.dataset.clicking = 'true';
-    
-    const genre = newButton.textContent.trim();
     console.log('🎯 Filter button clicked:', genre);
+    
+    // Clear MASTER_DATA to force fresh load with placeholders
+    window.musicPlayerPersistent.MASTER_DATA = [];
     
     sessionStorage.setItem('autoSearchGenre', genre);
     console.log('💾 Stored in sessionStorage:', genre);
@@ -4814,7 +4808,6 @@ filterButtons.forEach(button => {
     window.location.href = '/music';
   });
 });
-}
 
 // On music page, check for auto-search - ALWAYS runs
 if (window.location.pathname === '/music') {
