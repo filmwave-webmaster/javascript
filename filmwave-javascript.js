@@ -7975,6 +7975,65 @@ window.PlaylistManager = PlaylistManager;
 console.log('🎵 Playlist System loaded');
 
 /* ============================================================
+   DASHBOARD TILES PLACEHOLDER SWAP
+   ============================================================ */
+
+// ✅ DASHBOARD TILE PLACEHOLDER SWAP
+// 1) On page load: show placeholder, hide real
+// 2) When real tiles are populated: hide placeholder, show real
+
+(function () {
+  function showPlaceholder() {
+    const real = document.querySelector('.db-song-tiles');
+    const ph = document.querySelector('.db-song-tiles-placeholder');
+    if (ph) ph.style.display = 'block';
+    if (real) real.style.display = 'none';
+  }
+
+  function showReal() {
+    const real = document.querySelector('.db-song-tiles');
+    const ph = document.querySelector('.db-song-tiles-placeholder');
+    if (ph) ph.style.display = 'none';
+    if (real) real.style.display = 'block';
+  }
+
+  // ✅ run immediately + on load (covers Webflow/Barba timing)
+  showPlaceholder();
+  window.addEventListener('load', showPlaceholder);
+
+  // ✅ swap when tiles are actually "loaded" (have songId)
+  function trySwap() {
+    const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
+    if (!tiles.length) return false;
+
+    // "fully loaded" = first tile has data
+    if (tiles[0] && tiles[0].dataset.songId) {
+      showReal();
+      return true;
+    }
+    return false;
+  }
+
+  // fast checks right away
+  if (trySwap()) return;
+
+  // watch for DOM updates
+  const realWrap = document.querySelector('.db-song-tiles');
+  const obs = new MutationObserver(() => {
+    if (trySwap()) obs.disconnect();
+  });
+
+  if (realWrap) {
+    obs.observe(realWrap, { childList: true, subtree: true, attributes: true });
+  }
+
+  // fallback poll (in case mutations don’t fire)
+  const poll = setInterval(() => {
+    if (trySwap()) clearInterval(poll);
+  }, 100);
+})();
+
+/* ============================================================
    31. DASHBOARD TILES
    ============================================================ */
 
