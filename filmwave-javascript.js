@@ -4732,6 +4732,24 @@ if (typeof barba !== 'undefined') {
 
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
+
+  // Auto-fill search from URL parameter
+if (window.location.pathname === '/music') {
+  const urlParams = new URLSearchParams(window.location.search);
+  const genre = urlParams.get('genre');
+  
+  if (genre) {
+    setTimeout(() => {
+      const searchInput = document.querySelector('.music-area-container .text-field');
+      if (searchInput) {
+        searchInput.value = genre;
+        // Trigger input event to activate search
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log('✅ Auto-filled search with:', genre);
+      }
+    }, 300); // Wait for page to fully load
+  }
+}
   
   const g = window.musicPlayerPersistent;
 
