@@ -5056,6 +5056,97 @@ setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
   });
 }
 
+/* ============================================================
+   NAV RESIZE (Barba-safe)
+   Paste AFTER barba.init(...)
+   ============================================================ */
+
+(function initNavResizeSystem() {
+  if (window.__navResizeInstalled) return;
+  window.__navResizeInstalled = true;
+
+  function getNavEls() {
+    // If your nav is inside the current barba container, prefer that.
+    const container = document.querySelector('[data-barba="container"]');
+    const nav = (container && container.querySelector('.navigation')) || document.querySelector('.navigation');
+    const wrap = (container && container.querySelector('.global-nav-wrapper')) || document.querySelector('.global-nav-wrapper');
+    const logo = (container && container.querySelector('.nav-logo')) || document.querySelector('.nav-logo');
+    return { nav, wrap, logo };
+  }
+
+  function applyNavResizeOnScroll(reason = 'scroll') {
+    const { nav, wrap, logo } = getNavEls();
+    if (!nav || !wrap || !logo) return false;
+
+    // Set transitions once (don’t spam on every scroll)
+    if (!nav.dataset.navResizeTransitionSet) {
+      nav.style.transition = 'height 200ms ease';
+      wrap.style.transition = 'margin-top 200ms ease';
+      logo.style.transition = 'width 200ms ease';
+      nav.dataset.navResizeTransitionSet = '1';
+    }
+
+    const compact = window.scrollY > 0;
+
+    if (compact) {
+      nav.style.height = '60px';
+      wrap.style.marginTop = '60px';
+      logo.style.width = '150px';
+    } else {
+      nav.style.height = '';
+      wrap.style.marginTop = '';
+      logo.style.width = '';
+    }
+
+    // Uncomment if you want a single log:
+    // console.log('🧭 nav resize', reason, { path: location.pathname, y: scrollY });
+
+    return true;
+  }
+
+  function applyWithRetries(reason) {
+    let tries = 0;
+    function tick() {
+      tries++;
+      const ok = applyNavResizeOnScroll(reason + `#${tries}`);
+      if (ok) {
+        // Webflow IX2 can re-apply styles after init; re-hit a couple times
+        setTimeout(() => applyNavResizeOnScroll(reason + '+100'), 100);
+        setTimeout(() => applyNavResizeOnScroll(reason + '+300'), 300);
+        setTimeout(() => applyNavResizeOnScroll(reason + '+700'), 700);
+        return;
+      }
+      if (tries < 20) requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  // Bind scroll ONCE
+  window.addEventListener('scroll', () => applyNavResizeOnScroll('scroll'), { passive: true });
+
+  // Initial run
+  applyWithRetries('load');
+
+  // ✅ Barba hooks (more reliable than custom events)
+  function hookBarba() {
+    const b = window.barba;
+    if (!b || !b.hooks) return;
+
+    if (window.__navResizeBarbaHooked) return;
+    window.__navResizeBarbaHooked = true;
+
+    b.hooks.afterEnter(() => applyWithRetries('barba.afterEnter'));
+    b.hooks.after(() => applyWithRetries('barba.after'));
+  }
+
+  hookBarba();
+
+  // If Barba loads later (rare), try again shortly
+  setTimeout(hookBarba, 0);
+  setTimeout(hookBarba, 200);
+})();
+
+
 /**
  * ============================================================
  * FAVORITE BUTTON SYNCING
@@ -8432,116 +8523,3 @@ async function initDashboardPlaylists() {
     container.style.pointerEvents = '';
   }
 }
-
-/* ============================================================
-   32. NAVIGATION HEIGHT CHANGE
-   ============================================================ */
-
-function applyNavResizeOnScroll(reason = 'scroll') {
-  const nav = document.querySelector('.navigation');
-  const wrap = document.querySelector('.global-nav-wrapper');
-  const logo = document.querySelector('.nav-logo');
-
-  console.log('🧭 applyNavResizeOnScroll fired', reason, {
-    path: window.location.pathname,
-    scrollY: window.scrollY,
-    nav: !!nav,
-    wrap: !!wrap,
-    logo: !!logo,
-  });
-
-  if (!nav || !wrap || !logo) return;
-
-  const compact = window.scrollY > 0;
-
-  // smooth animation via inline transitions
-  nav.style.transition = 'height 200ms ease';
-  wrap.style.transition = 'margin-top 200ms ease';
-  logo.style.transition = 'width 200ms ease';
-
-  if (compact) {
-    nav.style.height = '60px';
-    wrap.style.marginTop = '60px';
-    logo.style.width = '150px';
-  } else {
-    // reset to Webflow values
-    nav.style.height = '';
-    wrap.style.marginTop = '';
-    logo.style.width = '';
-  }
-
-  console.log('✅ applied', reason, {
-    nav_style_height: nav.style.height,
-    wrap_style_marginTop: wrap.style.marginTop,
-    logo_style_width: logo.style.width,
-    nav_computed_height: getComputedStyle(nav).height,
-    wrap_computed_marginTop: getComputedStyle(wrap).marginTop,
-    logo_computed_width: getComputedStyle(logo).width,
-  });
-}
-
-// bind scroll ONCE
-if (!window.__navResizeScrollBound) {
-  window.__navResizeScrollBound = true;
-  window.addEventListener('scroll', () => applyNavResizeOnScroll('scroll'), { passive: true });
-}
-
-// run on first load
-document.addEventListener('DOMContentLoaded', () => {
-  applyNavResizeOnScroll('domcontentloaded');
-  requestAnimationFrame(() => applyNavResizeOnScroll('domcontentloaded+raf'));
-  setTimeout(() => applyNavResizeOnScroll('domcontentloaded+50'), 50);
-});
-
-// run after every Barba transition (you already dispatch this event)
-window.addEventListener('barbaAfterTransition', () => {
-  applyNavResizeOnScroll('barbaAfterTransition');
-  requestAnimationFrame(() => applyNavResizeOnScroll('barbaAfterTransition+raf'));
-  setTimeout(() => applyNavResizeOnScroll('barbaAfterTransition+50'), 50);
-  setTimeout(() => applyNavResizeOnScroll('barbaAfterTransition+200'), 200);
-  setTimeout(() => applyNavResizeOnScroll('barbaAfterTransition+600'), 600);
-});
-
-// watch for something overwriting nav/wrap/logo style/class
-(function watchNavMutations() {
-  if (window.__watchNavMutationsInstalled) return;
-  window.__watchNavMutationsInstalled = true;
-
-  function attach() {
-    const nav = document.querySelector('.navigation');
-    const wrap = document.querySelector('.global-nav-wrapper');
-    const logo = document.querySelector('.nav-logo');
-    if (!nav || !wrap || !logo) return;
-
-    if (window.__navMutationObserver) {
-      try { window.__navMutationObserver.disconnect(); } catch (e) {}
-    }
-
-    const obs = new MutationObserver((muts) => {
-      for (const m of muts) {
-        if (m.type === 'attributes') {
-          console.log('🧨 NAV MUTATION', {
-            target: m.target.className,
-            attr: m.attributeName,
-            nav_style_height: nav.style.height,
-            wrap_style_marginTop: wrap.style.marginTop,
-            logo_style_width: logo.style.width,
-            nav_computed_height: getComputedStyle(nav).height,
-            wrap_computed_marginTop: getComputedStyle(wrap).marginTop,
-            logo_computed_width: getComputedStyle(logo).width,
-          });
-        }
-      }
-    });
-
-    obs.observe(nav, { attributes: true, attributeFilter: ['style', 'class'] });
-    obs.observe(wrap, { attributes: true, attributeFilter: ['style', 'class'] });
-    obs.observe(logo, { attributes: true, attributeFilter: ['style', 'class'] });
-
-    window.__navMutationObserver = obs;
-    console.log('👀 Nav mutation observer attached');
-  }
-
-  document.addEventListener('DOMContentLoaded', attach);
-  window.addEventListener('barbaAfterTransition', attach);
-})();
