@@ -5078,7 +5078,7 @@ filterButtons.forEach(button => {
     
   }, 200);
 }
-    }]
+    }
   });
 }
 
