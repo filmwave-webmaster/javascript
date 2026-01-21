@@ -7996,11 +7996,14 @@ function revealDashboardTiles() {
   const ph = document.querySelector('.db-song-tiles-placeholder');
   if (!real || !ph) return;
 
+  // show real tiles
   real.style.visibility = 'visible';
   real.style.height = 'auto';
+
+  // hide + collapse placeholder
   ph.style.visibility = 'hidden';
-  // optional: remove from layout if you want
-  // ph.style.display = 'none';
+  ph.style.height = '0';
+  ph.style.overflow = 'hidden';
 }
 
 // 1) first load
