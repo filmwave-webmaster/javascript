@@ -4478,61 +4478,62 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
-    // ✅ IMMEDIATELY hide the song list
-    const container = document.querySelector('.music-list-wrapper');
-    if (container) {
-      container.style.opacity = '0';
-      container.style.visibility = 'hidden';
-    }
-    
-    // Wait for songs to load, then filter
-    setTimeout(() => {
-      const searchInput = document.querySelector('.music-area-container .text-field');
-      if (searchInput) {
-        searchInput.value = autoSearchGenre;
-        console.log('✅ [LOAD] Set search value:', autoSearchGenre);
+    // ✅ Set up a mutation observer to filter AS SOON AS songs appear
+    const observer = new MutationObserver((mutations) => {
+      const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+      
+      if (songCards.length > 5) { // Wait until songs are actually rendered
+        console.log('🎵 Songs detected, filtering immediately...');
+        observer.disconnect(); // Stop observing
         
-        // Wait a bit more for songs to render, then filter
+        const searchInput = document.querySelector('.music-area-container .text-field');
+        if (searchInput) {
+          searchInput.value = autoSearchGenre;
+        }
+        
+        const query = autoSearchGenre.toLowerCase().trim();
+        const keywords = query.split(/\s+/).filter(k => k.length > 0);
+        
+        let visibleCount = 0;
+        songCards.forEach(card => {
+          const songTitle = card.querySelector('.song-name')?.textContent.toLowerCase() || '';
+          const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+          const mood = (card.getAttribute('data-mood') || '').toLowerCase();
+          const genre = (card.getAttribute('data-genre') || '').toLowerCase();
+          const allText = `${songTitle} ${artistName} ${mood} ${genre}`;
+          
+          const matches = keywords.every(k => allText.includes(k));
+          
+          if (matches) {
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        
+        console.log(`✅ Filtered: showing ${visibleCount} of ${songCards.length} songs`);
+        
+        // ✅ Now fade in the container
         setTimeout(() => {
-          const query = autoSearchGenre.toLowerCase().trim();
-          const keywords = query.split(/\s+/).filter(k => k.length > 0);
-          const songCards = document.querySelectorAll('.song-wrapper');
-          
-          console.log(`🔍 Filtering ${songCards.length} cards for: "${query}"`);
-          
-          let visibleCount = 0;
-          songCards.forEach(card => {
-            const songTitle = card.querySelector('.song-name')?.textContent.toLowerCase() || '';
-            const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
-            const mood = (card.getAttribute('data-mood') || '').toLowerCase();
-            const genre = (card.getAttribute('data-genre') || '').toLowerCase();
-            const allText = `${songTitle} ${artistName} ${mood} ${genre}`;
-            
-            const matches = keywords.every(k => allText.includes(k));
-            
-            if (matches) {
-              card.style.display = '';
-              visibleCount++;
-            } else {
-              card.style.display = 'none';
-            }
-          });
-          
-          console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
-          
-          // ✅ Fade in the filtered results
+          const container = document.querySelector('.music-list-wrapper');
           if (container) {
-            container.style.transition = 'opacity 0.3s ease, visibility 0.3s ease';
+            container.style.transition = 'opacity 0.4s ease, visibility 0.4s ease';
             container.style.opacity = '1';
             container.style.visibility = 'visible';
           }
           
-          // ✅ ONLY remove flags AFTER everything completes
           sessionStorage.removeItem('autoSearchGenre');
           sessionStorage.removeItem('showPlaceholders');
-        }, 1000);
+        }, 100);
       }
-    }, 500);
+    });
+    
+    // Start observing the music list wrapper
+    const container = document.querySelector('.music-list-wrapper');
+    if (container) {
+      observer.observe(container, { childList: true, subtree: true });
+    }
   }
 }
   
