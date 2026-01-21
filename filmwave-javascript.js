@@ -1513,6 +1513,20 @@ async function fetchSongs() {
 function displaySongs(songs) {
   const container = document.querySelector('.music-list-wrapper');
   if (!container) return;
+
+  // ✅ NEW: Show placeholders if flag is set
+  if (sessionStorage.getItem('showPlaceholders') === 'true') {
+    container.style.opacity = '0';
+    document.querySelectorAll('.loading-placeholder').forEach(el => {
+      el.style.display = '';
+    });
+    sessionStorage.removeItem('showPlaceholders');
+  }
+  
+  const templateWrapper = container.querySelector('.template-wrapper');
+  const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
+  if (!templateCard) return;
+  
   const templateWrapper = container.querySelector('.template-wrapper');
   const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
   if (!templateCard) return;
@@ -1532,6 +1546,16 @@ function displaySongs(songs) {
     window.Webflow.require('ix2').init();
   }
   setTimeout(() => initializeWaveforms(), 100);
+
+/ ✅ NEW: Hide placeholders and fade in songs
+  setTimeout(() => {
+    document.querySelectorAll('.loading-placeholder').forEach(el => {
+      el.style.display = 'none';
+    });
+    container.style.opacity = '1';
+  }, 200);
+}
+  
 }
 
 /**
@@ -4800,6 +4824,9 @@ filterButtons.forEach(button => {
     // Clear MASTER_DATA to force fresh load with placeholders
     window.musicPlayerPersistent.MASTER_DATA = [];
     
+    // ✅ Force placeholders to show on next page
+    sessionStorage.setItem('showPlaceholders', 'true');
+    
     sessionStorage.setItem('autoSearchGenre', genre);
     console.log('💾 Stored in sessionStorage:', genre);
     
@@ -4808,7 +4835,7 @@ filterButtons.forEach(button => {
   });
 });
 }
-// === END FILTER PILL CODE ===     
+// === END FILTER PILL CODE ===   
   
   window.scrollTo(0, 0);
   
