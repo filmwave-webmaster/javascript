@@ -4986,7 +4986,12 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   if (typeof initDashboardPlaceholderSwap === 'function') initDashboardPlaceholderSwap();
   if (typeof initDashboardTiles === 'function') initDashboardTiles();
   if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
-  if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists(); // ← add this
+  if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists();
+}
+
+// Playlists page initialization
+if (document.querySelector('.sortable-container')) {
+  if (typeof renderPlaylistsGrid === 'function') renderPlaylistsGrid();
 }
 
 }, 200);
