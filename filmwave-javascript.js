@@ -7975,13 +7975,47 @@ window.PlaylistManager = PlaylistManager;
 console.log('🎵 Playlist System loaded');
 
 /* ============================================================
-   31. DASHBOARD TILES
+   31. DASHBOARD TILES LOADING PLACEHOLDER
    ============================================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+function initDashboardPlaceholderSwap() {
+  const real = document.querySelector('.db-song-tiles');
   const ph = document.querySelector('.db-song-tiles-placeholder');
-  if (ph) ph.style.display = 'flex';
+  if (!real || !ph) return;
+
+  // show placeholder immediately
+  ph.style.display = 'flex';
+  ph.style.visibility = 'visible';
+
+  // when your tiles are ready, call this (see below)
+  // revealDashboardTiles();
+}
+
+function revealDashboardTiles() {
+  const real = document.querySelector('.db-song-tiles');
+  const ph = document.querySelector('.db-song-tiles-placeholder');
+  if (!real || !ph) return;
+
+  real.style.visibility = 'visible';
+  real.style.height = 'auto';
+  ph.style.visibility = 'hidden';
+  // optional: remove from layout if you want
+  // ph.style.display = 'none';
+}
+
+// 1) first load
+document.addEventListener('DOMContentLoaded', () => {
+  initDashboardPlaceholderSwap();
 });
+
+// 2) barba transitions
+document.addEventListener('barbaAfterTransition', () => {
+  initDashboardPlaceholderSwap();
+});
+
+/* ============================================================
+   31. DASHBOARD TILES
+   ============================================================ */
 
 async function initDashboardTiles() {
   const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
@@ -8233,21 +8267,7 @@ async function initDashboardTiles() {
     });
   });
 
-  const real = document.querySelector('.db-song-tiles');
-const ph = document.querySelector('.db-song-tiles-placeholder');
-
-if (real) {
-  real.style.height = 'auto';
-  real.style.overflow = 'visible';
-}
-if (ph) {
-  ph.style.height = '0';
-  ph.style.overflow = 'hidden';
-}
-
-document.querySelector('.db-song-tiles').style.visibility = 'visible';
-document.querySelector('.db-song-tiles').style.height = 'auto';
-document.querySelector('.db-song-tiles-placeholder').style.visibility = 'hidden';
+  revealDashboardTiles();
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
