@@ -5034,6 +5034,19 @@ setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
 // Call Navigation height change
 applyNavResizeOnScroll('after-200');
 setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
+
+      (function forceNavStateAfterBarba() {
+  const run = (label) => {
+    if (typeof applyNavResizeOnScroll === 'function') applyNavResizeOnScroll(label);
+  };
+
+  run('barba-after-immediate');
+  requestAnimationFrame(() => run('barba-after-raf'));
+  setTimeout(() => run('barba-after-150'), 150);
+  setTimeout(() => run('barba-after-400'), 400);
+
+  setTimeout(() => window.dispatchEvent(new Event('scroll')), 50);
+})();
       
     }, 600);
     
@@ -8424,7 +8437,7 @@ async function initDashboardPlaylists() {
    32. NAVIGATION HEIGHT CHANGE
    ============================================================ */
 
-function applyNavResizeOnScroll(tag = '') {
+function applyNavResizeOnScroll(reason = 'scroll') {
   const nav = document.querySelector('.navigation');
   const wrap = document.querySelector('.global-nav-wrapper');
   const logo = document.querySelector('.nav-logo');
