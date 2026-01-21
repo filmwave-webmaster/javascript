@@ -8431,7 +8431,7 @@ function applyNavResizeOnScroll() {
   if (compact) {
     nav.style.height = '60px';
     wrap.style.paddingTop = '60px';
-    logo.style.width = '125px';
+    logo.style.width = '150px';
   } else {
     nav.style.height = '';
     wrap.style.paddingTop = '';
