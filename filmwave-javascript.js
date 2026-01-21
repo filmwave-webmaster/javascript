@@ -8417,7 +8417,6 @@ async function initDashboardPlaylists() {
    ============================================================ */
 
 function initNavResizeOnScroll() {
-  // prevent duplicates
   if (window.__navResizeScrollBound) return;
   window.__navResizeScrollBound = true;
 
@@ -8429,20 +8428,21 @@ function initNavResizeOnScroll() {
 
     const compact = window.scrollY > 0;
 
-    nav.style.height = compact ? '60px' : '105px';
-    wrap.style.paddingTop = compact ? '60px' : '105px';
-    logo.style.width = compact ? '150px' : '200px';
+    if (compact) {
+      nav.style.height = '60px';
+      wrap.style.paddingTop = '60px';
+      logo.style.width = '150px';
+    } else {
+      // 🔑 let Webflow values take over
+      nav.style.height = '';
+      wrap.style.paddingTop = '';
+      logo.style.width = '';
+    }
   }
 
-  // bind once
   window.addEventListener('scroll', apply, { passive: true });
-
-  // run immediately (important after transitions)
   apply();
 }
 
-// first load
 document.addEventListener('DOMContentLoaded', initNavResizeOnScroll);
-
-// barba transitions (you already dispatch this event)
 document.addEventListener('barbaAfterTransition', initNavResizeOnScroll);
