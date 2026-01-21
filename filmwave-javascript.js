@@ -8411,3 +8411,21 @@ async function initDashboardPlaylists() {
     container.style.pointerEvents = '';
   }
 }
+
+/* ============================================================
+   32. NAVIGATION HEIGHT CHANGE
+   ============================================================ */
+
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('.navigation');
+  const wrap = document.querySelector('.global-nav-wrapper');
+  if (!nav || !wrap) return;
+
+  if (window.scrollY > 0) {
+    nav.style.height = '60px';
+    wrap.style.paddingTop = '60px';
+  } else {
+    nav.style.height = '105px';
+    wrap.style.paddingTop = '105px';
+  }
+});
