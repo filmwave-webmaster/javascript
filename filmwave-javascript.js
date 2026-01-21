@@ -4447,29 +4447,16 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
-    // Use MutationObserver to catch the field as soon as it exists
-    const observer = new MutationObserver(() => {
+    setTimeout(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
       if (searchInput) {
-        // Set value but DON'T trigger search yet
         searchInput.value = autoSearchGenre;
-        console.log('✅ [LOAD] Set search value:', autoSearchGenre);
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
         
         sessionStorage.removeItem('autoSearchGenre');
-        observer.disconnect();
-        
-        // Trigger search after a delay to let loading placeholder show
-        setTimeout(() => {
-          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-          console.log('✅ [LOAD] Triggered search');
-        }, 300);
       }
-    });
-    
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    // Fallback timeout
-    setTimeout(() => observer.disconnect(), 500);
+    }, 200);
   }
 }
   
