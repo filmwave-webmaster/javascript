@@ -4808,6 +4808,7 @@ filterButtons.forEach(button => {
     window.location.href = '/music';
   });
 });
+}
 // === END FILTER PILL CODE ===     
   
   window.scrollTo(0, 0);
