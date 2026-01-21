@@ -8442,7 +8442,7 @@ function applyNavResizeOnScroll(reason = 'scroll') {
   const wrap = document.querySelector('.global-nav-wrapper');
   const logo = document.querySelector('.nav-logo');
 
-  console.log('🧭 applyNavResizeOnScroll fired', tag, {
+  console.log('🧭 applyNavResizeOnScroll fired', reason, {
     path: window.location.pathname,
     scrollY: window.scrollY,
     nav: !!nav,
@@ -8470,7 +8470,7 @@ function applyNavResizeOnScroll(reason = 'scroll') {
     logo.style.width = '';
   }
 
-  console.log('✅ applied', tag, {
+  console.log('✅ applied', reason, {
     nav_style_height: nav.style.height,
     wrap_style_marginTop: wrap.style.marginTop,
     logo_style_width: logo.style.width,
