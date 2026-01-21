@@ -4989,9 +4989,11 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists();
 }
 
-// Playlists page initialization
-if (document.querySelector('.sortable-container')) {
-  if (typeof renderPlaylistsGrid === 'function') renderPlaylistsGrid();
+// Playlists page initialization (with user refresh)
+if (document.querySelector('.sortable-container') && typeof PlaylistManager !== 'undefined') {
+  PlaylistManager.getUserId?.().then(() => {
+    PlaylistManager.renderPlaylistsGrid?.();
+  });
 }
 
 }, 200);
