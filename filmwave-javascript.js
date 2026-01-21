@@ -8245,11 +8245,8 @@ if (ph) {
   ph.style.overflow = 'hidden';
 }
 
-const real = document.querySelector('.db-song-tiles');
-const ph = document.querySelector('.db-song-tiles-placeholder');
-
-if (real) real.style.visibility = 'visible';
-if (ph) ph.style.display = 'none';
+document.querySelector('.db-song-tiles').style.visibility = 'visible';
+document.querySelector('.db-song-tiles-placeholder').style.visibility = 'hidden';
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
