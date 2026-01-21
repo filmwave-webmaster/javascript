@@ -4996,6 +4996,10 @@ if (document.querySelector('.sortable-container') && typeof PlaylistManager !== 
   });
 }
 
+// Call Navigation height change
+applyNavResizeOnScroll();
+setTimeout(applyNavResizeOnScroll, 50);
+      
 }, 200);
     
     window.dispatchEvent(new Event('scroll'));
@@ -8427,7 +8431,7 @@ function applyNavResizeOnScroll() {
   if (compact) {
     nav.style.height = '60px';
     wrap.style.paddingTop = '60px';
-    logo.style.width = '150px';
+    logo.style.width = '125px';
   } else {
     nav.style.height = '';
     wrap.style.paddingTop = '';
@@ -8435,22 +8439,7 @@ function applyNavResizeOnScroll() {
   }
 }
 
-function bindNavResizeOnScrollOnce() {
-  if (window.__navResizeScrollBound) return;
+if (!window.__navResizeScrollBound) {
   window.__navResizeScrollBound = true;
-
   window.addEventListener('scroll', applyNavResizeOnScroll, { passive: true });
 }
-
-// first load
-document.addEventListener('DOMContentLoaded', () => {
-  bindNavResizeOnScrollOnce();
-  applyNavResizeOnScroll();
-});
-
-// barba transitions (YOU dispatch this on window)
-window.addEventListener('barbaAfterTransition', () => {
-  bindNavResizeOnScrollOnce();
-  applyNavResizeOnScroll();
-});
-
