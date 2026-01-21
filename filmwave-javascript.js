@@ -47,17 +47,6 @@
  * ============================================================
  */
 
-// Clear search field immediately if auto-search is pending
-if (window.location.pathname === '/music' && sessionStorage.getItem('autoSearchGenre')) {
-  // Clear the localStorage filter state immediately
-  const filters = localStorage.getItem('musicFilters');
-  if (filters) {
-    const parsed = JSON.parse(filters);
-    parsed.searchQuery = '';
-    localStorage.setItem('musicFilters', JSON.stringify(parsed));
-  }
-}
-
 /**
  * ============================================================
  * GLOBAL STATE - Persists across Barba page transitions
@@ -82,8 +71,10 @@ if (!window.musicPlayerPersistent) {
     filtersInitialized: false,
     isTransitioning: false,
     autoPlayNext: false,
-    wasPlayingBeforeHidden: false, 
-    filteredSongIds: []
+    wasPlayingBeforeHidden: false,
+    filteredSongIds: [],  
+    filteredSongIds: [],
+    sidebarClone: null
   };
 }
 
@@ -1513,26 +1504,9 @@ async function fetchSongs() {
 function displaySongs(songs) {
   const container = document.querySelector('.music-list-wrapper');
   if (!container) return;
-
-  // ✅ If auto-search is pending, keep container hidden
-  const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
-  if (autoSearchGenre) {
-    container.style.opacity = '0';
-    container.style.visibility = 'hidden';
-    console.log('🔒 Container hidden - auto-search pending');
-  }
-
-  // Show placeholders if flag is set
-  if (sessionStorage.getItem('showPlaceholders') === 'true') {
-    document.querySelectorAll('.loading-placeholder').forEach(el => {
-      el.style.display = '';
-    });
-  }
-  
   const templateWrapper = container.querySelector('.template-wrapper');
   const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
   if (!templateCard) return;
-  
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
   songs.forEach(song => {
@@ -1549,21 +1523,6 @@ function displaySongs(songs) {
     window.Webflow.require('ix2').init();
   }
   setTimeout(() => initializeWaveforms(), 100);
-
-  // Hide placeholders (but keep container hidden if auto-search is active)
-  setTimeout(() => {
-    document.querySelectorAll('.loading-placeholder').forEach(el => {
-      el.style.display = 'none';
-    });
-    
-    // ✅ Only show container if NO auto-search is pending
-    if (!sessionStorage.getItem('autoSearchGenre')) {
-      container.style.opacity = '1';
-      container.style.visibility = 'visible';
-    }
-    
-    sessionStorage.removeItem('showPlaceholders');
-  }, 800);
 }
 
 /**
@@ -4467,82 +4426,8 @@ function initUniversalSearch() {
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
-
 window.addEventListener('load', () => {
   initMusicPage();
-
-// Check for auto-search on initial load
-if (window.location.pathname === '/music') {
-  const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
-  
-  if (autoSearchGenre) {
-    console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
-    
-    // ✅ Show clear button immediately
-    const clearBtn = document.querySelector('.circle-x');
-    if (clearBtn) {
-      clearBtn.style.display = 'flex';
-      clearBtn.style.opacity = '1';
-    }
-    
-    // ✅ Set up a mutation observer to filter AS SOON AS songs appear
-    const observer = new MutationObserver((mutations) => {
-      const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
-      
-      if (songCards.length > 5) { // Wait until songs are actually rendered
-        console.log('🎵 Songs detected, filtering immediately...');
-        observer.disconnect(); // Stop observing
-        
-        const searchInput = document.querySelector('.music-area-container .text-field');
-        if (searchInput) {
-          searchInput.value = autoSearchGenre;
-        }
-        
-        const query = autoSearchGenre.toLowerCase().trim();
-        const keywords = query.split(/\s+/).filter(k => k.length > 0);
-        
-        let visibleCount = 0;
-        songCards.forEach(card => {
-          const songTitle = card.querySelector('.song-name')?.textContent.toLowerCase() || '';
-          const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
-          const mood = (card.getAttribute('data-mood') || '').toLowerCase();
-          const genre = (card.getAttribute('data-genre') || '').toLowerCase();
-          const allText = `${songTitle} ${artistName} ${mood} ${genre}`;
-          
-          const matches = keywords.every(k => allText.includes(k));
-          
-          if (matches) {
-            card.style.display = '';
-            visibleCount++;
-          } else {
-            card.style.display = 'none';
-          }
-        });
-        
-        console.log(`✅ Filtered: showing ${visibleCount} of ${songCards.length} songs`);
-        
-        // ✅ Now fade in the container
-        setTimeout(() => {
-          const container = document.querySelector('.music-list-wrapper');
-          if (container) {
-            container.style.transition = 'opacity 0.4s ease, visibility 0.4s ease';
-            container.style.opacity = '1';
-            container.style.visibility = 'visible';
-          }
-          
-          sessionStorage.removeItem('autoSearchGenre');
-          sessionStorage.removeItem('showPlaceholders');
-        }, 100);
-      }
-    });
-    
-    // Start observing the music list wrapper
-    const container = document.querySelector('.music-list-wrapper');
-    if (container) {
-      observer.observe(container, { childList: true, subtree: true });
-    }
-  }
-}
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -4776,6 +4661,17 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
+
+       const g = window.musicPlayerPersistent;
+  
+  // Capture sidebar from incoming page BEFORE Barba processes it
+  const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
+  
+  if (incomingSidebar && !g.sidebarClone) {
+    g.sidebarClone = incomingSidebar.cloneNode(true);
+    console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
+  }
+      
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
        
@@ -4852,13 +4748,6 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT ===
-
-  // Initialize dashboard components
-const isDashboardPage = window.location.pathname === '/dashboard/dashboard';
-if (isDashboardPage) {
-  initDashboardTiles();
-  initDashboardPlaylists();
-  initDashboardFilterPills();
   
   window.scrollTo(0, 0);
   
@@ -5124,11 +5013,11 @@ if (isDashboardPage) {
         } catch (e) {}
       }
       
-     }, 600);
+    }, 600);
     
   }, 200);
 }
-    }
+    }]
   });
 }
 
@@ -8470,42 +8359,4 @@ async function initDashboardPlaylists() {
     container.style.opacity = '1';
     container.style.pointerEvents = '';
   }
-}
-
-/**
- * ============================================================
- * DASHBOARD FILTER PILLBOX BUTTONS
- * ============================================================
- */
-function initDashboardFilterPills() {
-  const filterButtons = document.querySelectorAll('.db-filter-pill');
-  console.log('🔍 Initializing genre filter buttons:', filterButtons.length);
-  
-  if (filterButtons.length === 0) {
-    console.log('ℹ️ No filter pills found on this page');
-    return;
-  }
-  
-  filterButtons.forEach(button => {
-    // Remove old listeners by cloning
-    const newButton = button.cloneNode(true);
-    button.parentNode.replaceChild(newButton, button);
-    
-    newButton.style.cursor = 'pointer';
-    newButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const genre = newButton.textContent.trim();
-      
-      console.log('🎯 Filter button clicked:', genre);
-      
-      window.musicPlayerPersistent.MASTER_DATA = [];
-      sessionStorage.setItem('showPlaceholders', 'true');
-      sessionStorage.setItem('autoSearchGenre', genre);
-      
-      window.location.href = '/music';
-    });
-  });
-  
-  console.log('✅ Filter pills initialized');
 }
