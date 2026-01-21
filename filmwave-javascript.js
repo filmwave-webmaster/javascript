@@ -4436,6 +4436,7 @@ function initUniversalSearch() {
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
+
 window.addEventListener('load', () => {
   initMusicPage();
 
@@ -4444,13 +4445,15 @@ if (window.location.pathname === '/music') {
   const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
   console.log('🔍 [LOAD] Checking for auto-search genre:', autoSearchGenre);
   
+  // Hide search field immediately if auto-filling
   if (autoSearchGenre) {
-    // Clear search field immediately
     const searchInput = document.querySelector('.music-area-container .text-field');
     if (searchInput) {
-      searchInput.value = '';
+      searchInput.style.opacity = '0';
     }
-    
+  }
+  
+  if (autoSearchGenre) {
     setTimeout(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
       console.log('🔍 [LOAD] Search input found:', !!searchInput);
@@ -4460,9 +4463,13 @@ if (window.location.pathname === '/music') {
         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
         
+        // Reveal the field
+        searchInput.style.transition = 'opacity 0.2s ease';
+        searchInput.style.opacity = '1';
+        
         sessionStorage.removeItem('autoSearchGenre');
       }
-    }, 300); // Reduced from 1000ms
+    }, 100);
   }
 }
   
