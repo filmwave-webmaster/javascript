@@ -8431,7 +8431,7 @@ function initNavResizeOnScroll() {
 
     nav.style.height = compact ? '60px' : '105px';
     wrap.style.paddingTop = compact ? '60px' : '105px';
-    logo.style.width = compact ? '125px' : '200px';
+    logo.style.width = compact ? '150px' : '200px';
   }
 
   // bind once
