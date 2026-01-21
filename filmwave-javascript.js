@@ -4732,7 +4732,7 @@ if (typeof barba !== 'undefined') {
 
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
-
+  
   const g = window.musicPlayerPersistent;
 
 // === SIDEBAR MANAGEMENT ===
@@ -7990,7 +7990,6 @@ async function initDashboardTiles() {
   // Check if tiles already have data
   const firstTile = tiles[0];
   if (firstTile && firstTile.dataset.songId) {
-    document.body.classList.add('db-tiles-loaded');
     console.log('♻️ Dashboard tiles already initialized, skipping');
     return;
   }
@@ -8229,7 +8228,6 @@ async function initDashboardTiles() {
     });
   });
 
-  document.body.classList.add('db-tiles-loaded');
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
 
