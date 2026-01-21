@@ -56,13 +56,6 @@ if (window.location.pathname === '/music' && sessionStorage.getItem('autoSearchG
     parsed.searchQuery = '';
     localStorage.setItem('musicFilters', JSON.stringify(parsed));
   }
-  
-  // Hide search field immediately via CSS injection
-  const style = document.createElement('style');
-  style.id = 'temp-search-hide';
-  style.textContent = '.music-area-container .text-field { opacity: 0 !important; }';
-  document.head.appendChild(style);
-}
 
 /**
  * ============================================================
