@@ -4742,14 +4742,11 @@ const isDashboardPage = window.location.pathname === '/dashboard/dashboard';
 if (isDashboardPage) {
   initDashboardTiles();
   initDashboardPlaylists();
-} 
-
-// === FILTER PILL CODE ===          
-
-// Genre filter button handling - ONLY on dashboard
+  
+  // === FILTER PILL CODE ===          
+  // Genre filter button handling - ONLY on dashboard
   const filterButtons = document.querySelectorAll('.db-filter-pill');
   console.log('🔍 Found genre filter buttons:', filterButtons.length);
-
   filterButtons.forEach(button => {
     button.style.cursor = 'pointer';
     button.addEventListener('click', (e) => {
@@ -4788,8 +4785,7 @@ if (window.location.pathname === '/music') {
     }, 500);
   }
 }
-
-// === END FILTER PILL CODE ===        
+// === END FILTER PILL CODE ===     
   
   window.scrollTo(0, 0);
   
