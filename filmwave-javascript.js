@@ -7979,13 +7979,12 @@ console.log('🎵 Playlist System loaded');
    ============================================================ */
 
 async function initDashboardTiles() {
-  // ✅ PLACEHOLDER SWAP (START) — put this at the very top of the function
+
   const realWrap = document.querySelector('.db-song-tiles');
   const placeholderWrap = document.querySelector('.db-song-tiles-placeholder');
   if (realWrap) realWrap.style.display = 'none';
   if (placeholderWrap) placeholderWrap.style.display = 'block';
-  // ✅ PLACEHOLDER SWAP (END)
-
+  
   const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
   console.log(`🔍 Found ${tiles.length} dashboard tiles`);
   
@@ -7996,8 +7995,10 @@ async function initDashboardTiles() {
 
   // Check if tiles already have data
   const firstTile = tiles[0];
-  if (firstTile && firstTile.dataset.songId) {
+    if (firstTile && firstTile.dataset.songId) {
     console.log('♻️ Dashboard tiles already initialized, skipping');
+    if (placeholderWrap) placeholderWrap.style.display = 'none';
+    if (realWrap) realWrap.style.display = 'block';
     return;
   }
 
@@ -8213,11 +8214,6 @@ async function initDashboardTiles() {
     }
   });
 
-  // ✅ PLACEHOLDER SWAP (FINAL) — put this right before the final console.log
-  if (placeholderWrap) placeholderWrap.style.display = 'none';
-  if (realWrap) realWrap.style.display = 'block';
-  // ✅ PLACEHOLDER SWAP (END)
-
   // Listen for play/pause events to update icons
   document.addEventListener('audioStateChange', (e) => {
     const { songId, isPlaying } = e.detail;
@@ -8239,7 +8235,10 @@ async function initDashboardTiles() {
       }
     });
   });
-
+  
+  if (placeholderWrap) placeholderWrap.style.display = 'none';
+  if (realWrap) realWrap.style.display = 'block';
+  
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
 
