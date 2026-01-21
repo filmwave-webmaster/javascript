@@ -8228,6 +8228,9 @@ async function initDashboardTiles() {
     });
   });
 
+  document.querySelector('.db-song-tiles').style.display = 'block';
+  document.querySelector('.db-song-tiles-placeholder').style.display = 'none';
+  
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
 
