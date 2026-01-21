@@ -4995,10 +4995,6 @@ if (document.querySelector('.sortable-container') && typeof PlaylistManager !== 
     PlaylistManager.renderPlaylistsGrid?.();
   });
 }
-
-// Call Navigation height change
-applyNavResizeOnScroll('after-200');
-setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
       
 }, 200);
     
@@ -5030,23 +5026,6 @@ setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
           }
         } catch (e) {}
       }
-
-// Call Navigation height change
-applyNavResizeOnScroll('after-200');
-setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
-
-      (function forceNavStateAfterBarba() {
-  const run = (label) => {
-    if (typeof applyNavResizeOnScroll === 'function') applyNavResizeOnScroll(label);
-  };
-
-  run('barba-after-immediate');
-  requestAnimationFrame(() => run('barba-after-raf'));
-  setTimeout(() => run('barba-after-150'), 150);
-  setTimeout(() => run('barba-after-400'), 400);
-
-  setTimeout(() => window.dispatchEvent(new Event('scroll')), 50);
-})();
       
     }, 600);
     
@@ -5055,97 +5034,6 @@ setTimeout(() => applyNavResizeOnScroll('after-200+50'), 50);
     }]
   });
 }
-
-/* ============================================================
-   NAV RESIZE (Barba-safe)
-   Paste AFTER barba.init(...)
-   ============================================================ */
-
-(function initNavResizeSystem() {
-  if (window.__navResizeInstalled) return;
-  window.__navResizeInstalled = true;
-
-  function getNavEls() {
-    // If your nav is inside the current barba container, prefer that.
-    const container = document.querySelector('[data-barba="container"]');
-    const nav = (container && container.querySelector('.navigation')) || document.querySelector('.navigation');
-    const wrap = (container && container.querySelector('.global-nav-wrapper')) || document.querySelector('.global-nav-wrapper');
-    const logo = (container && container.querySelector('.nav-logo')) || document.querySelector('.nav-logo');
-    return { nav, wrap, logo };
-  }
-
-  function applyNavResizeOnScroll(reason = 'scroll') {
-    const { nav, wrap, logo } = getNavEls();
-    if (!nav || !wrap || !logo) return false;
-
-    // Set transitions once (don’t spam on every scroll)
-    if (!nav.dataset.navResizeTransitionSet) {
-      nav.style.transition = 'height 200ms ease';
-      wrap.style.transition = 'margin-top 200ms ease';
-      logo.style.transition = 'width 200ms ease';
-      nav.dataset.navResizeTransitionSet = '1';
-    }
-
-    const compact = window.scrollY > 0;
-
-    if (compact) {
-      nav.style.height = '60px';
-      wrap.style.marginTop = '60px';
-      logo.style.width = '150px';
-    } else {
-      nav.style.height = '';
-      wrap.style.marginTop = '';
-      logo.style.width = '';
-    }
-
-    // Uncomment if you want a single log:
-    // console.log('🧭 nav resize', reason, { path: location.pathname, y: scrollY });
-
-    return true;
-  }
-
-  function applyWithRetries(reason) {
-    let tries = 0;
-    function tick() {
-      tries++;
-      const ok = applyNavResizeOnScroll(reason + `#${tries}`);
-      if (ok) {
-        // Webflow IX2 can re-apply styles after init; re-hit a couple times
-        setTimeout(() => applyNavResizeOnScroll(reason + '+100'), 100);
-        setTimeout(() => applyNavResizeOnScroll(reason + '+300'), 300);
-        setTimeout(() => applyNavResizeOnScroll(reason + '+700'), 700);
-        return;
-      }
-      if (tries < 20) requestAnimationFrame(tick);
-    }
-    tick();
-  }
-
-  // Bind scroll ONCE
-  window.addEventListener('scroll', () => applyNavResizeOnScroll('scroll'), { passive: true });
-
-  // Initial run
-  applyWithRetries('load');
-
-  // ✅ Barba hooks (more reliable than custom events)
-  function hookBarba() {
-    const b = window.barba;
-    if (!b || !b.hooks) return;
-
-    if (window.__navResizeBarbaHooked) return;
-    window.__navResizeBarbaHooked = true;
-
-    b.hooks.afterEnter(() => applyWithRetries('barba.afterEnter'));
-    b.hooks.after(() => applyWithRetries('barba.after'));
-  }
-
-  hookBarba();
-
-  // If Barba loads later (rare), try again shortly
-  setTimeout(hookBarba, 0);
-  setTimeout(hookBarba, 200);
-})();
-
 
 /**
  * ============================================================
@@ -8523,3 +8411,82 @@ async function initDashboardPlaylists() {
     container.style.pointerEvents = '';
   }
 }
+
+/* ============================================================
+   NAVIGATION HEIGHT CHANGE (BARBA-SAFE, WEBFLOW-SAFE)
+   - No inline styles (Webflow/IX2 overwrites those)
+   - Injects CSS from JS + toggles a class
+   ============================================================ */
+
+(function initNavResizeSystem() {
+  if (window.__fwNavResizeInstalled) return;
+  window.__fwNavResizeInstalled = true;
+
+  const STYLE_ID = 'fw-nav-resize-style';
+  const COMPACT_CLASS = 'fw-nav-compact';
+
+  function injectStyleOnce() {
+    if (document.getElementById(STYLE_ID)) return;
+
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = `
+      .${COMPACT_CLASS} .navigation {
+        height: 60px !important;
+        transition: height 200ms ease !important;
+      }
+      .${COMPACT_CLASS} .global-nav-wrapper {
+        margin-top: 60px !important;
+        transition: margin-top 200ms ease !important;
+      }
+      .${COMPACT_CLASS} .nav-logo {
+        width: 150px !important;
+        transition: width 200ms ease !important;
+      }
+
+      /* top-of-page uses your Webflow values naturally */
+      .navigation { transition: height 200ms ease !important; }
+      .global-nav-wrapper { transition: margin-top 200ms ease !important; }
+      .nav-logo { transition: width 200ms ease !important; }
+    `;
+    document.head.appendChild(style);
+    console.log('✅ fw nav resize CSS injected');
+  }
+
+  function apply(reason = 'scroll') {
+    injectStyleOnce();
+
+    const nav = document.querySelector('.navigation');
+    const wrap = document.querySelector('.global-nav-wrapper');
+    const logo = document.querySelector('.nav-logo');
+
+    // If the nav doesn’t exist on some pages, just do nothing
+    if (!nav || !wrap || !logo) {
+      // optional debug:
+      // console.log('🧭 nav resize skipped', reason, { nav: !!nav, wrap: !!wrap, logo: !!logo });
+      return;
+    }
+
+    const compact = window.scrollY > 0;
+    document.documentElement.classList.toggle(COMPACT_CLASS, compact);
+
+    // optional debug:
+    // console.log('🧭 nav resize applied', reason, { compact, y: window.scrollY });
+  }
+
+  // Bind once
+  window.addEventListener('scroll', () => apply('scroll'), { passive: true });
+
+  // Initial run
+  apply('init');
+  requestAnimationFrame(() => apply('init+raf'));
+  setTimeout(() => apply('init+50'), 50);
+
+  // Re-apply after Barba swaps DOM (call this from your Barba hook)
+  window.addEventListener('barbaAfterTransition', () => {
+    apply('barbaAfterTransition');
+    requestAnimationFrame(() => apply('barbaAfterTransition+raf'));
+    setTimeout(() => apply('barbaAfterTransition+50'), 50);
+    setTimeout(() => apply('barbaAfterTransition+200'), 200);
+  });
+})();
