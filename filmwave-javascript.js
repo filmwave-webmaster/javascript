@@ -4977,17 +4977,17 @@ if (shouldHaveSidebar && sidebar) {
       });
 
    // Call shared Memberstack handler function
-      initializeMemberstackHandlers();
-      
-      initializeProfileSortable(); 
-      initializePlaylistOverlay();  
-         
-    // Dashboard Initialization
-  if (window.location.pathname.startsWith('/dashboard/')) {
-    if (typeof initDashboardPlaceholderSwap === 'function') initDashboardPlaceholderSwap();
-    if (typeof initDashboardTiles === 'function') initDashboardTiles();
-    if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
-  }
+initializeMemberstackHandlers();
+initializeProfileSortable(); 
+initializePlaylistOverlay();  
+
+// Dashboard Initialization
+if (window.location.pathname.startsWith('/dashboard/')) {
+  if (typeof initDashboardPlaceholderSwap === 'function') initDashboardPlaceholderSwap();
+  if (typeof initDashboardTiles === 'function') initDashboardTiles();
+  if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
+  if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists(); // ← add this
+}
 
 }, 200);
     
@@ -8290,13 +8290,6 @@ async function initDashboardPlaylists() {
   const container = document.querySelector('.db-sortable-container');
   if (!container) {
     console.log('ℹ️ No dashboard playlists container found');
-    return;
-  }
-
-  // Check if playlists are already rendered
-  const existingCards = container.querySelectorAll('.playlist-card-template:not(.is-template)');
-  if (existingCards.length > 0) {
-    console.log('♻️ Dashboard playlists already rendered, skipping');
     return;
   }
 
