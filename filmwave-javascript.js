@@ -4468,6 +4468,13 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
+    // ✅ IMMEDIATELY hide the song list
+    const container = document.querySelector('.music-list-wrapper');
+    if (container) {
+      container.style.opacity = '0';
+      container.style.visibility = 'hidden';
+    }
+    
     // Wait for songs to load, then filter
     setTimeout(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
@@ -4503,12 +4510,19 @@ if (window.location.pathname === '/music') {
           
           console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
           
-          // ✅ ONLY remove flag AFTER filtering completes
+          // ✅ Fade in the filtered results
+          if (container) {
+            container.style.transition = 'opacity 0.3s ease, visibility 0.3s ease';
+            container.style.opacity = '1';
+            container.style.visibility = 'visible';
+          }
+          
+          // ✅ ONLY remove flags AFTER everything completes
           sessionStorage.removeItem('autoSearchGenre');
           sessionStorage.removeItem('showPlaceholders');
-        }, 1000); // Wait 1 second for songs to render
+        }, 1000);
       }
-    }, 500); // Wait 0.5 seconds for page to load
+    }, 500);
   }
 }
   
