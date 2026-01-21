@@ -4478,6 +4478,13 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
+    // ✅ Show clear button immediately
+    const clearBtn = document.querySelector('.circle-x');
+    if (clearBtn) {
+      clearBtn.style.display = 'flex';
+      clearBtn.style.opacity = '1';
+    }
+    
     // ✅ Set up a mutation observer to filter AS SOON AS songs appear
     const observer = new MutationObserver((mutations) => {
       const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
@@ -4851,40 +4858,7 @@ const isDashboardPage = window.location.pathname === '/dashboard/dashboard';
 if (isDashboardPage) {
   initDashboardTiles();
   initDashboardPlaylists();
-  
-// === FILTER PILL CODE ===          
-// Genre filter button handling - ONLY on dashboard
-const filterButtons = document.querySelectorAll('.db-filter-pill');
-console.log('🔍 Found genre filter buttons:', filterButtons.length);
-
-filterButtons.forEach(button => {
-  // Remove old listeners by cloning
-  const newButton = button.cloneNode(true);
-  button.parentNode.replaceChild(newButton, button);
-  
-  newButton.style.cursor = 'pointer';
-  newButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const genre = newButton.textContent.trim();
-    
-    console.log('🎯 Filter button clicked:', genre);
-    
-    // Clear MASTER_DATA to force fresh load with placeholders
-    window.musicPlayerPersistent.MASTER_DATA = [];
-    
-    // ✅ Force placeholders to show on next page
-    sessionStorage.setItem('showPlaceholders', 'true');
-    
-    sessionStorage.setItem('autoSearchGenre', genre);
-    console.log('💾 Stored in sessionStorage:', genre);
-    
-    console.log('🚀 Navigating to /music');
-    window.location.href = '/music';
-  });
-});
-}  
-// === END FILTER PILL CODE ===   
+  initDashboardFilterPills();
   
   window.scrollTo(0, 0);
   
@@ -8496,4 +8470,16 @@ async function initDashboardPlaylists() {
     container.style.opacity = '1';
     container.style.pointerEvents = '';
   }
+}
+
+} finally {
+    container.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      el.style.display = 'none';
+    });
+    container.style.opacity = '1';
+    container.style.pointerEvents = '';
+  }
+  
+  // Initialize filter pills
+  setTimeout(() => initDashboardFilterPills(), 500);
 }
