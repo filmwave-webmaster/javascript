@@ -4982,7 +4982,14 @@ if (shouldHaveSidebar && sidebar) {
       initializeProfileSortable(); 
       initializePlaylistOverlay();  
          
-    }, 200);
+    // Dashboard Initialization
+  if (window.location.pathname.startsWith('/dashboard/')) {
+    if (typeof initDashboardPlaceholderSwap === 'function') initDashboardPlaceholderSwap();
+    if (typeof initDashboardTiles === 'function') initDashboardTiles();
+    if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
+  }
+
+}, 200);
     
     window.dispatchEvent(new Event('scroll'));
     window.dispatchEvent(new Event('resize'));
