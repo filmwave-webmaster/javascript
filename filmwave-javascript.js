@@ -8246,6 +8246,7 @@ if (ph) {
 }
 
 document.querySelector('.db-song-tiles').style.visibility = 'visible';
+document.querySelector('.db-song-tiles').style.height = 'auto';
 document.querySelector('.db-song-tiles-placeholder').style.visibility = 'hidden';
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
