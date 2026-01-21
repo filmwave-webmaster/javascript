@@ -4428,26 +4428,32 @@ function initUniversalSearch() {
 window.addEventListener('load', () => {
   initMusicPage();
 
-  // Check for auto-search on initial load
-  if (window.location.pathname === '/music') {
-    const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
-    console.log('🔍 [LOAD] Checking for auto-search genre:', autoSearchGenre);
-    
-    if (autoSearchGenre) {
-      setTimeout(() => {
-        const searchInput = document.querySelector('.music-area-container .text-field');
-        console.log('🔍 [LOAD] Search input found:', !!searchInput);
-        
-        if (searchInput) {
-          searchInput.value = autoSearchGenre;
-          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-          console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
-          
-          sessionStorage.removeItem('autoSearchGenre');
-        }
-      }, 1000); // Longer delay for initial load
+ // Check for auto-search on initial load
+if (window.location.pathname === '/music') {
+  const autoSearchGenre = sessionStorage.getItem('autoSearchGenre');
+  console.log('🔍 [LOAD] Checking for auto-search genre:', autoSearchGenre);
+  
+  if (autoSearchGenre) {
+    // Clear search field immediately
+    const searchInput = document.querySelector('.music-area-container .text-field');
+    if (searchInput) {
+      searchInput.value = '';
     }
+    
+    setTimeout(() => {
+      const searchInput = document.querySelector('.music-area-container .text-field');
+      console.log('🔍 [LOAD] Search input found:', !!searchInput);
+      
+      if (searchInput) {
+        searchInput.value = autoSearchGenre;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log('✅ [LOAD] Auto-searched for:', autoSearchGenre);
+        
+        sessionStorage.removeItem('autoSearchGenre');
+      }
+    }, 300); // Reduced from 1000ms
   }
+}
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
