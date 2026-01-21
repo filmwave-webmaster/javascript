@@ -49,12 +49,13 @@
 
 // Clear search field immediately if auto-search is pending
 if (window.location.pathname === '/music' && sessionStorage.getItem('autoSearchGenre')) {
-  window.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.querySelector('.music-area-container .text-field');
-    if (searchInput) {
-      searchInput.value = '';
-    }
-  });
+  // Clear the localStorage filter state immediately
+  const filters = localStorage.getItem('musicFilters');
+  if (filters) {
+    const parsed = JSON.parse(filters);
+    parsed.searchQuery = '';
+    localStorage.setItem('musicFilters', JSON.stringify(parsed));
+  }
 }
 
 /**
