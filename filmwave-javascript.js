@@ -4468,24 +4468,47 @@ if (window.location.pathname === '/music') {
   if (autoSearchGenre) {
     console.log('🔍 [LOAD] Auto-search pending:', autoSearchGenre);
     
+    // Wait for songs to load, then filter
     setTimeout(() => {
       const searchInput = document.querySelector('.music-area-container .text-field');
       if (searchInput) {
         searchInput.value = autoSearchGenre;
+        console.log('✅ [LOAD] Set search value:', autoSearchGenre);
         
-        // ✅ TRIGGER THE FILTER IMMEDIATELY
-        if (typeof applyFilters === 'function') {
-          applyFilters();
-          console.log('✅ [LOAD] Applied filter for:', autoSearchGenre);
-        } else {
-          // Fallback: manually dispatch input event
-          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-          console.log('✅ [LOAD] Dispatched input event for:', autoSearchGenre);
-        }
-        
-        sessionStorage.removeItem('autoSearchGenre');
+        // Wait a bit more for songs to render, then filter
+        setTimeout(() => {
+          const query = autoSearchGenre.toLowerCase().trim();
+          const keywords = query.split(/\s+/).filter(k => k.length > 0);
+          const songCards = document.querySelectorAll('.song-wrapper');
+          
+          console.log(`🔍 Filtering ${songCards.length} cards for: "${query}"`);
+          
+          let visibleCount = 0;
+          songCards.forEach(card => {
+            const songTitle = card.querySelector('.song-name')?.textContent.toLowerCase() || '';
+            const artistName = card.querySelector('.artist-name')?.textContent.toLowerCase() || '';
+            const mood = (card.getAttribute('data-mood') || '').toLowerCase();
+            const genre = (card.getAttribute('data-genre') || '').toLowerCase();
+            const allText = `${songTitle} ${artistName} ${mood} ${genre}`;
+            
+            const matches = keywords.every(k => allText.includes(k));
+            
+            if (matches) {
+              card.style.display = '';
+              visibleCount++;
+            } else {
+              card.style.display = 'none';
+            }
+          });
+          
+          console.log(`✅ Showing ${visibleCount} of ${songCards.length} songs`);
+          
+          // ✅ ONLY remove flag AFTER filtering completes
+          sessionStorage.removeItem('autoSearchGenre');
+          sessionStorage.removeItem('showPlaceholders');
+        }, 1000); // Wait 1 second for songs to render
       }
-    }, 200); // Increased delay to ensure filters are initialized
+    }, 500); // Wait 0.5 seconds for page to load
   }
 }
   
