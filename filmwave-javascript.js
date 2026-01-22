@@ -4670,6 +4670,14 @@ if (typeof barba !== 'undefined') {
     g.sidebarClone = incomingSidebar.cloneNode(true);
     console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
   }
+
+  // Hide sidebar if transitioning from no-sidebar to sidebar page
+  const currentSidebar = data.current.container.querySelector('.sidebar-nav');
+  if (!currentSidebar && incomingSidebar) {
+    incomingSidebar.style.opacity = '0';
+    incomingSidebar.style.transition = 'none';
+    console.log('🫥 Hiding incoming sidebar during transition');
+  }
       
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
@@ -4737,16 +4745,26 @@ if (typeof barba !== 'undefined') {
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 const sidebar = document.querySelector('.sidebar-nav');
+const prevSidebar = data.current.container.querySelector('.sidebar-nav');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
+  
+  // Fade in sidebar if came from no-sidebar page
+  if (!prevSidebar) {
+    requestAnimationFrame(() => {
+      sidebar.style.transition = 'opacity 0.3s ease';
+      sidebar.style.opacity = '1';
+      console.log('✨ Fading in sidebar');
+    });
+  }
 } else if (!shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
   console.log('🚫 Sidebar hidden');
 }
-// === END SIDEBAR MANAGEMENT ===
+// === END SIDEBAR MANAGEMENT ===      
   
   window.scrollTo(0, 0);
   
