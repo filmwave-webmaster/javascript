@@ -4770,7 +4770,13 @@ if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
   console.log('🚫 Sidebar hidden');
 }
-// === END SIDEBAR MANAGEMENT ===      
+// === END SIDEBAR MANAGEMENT ===  
+
+  // Show loading placeholders after transition completes
+const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
+loadingPlaceholders.forEach(placeholder => {
+  placeholder.style.display = '';
+});
   
   window.scrollTo(0, 0);
   
