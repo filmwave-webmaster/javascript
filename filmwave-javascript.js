@@ -4420,6 +4420,27 @@ function initUniversalSearch() {
   updateLock();
 })();
 
+/**
+ * ============================================================
+ * BARBA SIDEBAR TIMING FIX HELPERS
+ * ============================================================
+ */
+
+function fwPageNeedsSidebar(container) {
+  return !!(container && container.querySelector('.sidebar-nav'));
+}
+
+function fwHideSidebar(tag = '') {
+  const sidebar = document.querySelector('.sidebar-nav');
+  if (sidebar) sidebar.style.display = 'none';
+  console.log('🧱 Sidebar hidden', tag);
+}
+
+function fwShowSidebar(tag = '') {
+  const sidebar = document.querySelector('.sidebar-nav');
+  if (sidebar) sidebar.style.display = '';
+  console.log('🧱 Sidebar shown', tag);
+}
 
 /**
  * ============================================================
@@ -4621,6 +4642,10 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
     beforeLeave(data) {
+
+  const sidebar = document.querySelector('.sidebar-nav');
+  if (sidebar) sidebar.style.display = 'none';
+      
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
@@ -4659,22 +4684,21 @@ if (typeof barba !== 'undefined') {
   document.body.style.height = '';
   return Promise.resolve();
 },
+      
+ beforeEnter(data) {
+  const g = window.musicPlayerPersistent;
 
-     beforeEnter(data) {
-
-       const g = window.musicPlayerPersistent;
-  
-  // Capture sidebar from incoming page BEFORE Barba processes it
   const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
-  
+  if (incomingSidebar) incomingSidebar.style.display = 'none';
+
+  // Capture sidebar from incoming page BEFORE Barba processes it
   if (incomingSidebar && !g.sidebarClone) {
-    g.sidebarClone = incomingSidebar.cloneNode(true);
     console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
   }
-      
+
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-       
+
   // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
   let style = document.getElementById(styleId);
@@ -4683,7 +4707,7 @@ if (typeof barba !== 'undefined') {
     style.id = styleId;
     document.head.appendChild(style);
   }
-       
+
   style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
   if (!isMusicPage) {
@@ -4691,7 +4715,7 @@ if (typeof barba !== 'undefined') {
     document.documentElement.style.overflow = 'visible';
     document.body.style.height = 'auto';
     nextContainer.style.overflow = 'visible';
-    
+
     const mainContent = nextContainer.querySelector('.main-content');
     if (mainContent) mainContent.style.overflow = 'visible';
   } else {
@@ -4699,12 +4723,17 @@ if (typeof barba !== 'undefined') {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.height = '100vh';
     nextContainer.style.overflow = 'hidden';
-    
+
     const musicArea = nextContainer.querySelector('.music-area-wrapper');
     if (musicArea) musicArea.style.overflow = 'hidden';
   }
 },
 
+afterEnter(data) {
+  const sidebar = document.querySelector('.sidebar-nav');
+  if (sidebar) sidebar.style.display = '';
+},
+      
       enter(data) {
         removeDuplicateIds();
 
