@@ -4752,14 +4752,15 @@ if (typeof barba !== 'undefined') {
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 const sidebar = document.querySelector('.sidebar-nav');
 const prevSidebar = data.current.container.querySelector('.sidebar-nav');
+const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
   
-  // Fade in sidebar if came from no-sidebar page
-  if (!prevSidebar) {
+  // Only fade in if: (1) came from no-sidebar page OR (2) fresh page load
+  if (!prevSidebar && !isBarbaNavigation) {
     requestAnimationFrame(() => {
       sidebar.style.transition = 'opacity 0.3s ease';
       sidebar.style.opacity = '1';
