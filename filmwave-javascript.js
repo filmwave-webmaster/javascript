@@ -8052,20 +8052,34 @@ function revealDashboardTiles() {
 // 1) first load
 document.addEventListener('DOMContentLoaded', () => {
   initDashboardPlaceholderSwap();
-});
-
-// Fade in sidebar on fresh page load
+  
+  // Fade in sidebar on fresh page load
   if (window.location.pathname.startsWith('/dashboard/')) {
     const sidebar = document.querySelector('.sidebar-nav');
+    const welcomeText = document.querySelector('.dashboard-welcome-text');
+    
     if (sidebar) {
       sidebar.style.opacity = '0';
       sidebar.style.transition = 'none';
-      requestAnimationFrame(() => {
+    }
+    
+    if (welcomeText) {
+      welcomeText.style.opacity = '0';
+      welcomeText.style.transition = 'none';
+    }
+    
+    requestAnimationFrame(() => {
+      if (sidebar) {
         sidebar.style.transition = 'opacity 0.3s ease';
         sidebar.style.opacity = '1';
-      });
-    }
+      }
+      if (welcomeText) {
+        welcomeText.style.transition = 'opacity 0.3s ease';
+        welcomeText.style.opacity = '1';
+      }
+    });
   }
+});
 
 // 2) barba transitions
 document.addEventListener('barbaAfterTransition', () => {
