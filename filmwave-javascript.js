@@ -4678,6 +4678,12 @@ if (typeof barba !== 'undefined') {
     incomingSidebar.style.transition = 'none';
     console.log('🫥 Hiding incoming sidebar during transition');
   }
+
+  // Hide loading placeholders during transition
+  const loadingPlaceholders = data.next.container.querySelectorAll('.loading-placeholder');
+  loadingPlaceholders.forEach(placeholder => {
+    placeholder.style.display = 'none';
+  });
       
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
