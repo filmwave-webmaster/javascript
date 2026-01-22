@@ -4643,7 +4643,7 @@ if (typeof barba !== 'undefined') {
       
     beforeLeave(data) {
 
-  const sidebar = document.querySelector('.sidebar-nav');
+  const sidebar = data.current.container.querySelector('.sidebar-nav');
   if (sidebar) sidebar.style.display = 'none';
       
   const g = window.musicPlayerPersistent;
@@ -4688,14 +4688,9 @@ if (typeof barba !== 'undefined') {
  beforeEnter(data) {
   const g = window.musicPlayerPersistent;
 
-  const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
-  if (incomingSidebar) incomingSidebar.style.display = 'none';
-
-  // Capture sidebar from incoming page BEFORE Barba processes it
-  if (incomingSidebar && !g.sidebarClone) {
-    console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
-  }
-
+    const sidebar = data.next.container.querySelector('.sidebar-nav');
+  if (sidebar) sidebar.style.display = 'none';
+   
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
 
@@ -4730,7 +4725,7 @@ if (typeof barba !== 'undefined') {
 },
 
 afterEnter(data) {
-  const sidebar = document.querySelector('.sidebar-nav');
+  const sidebar = data.next.container.querySelector('.sidebar-nav');
   if (sidebar) sidebar.style.display = '';
 },
       
