@@ -4752,15 +4752,14 @@ if (typeof barba !== 'undefined') {
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 const sidebar = document.querySelector('.sidebar-nav');
 const prevSidebar = data.current.container.querySelector('.sidebar-nav');
-const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
   
-  // Only fade in if: (1) came from no-sidebar page OR (2) fresh page load
-  if (!prevSidebar && !isBarbaNavigation) {
+  // Only fade in if came from no-sidebar page (not dashboard-to-dashboard)
+  if (!prevSidebar) {
     requestAnimationFrame(() => {
       sidebar.style.transition = 'opacity 0.3s ease';
       sidebar.style.opacity = '1';
@@ -4771,7 +4770,7 @@ if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
   console.log('🚫 Sidebar hidden');
 }
-// === END SIDEBAR MANAGEMENT ===  
+// === END SIDEBAR MANAGEMENT === 
 
   // Show loading placeholders after transition completes
 const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
