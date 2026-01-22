@@ -8054,6 +8054,19 @@ document.addEventListener('DOMContentLoaded', () => {
   initDashboardPlaceholderSwap();
 });
 
+// Fade in sidebar on fresh page load
+  if (window.location.pathname.startsWith('/dashboard/')) {
+    const sidebar = document.querySelector('.sidebar-nav');
+    if (sidebar) {
+      sidebar.style.opacity = '0';
+      sidebar.style.transition = 'none';
+      requestAnimationFrame(() => {
+        sidebar.style.transition = 'opacity 0.3s ease';
+        sidebar.style.opacity = '1';
+      });
+    }
+  }
+
 // 2) barba transitions
 document.addEventListener('barbaAfterTransition', () => {
   initDashboardPlaceholderSwap();
