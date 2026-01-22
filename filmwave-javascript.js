@@ -8051,6 +8051,15 @@ function revealDashboardTiles() {
 
 // 1) first load
 document.addEventListener('DOMContentLoaded', () => {
+  // Set welcome text to hidden immediately (before it gets populated)
+  if (window.location.pathname.startsWith('/dashboard/')) {
+    const welcomeText = document.querySelector('.dashboard-welcome-text');
+    if (welcomeText) {
+      welcomeText.style.opacity = '0';
+      welcomeText.style.transition = 'none';
+    }
+  }
+  
   initDashboardPlaceholderSwap();
   
   // Fade in sidebar on fresh page load
@@ -8061,11 +8070,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebar) {
       sidebar.style.opacity = '0';
       sidebar.style.transition = 'none';
-    }
-    
-    if (welcomeText) {
-      welcomeText.style.opacity = '0';
-      welcomeText.style.transition = 'none';
     }
     
     requestAnimationFrame(() => {
