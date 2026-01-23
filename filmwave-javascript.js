@@ -8052,7 +8052,8 @@ function revealDashboardTiles() {
 // 1) first load
 document.addEventListener('DOMContentLoaded', () => {
   initDashboardPlaceholderSwap();
-  
+});
+
 // 2) barba transitions
 document.addEventListener('barbaAfterTransition', () => {
   initDashboardPlaceholderSwap();
