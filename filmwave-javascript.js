@@ -4774,11 +4774,13 @@ const prevSidebar = data.current.container.querySelector('.sidebar-nav');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
+  sidebar.style.opacity = '1';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
   
   // Only fade in if came from no-sidebar page (not dashboard-to-dashboard)
   if (!prevSidebar) {
+    sidebar.style.opacity = '0';
     requestAnimationFrame(() => {
       sidebar.style.transition = 'opacity 0.3s ease';
       sidebar.style.opacity = '1';
@@ -4786,8 +4788,13 @@ if (shouldHaveSidebar && sidebar) {
     });
   }
 } else if (!shouldHaveSidebar && sidebar) {
-  sidebar.style.visibility = 'hidden';
-  console.log('🚫 Sidebar hidden');
+  // Fade out sidebar when leaving dashboard
+  sidebar.style.transition = 'opacity 0.3s ease';
+  sidebar.style.opacity = '0';
+  setTimeout(() => {
+    sidebar.style.visibility = 'hidden';
+  }, 300);
+  console.log('🚫 Sidebar fading out');
 }
 // === END SIDEBAR MANAGEMENT === 
 
