@@ -4648,10 +4648,13 @@ if (typeof barba !== 'undefined') {
     g.currentWavesurfer = null;
   }
 
- // Hide old sidebar to prevent doubling effect
+ // Hide old sidebar links to prevent doubling, keep welcome text visible
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
   if (oldSidebar) {
-    oldSidebar.style.opacity = '0';
+    const navBlocks = oldSidebar.querySelectorAll('.db-sidebar-nav, .db-sidebar-account-nav');
+    navBlocks.forEach(block => {
+      block.style.visibility = 'hidden';
+    });
   }
   
   const playerWrapper = document.querySelector('.music-player-wrapper');
