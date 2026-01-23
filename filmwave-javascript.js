@@ -4647,6 +4647,12 @@ if (typeof barba !== 'undefined') {
     g.persistedWaveformContainer = null;
     g.currentWavesurfer = null;
   }
+
+  // Hide old sidebar to prevent doubling effect
+  const oldSidebar = data.current.container.querySelector('.sidebar-nav');
+  if (oldSidebar) {
+    oldSidebar.style.opacity = '0';
+  }
   
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
