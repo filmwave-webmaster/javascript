@@ -8051,40 +8051,8 @@ function revealDashboardTiles() {
 
 // 1) first load
 document.addEventListener('DOMContentLoaded', () => {
-  // Set welcome text to hidden immediately (before it gets populated)
-  if (window.location.pathname.startsWith('/dashboard/')) {
-    const welcomeText = document.querySelector('.dashboard-welcome-text');
-    if (welcomeText) {
-      welcomeText.style.opacity = '0';
-      welcomeText.style.transition = 'none';
-    }
-  }
-  
   initDashboardPlaceholderSwap();
   
-  // Fade in sidebar on fresh page load
-  if (window.location.pathname.startsWith('/dashboard/')) {
-    const sidebar = document.querySelector('.sidebar-nav');
-    const welcomeText = document.querySelector('.dashboard-welcome-text');
-    
-    if (sidebar) {
-      sidebar.style.opacity = '0';
-      sidebar.style.transition = 'none';
-    }
-    
-    requestAnimationFrame(() => {
-      if (sidebar) {
-        sidebar.style.transition = 'opacity 0.3s ease';
-        sidebar.style.opacity = '1';
-      }
-      if (welcomeText) {
-        welcomeText.style.transition = 'opacity 0.3s ease';
-        welcomeText.style.opacity = '1';
-      }
-    });
-  }
-});
-
 // 2) barba transitions
 document.addEventListener('barbaAfterTransition', () => {
   initDashboardPlaceholderSwap();
