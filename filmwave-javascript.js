@@ -8362,6 +8362,13 @@ async function initDashboardPlaylists() {
     return;
   }
 
+  // Prevent multiple simultaneous runs
+  if (container.dataset.loading === 'true') {
+    console.log('⏸️ Playlists already loading, skipping...');
+    return;
+  }
+  container.dataset.loading = 'true';
+
   const template = container.querySelector('.playlist-card-template.is-template');
   if (!template) {
     console.log('❌ No playlist template found');
