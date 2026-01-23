@@ -8393,8 +8393,8 @@ async function initDashboardPlaylists() {
 
     console.log('📊 Showing first 4 playlists');
 
-    // Clear existing cards
-    container.querySelectorAll('.playlist-card-template').forEach((card) => {
+    // Clear existing cards (excluding template)
+    container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
       card.remove();
     });
 
