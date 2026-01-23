@@ -5050,13 +5050,6 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
   if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists();
 }
-
-// Playlists page initialization (with user refresh)
-if (document.querySelector('.sortable-container') && typeof PlaylistManager !== 'undefined') {
-  PlaylistManager.getUserId?.().then(() => {
-    PlaylistManager.renderPlaylistsGrid?.();
-  });
-}
       
 }, 200);
     
@@ -8361,13 +8354,6 @@ async function initDashboardPlaylists() {
     console.log('ℹ️ No dashboard playlists container found');
     return;
   }
-
-  // Prevent multiple simultaneous runs
-  if (container.dataset.loading === 'true') {
-    console.log('⏸️ Playlists already loading, skipping...');
-    return;
-  }
-  container.dataset.loading = 'true';
 
   const template = container.querySelector('.playlist-card-template.is-template');
   if (!template) {
