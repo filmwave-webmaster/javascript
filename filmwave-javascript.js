@@ -4648,15 +4648,12 @@ if (typeof barba !== 'undefined') {
     g.currentWavesurfer = null;
   }
 
-   // Hide old sidebar links/items to prevent doubling, but keep welcome text visible
+ // Hide old sidebar links/items to prevent doubling, but keep welcome text visible
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
   if (oldSidebar) {
-    const welcomeText = oldSidebar.querySelector('.dashboard-welcome-text');
-    // Hide all sidebar children except welcome text
-    Array.from(oldSidebar.children).forEach(child => {
-      if (child !== welcomeText && !child.contains(welcomeText)) {
-        child.style.opacity = '0';
-      }
+    const links = oldSidebar.querySelectorAll('.sidebar-link, .sidebar-nav-link, a');
+    links.forEach(link => {
+      link.style.opacity = '0';
     });
   }
   
