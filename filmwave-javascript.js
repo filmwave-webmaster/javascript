@@ -4647,15 +4647,6 @@ if (typeof barba !== 'undefined') {
     g.persistedWaveformContainer = null;
     g.currentWavesurfer = null;
   }
-
-  // Hide old sidebar links to prevent doubling, keep welcome text visible
-  const oldSidebar = data.current.container.querySelector('.sidebar-nav');
-  if (oldSidebar) {
-    const navBlocks = oldSidebar.querySelectorAll('.db-sidebar-nav, .db-sidebar-account-nav');
-    navBlocks.forEach(block => {
-      block.style.visibility = 'hidden';
-    });
-  }
       
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
