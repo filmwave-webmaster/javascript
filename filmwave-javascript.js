@@ -8362,7 +8362,7 @@ async function initDashboardPlaylists() {
     return;
   }
 
-  const template = container.querySelector('.playlist-card-template');
+  const template = container.querySelector('.playlist-card-template.is-template');
   if (!template) {
     console.log('❌ No playlist template found');
     return;
@@ -8370,13 +8370,10 @@ async function initDashboardPlaylists() {
 
   console.log('🎵 Initializing dashboard playlists...');
 
-  // Clear existing cards FIRST (before removing template)
-  const existingCards = Array.from(container.querySelectorAll('.playlist-card-template'));
-  existingCards.forEach((card) => {
-    if (card !== template) {
-      card.remove();
-    }
-  });
+  // Clear ALL non-template cards
+container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
+  card.remove();
+});
 
   // Remove template from DOM temporarily
   const templateParent = template.parentNode;
