@@ -4647,6 +4647,19 @@ if (typeof barba !== 'undefined') {
     g.persistedWaveformContainer = null;
     g.currentWavesurfer = null;
   }
+
+ // Persist welcome message across transitions
+  const oldWelcome = data.current.container.querySelector('.dashboard-welcome-text');
+  if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
+    g.persistedWelcome = oldWelcome.cloneNode(true);
+    g.persistedWelcome.style.position = 'fixed';
+    g.persistedWelcome.style.zIndex = '10000';
+    // Copy computed position
+    const rect = oldWelcome.getBoundingClientRect();
+    g.persistedWelcome.style.top = rect.top + 'px';
+    g.persistedWelcome.style.left = rect.left + 'px';
+    document.body.appendChild(g.persistedWelcome);
+  }     
       
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
@@ -4771,6 +4784,12 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
+
+// Remove persisted welcome and restore from new page
+  if (g.persistedWelcome) {
+    g.persistedWelcome.remove();
+    g.persistedWelcome = null;
+  }        
 
   // Show loading placeholders after transition completes
 const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
