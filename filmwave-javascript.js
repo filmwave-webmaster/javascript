@@ -4661,11 +4661,19 @@ if (typeof barba !== 'undefined') {
     document.body.appendChild(g.persistedWelcome);
   } 
 
-   // Hide old sidebar to prevent doubling
+   // Hide old sidebar to prevent doubling (fade out if going to non-dashboard)
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
   if (oldSidebar) {
-    oldSidebar.style.opacity = '0';
-  }    
+    const nextUrl = data.next.url.path;
+    const goingToNonDashboard = !nextUrl.startsWith('/dashboard/');
+    
+    if (goingToNonDashboard) {
+      oldSidebar.style.transition = 'opacity 0.3s ease';
+      oldSidebar.style.opacity = '0';
+    } else {
+      oldSidebar.style.opacity = '0';
+    }
+  }   
       
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
@@ -4774,13 +4782,11 @@ const prevSidebar = data.current.container.querySelector('.sidebar-nav');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
-  sidebar.style.opacity = '1';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
   
   // Only fade in if came from no-sidebar page (not dashboard-to-dashboard)
   if (!prevSidebar) {
-    sidebar.style.opacity = '0';
     requestAnimationFrame(() => {
       sidebar.style.transition = 'opacity 0.3s ease';
       sidebar.style.opacity = '1';
@@ -4788,13 +4794,8 @@ if (shouldHaveSidebar && sidebar) {
     });
   }
 } else if (!shouldHaveSidebar && sidebar) {
-  // Fade out sidebar when leaving dashboard
-  sidebar.style.transition = 'opacity 0.3s ease';
-  sidebar.style.opacity = '0';
-  setTimeout(() => {
-    sidebar.style.visibility = 'hidden';
-  }, 300);
-  console.log('🚫 Sidebar fading out');
+  sidebar.style.visibility = 'hidden';
+  console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
 
