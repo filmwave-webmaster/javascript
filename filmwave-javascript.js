@@ -4648,22 +4648,10 @@ if (typeof barba !== 'undefined') {
     g.currentWavesurfer = null;
   }
 
- // Hide old sidebar links/items to prevent doubling, but keep welcome text visible
+ // Hide old sidebar to prevent doubling effect
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
   if (oldSidebar) {
-    const links = oldSidebar.querySelectorAll('.sidebar-link, .sidebar-nav-link, a');
-    links.forEach(link => {
-      link.style.opacity = '0';
-    });
-    
-    // Also hide the nav blocks when leaving dashboard
-    const nextHasSidebar = data.next.container.querySelector('.sidebar-nav');
-    if (!nextHasSidebar) {
-      const navBlocks = oldSidebar.querySelectorAll('.db-sidebar-nav, .db-sidebar-account-nav');
-      navBlocks.forEach(block => {
-        block.style.opacity = '0';
-      });
-    }
+    oldSidebar.style.opacity = '0';
   }
   
   const playerWrapper = document.querySelector('.music-player-wrapper');
