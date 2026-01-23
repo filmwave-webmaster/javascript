@@ -4655,6 +4655,15 @@ if (typeof barba !== 'undefined') {
     links.forEach(link => {
       link.style.opacity = '0';
     });
+    
+    // Also hide the nav blocks when leaving dashboard
+    const nextHasSidebar = data.next.container.querySelector('.sidebar-nav');
+    if (!nextHasSidebar) {
+      const navBlocks = oldSidebar.querySelectorAll('.db-sidebar-nav, .db-sidebar-account-nav');
+      navBlocks.forEach(block => {
+        block.style.opacity = '0';
+      });
+    }
   }
   
   const playerWrapper = document.querySelector('.music-player-wrapper');
