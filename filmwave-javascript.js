@@ -8370,6 +8370,13 @@ async function initDashboardPlaylists() {
 
   console.log('🎵 Initializing dashboard playlists...');
 
+  console.log('🎵 Initializing dashboard playlists...');
+
+  // Clear existing cards FIRST (before removing template)
+  container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
+    card.remove();
+  });
+
   // Remove template from DOM temporarily
   const templateParent = template.parentNode;
   const templateNextSibling = template.nextSibling;
@@ -8392,11 +8399,6 @@ async function initDashboardPlaylists() {
     }).slice(0, 4);
 
     console.log('📊 Showing first 4 playlists');
-
-    // Clear existing cards (excluding template)
-    container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
-      card.remove();
-    });
 
     // Pre-fetch counts in parallel
     const playlistCounts = await Promise.all(
