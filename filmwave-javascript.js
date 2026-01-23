@@ -4659,7 +4659,13 @@ if (typeof barba !== 'undefined') {
     g.persistedWelcome.style.top = rect.top + 'px';
     g.persistedWelcome.style.left = rect.left + 'px';
     document.body.appendChild(g.persistedWelcome);
-  }     
+  } 
+
+   // Hide old sidebar to prevent doubling
+  const oldSidebar = data.current.container.querySelector('.sidebar-nav');
+  if (oldSidebar) {
+    oldSidebar.style.opacity = '0';
+  }    
       
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
