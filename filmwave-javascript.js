@@ -4673,8 +4673,16 @@ if (typeof barba !== 'undefined') {
     } else {
       oldSidebar.style.opacity = '0';
     }
-  }   
-      
+  }  
+
+  // Fade out filter wrapper when leaving music page
+  const filterWrapper = data.current.container.querySelector('.filter-wrapper');
+  if (filterWrapper) {
+    filterWrapper.style.transition = 'opacity 0.3s ease';
+    filterWrapper.style.opacity = '0';
+  }    
+
+  // Music player wrapper    
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
     playerWrapper.style.transition = 'none';
@@ -4705,6 +4713,13 @@ if (typeof barba !== 'undefined') {
     incomingSidebar.style.transition = 'none';
     console.log('🫥 Hiding incoming sidebar during transition');
   }
+
+  // Hide filter wrapper during transition
+  const incomingFilterWrapper = data.next.container.querySelector('.filter-wrapper');
+  if (incomingFilterWrapper) {
+    incomingFilterWrapper.style.opacity = '0';
+    incomingFilterWrapper.style.transition = 'none';
+  }     
 
   // Hide loading placeholders during transition
   const loadingPlaceholders = data.next.container.querySelectorAll('.loading-placeholder');
@@ -4798,6 +4813,15 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
+
+// Fade in filter wrapper
+  const filterWrapper = document.querySelector('.filter-wrapper');
+  if (filterWrapper) {
+    requestAnimationFrame(() => {
+      filterWrapper.style.transition = 'opacity 0.3s ease';
+      filterWrapper.style.opacity = '1';
+    });
+  }        
 
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
