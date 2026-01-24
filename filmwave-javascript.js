@@ -8403,15 +8403,26 @@ async function initDashboardTiles() {
     const activeTile = Array.from(tiles).find(tile => tile.dataset.songId === g.currentSongData.id);
     if (activeTile) {
       const wsData = g.waveformData.find(w => w.songId === g.currentSongData.id);
-      if (wsData && wsData.wavesurfer && g.standaloneAudio.duration > 0) {
-        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        wsData.wavesurfer.seekTo(progress);
+      if (wsData && wsData.wavesurfer) {
+        const syncProgress = () => {
+          if (g.standaloneAudio.duration > 0) {
+            const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+            wsData.wavesurfer.seekTo(progress);
+          }
+          
+          // Update play/pause icons
+          const playIcon = activeTile.querySelector('.db-play-icon');
+          const pauseIcon = activeTile.querySelector('.db-pause-icon');
+          if (playIcon) playIcon.style.display = g.isPlaying ? 'none' : 'block';
+          if (pauseIcon) pauseIcon.style.display = g.isPlaying ? 'block' : 'none';
+        };
         
-        // Update play/pause icons
-        const playIcon = activeTile.querySelector('.db-play-icon');
-        const pauseIcon = activeTile.querySelector('.db-pause-icon');
-        if (playIcon) playIcon.style.display = g.isPlaying ? 'none' : 'block';
-        if (pauseIcon) pauseIcon.style.display = g.isPlaying ? 'block' : 'none';
+        // Sync immediately if ready, otherwise wait
+        if (wsData.wavesurfer.isReady) {
+          syncProgress();
+        } else {
+          wsData.wavesurfer.once('ready', syncProgress);
+        }
       }
     }
   }
