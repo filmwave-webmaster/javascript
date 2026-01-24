@@ -4856,10 +4856,10 @@ if (shouldHaveSidebar && sidebar) {
 // Fade in the main content
   const currentMainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
   if (currentMainContent) {
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       currentMainContent.style.transition = 'opacity 0.3s ease';
       currentMainContent.style.opacity = '1';
-    });
+    }, 50);
   }     
         
 // Remove persisted welcome and restore from new page
