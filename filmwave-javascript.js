@@ -4854,13 +4854,13 @@ if (shouldHaveSidebar && sidebar) {
   }
 
 // Fade in the main content
-  const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
-  if (mainContent) {
+  const currentMainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (currentMainContent) {
     requestAnimationFrame(() => {
-      mainContent.style.transition = 'opacity 0.3s ease';
-      mainContent.style.opacity = '1';
+      currentMainContent.style.transition = 'opacity 0.3s ease';
+      currentMainContent.style.opacity = '1';
     });
-  }        
+  }     
         
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
