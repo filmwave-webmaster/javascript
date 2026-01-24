@@ -1044,21 +1044,6 @@ function linkStandaloneToWaveform() {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
       wavesurfer.seekTo(progress);
     }
-    
-    const existingListener = g.standaloneAudio._waveformSyncListener;
-    if (existingListener) {
-      g.standaloneAudio.removeEventListener('timeupdate', existingListener);
-    }
-    
-    const syncListener = () => {
-      if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
-        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        wavesurfer.seekTo(progress);
-      }
-    };
-    
-    g.standaloneAudio._waveformSyncListener = syncListener;
-    g.standaloneAudio.addEventListener('timeupdate', syncListener);
   }
 }
 
@@ -1068,9 +1053,17 @@ function linkStandaloneToWaveform() {
  * ============================================================
  */
 function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
-  const g = window.musicPlayerPersistent;
-  
-    if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+    const g = window.musicPlayerPersistent;
+
+  g._standaloneToken = (g._standaloneToken || 0) + 1;
+  const token = g._standaloneToken;
+
+  if (g.standaloneAudio) {
+    try { g.standaloneAudio.pause(); } catch (e) {}
+    try { g.standaloneAudio.src = ''; g.standaloneAudio.load(); } catch (e) {}
+  }
+
+  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
     g.currentWavesurfer.seekTo(0);
   }
 
@@ -1080,34 +1073,43 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g.currentWavesurfer = wavesurfer;
   g.hasActiveSong = true;
   
-  audio.addEventListener('loadedmetadata', () => {
+    audio.addEventListener('loadedmetadata', () => {
+    if (g._standaloneToken !== token) return;
+    if (g.standaloneAudio !== audio) return;
+
     g.currentDuration = audio.duration;
-    
+
     if (seekToTime !== null && seekToTime < audio.duration) {
       audio.currentTime = seekToTime;
     }
   });
   
-  audio.addEventListener('timeupdate', () => {
-  g.currentTime = audio.currentTime;
+    audio.addEventListener('timeupdate', () => {
+    if (g._standaloneToken !== token) return;
+    if (g.standaloneAudio !== audio) return;
+
+    g.currentTime = audio.currentTime;
+
+    if (g.currentWavesurfer && audio.duration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      g.currentWavesurfer.seekTo(progress);
+    }
+
+    const masterCounter = document.querySelector('.player-duration-counter');
+    if (masterCounter) {
+      masterCounter.textContent = formatDuration(audio.currentTime);
+    }
+
+    if (g.currentPeaksData && g.currentDuration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      drawMasterWaveform(g.currentPeaksData, progress);
+    }
+  });
   
-  if (g.currentWavesurfer && audio.duration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    g.currentWavesurfer.seekTo(progress);
-  }
-  
-  const masterCounter = document.querySelector('.player-duration-counter');
-  if (masterCounter) {
-    masterCounter.textContent = formatDuration(audio.currentTime);
-  }
-  
-  if (g.currentPeaksData && g.currentDuration > 0) {
-    const progress = audio.currentTime / audio.duration;
-    drawMasterWaveform(g.currentPeaksData, progress);
-  }
-});
-  
-  audio.addEventListener('play', () => {
+    audio.addEventListener('play', () => {
+    if (g._standaloneToken !== token) return;
+    if (g.standaloneAudio !== audio) return;
+
     g.isPlaying = true;
     updatePlayPauseIcons(cardElement, true);
     updateMasterControllerIcons(true);
@@ -1117,7 +1119,10 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: true } }));
   });
   
-  audio.addEventListener('pause', () => {
+    audio.addEventListener('pause', () => {
+    if (g._standaloneToken !== token) return;
+    if (g.standaloneAudio !== audio) return;
+
     g.isPlaying = false;
     updatePlayPauseIcons(cardElement, false);
     updateMasterControllerIcons(false);
@@ -1125,11 +1130,14 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: false } }));
   });
   
-  audio.addEventListener('ended', () => {
+      audio.addEventListener('ended', () => {
+    if (g._standaloneToken !== token) return;
+    if (g.standaloneAudio !== audio) return;
+
     updatePlayPauseIcons(cardElement, false);
     const pb = cardElement.querySelector('.play-button');
     if (pb) pb.style.opacity = '0';
-    
+
     const currentIndex = g.allWavesurfers.indexOf(wavesurfer);
     let nextWavesurfer = null;
     for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
@@ -1163,8 +1171,11 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
   
-  if (shouldAutoPlay) {
-    audio.play().catch(err => console.error('Playback error:', err));
+    if (shouldAutoPlay) {
+    audio.play().catch(err => {
+      if (err && err.name === 'AbortError') return;
+      console.error('Playback error:', err);
+    });
   }
   
   syncMasterTrack(wavesurfer, songData);
