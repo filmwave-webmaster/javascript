@@ -1046,11 +1046,6 @@ function linkStandaloneToWaveform() {
     }
   }
 }
-    
-    g.standaloneAudio._waveformSyncListener = syncListener;
-    g.standaloneAudio.addEventListener('timeupdate', syncListener);
-  }
-}
 
 /**
  * ============================================================
