@@ -1093,6 +1093,9 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     // Also update dashboard tile waveforms (debounced after manual seeks)
     if (now - g.lastSeekTime > 200) {
       g.dashboardTileWavesurfers.forEach(tileWs => {
+        // Skip if this is the current waveform being played
+        if (tileWs === g.currentWavesurfer) return;
+        
         const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
         if (tileData && tileData.songId === songData.id && audio.duration > 0) {
           const progress = audio.currentTime / audio.duration;
