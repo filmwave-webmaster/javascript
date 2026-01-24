@@ -75,7 +75,8 @@ if (!window.musicPlayerPersistent) {
     filteredSongIds: [],  
     filteredSongIds: [],
     sidebarClone: null,
-    dashboardTileWavesurfers: []
+    dashboardTileWavesurfers: [],
+    lastSpacebarPress: 0
   };
 }
 
@@ -1674,6 +1675,14 @@ document.addEventListener('keydown', function (e) {
   if (e.code === 'Space') {
     e.preventDefault();
     e.stopImmediatePropagation();
+    
+    // Debounce spacebar to prevent double-trigger
+    const now = Date.now();
+    if (g.lastSpacebarPress && (now - g.lastSpacebarPress) < 200) {
+      console.log('⏭️ Spacebar debounced');
+      return false;
+    }
+    g.lastSpacebarPress = now;
     
     if (g.standaloneAudio) {
       try {
