@@ -41,7 +41,7 @@
  * 28. FILTER STATE SAVE/RESTORE              ~4280
  * 29. FAVORITE SONGS PERSISTENCE             ~4750
  * 30. XANO PLAYLIST SYSTEM                   ~5870
- * 31. DASHBOARD TILES                        ~7900
+ * 31.                         ~7900
  * 32. DASHBOARD PLAYLISTS                    ~8100
  * 
  * ============================================================
@@ -4869,6 +4869,11 @@ if (typeof barba !== 'undefined') {
   console.log('🚪 BARBA AFTER FIRED');
   
   const g = window.musicPlayerPersistent;
+
+  // 🔁 Reattach dashboard waveform AFTER Barba swaps DOM
+  if (window.location.pathname.startsWith('/dashboard/')) {
+    setTimeout(reattachDashboardWaveformToCurrentSong, 300);
+  }      
         
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
@@ -8212,6 +8217,34 @@ document.addEventListener('barbaAfterTransition', () => {
    31. DASHBOARD TILES
    ============================================================ */
 
+//Waveform helper
+function reattachDashboardWaveformToCurrentSong() {
+  const g = window.musicPlayerPersistent;
+  if (!g || !g.currentSongData) return;
+
+  // Find the *new* dashboard wavesurfer for the current song
+  const match = g.waveformData.find(d =>
+    d.songData &&
+    d.songData.id === g.currentSongData.id &&
+    d.wavesurfer &&
+    d.cardElement &&
+    document.body.contains(d.cardElement) &&
+    d.cardElement.offsetParent !== null
+  );
+
+  if (!match) return;
+
+  // Point global state at the new instance
+  g.currentWavesurfer = match.wavesurfer;
+
+  // Sync it to the current audio time
+  const audio = g.standaloneAudio;
+  if (audio && audio.duration > 0) {
+    match.wavesurfer.seekTo(audio.currentTime / audio.duration);
+  }
+}
+// End of helper
+
 async function initDashboardTiles() {
   const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
   console.log(`🔍 Found ${tiles.length} dashboard tiles`);
@@ -8552,15 +8585,8 @@ async function initDashboardTiles() {
 
     revealDashboardTiles();
 
-  // IMPORTANT: after Barba, the old dashboard wavesurfers were destroyed.
-  // Re-link the current standalone audio to whichever NEW tile waveform matches the current song.
-  setTimeout(() => {
-    linkStandaloneToWaveform();
-  }, 0);
-
-  setTimeout(() => {
-    linkStandaloneToWaveform();
-  }, 250);
+   // After rebuilding dashboard tile wavesurfers, reattach current song
+  setTimeout(reattachDashboardWaveformToCurrentSong, 0);
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
