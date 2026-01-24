@@ -8227,7 +8227,7 @@ async function initDashboardTiles() {
         interact: true
       });
 
-      const peaksData = fields['Peaks'] ? JSON.parse(fields['Peaks']) : null;
+      const peaksData = fields['Waveform Peaks'] ? JSON.parse(fields['Waveform Peaks']) : null;
       const duration = fields['Duration'];
       
       console.log(`   Peaks available: ${!!peaksData}, Duration: ${duration}`);
