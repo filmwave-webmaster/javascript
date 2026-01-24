@@ -8393,13 +8393,15 @@ async function initDashboardTiles() {
           // If clicking on the currently playing song - just seek
           if (isCurrentSong) {
             console.log('   Seeking within currently playing song');
+            g.lastSeekTime = Date.now(); // Set BEFORE duration check
             if (g.standaloneAudio.duration && !isNaN(g.standaloneAudio.duration)) {
               const seekTime = progress * g.standaloneAudio.duration;
               g.standaloneAudio.currentTime = seekTime;
-              g.lastSeekTime = Date.now();
               wavesurfer.seekTo(progress);
             } else {
               console.warn('⚠️ Audio duration not ready yet');
+              // Still seek the waveform visually even if audio isn't ready
+              wavesurfer.seekTo(progress);
             }
           }
           // If clicking on a different song - pause old, play new from position
