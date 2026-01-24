@@ -1071,6 +1071,25 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       audio.currentTime = seekToTime;
     }
   });
+
+  if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      wavesurfer.seekTo(progress);
+    }
+    
+    // Also update dashboard tile waveforms
+    g.dashboardTileWavesurfers.forEach(tileWs => {
+      // Skip if this is the current waveform being played
+      if (tileWs === g.currentWavesurfer) return;
+      
+      const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
+      if (tileData && tileData.songId === songData.id && audio.duration > 0) {
+        const progress = audio.currentTime / audio.duration;
+        tileWs.seekTo(progress);
+      }
+    });
+    
+    const masterCounter = document.querySelector('.player-duration-counter');
   
   audio.addEventListener('timeupdate', () => {
     g.currentTime = audio.currentTime;
