@@ -4738,13 +4738,6 @@ if (typeof barba !== 'undefined') {
     nextFilterWrapper.style.transition = 'none';
   }
   
-  // Hide main content during transition
-  const nextMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
-  if (nextMainContent) {
-    nextMainContent.style.opacity = '0';
-    nextMainContent.style.transition = 'none';
-  }
-
   // Hide filter wrapper during transition
   const incomingFilterWrapper = data.next.container.querySelector('.filter-wrapper');
   if (incomingFilterWrapper) {
@@ -4856,6 +4849,8 @@ if (shouldHaveSidebar && sidebar) {
 // Fade in the main content
   const currentMainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
   if (currentMainContent) {
+    currentMainContent.style.opacity = '0';
+    currentMainContent.style.transition = 'none';
     setTimeout(() => {
       currentMainContent.style.transition = 'opacity 0.3s ease';
       currentMainContent.style.opacity = '1';
