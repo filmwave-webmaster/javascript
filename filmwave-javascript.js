@@ -4732,10 +4732,10 @@ if (typeof barba !== 'undefined') {
   }
 
   // Hide filter wrapper during transition
-  const incomingFilterWrapper = data.next.container.querySelector('.filter-wrapper');
-  if (incomingFilterWrapper) {
-    incomingFilterWrapper.style.opacity = '0';
-    incomingFilterWrapper.style.transition = 'none';
+  const nextFilterWrapper = data.next.container.querySelector('.filter-wrapper');
+  if (nextFilterWrapper) {
+    nextFilterWrapper.style.opacity = '0';
+    nextFilterWrapper.style.transition = 'none';
   }
   
   // Hide main content during transition
