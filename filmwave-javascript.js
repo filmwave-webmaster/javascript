@@ -4739,10 +4739,10 @@ if (typeof barba !== 'undefined') {
   }
   
   // Hide main content during transition
-  const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
-  if (incomingMainContent) {
-    incomingMainContent.style.opacity = '0';
-    incomingMainContent.style.transition = 'none';
+  const nextMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (nextMainContent) {
+    nextMainContent.style.opacity = '0';
+    nextMainContent.style.transition = 'none';
   }
 
   // Hide filter wrapper during transition
