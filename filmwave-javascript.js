@@ -8391,25 +8391,14 @@ async function initDashboardTiles() {
               wavesurfer.seekTo(progress);
             }
           }
-          // If clicking on a different song - pause old, play new from position
+                    // If clicking on a different song - pause old, play new from position
           else {
-  console.log('   Switching to new song and playing from position');
+            console.log('   Switching to new song and playing from position');
 
-  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-    g.currentWavesurfer.seekTo(0);
-  }
+            if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+              g.currentWavesurfer.seekTo(0);
+            }
 
-  if (wavesurfer.getDuration() > 0) {
-    const seekTime = progress * wavesurfer.getDuration();
-    playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
-  } else {
-    wavesurfer.once('ready', () => {
-      const seekTime = progress * wavesurfer.getDuration();
-      playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
-    });
-  }
-}
-            
             if (wavesurfer.getDuration() > 0) {
               const seekTime = progress * wavesurfer.getDuration();
               playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
