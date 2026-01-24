@@ -4620,22 +4620,19 @@ if (typeof barba !== 'undefined') {
     transitions: [{
       name: 'default',
       
-    beforeLeave(data) {
+   beforeLeave(data) {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
-
-  // Hide old page content immediately to prevent visual overlap
-  const directChildren = Array.from(data.current.container.children);
-  directChildren.forEach(el => {
-    // Skip persistent elements
-    if (!el.classList.contains('music-player-wrapper') && 
-        !el.classList.contains('sidebar-nav') &&
-        !el.classList.contains('navigation')) {
-      el.style.visibility = 'hidden';
-    }
-  });    
-      
+  
+  // Fade out the main content area only (not persistent elements)
+  const mainContent = data.current.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (mainContent) {
+    mainContent.style.transition = 'opacity 0.15s ease';
+    mainContent.style.opacity = '0';
+  }
+  
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
+     
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
   g.filtersInitialized = false;
@@ -4708,6 +4705,13 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
+
+       // Reset opacity on main content
+  const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (incomingMainContent) {
+    incomingMainContent.style.opacity = '1';
+    incomingMainContent.style.transition = '';
+  }
        
        const g = window.musicPlayerPersistent;
   
