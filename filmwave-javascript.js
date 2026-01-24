@@ -8357,6 +8357,13 @@ async function initDashboardTiles() {
       waveformContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Debounce rapid clicks to prevent flicker
+        const now = Date.now();
+        if (now - g.lastSeekTime < 300) {
+          console.log('⏭️ Waveform click debounced');
+          return;
+        }
         
         // Calculate click position for seeking
         const bounds = waveformContainer.getBoundingClientRect();
