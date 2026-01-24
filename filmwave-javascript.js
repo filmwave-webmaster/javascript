@@ -8228,10 +8228,11 @@ async function initDashboardTiles() {
       });
 
       const peaksData = fields['Peaks'] ? JSON.parse(fields['Peaks']) : null;
+      const duration = fields['Duration'];
       
-      if (peaksData && Array.isArray(peaksData)) {
-        // Load peaks only, no audio URL - visual display only
-        wavesurfer.load('', peaksData);
+      if (peaksData && Array.isArray(peaksData) && duration) {
+        // Load with peaks AND duration for instant display (no audio fetch)
+        wavesurfer.load(fields['R2 Audio URL'], [peaksData], duration);
       } else {
         wavesurfer.load(fields['R2 Audio URL']);
       }
