@@ -4624,13 +4624,14 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
 
-  // Fade out old page content to prevent visual overlap (exclude persistent elements)
-  const elementsToFade = data.current.container.querySelectorAll('*:not(.music-player-wrapper):not(.sidebar-nav):not(.navigation):not(.global-nav-wrapper)');
-  elementsToFade.forEach(el => {
-    // Only fade direct children of the container, not nested elements
-    if (el.parentElement === data.current.container) {
-      el.style.transition = 'opacity 0.2s ease';
-      el.style.opacity = '0';
+  // Hide old page content immediately to prevent visual overlap
+  const directChildren = Array.from(data.current.container.children);
+  directChildren.forEach(el => {
+    // Skip persistent elements
+    if (!el.classList.contains('music-player-wrapper') && 
+        !el.classList.contains('sidebar-nav') &&
+        !el.classList.contains('navigation')) {
+      el.style.visibility = 'hidden';
     }
   });    
       
@@ -4707,14 +4708,7 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
-       // Reset opacity on incoming container to prevent fade issues
-       data.next.container.style.opacity = '1';
-       const children = data.next.container.querySelectorAll('*');
-       children.forEach(el => {
-         el.style.opacity = '';
-         el.style.transition = '';
-       });
-
+       
        const g = window.musicPlayerPersistent;
   
   // Capture sidebar from incoming page BEFORE Barba processes it
