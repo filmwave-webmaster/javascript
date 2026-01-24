@@ -1079,14 +1079,14 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const now = Date.now();
     const timeSinceSeek = now - g.lastSeekTime;
     
-    if (g.currentWavesurfer === wavesurfer && audio.duration > 0 && now - g.lastSeekTime > 200) {
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0 && now - g.lastSeekTime > 50) {
       const progress = audio.currentTime / audio.duration;
       console.log('🎯 Main waveform sync - timeSinceSeek:', timeSinceSeek);
       wavesurfer.seekTo(progress);
     }
 
     // Also update dashboard tile waveforms (debounced after manual seeks)
-    if (now - g.lastSeekTime > 100) {
+    if (now - g.lastSeekTime > 50) {
       g.dashboardTileWavesurfers.forEach(tileWs => {
         const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
         if (tileData && tileData.songId === songData.id && audio.duration > 0) {
@@ -8357,13 +8357,6 @@ async function initDashboardTiles() {
       waveformContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        // Debounce rapid clicks to prevent flicker
-        const now = Date.now();
-        if (now - g.lastSeekTime < 300) {
-          console.log('⏭️ Waveform click debounced');
-          return;
-        }
         
         // Calculate click position for seeking
         const bounds = waveformContainer.getBoundingClientRect();
@@ -8400,10 +8393,10 @@ async function initDashboardTiles() {
           // If clicking on the currently playing song - just seek
           if (isCurrentSong) {
             console.log('   Seeking within currently playing song');
-            g.lastSeekTime = Date.now(); // Set BEFORE duration check
+            const seekTime = progress * g.standaloneAudio.duration;
             if (g.standaloneAudio.duration && !isNaN(g.standaloneAudio.duration)) {
-              const seekTime = progress * g.standaloneAudio.duration;
               g.standaloneAudio.currentTime = seekTime;
+              g.lastSeekTime = Date.now(); // Only set when actually seeking
               wavesurfer.seekTo(progress);
             } else {
               console.warn('⚠️ Audio duration not ready yet');
