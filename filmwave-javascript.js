@@ -447,7 +447,8 @@ function navigateStandaloneTrack(direction) {
       g.standaloneAudio = null;
     }
   }
-  
+
+  g.currentWavesurfer = wavesurfer;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
@@ -466,13 +467,19 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-  audio.addEventListener('timeupdate', () => {
+    audio.addEventListener('timeupdate', () => {
     if (g.standaloneAudio !== audio) return;
     
     if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
     if (!isFinite(audio.currentTime)) return;
     
     g.currentTime = audio.currentTime;
+
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+      const progress = audio.currentTime / audio.duration;
+      wavesurfer.seekTo(progress);
+    }
+
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
@@ -8331,11 +8338,6 @@ async function initDashboardTiles() {
           wavesurfer.seekTo(progress);
         }
       };
-      
-      // Attach the listener if audio exists
-      if (g.standaloneAudio) {
-        g.standaloneAudio.addEventListener('timeupdate', wavesurfer._progressUpdater);
-      }
 
       // Waveform click to play/seek
       waveformContainer.style.cursor = 'pointer';
@@ -8463,8 +8465,12 @@ async function initDashboardTiles() {
     }
   });
 
-  // Listen for play/pause events to update icons and reset waveforms
-  document.addEventListener('audioStateChange', (e) => {
+    // Listen for play/pause events to update icons and reset waveforms
+  if (g._dashboardAudioStateHandler) {
+    document.removeEventListener('audioStateChange', g._dashboardAudioStateHandler);
+  }
+
+  g._dashboardAudioStateHandler = (e) => {
     const { songId, isPlaying } = e.detail;
     
     tiles.forEach(tile => {
@@ -8481,21 +8487,12 @@ async function initDashboardTiles() {
         
         if (playIcon) playIcon.style.display = 'block';
         if (pauseIcon) pauseIcon.style.display = 'none';
-        
-        // Reset waveform progress for non-active tiles
-        const tileSongId = tile.dataset.songId;
-        if (tileSongId) {
-          const wsData = g.waveformData.find(w => String(w.songId) === String(tileSongId));
-          if (wsData && wsData.wavesurfer) {
-            console.log('🔄 Resetting tile waveform for song:', tileSongId);
-            wsData.wavesurfer.seekTo(0);
-          } else {
-            console.log('⚠️ Could not find waveform for tile:', tileSongId);
-          }
-        }
       }
     });
-  });
+  };
+
+  document.addEventListener('audioStateChange', g._dashboardAudioStateHandler);
+
 
   revealDashboardTiles();
   
