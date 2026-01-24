@@ -8370,9 +8370,14 @@ async function initDashboardTiles() {
         const isAnyPlaying = g.standaloneAudio && !g.standaloneAudio.paused;
         
         // If NO song is playing anywhere - just seek without playing
-        if (!isAnyPlaying) {
+                if (!isAnyPlaying) {
           console.log('   No song playing - seeking without autoplay');
-          
+
+          // ✅ If switching tiles while paused, clear the old tile progress immediately
+          if (!isCurrentSong && g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+            g.currentWavesurfer.seekTo(0);
+          }
+
           if (wavesurfer.getDuration() > 0) {
             wavesurfer.seekTo(progress);
           } else {
@@ -8380,13 +8385,19 @@ async function initDashboardTiles() {
               wavesurfer.seekTo(progress);
             });
           }
-          
+
+          // ✅ If this is the current song, also seek the standalone audio
+          if (isCurrentSong && g.standaloneAudio && g.standaloneAudio.duration > 0) {
+            g.standaloneAudio.currentTime = progress * g.standaloneAudio.duration;
+          }
+
           // Load the song but don't play
           if (!isCurrentSong) {
             const seekTime = progress * (wavesurfer.getDuration() || 0);
             playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, false);
           }
         }
+
         // If a song IS playing somewhere
         else {
           // If clicking on the currently playing song - just seek
