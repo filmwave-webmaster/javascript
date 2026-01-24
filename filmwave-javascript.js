@@ -475,9 +475,11 @@ function navigateStandaloneTrack(direction) {
     
     g.currentTime = audio.currentTime;
 
-            if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+        if (g.currentWavesurfer === wavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
-      wavesurfer.seekTo(progress);
+      if (isFinite(progress)) {
+        wavesurfer.seekTo(progress);
+      }
     }
 
     const masterCounter = document.querySelector('.player-duration-counter');
@@ -1022,7 +1024,12 @@ function linkStandaloneToWaveform() {
   
   if (!g.standaloneAudio || !g.currentSongData) return;
   
-  const matchingData = g.waveformData.find(data => data.songData.id === g.currentSongData.id);
+    const matchingData = g.waveformData.find(data =>
+    data.songData.id === g.currentSongData.id &&
+    data.cardElement &&
+    document.body.contains(data.cardElement) &&
+    data.cardElement.offsetParent !== null
+  );
   
   if (matchingData) {
     const { wavesurfer, cardElement } = matchingData;
@@ -1063,6 +1070,10 @@ function linkStandaloneToWaveform() {
 function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
+    if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+    g.currentWavesurfer.seekTo(0);
+  }
+
   const audio = new Audio(audioUrl);
   g.standaloneAudio = audio;
   g.currentSongData = songData;
@@ -8330,14 +8341,6 @@ async function initDashboardTiles() {
           wavesurfer.seekTo(progress);
         });
       }
-      
-      // Store reference to update function so we can remove it later
-      wavesurfer._progressUpdater = () => {
-        if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-          wavesurfer.seekTo(progress);
-        }
-      };
 
       // Waveform click to play/seek
       waveformContainer.style.cursor = 'pointer';
@@ -8465,7 +8468,7 @@ async function initDashboardTiles() {
     }
   });
 
-        // Listen for play/pause events to update icons and reset waveforms
+       // Listen for play/pause events to update icons and reset waveforms
   if (g._dashboardAudioStateHandler) {
     document.removeEventListener('audioStateChange', g._dashboardAudioStateHandler);
   }
@@ -8487,6 +8490,15 @@ async function initDashboardTiles() {
         
         if (playIcon) playIcon.style.display = 'block';
         if (pauseIcon) pauseIcon.style.display = 'none';
+
+        // Reset waveform progress for non-active tiles
+        const tileSongId = tile.dataset.songId;
+        if (tileSongId) {
+          const wsData = g.waveformData.find(w => String(w.songId) === String(tileSongId));
+          if (wsData && wsData.wavesurfer) {
+            wsData.wavesurfer.seekTo(0);
+          }
+        }
       }
     });
   };
