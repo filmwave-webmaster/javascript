@@ -8230,7 +8230,8 @@ async function initDashboardTiles() {
       const peaksData = fields['Peaks'] ? JSON.parse(fields['Peaks']) : null;
       
       if (peaksData && Array.isArray(peaksData)) {
-        wavesurfer.load(fields['R2 Audio URL'], peaksData);
+        // Load peaks only, no audio URL - visual display only
+        wavesurfer.load('', peaksData);
       } else {
         wavesurfer.load(fields['R2 Audio URL']);
       }
