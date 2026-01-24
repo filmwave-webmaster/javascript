@@ -83,6 +83,15 @@ if (!window.musicPlayerPersistent) {
 let lastPlayState = false;
 let searchTimeout;
 
+// Shared AudioContext to prevent browser limits
+if (!window.sharedAudioContext) {
+  try {
+    window.sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (e) {
+    console.warn('Could not create shared AudioContext:', e);
+  }
+}
+
 const AIRTABLE_API_KEY = 'patiV6QOeKzi9nFsZ.6670b6f25ef81e914add50d3839946c2905e9e63d52ed7148a897cc434fe65f0';
 const BASE_ID = 'app7vAuN4CqMkml5g';
 const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
@@ -1317,7 +1326,8 @@ function loadWaveformBatch(cardElements) {
       responsive: 300,
       interact: true,
       hideScrollbar: true,
-      minPxPerSec: 1
+      minPxPerSec: 1,
+      audioContext: window.sharedAudioContext,
     });
     
     const peaksData = songData.fields['Waveform Peaks'];
@@ -8284,7 +8294,8 @@ async function initDashboardTiles() {
         height: waveformContainer.offsetHeight || 60,
         normalize: true,
         backend: 'WebAudio',
-        interact: true
+        interact: true,
+        audioContext: window.sharedAudioContext
       });
 
       const peaksData = fields['Waveform Peaks'] ? JSON.parse(fields['Waveform Peaks']) : null;
