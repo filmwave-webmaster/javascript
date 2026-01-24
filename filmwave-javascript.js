@@ -8385,13 +8385,11 @@ async function initDashboardTiles() {
         if (pauseIcon) pauseIcon.style.display = 'none';
         
         // Reset waveform progress for non-active tiles
-        const waveformContainer = tile.querySelector('.db-waveform');
-        if (waveformContainer) {
-          const tileWavesurfer = g.dashboardTileWavesurfers.find(ws => {
-            return ws.container === waveformContainer;
-          });
-          if (tileWavesurfer) {
-            tileWavesurfer.seekTo(0);
+        const tileSongId = tile.dataset.songId;
+        if (tileSongId) {
+          const wsData = g.waveformData.find(w => w.songId === tileSongId);
+          if (wsData && wsData.wavesurfer) {
+            wsData.wavesurfer.seekTo(0);
           }
         }
       }
