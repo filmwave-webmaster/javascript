@@ -1044,6 +1044,21 @@ function linkStandaloneToWaveform() {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
       wavesurfer.seekTo(progress);
     }
+    
+    const existingListener = g.standaloneAudio._waveformSyncListener;
+    if (existingListener) {
+      g.standaloneAudio.removeEventListener('timeupdate', existingListener);
+    }
+    
+    const syncListener = () => {
+      if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
+        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+        wavesurfer.seekTo(progress);
+      }
+    };
+    
+    g.standaloneAudio._waveformSyncListener = syncListener;
+    g.standaloneAudio.addEventListener('timeupdate', syncListener);
   }
 }
 
@@ -8378,10 +8393,22 @@ async function initDashboardTiles() {
           }
           // If clicking on a different song - pause old, play new from position
           else {
-            console.log('   Switching to new song and playing from position');
-            if (g.standaloneAudio) {
-              g.standaloneAudio.pause();
-            }
+  console.log('   Switching to new song and playing from position');
+
+  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+    g.currentWavesurfer.seekTo(0);
+  }
+
+  if (wavesurfer.getDuration() > 0) {
+    const seekTime = progress * wavesurfer.getDuration();
+    playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
+  } else {
+    wavesurfer.once('ready', () => {
+      const seekTime = progress * wavesurfer.getDuration();
+      playStandaloneSong(fields['R2 Audio URL'], song, wavesurfer, tile, seekTime, true);
+    });
+  }
+}
             
             if (wavesurfer.getDuration() > 0) {
               const seekTime = progress * wavesurfer.getDuration();
@@ -8415,7 +8442,12 @@ async function initDashboardTiles() {
           e.preventDefault();
           e.stopPropagation();
           
-          const wsData = g.waveformData.find(w => w.songId === song.id);
+          const wsData = g.waveformData.find(w =>
+  w.songId === song.id &&
+  w.cardElement &&
+  document.body.contains(w.cardElement) &&
+  w.cardElement.offsetParent !== null
+);
           
           // If currently playing this song, pause it
           if (g.currentSongData?.id === song.id && g.standaloneAudio && !g.standaloneAudio.paused) {
@@ -8444,7 +8476,12 @@ async function initDashboardTiles() {
         e.preventDefault();
         e.stopPropagation();
         
-        const wsData = g.waveformData.find(w => w.songId === song.id);
+        const wsData = g.waveformData.find(w =>
+  w.songId === song.id &&
+  w.cardElement &&
+  document.body.contains(w.cardElement) &&
+  w.cardElement.offsetParent !== null
+);
         
         if (wsData) {
           playStandaloneSong(fields['R2 Audio URL'], song, wsData.wavesurfer, tile);
