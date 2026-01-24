@@ -1079,6 +1079,15 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       const progress = audio.currentTime / audio.duration;
       wavesurfer.seekTo(progress);
     }
+
+    // Also update dashboard tile waveforms
+    g.dashboardTileWavesurfers.forEach(tileWs => {
+      const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
+      if (tileData && tileData.songId === songData.id && audio.duration > 0) {
+        const progress = audio.currentTime / audio.duration;
+        tileWs.seekTo(progress);
+      }
+    });
     
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
@@ -1386,28 +1395,6 @@ function loadWaveformBatch(cardElements) {
       audioUrl,
       songData
     });
-
-    // Setup progress tracker syncing
-      wavesurfer.once('ready', () => {
-        // Set initial position if this song is currently playing
-        if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-          wavesurfer.seekTo(progress);
-        }
-      });
-
-      // Store progress updater function for cleanup
-      wavesurfer._progressUpdater = () => {
-        if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.duration > 0) {
-          const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-          wavesurfer.seekTo(progress);
-        }
-      };
-
-      // Attach listener
-      if (g.standaloneAudio) {
-        g.standaloneAudio.addEventListener('timeupdate', wavesurfer._progressUpdater);
-      }
     
 const handlePlayPause = (e) => {
   if (e) {
