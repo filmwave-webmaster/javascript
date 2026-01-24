@@ -4625,10 +4625,14 @@ if (typeof barba !== 'undefined') {
   g.isTransitioning = true;
   
   // Fade out the main content area only (not persistent elements)
-  const mainContent = data.current.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  const mainContent = data.current.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper, .db-content-container');
   if (mainContent) {
     mainContent.style.transition = 'opacity 0.15s ease';
     mainContent.style.opacity = '0';
+  } else {
+    // If no specific wrapper found, fade the entire container
+    data.current.container.style.transition = 'opacity 0.15s ease';
+    data.current.container.style.opacity = '0';
   }
   
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
