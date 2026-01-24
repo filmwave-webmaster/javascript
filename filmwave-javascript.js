@@ -8224,10 +8224,17 @@ async function initDashboardTiles() {
     const g = window.musicPlayerPersistent;
   g.isTransitioning = false;
   
-  // Always clean up existing dashboard tile waveforms before reinitializing
+    // Always clean up existing dashboard tile waveforms before reinitializing
   if (g.dashboardTileWavesurfers && g.dashboardTileWavesurfers.length > 0) {
-    console.log(`🧹 Cleaning up ${g.dashboardTileWavesurfers.length} old dashboard tile waveforms`);
-    g.dashboardTileWavesurfers.forEach(ws => {
+    const oldDash = g.dashboardTileWavesurfers.slice();
+    console.log(`🧹 Cleaning up ${oldDash.length} old dashboard tile waveforms`);
+
+    // If currentWavesurfer was one of the dashboard tiles, clear it (it’s about to be destroyed)
+    if (g.currentWavesurfer && oldDash.includes(g.currentWavesurfer)) {
+      g.currentWavesurfer = null;
+    }
+
+    oldDash.forEach(ws => {
       try {
         ws.unAll();
         ws.destroy();
@@ -8235,6 +8242,11 @@ async function initDashboardTiles() {
         console.warn('Error destroying dashboard tile wavesurfer:', e);
       }
     });
+
+    // Remove destroyed tile wavesurfers from global arrays so we never reference stale instances
+    g.allWavesurfers = (g.allWavesurfers || []).filter(ws => !oldDash.includes(ws));
+    g.waveformData = (g.waveformData || []).filter(w => !oldDash.includes(w.wavesurfer));
+
     g.dashboardTileWavesurfers = [];
   }
   
@@ -8538,7 +8550,17 @@ async function initDashboardTiles() {
 
   document.addEventListener('audioStateChange', g._dashboardAudioStateHandler);
 
-  revealDashboardTiles();
+    revealDashboardTiles();
+
+  // IMPORTANT: after Barba, the old dashboard wavesurfers were destroyed.
+  // Re-link the current standalone audio to whichever NEW tile waveform matches the current song.
+  setTimeout(() => {
+    linkStandaloneToWaveform();
+  }, 0);
+
+  setTimeout(() => {
+    linkStandaloneToWaveform();
+  }, 250);
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
