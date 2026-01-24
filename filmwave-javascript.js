@@ -72,9 +72,9 @@ if (!window.musicPlayerPersistent) {
     isTransitioning: false,
     autoPlayNext: false,
     wasPlayingBeforeHidden: false,
-    filteredSongIds: [],  
     filteredSongIds: [],
     sidebarClone: null,
+    persistedWelcome: null,
     dashboardTileWavesurfers: [],
     lastSeekTime: 0
   };
@@ -8393,10 +8393,14 @@ async function initDashboardTiles() {
           // If clicking on the currently playing song - just seek
           if (isCurrentSong) {
             console.log('   Seeking within currently playing song');
-            const seekTime = progress * g.standaloneAudio.duration;
-            g.standaloneAudio.currentTime = seekTime;
-            g.lastSeekTime = Date.now();
-            wavesurfer.seekTo(progress);
+            if (g.standaloneAudio.duration && !isNaN(g.standaloneAudio.duration)) {
+              const seekTime = progress * g.standaloneAudio.duration;
+              g.standaloneAudio.currentTime = seekTime;
+              g.lastSeekTime = Date.now();
+              wavesurfer.seekTo(progress);
+            } else {
+              console.warn('⚠️ Audio duration not ready yet');
+            }
           }
           // If clicking on a different song - pause old, play new from position
           else {
