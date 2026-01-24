@@ -4623,6 +4623,11 @@ if (typeof barba !== 'undefined') {
     beforeLeave(data) {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
+
+  // Fade out old page content to prevent visual overlap
+  data.current.container.style.transition = 'opacity 0.2s ease';
+  data.current.container.style.opacity = '0';    
+      
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
