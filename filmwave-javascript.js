@@ -8245,17 +8245,21 @@ async function initDashboardTiles() {
         songData: song
       });
       
-      // Sync waveform progress with standalone audio for this song
-      const updateProgress = () => {
+      // Set initial position immediately when waveform loads (prevents flash)
+      if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.duration > 0) {
+        wavesurfer.once('ready', () => {
+          const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+          wavesurfer.seekTo(progress);
+        });
+      }
+      
+      // Store reference to update function so we can remove it later
+      wavesurfer._progressUpdater = () => {
         if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.duration > 0) {
           const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
           wavesurfer.seekTo(progress);
         }
       };
-      
-      if (g.standaloneAudio) {
-        g.standaloneAudio.addEventListener('timeupdate', updateProgress);
-      }
 
       // Waveform click to play/seek
       waveformContainer.style.cursor = 'pointer';
