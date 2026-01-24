@@ -8230,10 +8230,13 @@ async function initDashboardTiles() {
       const peaksData = fields['Peaks'] ? JSON.parse(fields['Peaks']) : null;
       const duration = fields['Duration'];
       
+      console.log(`   Peaks available: ${!!peaksData}, Duration: ${duration}`);
+      
       if (peaksData && Array.isArray(peaksData) && duration) {
-        // Load with peaks AND duration for instant display (no audio fetch)
+        console.log(`   ⚡ Loading with peaks + duration (instant)`);
         wavesurfer.load(fields['R2 Audio URL'], [peaksData], duration);
       } else {
+        console.log(`   ⚠️ Loading audio file (slow)`);
         wavesurfer.load(fields['R2 Audio URL']);
       }
 
