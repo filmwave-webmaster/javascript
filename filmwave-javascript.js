@@ -1024,7 +1024,7 @@ function linkStandaloneToWaveform() {
   
   if (!g.standaloneAudio || !g.currentSongData) return;
   
-    const matchingData = g.waveformData.find(data =>
+  const matchingData = g.waveformData.find(data =>
     data.songData.id === g.currentSongData.id &&
     data.cardElement &&
     document.body.contains(data.cardElement) &&
@@ -1044,18 +1044,8 @@ function linkStandaloneToWaveform() {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
       wavesurfer.seekTo(progress);
     }
-    
-    const existingListener = g.standaloneAudio._waveformSyncListener;
-    if (existingListener) {
-      g.standaloneAudio.removeEventListener('timeupdate', existingListener);
-    }
-    
-    const syncListener = () => {
-      if (g.currentWavesurfer === wavesurfer && g.standaloneAudio && g.standaloneAudio.duration > 0) {
-        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        wavesurfer.seekTo(progress);
-      }
-    };
+  }
+}
     
     g.standaloneAudio._waveformSyncListener = syncListener;
     g.standaloneAudio.addEventListener('timeupdate', syncListener);
@@ -1089,23 +1079,23 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   });
   
   audio.addEventListener('timeupdate', () => {
-    g.currentTime = audio.currentTime;
-    
-    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
-      const progress = audio.currentTime / audio.duration;
-      wavesurfer.seekTo(progress);
-    }
-    
-    const masterCounter = document.querySelector('.player-duration-counter');
-    if (masterCounter) {
-      masterCounter.textContent = formatDuration(audio.currentTime);
-    }
-    
-    if (g.currentPeaksData && g.currentDuration > 0) {
-      const progress = audio.currentTime / audio.duration;
-      drawMasterWaveform(g.currentPeaksData, progress);
-    }
-  });
+  g.currentTime = audio.currentTime;
+  
+  if (g.currentWavesurfer && audio.duration > 0) {
+    const progress = audio.currentTime / audio.duration;
+    g.currentWavesurfer.seekTo(progress);
+  }
+  
+  const masterCounter = document.querySelector('.player-duration-counter');
+  if (masterCounter) {
+    masterCounter.textContent = formatDuration(audio.currentTime);
+  }
+  
+  if (g.currentPeaksData && g.currentDuration > 0) {
+    const progress = audio.currentTime / audio.duration;
+    drawMasterWaveform(g.currentPeaksData, progress);
+  }
+});
   
   audio.addEventListener('play', () => {
     g.isPlaying = true;
