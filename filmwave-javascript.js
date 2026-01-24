@@ -8371,8 +8371,10 @@ async function initDashboardTiles() {
           
           if (wavesurfer.getDuration() > 0) {
             wavesurfer.seekTo(progress);
+            wavesurfer.seekTo(progress);
           } else {
             wavesurfer.once('ready', () => {
+              wavesurfer.seekTo(progress);
               wavesurfer.seekTo(progress);
             });
           }
