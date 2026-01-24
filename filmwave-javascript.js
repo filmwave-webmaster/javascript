@@ -475,9 +475,11 @@ function navigateStandaloneTrack(direction) {
     
     g.currentTime = audio.currentTime;
 
-    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+        if (g.currentWavesurfer === wavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
-      wavesurfer.seekTo(progress);
+      if (isFinite(progress)) {
+        wavesurfer.seekTo(progress);
+      }
     }
 
     const masterCounter = document.querySelector('.player-duration-counter');
@@ -8465,7 +8467,7 @@ async function initDashboardTiles() {
     }
   });
 
-    // Listen for play/pause events to update icons and reset waveforms
+      // Listen for play/pause events to update icons and reset waveforms
   if (g._dashboardAudioStateHandler) {
     document.removeEventListener('audioStateChange', g._dashboardAudioStateHandler);
   }
@@ -8487,12 +8489,20 @@ async function initDashboardTiles() {
         
         if (playIcon) playIcon.style.display = 'block';
         if (pauseIcon) pauseIcon.style.display = 'none';
+
+        // Reset waveform progress for non-active tiles
+        const tileSongId = tile.dataset.songId;
+        if (tileSongId) {
+          const wsData = g.waveformData.find(w => String(w.songId) === String(tileSongId));
+          if (wsData && wsData.wavesurfer) {
+            wsData.wavesurfer.seekTo(0);
+          }
+        }
       }
     });
   };
 
   document.addEventListener('audioStateChange', g._dashboardAudioStateHandler);
-
 
   revealDashboardTiles();
   
