@@ -4624,9 +4624,15 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
 
-  // Fade out old page content to prevent visual overlap
-  data.current.container.style.transition = 'opacity 0.2s ease';
-  data.current.container.style.opacity = '0';    
+  // Fade out old page content to prevent visual overlap (exclude persistent elements)
+  const elementsToFade = data.current.container.querySelectorAll('*:not(.music-player-wrapper):not(.sidebar-nav):not(.navigation):not(.global-nav-wrapper)');
+  elementsToFade.forEach(el => {
+    // Only fade direct children of the container, not nested elements
+    if (el.parentElement === data.current.container) {
+      el.style.transition = 'opacity 0.2s ease';
+      el.style.opacity = '0';
+    }
+  });    
       
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
