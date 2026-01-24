@@ -4809,6 +4809,7 @@ if (typeof barba !== 'undefined') {
 
 // Fade in the main content
   const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  console.log('🎨 Main content element found:', mainContent, 'Class:', mainContent?.className);
   if (mainContent) {
     mainContent.style.opacity = '0';
     mainContent.style.transition = 'opacity 0.3s ease';
