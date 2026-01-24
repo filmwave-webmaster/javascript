@@ -75,8 +75,7 @@ if (!window.musicPlayerPersistent) {
     filteredSongIds: [],  
     filteredSongIds: [],
     sidebarClone: null,
-    dashboardTileWavesurfers: [],
-    lastSpacebarPress: 0
+    dashboardTileWavesurfers: []
   };
 }
 
@@ -1676,26 +1675,12 @@ document.addEventListener('keydown', function (e) {
     e.preventDefault();
     e.stopImmediatePropagation();
     
-    // Debounce spacebar to prevent double-trigger
-    const now = Date.now();
-    if (g.lastSpacebarPress && (now - g.lastSpacebarPress) < 200) {
-      console.log('⏭️ Spacebar debounced');
-      return false;
-    }
-    g.lastSpacebarPress = now;
-    
     if (g.standaloneAudio) {
-      try {
-        if (g.standaloneAudio.paused) {
-          g.standaloneAudio.play().catch(err => console.warn('Spacebar play failed:', err));
-        } else {
-          g.standaloneAudio.pause();
-        }
-      } catch (err) {
-        console.warn('Spacebar control error:', err);
+      if (g.standaloneAudio.paused) {
+        g.standaloneAudio.play();
+      } else {
+        g.standaloneAudio.pause();
       }
-    } else {
-      console.log('⚠️ No standaloneAudio available for spacebar control');
     }
     return false;
   }
