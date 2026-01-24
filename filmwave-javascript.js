@@ -8480,7 +8480,10 @@ async function initDashboardTiles() {
         if (tileSongId) {
           const wsData = g.waveformData.find(w => w.songId === tileSongId);
           if (wsData && wsData.wavesurfer) {
+            console.log('🔄 Resetting tile waveform for song:', tileSongId);
             wsData.wavesurfer.seekTo(0);
+          } else {
+            console.log('⚠️ Could not find waveform for tile:', tileSongId);
           }
         }
       }
