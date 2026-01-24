@@ -8125,18 +8125,7 @@ async function initDashboardTiles() {
 
   const g = window.musicPlayerPersistent;
   
-  // Check if tiles already have data
-  const firstTile = tiles[0];
-  const tilesAlreadyInitialized = firstTile && firstTile.dataset.songId;
-  const hasActiveSong = g.currentSongData && g.standaloneAudio;
-  
-  // Only reinitialize if: (1) not yet initialized OR (2) there's an active song that needs syncing
-  if (tilesAlreadyInitialized && !hasActiveSong) {
-    console.log('♻️ Dashboard tiles already initialized, no active song - skipping');
-    return;
-  }
-  
-  // Clean up existing dashboard tile waveforms
+  // Always clean up existing dashboard tile waveforms before reinitializing
   if (g.dashboardTileWavesurfers && g.dashboardTileWavesurfers.length > 0) {
     console.log(`🧹 Cleaning up ${g.dashboardTileWavesurfers.length} old dashboard tile waveforms`);
     g.dashboardTileWavesurfers.forEach(ws => {
@@ -8149,6 +8138,9 @@ async function initDashboardTiles() {
     });
     g.dashboardTileWavesurfers = [];
   }
+  
+  // Clear waveform data for dashboard tiles
+  g.waveformData = g.waveformData.filter(w => !g.dashboardTileSongs || !g.dashboardTileSongs.find(s => s.id === w.songId));
   
   // Reset dataset to allow re-initialization
   tiles.forEach(tile => {
@@ -8406,34 +8398,17 @@ async function initDashboardTiles() {
 
   revealDashboardTiles();
   
-  // Sync currently playing song's waveform if returning to dashboard
-  if (g.currentSongData && g.standaloneAudio) {
-    const activeTile = Array.from(tiles).find(tile => tile.dataset.songId === g.currentSongData.id);
-    if (activeTile) {
+  // Sync currently playing song's waveform progress
+  setTimeout(() => {
+    if (g.currentSongData && g.standaloneAudio) {
       const wsData = g.waveformData.find(w => w.songId === g.currentSongData.id);
-      if (wsData && wsData.wavesurfer) {
-        const syncProgress = () => {
-          if (g.standaloneAudio.duration > 0) {
-            const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-            wsData.wavesurfer.seekTo(progress);
-          }
-          
-          // Update play/pause icons
-          const playIcon = activeTile.querySelector('.db-play-icon');
-          const pauseIcon = activeTile.querySelector('.db-pause-icon');
-          if (playIcon) playIcon.style.display = g.isPlaying ? 'none' : 'block';
-          if (pauseIcon) pauseIcon.style.display = g.isPlaying ? 'block' : 'none';
-        };
-        
-        // Sync immediately if ready, otherwise wait
-        if (wsData.wavesurfer.isReady) {
-          syncProgress();
-        } else {
-          wsData.wavesurfer.once('ready', syncProgress);
-        }
+      if (wsData && wsData.wavesurfer && g.standaloneAudio.duration > 0) {
+        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+        wsData.wavesurfer.seekTo(progress);
+        console.log(`🎯 Synced waveform progress: ${Math.round(progress * 100)}%`);
       }
     }
-  }
+  }, 500);
   
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
