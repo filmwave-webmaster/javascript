@@ -1076,8 +1076,12 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   audio.addEventListener('timeupdate', () => {
     g.currentTime = audio.currentTime;
     
-    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
+    const now = Date.now();
+    const timeSinceSeek = now - g.lastSeekTime;
+    
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0 && now - g.lastSeekTime > 200) {
       const progress = audio.currentTime / audio.duration;
+      console.log('🎯 Main waveform sync - timeSinceSeek:', timeSinceSeek);
       wavesurfer.seekTo(progress);
     }
 
