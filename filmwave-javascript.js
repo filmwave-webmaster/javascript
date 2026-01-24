@@ -4846,16 +4846,16 @@ if (shouldHaveSidebar && sidebar) {
     });
   }
 
-// Fade in the main content
-  const currentMainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
-  if (currentMainContent) {
-    currentMainContent.style.opacity = '0';
-    currentMainContent.style.transition = 'none';
+// Fade in the page content (not persistent nav/sidebar)
+  const pageContent = document.querySelector('.db-content-container');
+  if (pageContent) {
+    pageContent.style.opacity = '0';
+    pageContent.style.transition = 'none';
     setTimeout(() => {
-      currentMainContent.style.transition = 'opacity 0.3s ease';
-      currentMainContent.style.opacity = '1';
+      pageContent.style.transition = 'opacity 0.3s ease';
+      pageContent.style.opacity = '1';
     }, 50);
-  }     
+  }  
         
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
