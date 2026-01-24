@@ -4743,6 +4743,13 @@ if (typeof barba !== 'undefined') {
   if (incomingFilterWrapper) {
     incomingFilterWrapper.style.opacity = '0';
     incomingFilterWrapper.style.transition = 'none';
+  } 
+
+  // Hide dashboard content during transition
+  const nextPageContent = data.next.container.querySelector('.db-content-container');
+  if (nextPageContent) {
+    nextPageContent.style.opacity = '0';
+    nextPageContent.style.transition = 'none';
   }     
 
   // Hide loading placeholders during transition
