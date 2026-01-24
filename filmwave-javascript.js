@@ -1086,7 +1086,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     }
 
     // Also update dashboard tile waveforms (debounced after manual seeks)
-    const now = Date.now();
     if (now - g.lastSeekTime > 100) {
       g.dashboardTileWavesurfers.forEach(tileWs => {
         const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
