@@ -8467,7 +8467,7 @@ async function initDashboardTiles() {
     const { songId, isPlaying } = e.detail;
     
     tiles.forEach(tile => {
-      if (tile.dataset.songId === songId) {
+      if (String(tile.dataset.songId) === String(songId)) {
         const playIcon = tile.querySelector('.db-play-icon');
         const pauseIcon = tile.querySelector('.db-pause-icon');
         
@@ -8484,7 +8484,7 @@ async function initDashboardTiles() {
         // Reset waveform progress for non-active tiles
         const tileSongId = tile.dataset.songId;
         if (tileSongId) {
-          const wsData = g.waveformData.find(w => w.songId === tileSongId);
+          const wsData = g.waveformData.find(w => String(w.songId) === String(tileSongId));
           if (wsData && wsData.wavesurfer) {
             console.log('🔄 Resetting tile waveform for song:', tileSongId);
             wsData.wavesurfer.seekTo(0);
