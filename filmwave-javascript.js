@@ -1666,11 +1666,17 @@ document.addEventListener('keydown', function (e) {
     e.stopImmediatePropagation();
     
     if (g.standaloneAudio) {
-      if (g.standaloneAudio.paused) {
-        g.standaloneAudio.play();
-      } else {
-        g.standaloneAudio.pause();
+      try {
+        if (g.standaloneAudio.paused) {
+          g.standaloneAudio.play().catch(err => console.warn('Spacebar play failed:', err));
+        } else {
+          g.standaloneAudio.pause();
+        }
+      } catch (err) {
+        console.warn('Spacebar control error:', err);
       }
+    } else {
+      console.log('⚠️ No standaloneAudio available for spacebar control');
     }
     return false;
   }
