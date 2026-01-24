@@ -8260,6 +8260,11 @@ async function initDashboardTiles() {
           wavesurfer.seekTo(progress);
         }
       };
+      
+      // Attach the listener if audio exists
+      if (g.standaloneAudio) {
+        g.standaloneAudio.addEventListener('timeupdate', wavesurfer._progressUpdater);
+      }
 
       // Waveform click to play/seek
       waveformContainer.style.cursor = 'pointer';
