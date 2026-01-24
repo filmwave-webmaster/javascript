@@ -75,8 +75,7 @@ if (!window.musicPlayerPersistent) {
     filteredSongIds: [],
     sidebarClone: null,
     persistedWelcome: null,
-    dashboardTileWavesurfers: [],
-    lastSeekTime: 0
+    dashboardTileWavesurfers: []
   };
 }
 
@@ -1076,32 +1075,14 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   audio.addEventListener('timeupdate', () => {
     g.currentTime = audio.currentTime;
     
-    const now = Date.now();
-    const timeSinceSeek = now - g.lastSeekTime;
-    
-    if (g.currentWavesurfer === wavesurfer && audio.duration > 0 && now - g.lastSeekTime > 50) {
+    if (g.currentWavesurfer === wavesurfer && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
-      console.log('🎯 Main waveform sync - timeSinceSeek:', timeSinceSeek);
       wavesurfer.seekTo(progress);
     }
     
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
-    }
-
-    // Also update dashboard tile waveforms (debounced after manual seeks)
-    if (now - g.lastSeekTime > 200) {
-      g.dashboardTileWavesurfers.forEach(tileWs => {
-        // Skip if this is the current waveform being played
-        if (tileWs === g.currentWavesurfer) return;
-        
-        const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
-        if (tileData && tileData.songId === songData.id && audio.duration > 0) {
-          const progress = audio.currentTime / audio.duration;
-          tileWs.seekTo(progress);
-        }
-      });
     }
     
     if (g.currentPeaksData && g.currentDuration > 0) {
@@ -8377,10 +8358,8 @@ async function initDashboardTiles() {
           
           if (wavesurfer.getDuration() > 0) {
             wavesurfer.seekTo(progress);
-            wavesurfer.seekTo(progress);
           } else {
             wavesurfer.once('ready', () => {
-              wavesurfer.seekTo(progress);
               wavesurfer.seekTo(progress);
             });
           }
@@ -8399,7 +8378,6 @@ async function initDashboardTiles() {
             const seekTime = progress * g.standaloneAudio.duration;
             if (g.standaloneAudio.duration && !isNaN(g.standaloneAudio.duration)) {
               g.standaloneAudio.currentTime = seekTime;
-              g.lastSeekTime = Date.now(); // Only set when actually seeking
               wavesurfer.seekTo(progress);
             } else {
               console.warn('⚠️ Audio duration not ready yet');
