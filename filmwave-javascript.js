@@ -8410,18 +8410,6 @@ async function initDashboardTiles() {
 
   revealDashboardTiles();
   
-  // Sync currently playing song's waveform progress
-  setTimeout(() => {
-    if (g.currentSongData && g.standaloneAudio) {
-      const wsData = g.waveformData.find(w => w.songId === g.currentSongData.id);
-      if (wsData && wsData.wavesurfer && g.standaloneAudio.duration > 0) {
-        const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-        wsData.wavesurfer.seekTo(progress);
-        console.log(`🎯 Synced waveform progress: ${Math.round(progress * 100)}%`);
-      }
-    }
-  }, 500);
-  
   console.log(`✅ Dashboard tiles initialized (${tiles.length} tiles)`);
 }
 
