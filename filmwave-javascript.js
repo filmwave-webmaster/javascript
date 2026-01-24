@@ -4707,6 +4707,13 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
+       // Reset opacity on incoming container to prevent fade issues
+       data.next.container.style.opacity = '1';
+       const children = data.next.container.querySelectorAll('*');
+       children.forEach(el => {
+         el.style.opacity = '';
+         el.style.transition = '';
+       });
 
        const g = window.musicPlayerPersistent;
   
