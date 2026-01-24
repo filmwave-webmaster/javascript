@@ -4830,7 +4830,6 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
-
 // Fade in filter wrapper
   const filterWrapper = document.querySelector('.filter-wrapper');
   if (filterWrapper) {
@@ -4838,8 +4837,18 @@ if (shouldHaveSidebar && sidebar) {
       filterWrapper.style.transition = 'opacity 0.3s ease';
       filterWrapper.style.opacity = '1';
     });
-  }        
-
+  }
+  
+  // Fade in the main content
+  const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (mainContent) {
+    mainContent.style.opacity = '0';
+    mainContent.style.transition = 'opacity 0.3s ease';
+    requestAnimationFrame(() => {
+      mainContent.style.opacity = '1';
+    });
+  }
+        
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
     g.persistedWelcome.remove();
