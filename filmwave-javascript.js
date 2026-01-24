@@ -4736,6 +4736,20 @@ if (typeof barba !== 'undefined') {
   if (incomingFilterWrapper) {
     incomingFilterWrapper.style.opacity = '0';
     incomingFilterWrapper.style.transition = 'none';
+  }
+  
+  // Hide main content during transition
+  const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (incomingMainContent) {
+    incomingMainContent.style.opacity = '0';
+    incomingMainContent.style.transition = 'none';
+  }
+
+  // Hide filter wrapper during transition
+  const incomingFilterWrapper = data.next.container.querySelector('.filter-wrapper');
+  if (incomingFilterWrapper) {
+    incomingFilterWrapper.style.opacity = '0';
+    incomingFilterWrapper.style.transition = 'none';
   }     
 
   // Hide loading placeholders during transition
@@ -4806,17 +4820,6 @@ if (typeof barba !== 'undefined') {
   console.log('🚪 BARBA AFTER FIRED');
   
   const g = window.musicPlayerPersistent;
-
-// Fade in the main content
-  const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
-  console.log('🎨 Main content element found:', mainContent, 'Class:', mainContent?.className);
-  if (mainContent) {
-    mainContent.style.opacity = '0';
-    mainContent.style.transition = 'opacity 0.3s ease';
-    requestAnimationFrame(() => {
-      mainContent.style.opacity = '1';
-    });
-  }
         
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
@@ -4849,6 +4852,15 @@ if (shouldHaveSidebar && sidebar) {
       filterWrapper.style.opacity = '1';
     });
   }
+
+// Fade in the main content
+  const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (mainContent) {
+    requestAnimationFrame(() => {
+      mainContent.style.transition = 'opacity 0.3s ease';
+      mainContent.style.opacity = '1';
+    });
+  }        
         
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
