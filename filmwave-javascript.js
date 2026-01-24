@@ -8123,13 +8123,6 @@ async function initDashboardTiles() {
     return;
   }
 
-  // Check if tiles already have data
-  const firstTile = tiles[0];
-  if (firstTile && firstTile.dataset.songId) {
-    console.log('♻️ Dashboard tiles already initialized, skipping');
-    return;
-  }
-
   const g = window.musicPlayerPersistent;
 
   // Clean up existing dashboard tile waveforms
