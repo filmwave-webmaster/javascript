@@ -1089,6 +1089,20 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
     }
+
+    // Also update dashboard tile waveforms (debounced after manual seeks)
+    if (now - g.lastSeekTime > 50) {
+      g.dashboardTileWavesurfers.forEach(tileWs => {
+        // Skip the current waveform - it's already being synced above
+        if (tileWs === wavesurfer) return;
+        
+        const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
+        if (tileData && tileData.songId === songData.id && audio.duration > 0) {
+          const progress = audio.currentTime / audio.duration;
+          tileWs.seekTo(progress);
+        }
+      });
+    }
     
     if (g.currentPeaksData && g.currentDuration > 0) {
       const progress = audio.currentTime / audio.duration;
