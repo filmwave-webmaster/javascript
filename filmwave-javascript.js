@@ -784,9 +784,7 @@ function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
     playerWrapper.style.alignItems = 'center';
   }
   
-  g.currentPeaksData = null;
-  drawMasterWaveform(null, 0);
-  updateMasterPlayerInfo(songData, wavesurfer);
+    updateMasterPlayerInfo(songData, wavesurfer);
   
   const getAndDrawPeaks = () => {
     if (g.currentWavesurfer !== wavesurfer) return;
@@ -1165,7 +1163,9 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
-  if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+    syncMasterTrack(wavesurfer, songData);
+    updateMasterPlayerVisibility();
     if (shouldAutoPlay) {
       g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
     }
@@ -8192,7 +8192,8 @@ async function initDashboardTiles() {
     return;
   }
 
-  const g = window.musicPlayerPersistent;
+    const g = window.musicPlayerPersistent;
+  g.isTransitioning = false;
   
   // Always clean up existing dashboard tile waveforms before reinitializing
   if (g.dashboardTileWavesurfers && g.dashboardTileWavesurfers.length > 0) {
