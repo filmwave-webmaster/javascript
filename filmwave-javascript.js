@@ -8124,7 +8124,18 @@ async function initDashboardTiles() {
   }
 
   const g = window.musicPlayerPersistent;
-
+  
+  // Check if tiles already have data
+  const firstTile = tiles[0];
+  const tilesAlreadyInitialized = firstTile && firstTile.dataset.songId;
+  const hasActiveSong = g.currentSongData && g.standaloneAudio;
+  
+  // Only reinitialize if: (1) not yet initialized OR (2) there's an active song that needs syncing
+  if (tilesAlreadyInitialized && !hasActiveSong) {
+    console.log('♻️ Dashboard tiles already initialized, no active song - skipping');
+    return;
+  }
+  
   // Clean up existing dashboard tile waveforms
   if (g.dashboardTileWavesurfers && g.dashboardTileWavesurfers.length > 0) {
     console.log(`🧹 Cleaning up ${g.dashboardTileWavesurfers.length} old dashboard tile waveforms`);
@@ -8152,7 +8163,6 @@ async function initDashboardTiles() {
   if (g.MASTER_DATA.length === 0) {
     await fetchSongs();
   }
-
   console.log(`📊 Total songs in MASTER_DATA: ${g.MASTER_DATA.length}`);
 
   // Use cached random selection if available, otherwise create new one
