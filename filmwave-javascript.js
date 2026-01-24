@@ -74,7 +74,8 @@ if (!window.musicPlayerPersistent) {
     wasPlayingBeforeHidden: false,
     filteredSongIds: [],  
     filteredSongIds: [],
-    sidebarClone: null
+    sidebarClone: null,
+    dashboardTileWavesurfers: []
   };
 }
 
@@ -8130,6 +8131,29 @@ async function initDashboardTiles() {
   }
 
   const g = window.musicPlayerPersistent;
+
+  // Clean up existing dashboard tile waveforms
+  if (g.dashboardTileWavesurfers && g.dashboardTileWavesurfers.length > 0) {
+    console.log(`🧹 Cleaning up ${g.dashboardTileWavesurfers.length} old dashboard tile waveforms`);
+    g.dashboardTileWavesurfers.forEach(ws => {
+      try {
+        ws.unAll();
+        ws.destroy();
+      } catch (e) {
+        console.warn('Error destroying dashboard tile wavesurfer:', e);
+      }
+    });
+    g.dashboardTileWavesurfers = [];
+  }
+  
+  // Reset dataset to allow re-initialization
+  tiles.forEach(tile => {
+    delete tile.dataset.songId;
+    const waveformContainer = tile.querySelector('.db-waveform');
+    if (waveformContainer) {
+      waveformContainer.innerHTML = '';
+    }
+  });
   
   // Ensure songs are loaded
   if (g.MASTER_DATA.length === 0) {
@@ -8211,7 +8235,7 @@ async function initDashboardTiles() {
         wavesurfer.load(fields['R2 Audio URL']);
       }
 
-      g.allWavesurfers.push(wavesurfer);
+      g.dashboardTileWavesurfers.push(wavesurfer);
       
       g.waveformData.push({
         wavesurfer: wavesurfer,
