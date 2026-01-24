@@ -4634,9 +4634,15 @@ if (typeof barba !== 'undefined') {
     data.current.container.style.transition = 'opacity 0.15s ease';
     data.current.container.style.opacity = '0';
   }
+
+  // Fade out navigation header to prevent persistence
+  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
+  if (navHeader) {
+    navHeader.style.transition = 'opacity 0.15s ease';
+    navHeader.style.opacity = '0';
+  }
   
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
-     
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
   
   g.filtersInitialized = false;
@@ -4867,6 +4873,15 @@ if (shouldHaveSidebar && sidebar) {
       pageContent.style.opacity = '1';
     }, 50);
   }  
+
+// Fade in navigation header
+  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
+  if (navHeader) {
+    setTimeout(() => {
+      navHeader.style.transition = 'opacity 0.3s ease';
+      navHeader.style.opacity = '1';
+    }, 50);
+  }        
         
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
