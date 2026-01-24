@@ -75,7 +75,8 @@ if (!window.musicPlayerPersistent) {
     filteredSongIds: [],  
     filteredSongIds: [],
     sidebarClone: null,
-    dashboardTileWavesurfers: []
+    dashboardTileWavesurfers: [],
+    lastSeekTime: 0
   };
 }
 
@@ -1080,14 +1081,17 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       wavesurfer.seekTo(progress);
     }
 
-    // Also update dashboard tile waveforms
-    g.dashboardTileWavesurfers.forEach(tileWs => {
-      const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
-      if (tileData && tileData.songId === songData.id && audio.duration > 0) {
-        const progress = audio.currentTime / audio.duration;
-        tileWs.seekTo(progress);
-      }
-    });
+    // Also update dashboard tile waveforms (debounced after manual seeks)
+    const now = Date.now();
+    if (now - g.lastSeekTime > 100) {
+      g.dashboardTileWavesurfers.forEach(tileWs => {
+        const tileData = g.waveformData.find(d => d.wavesurfer === tileWs);
+        if (tileData && tileData.songId === songData.id && audio.duration > 0) {
+          const progress = audio.currentTime / audio.duration;
+          tileWs.seekTo(progress);
+        }
+      });
+    }
     
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
@@ -8386,6 +8390,7 @@ async function initDashboardTiles() {
             console.log('   Seeking within currently playing song');
             const seekTime = progress * g.standaloneAudio.duration;
             g.standaloneAudio.currentTime = seekTime;
+            g.lastSeekTime = Date.now();
             wavesurfer.seekTo(progress);
           }
           // If clicking on a different song - pause old, play new from position
