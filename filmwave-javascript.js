@@ -4807,6 +4807,16 @@ if (typeof barba !== 'undefined') {
   
   const g = window.musicPlayerPersistent;
 
+// Fade in the main content
+  const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (mainContent) {
+    mainContent.style.opacity = '0';
+    mainContent.style.transition = 'opacity 0.3s ease';
+    requestAnimationFrame(() => {
+      mainContent.style.opacity = '1';
+    });
+  }
+        
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 const sidebar = document.querySelector('.sidebar-nav');
@@ -4836,16 +4846,6 @@ if (shouldHaveSidebar && sidebar) {
     requestAnimationFrame(() => {
       filterWrapper.style.transition = 'opacity 0.3s ease';
       filterWrapper.style.opacity = '1';
-    });
-  }
-  
-  // Fade in the main content
-  const mainContent = document.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
-  if (mainContent) {
-    mainContent.style.opacity = '0';
-    mainContent.style.transition = 'opacity 0.3s ease';
-    requestAnimationFrame(() => {
-      mainContent.style.opacity = '1';
     });
   }
         
