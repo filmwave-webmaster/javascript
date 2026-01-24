@@ -8365,7 +8365,7 @@ async function initDashboardTiles() {
     }
   });
 
-  // Listen for play/pause events to update icons
+  // Listen for play/pause events to update icons and reset waveforms
   document.addEventListener('audioStateChange', (e) => {
     const { songId, isPlaying } = e.detail;
     
@@ -8383,6 +8383,17 @@ async function initDashboardTiles() {
         
         if (playIcon) playIcon.style.display = 'block';
         if (pauseIcon) pauseIcon.style.display = 'none';
+        
+        // Reset waveform progress for non-active tiles
+        const waveformContainer = tile.querySelector('.db-waveform');
+        if (waveformContainer) {
+          const tileWavesurfer = g.dashboardTileWavesurfers.find(ws => {
+            return ws.container === waveformContainer;
+          });
+          if (tileWavesurfer) {
+            tileWavesurfer.seekTo(0);
+          }
+        }
       }
     });
   });
