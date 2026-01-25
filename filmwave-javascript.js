@@ -4665,54 +4665,31 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
    beforeLeave(data) {
-
-// 🔒 Pin main nav so it never fades/flashes
-const navHeaderEl = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
-if (navHeaderEl) {
-navHeaderEl.style.transition = 'none';
-navHeaderEl.style.opacity = '1';
-navHeaderEl.style.visibility = 'visible';
-}
-     
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
-// Fade logic (dashboard vs non-dashboard)
-const fromPath = (data?.current?.url?.path || window.location.pathname || '');
-const toPath = (data?.next?.url?.path || '');
-const fromDashboard = fromPath.startsWith('/dashboard/');
-const toDashboard = toPath.startsWith('/dashboard/');
+    // Fade out ONLY the correct area (prevents random full-page fades)
+  const leavingPath = data.current?.url?.path || window.location.pathname || '';
+  const isDashboard = leavingPath.startsWith('/dashboard/');
 
-// ✅ DASHBOARD → DASHBOARD: fade ONLY dashboard content
-if (fromDashboard && toDashboard) {
-  const mainContent = data.current.container.querySelector('.dashboard-content-wrapper, .db-content-container');
-  if (mainContent) {
-    mainContent.style.transition = 'opacity 0.15s ease';
-    mainContent.style.opacity = '0';
-  }
-}
+  const mainContent = isDashboard
+    ? data.current.container.querySelector('.db-content-container')
+    : data.current.container.querySelector('.main-content, .page-wrapper, .dashboard-content-wrapper');
 
-// ✅ DASHBOARD → NON-DASHBOARD: fade dashboard content (sidebar hide handled elsewhere)
-else if (fromDashboard && !toDashboard) {
-  const mainContent = data.current.container.querySelector('.dashboard-content-wrapper, .db-content-container');
-  if (mainContent) {
-    mainContent.style.transition = 'opacity 0.15s ease';
-    mainContent.style.opacity = '0';
-  }
-}
-
-// ✅ NON-DASHBOARD → NON-DASHBOARD: fade ONLY the page content wrapper (NOT nav)
-else if (!fromDashboard && !toDashboard) {
-  const mainContent = data.current.container.querySelector('.main-content');
   if (mainContent) {
     mainContent.style.transition = 'opacity 0.15s ease';
     mainContent.style.opacity = '0';
   } else {
-    // fallback if no .main-content exists
     data.current.container.style.transition = 'opacity 0.15s ease';
     data.current.container.style.opacity = '0';
   }
-}
+
+  // Fade out navigation header to prevent persistence
+  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
+  if (navHeader) {
+    navHeader.style.transition = 'opacity 0.15s ease';
+    navHeader.style.opacity = '0';
+  }
   
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
@@ -4795,14 +4772,6 @@ setTimeout(() => {
 
      beforeEnter(data) {
 
-  // 🔒 Pin incoming main nav before it becomes visible
-const incomingNavHeaderEl = data.next.container.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
-if (incomingNavHeaderEl) {
-  incomingNavHeaderEl.style.transition = 'none';
-  incomingNavHeaderEl.style.opacity = '1';
-  incomingNavHeaderEl.style.visibility = 'visible';
-}
-
        // Reset opacity on main content
   const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
   if (incomingMainContent) {
@@ -4811,17 +4780,6 @@ if (incomingNavHeaderEl) {
   }
        
        const g = window.musicPlayerPersistent;
-
-  // ✅ Prep incoming page for NON-DASHBOARD → NON-DASHBOARD fade-in
-const fromPath = (data?.current?.url?.path || window.location.pathname || '');
-const toPath = (data?.next?.url?.path || '');
-const fromDashboard = fromPath.startsWith('/dashboard/');
-const toDashboard = toPath.startsWith('/dashboard/');
-
-if (!fromDashboard && !toDashboard) {
-  data.next.container.style.opacity = '0';
-  data.next.container.style.transition = 'none';
-}     
   
   // Capture sidebar from incoming page BEFORE Barba processes it
   const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
@@ -4926,32 +4884,8 @@ if (!fromDashboard && !toDashboard) {
 
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
-
-// 🔒 Re-pin nav after swap (covers rare race-condition flashes)
-const navHeaderEl2 = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
-if (navHeaderEl2) {
-  navHeaderEl2.style.transition = 'none';
-  navHeaderEl2.style.opacity = '1';
-  navHeaderEl2.style.visibility = 'visible';
-}  
   
   const g = window.musicPlayerPersistent;
-
-  // ✅ Fade in for NON-DASHBOARD → NON-DASHBOARD
-const fromPath = (data?.current?.url?.path || '');
-const toPath = (data?.next?.url?.path || window.location.pathname || '');
-const fromDashboard = fromPath.startsWith('/dashboard/');
-const toDashboard = toPath.startsWith('/dashboard/');
-
-if (!fromDashboard && !toDashboard) {
-  const el = data.next.container;
-  el.style.opacity = '0';
-  el.style.transition = 'none';
-  requestAnimationFrame(() => {
-    el.style.transition = 'opacity 0.15s ease';
-    el.style.opacity = '1';
-  });
-}      
 
   // 🔁 Reattach dashboard waveform AFTER Barba swaps DOM
   if (window.location.pathname.startsWith('/dashboard/')) {
