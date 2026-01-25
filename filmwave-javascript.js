@@ -4668,7 +4668,7 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
-  // Fade logic (dashboard vs non-dashboard)
+// Fade logic (dashboard vs non-dashboard)
 const fromPath = (data?.current?.url?.path || window.location.pathname || '');
 const toPath = (data?.next?.url?.path || '');
 const fromDashboard = fromPath.startsWith('/dashboard/');
@@ -4682,7 +4682,8 @@ if (fromDashboard && toDashboard) {
     mainContent.style.opacity = '0';
   }
 }
-// ✅ DASHBOARD → NON-DASHBOARD: fade dashboard content, hide sidebar instantly elsewhere in your code
+
+// ✅ DASHBOARD → NON-DASHBOARD: fade dashboard content (sidebar hide handled elsewhere)
 else if (fromDashboard && !toDashboard) {
   const mainContent = data.current.container.querySelector('.dashboard-content-wrapper, .db-content-container');
   if (mainContent) {
@@ -4690,18 +4691,19 @@ else if (fromDashboard && !toDashboard) {
     mainContent.style.opacity = '0';
   }
 }
-// ✅ NON-DASHBOARD → NON-DASHBOARD: fade the whole container (this is what you asked for)
-else if (!fromDashboard && !toDashboard) {
-  data.current.container.style.transition = 'opacity 0.15s ease';
-  data.current.container.style.opacity = '0';
-}
 
-  // Fade out navigation header to prevent persistence
-  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
-  if (navHeader) {
-    navHeader.style.transition = 'opacity 0.15s ease';
-    navHeader.style.opacity = '0';
+// ✅ NON-DASHBOARD → NON-DASHBOARD: fade ONLY the page content wrapper (NOT nav)
+else if (!fromDashboard && !toDashboard) {
+  const mainContent = data.current.container.querySelector('.main-content');
+  if (mainContent) {
+    mainContent.style.transition = 'opacity 0.15s ease';
+    mainContent.style.opacity = '0';
+  } else {
+    // fallback if no .main-content exists
+    data.current.container.style.transition = 'opacity 0.15s ease';
+    data.current.container.style.opacity = '0';
   }
+}
   
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
