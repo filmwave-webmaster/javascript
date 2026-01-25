@@ -4654,41 +4654,6 @@ function forceWebflowRestart() {
   console.log('✅ Webflow IX engine restarted');
 }
 
-// Helpers
-
-function hideIncomingSidebar(nextContainer) {
-  if (!nextContainer) return;
-  const incoming = nextContainer.querySelector('.sidebar-nav');
-  if (!incoming) return;
-
-  // fully remove from rendering so it can't "double" visually
-  incoming.style.display = 'none';
-  incoming.style.visibility = 'hidden';
-  incoming.style.opacity = '0';
-  incoming.style.pointerEvents = 'none';
-}
-
-function getDbContentContainer(container) {
-  if (!container) return null;
-  return container.querySelector('.db-content-container') || null;
-}
-
-function pinPersistentUiVisible() {
-  const sidebar = document.querySelector('.sidebar-nav');
-  if (sidebar) {
-    sidebar.style.opacity = '1';
-    sidebar.style.visibility = 'visible';
-  }
-
-  const topNav = document.querySelector('.main-navigation, .navbar, .nav');
-  if (topNav) {
-    topNav.style.opacity = '1';
-    topNav.style.visibility = 'visible';
-  }
-}
-
-// Barba init
-
 if (typeof barba !== 'undefined') {
   barba.init({
     prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
@@ -4696,40 +4661,32 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
    beforeLeave(data) {
-     
-// ✅ prevent flash: hide arrows + incoming welcome + incoming db content immediately
-hideAllSidebarNavArrowsImmediate(data.next.container);
-
-const incomingWelcome = data.next.container.querySelector('.dashboard-welcome-text');
-if (incomingWelcome) {
-  incomingWelcome.style.opacity = '0';
-  incomingWelcome.style.transition = 'none';
-}
-
-const inDb = getDbContentContainer(data.next.container);
-if (inDb) {
-  inDb.style.opacity = '0';
-  inDb.style.transition = 'none';
-}
-     
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
-
-  // Fade out ONLY the db content area (prevents sidebar/nav fading)
-  const outEl = getDbContentContainer(data.current.container);
-  if (outEl) {
-    outEl.style.transition = 'opacity 200ms ease';
-    outEl.style.opacity = '0';
+  
+  // Fade out the main content area only (not persistent elements)
+  const mainContent = data.current.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper, .db-content-container');
+  if (mainContent) {
+    mainContent.style.transition = 'opacity 0.15s ease';
+    mainContent.style.opacity = '0';
+  } else {
+    // If no specific wrapper found, fade the entire container
+    data.current.container.style.transition = 'opacity 0.15s ease';
+    data.current.container.style.opacity = '0';
   }
 
-  // Keep persistent UI pinned (safety)
-  pinPersistentUiVisible();
-
+  // Fade out navigation header to prevent persistence
+  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
+  if (navHeader) {
+    navHeader.style.transition = 'opacity 0.15s ease';
+    navHeader.style.opacity = '0';
+  }
+  
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
-
+  
   g.filtersInitialized = false;
-
+  
   // Clean up waveforms from ANY page (music page OR home page with featured songs)
   if (isMusicPage || hasFeaturedSongs) {
     g.allWavesurfers.forEach(ws => {
@@ -4740,105 +4697,120 @@ if (inDb) {
         console.warn('Error destroying wavesurfer:', error);
       }
     });
-
+    
     document.querySelectorAll('.waveform').forEach(container => {
       container.innerHTML = '';
     });
-
+    
     g.allWavesurfers = [];
     g.waveformData = [];
     g.persistedWaveformContainer = null;
     g.currentWavesurfer = null;
   }
 
-  // Persist welcome message across transitions
+ // Persist welcome message across transitions
   const oldWelcome = data.current.container.querySelector('.dashboard-welcome-text');
   if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
     g.persistedWelcome = oldWelcome.cloneNode(true);
     g.persistedWelcome.style.position = 'fixed';
     g.persistedWelcome.style.zIndex = '10000';
+    // Copy computed position
     const rect = oldWelcome.getBoundingClientRect();
     g.persistedWelcome.style.top = rect.top + 'px';
     g.persistedWelcome.style.left = rect.left + 'px';
     document.body.appendChild(g.persistedWelcome);
-  }
+  } 
 
-  // Hide old sidebar inside current container to prevent doubling
+   // Hide old sidebar to prevent doubling (fade out if going to non-dashboard)
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
   if (oldSidebar) {
     const nextUrl = data.next.url.path;
     const goingToNonDashboard = !nextUrl.startsWith('/dashboard/');
+    
     if (goingToNonDashboard) {
       oldSidebar.style.transition = 'opacity 0.3s ease';
       oldSidebar.style.opacity = '0';
     } else {
       oldSidebar.style.opacity = '0';
     }
-  }
+  }  
 
   // Fade out filter wrapper when leaving music page
   const filterWrapper = data.current.container.querySelector('.filter-wrapper');
   if (filterWrapper) {
     filterWrapper.style.transition = 'opacity 0.3s ease';
     filterWrapper.style.opacity = '0';
-  }
+  }    
 
-  // Music player wrapper
+  // Music player wrapper    
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper && g.hasActiveSong) {
     playerWrapper.style.transition = 'none';
   }
-
+  
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
   document.body.style.height = '';
+  return Promise.resolve();
 },
 
      beforeEnter(data) {
-  const g = window.musicPlayerPersistent;
 
-  // Hide the incoming sidebar      
-  const nextPath = data?.next?.url?.path || window.location.pathname;
-  const currentPath = data?.current?.url?.path || '';
-
-  const goingDashboardToDashboard =
-  currentPath.startsWith('/dashboard/') && nextPath.startsWith('/dashboard/');
-
-  if (goingDashboardToDashboard) {
-  hideIncomingSidebar(data.next.container);
-  }     
-
-  // Ensure only the db content starts hidden (no global fade)
-  const inEl = getDbContentContainer(data.next.container);
-  if (inEl) {
-    inEl.style.opacity = '0';
-    inEl.style.transition = 'none';
+       // Reset opacity on main content
+  const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
+  if (incomingMainContent) {
+    incomingMainContent.style.opacity = '1';
+    incomingMainContent.style.transition = '';
   }
-
-  pinPersistentUiVisible();
-
+       
+       const g = window.musicPlayerPersistent;
+  
   // Capture sidebar from incoming page BEFORE Barba processes it
   const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
+  
   if (incomingSidebar && !g.sidebarClone) {
     g.sidebarClone = incomingSidebar.cloneNode(true);
     console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
   }
 
-  // Hide filter wrapper during transition (dedupe your double block)
+  // Hide sidebar if transitioning from no-sidebar to sidebar page
+  const currentSidebar = data.current.container.querySelector('.sidebar-nav');
+  if (!currentSidebar && incomingSidebar) {
+    incomingSidebar.style.opacity = '0';
+    incomingSidebar.style.transition = 'none';
+    console.log('🫥 Hiding incoming sidebar during transition');
+  }
+
+  // Hide filter wrapper during transition
+  const nextFilterWrapper = data.next.container.querySelector('.filter-wrapper');
+  if (nextFilterWrapper) {
+    nextFilterWrapper.style.opacity = '0';
+    nextFilterWrapper.style.transition = 'none';
+  }
+  
+  // Hide filter wrapper during transition
   const incomingFilterWrapper = data.next.container.querySelector('.filter-wrapper');
   if (incomingFilterWrapper) {
     incomingFilterWrapper.style.opacity = '0';
     incomingFilterWrapper.style.transition = 'none';
-  }
+  } 
+
+  // Hide dashboard content during transition
+  const nextPageContent = data.next.container.querySelector('.db-content-container');
+  if (nextPageContent) {
+    nextPageContent.style.opacity = '0';
+    nextPageContent.style.transition = 'none';
+  }     
 
   // Hide loading placeholders during transition
-  data.next.container.querySelectorAll('.loading-placeholder').forEach(placeholder => {
+  const loadingPlaceholders = data.next.container.querySelectorAll('.loading-placeholder');
+  loadingPlaceholders.forEach(placeholder => {
     placeholder.style.display = 'none';
   });
-
+      
   const nextContainer = data.next.container;
   const isMusicPage = !!nextContainer.querySelector('.music-list-wrapper');
-
+       
   // Inject CSS to hide ONLY .login-section during transition
   const styleId = 'barba-transition-style';
   let style = document.getElementById(styleId);
@@ -4847,6 +4819,7 @@ if (inDb) {
     style.id = styleId;
     document.head.appendChild(style);
   }
+       
   style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
   if (!isMusicPage) {
@@ -4854,7 +4827,7 @@ if (inDb) {
     document.documentElement.style.overflow = 'visible';
     document.body.style.height = 'auto';
     nextContainer.style.overflow = 'visible';
-
+    
     const mainContent = nextContainer.querySelector('.main-content');
     if (mainContent) mainContent.style.overflow = 'visible';
   } else {
@@ -4862,11 +4835,12 @@ if (inDb) {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.height = '100vh';
     nextContainer.style.overflow = 'hidden';
-
+    
     const musicArea = nextContainer.querySelector('.music-area-wrapper');
     if (musicArea) musicArea.style.overflow = 'hidden';
   }
 },
+
       enter(data) {
         removeDuplicateIds();
 
@@ -4925,8 +4899,6 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
-
-updateSidebarNavArrows(document);        
         
 // Fade in filter wrapper
   const filterWrapper = document.querySelector('.filter-wrapper');
@@ -4937,30 +4909,16 @@ updateSidebarNavArrows(document);
     });
   }
 
-// Fade in ONLY the incoming db content container (prevents wrapper flash)
-const pageContent = getDbContentContainer(data.next.container);
-if (pageContent) {
-  pageContent.style.opacity = '0';
-  pageContent.style.transition = 'none';
-
-  requestAnimationFrame(() => {
-    pageContent.style.transition = 'opacity 0.3s ease';
-    pageContent.style.opacity = '1';
-  });
-}
-
-setTimeout(() => {
-  const incomingWelcome = document.querySelector('.dashboard-welcome-text');
-  if (incomingWelcome) {
-    incomingWelcome.style.transition = 'opacity 0.2s ease';
-    incomingWelcome.style.opacity = '1';
-  }
-
-  if (g.persistedWelcome) {
-    g.persistedWelcome.remove();
-    g.persistedWelcome = null;
-  }
-}, 250);        
+// Fade in the page content (not persistent nav/sidebar)
+  const pageContent = document.querySelector('.db-content-container');
+  if (pageContent) {
+    pageContent.style.opacity = '0';
+    pageContent.style.transition = 'none';
+    setTimeout(() => {
+      pageContent.style.transition = 'opacity 0.3s ease';
+      pageContent.style.opacity = '1';
+    }, 50);
+  }  
 
 // Fade in navigation header
   const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
@@ -4969,7 +4927,13 @@ setTimeout(() => {
       navHeader.style.transition = 'opacity 0.3s ease';
       navHeader.style.opacity = '1';
     }, 50);
-  }     
+  }        
+        
+// Remove persisted welcome and restore from new page
+  if (g.persistedWelcome) {
+    g.persistedWelcome.remove();
+    g.persistedWelcome = null;
+  }        
 
   // Show loading placeholders after transition completes
 const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
