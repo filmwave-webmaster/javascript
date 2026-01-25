@@ -4656,7 +4656,11 @@ function forceWebflowRestart() {
 
 if (typeof barba !== 'undefined') {
   barba.init({
-    prevent: ({ el }) => el.classList && el.classList.contains('no-barba'),
+    prevent: ({ el }) => {
+  const g = window.musicPlayerPersistent;
+  if (g && g.isTransitioning) return true;
+  return el.classList && el.classList.contains('no-barba');
+},
     transitions: [{
       name: 'default',
       
@@ -4664,13 +4668,18 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
-  // Fade out the main content area only (not persistent elements)
-  const mainContent = data.current.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper, .db-content-container');
+    // Fade out ONLY the correct area (prevents random full-page fades)
+  const leavingPath = data.current?.url?.path || window.location.pathname || '';
+  const isDashboard = leavingPath.startsWith('/dashboard/');
+
+  const mainContent = isDashboard
+    ? data.current.container.querySelector('.db-content-container')
+    : data.current.container.querySelector('.main-content, .page-wrapper, .dashboard-content-wrapper');
+
   if (mainContent) {
     mainContent.style.transition = 'opacity 0.15s ease';
     mainContent.style.opacity = '0';
   } else {
-    // If no specific wrapper found, fade the entire container
     data.current.container.style.transition = 'opacity 0.15s ease';
     data.current.container.style.opacity = '0';
   }
@@ -4709,17 +4718,19 @@ if (typeof barba !== 'undefined') {
   }
 
  // Persist welcome message across transitions
-  const oldWelcome = data.current.container.querySelector('.dashboard-welcome-text');
-  if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
-    g.persistedWelcome = oldWelcome.cloneNode(true);
-    g.persistedWelcome.style.position = 'fixed';
-    g.persistedWelcome.style.zIndex = '10000';
-    // Copy computed position
-    const rect = oldWelcome.getBoundingClientRect();
-    g.persistedWelcome.style.top = rect.top + 'px';
-    g.persistedWelcome.style.left = rect.left + 'px';
-    document.body.appendChild(g.persistedWelcome);
-  } 
+const oldWelcome = data.current.container.querySelector('.dashboard-welcome-text');
+if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
+  oldWelcome.style.visibility = 'hidden'; // ← ADD THIS LINE
+
+  g.persistedWelcome = oldWelcome.cloneNode(true);
+  g.persistedWelcome.style.position = 'fixed';
+  g.persistedWelcome.style.zIndex = '10000';
+  // Copy computed position
+  const rect = oldWelcome.getBoundingClientRect();
+  g.persistedWelcome.style.top = rect.top + 'px';
+  g.persistedWelcome.style.left = rect.left + 'px';
+  document.body.appendChild(g.persistedWelcome);
+}
 
    // Hide old sidebar to prevent doubling (fade out if going to non-dashboard)
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
