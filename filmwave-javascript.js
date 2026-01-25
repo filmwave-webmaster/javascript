@@ -4696,6 +4696,22 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
    beforeLeave(data) {
+     
+// ✅ prevent flash: hide arrows + incoming welcome + incoming db content immediately
+hideAllSidebarNavArrowsImmediate(data.next.container);
+
+const incomingWelcome = data.next.container.querySelector('.dashboard-welcome-text');
+if (incomingWelcome) {
+  incomingWelcome.style.opacity = '0';
+  incomingWelcome.style.transition = 'none';
+}
+
+const inDb = getDbContentContainer(data.next.container);
+if (inDb) {
+  inDb.style.opacity = '0';
+  inDb.style.transition = 'none';
+}
+     
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
 
@@ -4922,16 +4938,30 @@ updateSidebarNavArrows(document);
     });
   }
 
-// Fade in the page content (not persistent nav/sidebar)
-  const pageContent = document.querySelector('.db-content-container');
-  if (pageContent) {
-    pageContent.style.opacity = '0';
-    pageContent.style.transition = 'none';
-    setTimeout(() => {
-      pageContent.style.transition = 'opacity 0.3s ease';
-      pageContent.style.opacity = '1';
-    }, 50);
-  }  
+// Fade in ONLY the incoming db content container (prevents wrapper flash)
+const pageContent = getDbContentContainer(data.next.container);
+if (pageContent) {
+  pageContent.style.opacity = '0';
+  pageContent.style.transition = 'none';
+
+  requestAnimationFrame(() => {
+    pageContent.style.transition = 'opacity 0.3s ease';
+    pageContent.style.opacity = '1';
+  });
+}
+
+setTimeout(() => {
+  const incomingWelcome = document.querySelector('.dashboard-welcome-text');
+  if (incomingWelcome) {
+    incomingWelcome.style.transition = 'opacity 0.2s ease';
+    incomingWelcome.style.opacity = '1';
+  }
+
+  if (g.persistedWelcome) {
+    g.persistedWelcome.remove();
+    g.persistedWelcome = null;
+  }
+}, 250);        
 
 // Fade in navigation header
   const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
@@ -4940,13 +4970,7 @@ updateSidebarNavArrows(document);
       navHeader.style.transition = 'opacity 0.3s ease';
       navHeader.style.opacity = '1';
     }, 50);
-  } 
-        
-// Remove persisted welcome and restore from new page
-  if (g.persistedWelcome) {
-    g.persistedWelcome.remove();
-    g.persistedWelcome = null;
-  }        
+  }     
 
   // Show loading placeholders after transition completes
 const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
