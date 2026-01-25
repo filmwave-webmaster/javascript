@@ -2946,33 +2946,19 @@ removeDuplicateIds();
 
 /**
  * ============================================================
- * SIDEBAR ARROWS
+ * SIDEBAR NAV ACTIVE ARROW
  * ============================================================
  */
-
-// Hide everything immediately (prevents flash)
-function hideAllSidebarNavArrowsImmediate(root = document) {
-  const sidebar = root.querySelector('.sidebar-nav');
+function updateSidebarNavArrows() {
+  const sidebar = document.querySelector('.sidebar-nav');
   if (!sidebar) return;
 
   const arrows = sidebar.querySelectorAll('.db-sidebar-nav-arrow');
   if (!arrows.length) return;
 
   arrows.forEach(a => {
-    a.style.transition = 'none';
-    a.style.opacity = '0';
-    a.style.visibility = 'hidden';
-    a.style.pointerEvents = 'none';
+    a.style.transition = 'opacity 200ms ease';
   });
-}
-
-// Show only the current page arrow (with fade)
-function updateSidebarNavArrows(root = document) {
-  const sidebar = root.querySelector('.sidebar-nav');
-  if (!sidebar) return;
-
-  const arrows = sidebar.querySelectorAll('.db-sidebar-nav-arrow');
-  if (!arrows.length) return;
 
   let path = window.location.pathname || '';
   path = path.replace(/\/+$/, '');
@@ -2986,53 +2972,23 @@ function updateSidebarNavArrows(root = document) {
     slug = path.split('/').filter(Boolean).pop() || '';
   }
 
-  // Hide all immediately (no flash)
   arrows.forEach(a => {
-    a.style.transition = 'none';
     a.style.opacity = '0';
-    a.style.visibility = 'hidden';
     a.style.pointerEvents = 'none';
   });
 
   const active = sidebar.querySelector(`.db-sidebar-nav-arrow[data-db-nav="${slug}"]`);
-  if (!active) return;
-
-  // Make active visible first (still invisible), then fade in next frame
-  active.style.visibility = 'visible';
-  active.style.pointerEvents = 'auto';
-
-  requestAnimationFrame(() => {
-    active.style.transition = 'opacity 200ms ease';
-    active.style.opacity = '1';
-  });
+  if (active) {
+    active.style.pointerEvents = 'auto';
+    requestAnimationFrame(() => {
+      active.style.opacity = '1';
+    });
+  }
 }
 
-// 1) Run ASAP on load
-hideAllSidebarNavArrowsImmediate(document);
-updateSidebarNavArrows(document);
-requestAnimationFrame(() => updateSidebarNavArrows(document));
-setTimeout(() => updateSidebarNavArrows(document), 150);
-
-// 2) Hide arrows immediately on any sidebar link click (prevents flash during navigation)
-document.addEventListener('pointerdown', (e) => {
-  const link = e.target.closest('.sidebar-nav a, .sidebar-nav .w-inline-block');
-  if (!link) return;
-  hideAllSidebarNavArrowsImmediate(document);
-}, true);
-
-// 3) Barba: hide arrows INSIDE the incoming container BEFORE it becomes visible
-document.addEventListener('barbaBeforeEnter', (e) => {
-  const nextContainer = e?.detail?.next?.container;
-  if (!nextContainer) return;
-  hideAllSidebarNavArrowsImmediate(nextContainer);
-}, true);
-
-// 4) After Barba: re-run on the live DOM
-document.addEventListener('barbaAfterTransition', () => {
-  updateSidebarNavArrows(document);
-  requestAnimationFrame(() => updateSidebarNavArrows(document));
-  setTimeout(() => updateSidebarNavArrows(document), 150);
-});
+updateSidebarNavArrows();
+requestAnimationFrame(updateSidebarNavArrows);
+setTimeout(updateSidebarNavArrows, 150);
 
 /**
  * ============================================================
