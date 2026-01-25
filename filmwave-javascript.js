@@ -2946,6 +2946,41 @@ removeDuplicateIds();
 
 /**
  * ============================================================
+ * SIDEBAR NAV ACTIVE ARROW
+ * ============================================================
+ */
+function updateSidebarNavArrows() {
+  const sidebar = document.querySelector('.sidebar-nav');
+  if (!sidebar) return;
+
+  const arrows = sidebar.querySelectorAll('.db-sidebar-nav-arrow');
+  if (!arrows.length) return;
+
+  let path = window.location.pathname || '';
+  path = path.replace(/\/+$/, '');
+
+  let slug = '';
+  if (path === '/dashboard') {
+    slug = 'dashboard';
+  } else if (path.startsWith('/dashboard/')) {
+    slug = path.split('/').filter(Boolean).pop() || 'dashboard';
+  } else {
+    slug = path.split('/').filter(Boolean).pop() || '';
+  }
+
+  arrows.forEach(a => {
+    a.style.display = 'none';
+  });
+
+  const active = sidebar.querySelector(`.db-sidebar-nav-arrow[data-db-nav="${slug}"]`);
+  if (active) active.style.display = 'block';
+}
+
+updateSidebarNavArrows();
+setTimeout(updateSidebarNavArrows, 50);
+
+/**
+ * ============================================================
  * HANDLE TAB VISIBILITY
  * ============================================================
  */
@@ -4884,6 +4919,10 @@ if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
+
+  // Call sidebar arrows
+  updateSidebarNavArrows();
+  setTimeout(updateSidebarNavArrows, 50);
   
   // Only fade in if came from no-sidebar page (not dashboard-to-dashboard)
   if (!prevSidebar) {
@@ -4898,6 +4937,7 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
+        
 // Fade in filter wrapper
   const filterWrapper = document.querySelector('.filter-wrapper');
   if (filterWrapper) {
