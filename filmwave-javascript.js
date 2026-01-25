@@ -4656,6 +4656,18 @@ function forceWebflowRestart() {
 
 // Helpers
 
+function hideIncomingSidebar(nextContainer) {
+  if (!nextContainer) return;
+  const incoming = nextContainer.querySelector('.sidebar-nav');
+  if (!incoming) return;
+
+  // fully remove from rendering so it can't "double" visually
+  incoming.style.display = 'none';
+  incoming.style.visibility = 'hidden';
+  incoming.style.opacity = '0';
+  incoming.style.pointerEvents = 'none';
+}
+
 function getDbContentContainer(container) {
   if (!container) return null;
   return container.querySelector('.db-content-container') || null;
@@ -4770,6 +4782,17 @@ if (typeof barba !== 'undefined') {
      beforeEnter(data) {
   const g = window.musicPlayerPersistent;
 
+  // Hide the incoming sidebar      
+  const nextPath = data?.next?.url?.path || window.location.pathname;
+  const currentPath = data?.current?.url?.path || '';
+
+  const goingDashboardToDashboard =
+  currentPath.startsWith('/dashboard/') && nextPath.startsWith('/dashboard/');
+
+  if (goingDashboardToDashboard) {
+  hideIncomingSidebar(data.next.container);
+  }     
+
   // Ensure only the db content starts hidden (no global fade)
   const inEl = getDbContentContainer(data.next.container);
   if (inEl) {
@@ -4784,14 +4807,6 @@ if (typeof barba !== 'undefined') {
   if (incomingSidebar && !g.sidebarClone) {
     g.sidebarClone = incomingSidebar.cloneNode(true);
     console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
-  }
-
-  // Hide sidebar if transitioning from no-sidebar to sidebar page
-  const currentSidebar = data.current.container.querySelector('.sidebar-nav');
-  if (!currentSidebar && incomingSidebar) {
-    incomingSidebar.style.opacity = '0';
-    incomingSidebar.style.transition = 'none';
-    console.log('🫥 Hiding incoming sidebar during transition');
   }
 
   // Hide filter wrapper during transition (dedupe your double block)
@@ -4895,6 +4910,8 @@ if (shouldHaveSidebar && sidebar) {
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
+
+updateSidebarNavArrows(document);        
         
 // Fade in filter wrapper
   const filterWrapper = document.querySelector('.filter-wrapper');
