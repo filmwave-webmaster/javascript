@@ -4665,6 +4665,15 @@ if (typeof barba !== 'undefined') {
       name: 'default',
       
    beforeLeave(data) {
+
+// 🔒 Pin main nav so it never fades/flashes
+const navHeader = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
+if (navHeader) {
+  navHeader.style.transition = 'none';
+  navHeader.style.opacity = '1';
+  navHeader.style.visibility = 'visible';
+}
+     
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
@@ -4785,6 +4794,14 @@ setTimeout(() => {
 },
 
      beforeEnter(data) {
+
+   // 🔒 Pin incoming main nav before it becomes visible
+const incomingNavHeader = data.next.container.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
+if (incomingNavHeader) {
+  incomingNavHeader.style.transition = 'none';
+  incomingNavHeader.style.opacity = '1';
+  incomingNavHeader.style.visibility = 'visible';
+}    
 
        // Reset opacity on main content
   const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
@@ -4909,6 +4926,14 @@ if (!fromDashboard && !toDashboard) {
 
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
+
+  // 🔒 Re-pin nav after swap (covers rare race-condition flashes)
+const navHeader = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
+if (navHeader) {
+  navHeader.style.transition = 'none';
+  navHeader.style.opacity = '1';
+  navHeader.style.visibility = 'visible';
+}      
   
   const g = window.musicPlayerPersistent;
 
