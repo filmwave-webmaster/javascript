@@ -2957,8 +2957,8 @@ function updateSidebarNavArrows() {
   if (!arrows.length) return;
 
   arrows.forEach(a => {
-  a.style.transition = 'opacity 200ms ease';
-});
+    a.style.transition = 'opacity 200ms ease';
+  });
 
   let path = window.location.pathname || '';
   path = path.replace(/\/+$/, '');
@@ -2973,18 +2973,17 @@ function updateSidebarNavArrows() {
   }
 
   arrows.forEach(a => {
-  a.style.opacity = '0';
-  a.style.pointerEvents = 'none';
-});
-
-const active = sidebar.querySelector(`.db-sidebar-nav-arrow[data-db-nav="${slug}"]`);
-if (active) {
-  active.style.pointerEvents = 'auto';
-
-  // Force next frame so transition can apply cleanly
-  requestAnimationFrame(() => {
-    active.style.opacity = '1';
+    a.style.opacity = '0';
+    a.style.pointerEvents = 'none';
   });
+
+  const active = sidebar.querySelector(`.db-sidebar-nav-arrow[data-db-nav="${slug}"]`);
+  if (active) {
+    active.style.pointerEvents = 'auto';
+    requestAnimationFrame(() => {
+      active.style.opacity = '1';
+    });
+  }
 }
 
 updateSidebarNavArrows();
