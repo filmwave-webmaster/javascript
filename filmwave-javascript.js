@@ -4792,7 +4792,6 @@ if (inDb) {
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
   document.body.style.height = '';
-  return Promise.resolve();
 },
 
      beforeEnter(data) {
