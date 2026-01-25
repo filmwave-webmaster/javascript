@@ -4667,11 +4667,11 @@ if (typeof barba !== 'undefined') {
    beforeLeave(data) {
 
 // 🔒 Pin main nav so it never fades/flashes
-const navHeader = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
-if (navHeader) {
-  navHeader.style.transition = 'none';
-  navHeader.style.opacity = '1';
-  navHeader.style.visibility = 'visible';
+const navHeaderEl = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
+if (navHeaderEl) {
+navHeaderEl.style.transition = 'none';
+navHeaderEl.style.opacity = '1';
+navHeaderEl.style.visibility = 'visible';
 }
      
   const g = window.musicPlayerPersistent;
@@ -4795,13 +4795,13 @@ setTimeout(() => {
 
      beforeEnter(data) {
 
-   // 🔒 Pin incoming main nav before it becomes visible
-const incomingNavHeader = data.next.container.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
-if (incomingNavHeader) {
-  incomingNavHeader.style.transition = 'none';
-  incomingNavHeader.style.opacity = '1';
-  incomingNavHeader.style.visibility = 'visible';
-}    
+  // 🔒 Pin incoming main nav before it becomes visible
+const incomingNavHeaderEl = data.next.container.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
+if (incomingNavHeaderEl) {
+  incomingNavHeaderEl.style.transition = 'none';
+  incomingNavHeaderEl.style.opacity = '1';
+  incomingNavHeaderEl.style.visibility = 'visible';
+}
 
        // Reset opacity on main content
   const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
@@ -4927,13 +4927,13 @@ if (!fromDashboard && !toDashboard) {
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
 
-  // 🔒 Re-pin nav after swap (covers rare race-condition flashes)
-const navHeader = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
-if (navHeader) {
-  navHeader.style.transition = 'none';
-  navHeader.style.opacity = '1';
-  navHeader.style.visibility = 'visible';
-}      
+// 🔒 Re-pin nav after swap (covers rare race-condition flashes)
+const navHeaderEl2 = document.querySelector('.global-nav-wrapper, .navigation, .main-navigation, .navbar, .nav');
+if (navHeaderEl2) {
+  navHeaderEl2.style.transition = 'none';
+  navHeaderEl2.style.opacity = '1';
+  navHeaderEl2.style.visibility = 'visible';
+}  
   
   const g = window.musicPlayerPersistent;
 
