@@ -2956,6 +2956,10 @@ function updateSidebarNavArrows() {
   const arrows = sidebar.querySelectorAll('.db-sidebar-nav-arrow');
   if (!arrows.length) return;
 
+  arrows.forEach(a => {
+  a.style.transition = 'opacity 200ms ease';
+});
+
   let path = window.location.pathname || '';
   path = path.replace(/\/+$/, '');
 
@@ -2969,21 +2973,30 @@ function updateSidebarNavArrows() {
   }
 
   arrows.forEach(a => {
-    a.style.display = 'none';
-  });
+  a.style.opacity = '0';
+  a.style.pointerEvents = 'none';
+});
 
-  const active = sidebar.querySelector(`.db-sidebar-nav-arrow[data-db-nav="${slug}"]`);
-  if (active) active.style.display = 'block';
+const active = sidebar.querySelector(`.db-sidebar-nav-arrow[data-db-nav="${slug}"]`);
+if (active) {
+  active.style.pointerEvents = 'auto';
+
+  // Force next frame so transition can apply cleanly
+  requestAnimationFrame(() => {
+    active.style.opacity = '1';
+  });
 }
 
 updateSidebarNavArrows();
-setTimeout(updateSidebarNavArrows, 50);
+requestAnimationFrame(updateSidebarNavArrows);
+setTimeout(updateSidebarNavArrows, 150);
 
 /**
  * ============================================================
  * HANDLE TAB VISIBILITY
  * ============================================================
  */
+  
 document.addEventListener('visibilitychange', function() {
   const g = window.musicPlayerPersistent;
   
