@@ -4668,21 +4668,33 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
-    // Fade out ONLY the correct area (prevents random full-page fades)
-  const leavingPath = data.current?.url?.path || window.location.pathname || '';
-  const isDashboard = leavingPath.startsWith('/dashboard/');
+  // Fade logic (dashboard vs non-dashboard)
+const fromPath = (data?.current?.url?.path || window.location.pathname || '');
+const toPath = (data?.next?.url?.path || '');
+const fromDashboard = fromPath.startsWith('/dashboard/');
+const toDashboard = toPath.startsWith('/dashboard/');
 
-  const mainContent = isDashboard
-    ? data.current.container.querySelector('.db-content-container')
-    : data.current.container.querySelector('.main-content, .page-wrapper, .dashboard-content-wrapper');
-
+// ✅ DASHBOARD → DASHBOARD: fade ONLY dashboard content
+if (fromDashboard && toDashboard) {
+  const mainContent = data.current.container.querySelector('.dashboard-content-wrapper, .db-content-container');
   if (mainContent) {
     mainContent.style.transition = 'opacity 0.15s ease';
     mainContent.style.opacity = '0';
-  } else {
-    data.current.container.style.transition = 'opacity 0.15s ease';
-    data.current.container.style.opacity = '0';
   }
+}
+// ✅ DASHBOARD → NON-DASHBOARD: fade dashboard content, hide sidebar instantly elsewhere in your code
+else if (fromDashboard && !toDashboard) {
+  const mainContent = data.current.container.querySelector('.dashboard-content-wrapper, .db-content-container');
+  if (mainContent) {
+    mainContent.style.transition = 'opacity 0.15s ease';
+    mainContent.style.opacity = '0';
+  }
+}
+// ✅ NON-DASHBOARD → NON-DASHBOARD: fade the whole container (this is what you asked for)
+else if (!fromDashboard && !toDashboard) {
+  data.current.container.style.transition = 'opacity 0.15s ease';
+  data.current.container.style.opacity = '0';
+}
 
   // Fade out navigation header to prevent persistence
   const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
@@ -4780,6 +4792,17 @@ setTimeout(() => {
   }
        
        const g = window.musicPlayerPersistent;
+
+  // ✅ Prep incoming page for NON-DASHBOARD → NON-DASHBOARD fade-in
+const fromPath = (data?.current?.url?.path || window.location.pathname || '');
+const toPath = (data?.next?.url?.path || '');
+const fromDashboard = fromPath.startsWith('/dashboard/');
+const toDashboard = toPath.startsWith('/dashboard/');
+
+if (!fromDashboard && !toDashboard) {
+  data.next.container.style.opacity = '0';
+  data.next.container.style.transition = 'none';
+}     
   
   // Capture sidebar from incoming page BEFORE Barba processes it
   const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
@@ -4886,6 +4909,22 @@ setTimeout(() => {
   console.log('🚪 BARBA AFTER FIRED');
   
   const g = window.musicPlayerPersistent;
+
+  // ✅ Fade in for NON-DASHBOARD → NON-DASHBOARD
+const fromPath = (data?.current?.url?.path || '');
+const toPath = (data?.next?.url?.path || window.location.pathname || '');
+const fromDashboard = fromPath.startsWith('/dashboard/');
+const toDashboard = toPath.startsWith('/dashboard/');
+
+if (!fromDashboard && !toDashboard) {
+  const el = data.next.container;
+  el.style.opacity = '0';
+  el.style.transition = 'none';
+  requestAnimationFrame(() => {
+    el.style.transition = 'opacity 0.15s ease';
+    el.style.opacity = '1';
+  });
+}      
 
   // 🔁 Reattach dashboard waveform AFTER Barba swaps DOM
   if (window.location.pathname.startsWith('/dashboard/')) {
