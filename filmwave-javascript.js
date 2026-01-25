@@ -4720,8 +4720,6 @@ if (typeof barba !== 'undefined') {
  // Persist welcome message across transitions
 const oldWelcome = data.current.container.querySelector('.dashboard-welcome-text');
 if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
-  oldWelcome.style.visibility = 'hidden'; // ← ADD THIS LINE
-
   g.persistedWelcome = oldWelcome.cloneNode(true);
   g.persistedWelcome.style.position = 'fixed';
   g.persistedWelcome.style.zIndex = '10000';
@@ -4731,7 +4729,7 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
   g.persistedWelcome.style.left = rect.left + 'px';
   document.body.appendChild(g.persistedWelcome);
 }
-
+     
    // Hide old sidebar to prevent doubling (fade out if going to non-dashboard)
   const oldSidebar = data.current.container.querySelector('.sidebar-nav');
   if (oldSidebar) {
