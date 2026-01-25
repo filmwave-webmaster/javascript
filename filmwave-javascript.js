@@ -4730,26 +4730,19 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
   document.body.appendChild(g.persistedWelcome);
 }
      
-   // Hide old sidebar inside current container to prevent overlap on non-dashboard pages
-const oldSidebar = data.current.container.querySelector('.sidebar-nav');
-if (oldSidebar) {
-  const nextUrl = data.next.url.path;
-  const goingToNonDashboard = !nextUrl.startsWith('/dashboard/');
-
-  if (goingToNonDashboard) {
-    oldSidebar.style.transition = 'opacity 0.15s ease';
-oldSidebar.style.opacity = '0';
-setTimeout(() => {
-  oldSidebar.style.visibility = 'hidden';
-  oldSidebar.style.pointerEvents = 'none';
-}, 150);
-    oldSidebar.style.opacity = '0';
-    oldSidebar.style.visibility = 'hidden';
-    oldSidebar.style.pointerEvents = 'none';
-  } else {
-    oldSidebar.style.opacity = '0';
-  }
-}
+   // Hide old sidebar to prevent doubling (fade out if going to non-dashboard)
+  const oldSidebar = data.current.container.querySelector('.sidebar-nav');
+  if (oldSidebar) {
+    const nextUrl = data.next.url.path;
+    const goingToNonDashboard = !nextUrl.startsWith('/dashboard/');
+    
+    if (goingToNonDashboard) {
+      oldSidebar.style.transition = 'opacity 0.3s ease';
+      oldSidebar.style.opacity = '0';
+    } else {
+      oldSidebar.style.opacity = '0';
+    }
+  }  
 
   // Fade out filter wrapper when leaving music page
   const filterWrapper = data.current.container.querySelector('.filter-wrapper');
