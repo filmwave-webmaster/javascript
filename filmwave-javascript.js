@@ -507,7 +507,7 @@ function navigateStandaloneTrack(direction) {
     }
   }
 
-  g.currentWavesurfer = wavesurfer;
+  g.currentWavesurfer = null;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
@@ -534,10 +534,10 @@ function navigateStandaloneTrack(direction) {
     
     g.currentTime = audio.currentTime;
 
-        if (g.currentWavesurfer === wavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+        if (g.currentWavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
       if (isFinite(progress)) {
-        wavesurfer.seekTo(progress);
+        g.currentWavesurfer.seekTo(progress);
       }
     }
 
