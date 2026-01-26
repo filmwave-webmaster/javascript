@@ -968,6 +968,199 @@ function initMasterPlayer() {
   drawMasterWaveform([], 0);
   setupMasterPlayerControls();
 }
+
+/**
+ * ============================================================
+ * VOLUME CONTROLLER (Persistent Player)
+ * ============================================================
+ */
+
+function initVolumeController() {
+  const g = window.musicPlayerPersistent;
+  if (!g) return;
+
+  const wrapper = document.querySelector('.volume-wrapper');
+  const iconWrapper = document.querySelector('.volume-icon-wrapper');
+  const trackWrapper = document.querySelector('.volume-track-wrapper');
+  const track = document.querySelector('.volume-track');
+  const handle = document.querySelector('.volume-slider-handle');
+
+  if (!wrapper || !iconWrapper || !trackWrapper || !track || !handle) return;
+
+  const iconMuted = iconWrapper.querySelector('.volume-icon-muted');
+  const iconQuiet = iconWrapper.querySelector('.volume-icon-quiet');
+  const iconMedium = iconWrapper.querySelector('.volume-icon-medium');
+  const iconLoud = iconWrapper.querySelector('.volume-icon-loud');
+
+  // Prevent double-binding if Barba re-inits
+  if (wrapper.dataset.volumeInit === 'true') return;
+  wrapper.dataset.volumeInit = 'true';
+
+  // Default: max volume (unless saved)
+  const saved = Number(localStorage.getItem('fw_volume'));
+  let volume = Number.isFinite(saved) ? Math.max(0, Math.min(1, saved)) : 1;
+
+  // Make track hidden initially (only icon wrapper visible)
+  trackWrapper.style.display = 'none';
+
+  // Ensure track can position handle
+  track.style.position = 'relative';
+  handle.style.position = 'absolute';
+  handle.style.top = '50%';
+  handle.style.transform = 'translate(-50%, -50%)';
+
+  function setAllIconsHidden() {
+    if (iconMuted) iconMuted.style.display = 'none';
+    if (iconQuiet) iconQuiet.style.display = 'none';
+    if (iconMedium) iconMedium.style.display = 'none';
+    if (iconLoud) iconLoud.style.display = 'none';
+  }
+
+  function renderIconForVolume(v) {
+    setAllIconsHidden();
+
+    if (v <= 0.0001) {
+      if (iconMuted) iconMuted.style.display = 'block';
+      return;
+    }
+    if (v <= 0.33) {
+      if (iconQuiet) iconQuiet.style.display = 'block';
+      return;
+    }
+    if (v <= 0.66) {
+      if (iconMedium) iconMedium.style.display = 'block';
+      return;
+    }
+    if (iconLoud) iconLoud.style.display = 'block';
+  }
+
+  function applyVolumeToPlayer(v) {
+    volume = Math.max(0, Math.min(1, v));
+    localStorage.setItem('fw_volume', String(volume));
+
+    // Apply to your actual playback source
+    if (g.standaloneAudio) {
+      g.standaloneAudio.volume = volume;
+      g.standaloneAudio.muted = volume <= 0.0001;
+    }
+
+    // Store on global state too (useful when new Audio() is created)
+    g._fwVolume = volume;
+
+    renderIconForVolume(volume);
+  }
+
+  function setHandleFromVolume(v) {
+    const rect = track.getBoundingClientRect();
+    const handleW = handle.offsetWidth || 10;
+
+    const minX = handleW / 2;
+    const maxX = rect.width - handleW / 2;
+
+    const x = minX + (maxX - minX) * Math.max(0, Math.min(1, v));
+    handle.style.left = `${x}px`;
+  }
+
+  function getVolumeFromClientX(clientX) {
+    const rect = track.getBoundingClientRect();
+    const handleW = handle.offsetWidth || 10;
+
+    const x = clientX - rect.left;
+    const minX = handleW / 2;
+    const maxX = rect.width - handleW / 2;
+
+    const clamped = Math.max(minX, Math.min(maxX, x));
+    const ratio = (clamped - minX) / (maxX - minX);
+
+    return Math.max(0, Math.min(1, ratio));
+  }
+
+  function openTrack() {
+    trackWrapper.style.display = 'flex';
+    // position correctly after it becomes visible
+    requestAnimationFrame(() => setHandleFromVolume(volume));
+  }
+
+  function closeTrack() {
+    trackWrapper.style.display = 'none';
+  }
+
+  // Toggle open on icon click
+  iconWrapper.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isOpen = getComputedStyle(trackWrapper).display !== 'none';
+    if (isOpen) closeTrack();
+    else openTrack();
+  });
+
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (!wrapper.contains(e.target)) closeTrack();
+  });
+
+  // Drag logic (mouse + touch)
+  let dragging = false;
+
+  function onMove(clientX) {
+    const v = getVolumeFromClientX(clientX);
+    setHandleFromVolume(v);
+    applyVolumeToPlayer(v);
+  }
+
+  function onMouseMove(e) {
+    if (!dragging) return;
+    onMove(e.clientX);
+  }
+
+  function onMouseUp() {
+    dragging = false;
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  }
+
+  function onTouchMove(e) {
+    if (!dragging) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    onMove(t.clientX);
+  }
+
+  function onTouchEnd() {
+    dragging = false;
+    document.removeEventListener('touchmove', onTouchMove, { passive: false });
+    document.removeEventListener('touchend', onTouchEnd);
+  }
+
+  // Click track to set volume
+  track.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onMove(e.clientX);
+  });
+
+  // Drag handle
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragging = true;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+
+  handle.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragging = true;
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+  }, { passive: false });
+
+  // Initial paint + apply to current audio (if any)
+  setHandleFromVolume(volume);
+  applyVolumeToPlayer(volume);
+}
   
 /**
  * ============================================================
