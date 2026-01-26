@@ -1565,7 +1565,10 @@ if (songName) {
 }
     
     wavesurfer.on('interaction', function (newProgress) {
-      g.activeSongSource = 'music';
+      // Only set source if user clicked a different song (intentional interaction)
+      if (g.currentSongData?.id !== songData.id) {
+        g.activeSongSource = 'music';
+      }
       if (g.currentSongData?.id === songData.id) {
         if (g.standaloneAudio) {
           g.standaloneAudio.currentTime = newProgress;
