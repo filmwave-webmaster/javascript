@@ -4921,8 +4921,11 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
         return initMusicPage();
       },
 
-      after(data) {
+     after(data) {
   console.log('🚪 BARBA AFTER FIRED');
+  console.log('🔍 Sidebar element:', document.querySelector('.sidebar-nav'));
+  console.log('🔍 Current path:', data.current?.url?.path);
+  console.log('🔍 New path:', window.location.pathname);
   
   const g = window.musicPlayerPersistent;
 
