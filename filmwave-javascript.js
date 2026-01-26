@@ -4683,16 +4683,6 @@ if (typeof barba !== 'undefined') {
     data.current.container.style.transition = 'opacity 0.15s ease';
     data.current.container.style.opacity = '0';
   }
-
-  // Fade out navigation header ONLY when leaving dashboard entirely
-  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
-  const nextPath = data.next?.url?.path || '';
-  const isLeavingDashboard = isDashboard && !nextPath.startsWith('/dashboard/');
-  
-  if (navHeader && isLeavingDashboard) {
-    navHeader.style.transition = 'opacity 0.15s ease';
-    navHeader.style.opacity = '0';
-  }
   
   const isMusicPage = !!data.current.container.querySelector('.music-list-wrapper');
   const hasFeaturedSongs = !!data.current.container.querySelector('.featured-songs-wrapper');
@@ -4930,20 +4920,7 @@ if (shouldHaveSidebar && sidebar) {
       pageContent.style.transition = 'opacity 0.3s ease';
       pageContent.style.opacity = '1';
     }, 50);
-  }  
-
-// Fade in navigation header ONLY if it was faded out (leaving dashboard)
-  const navHeader = document.querySelector('.global-nav-wrapper, .navigation');
-  const currentPath = window.location.pathname;
-  const cameFromNonDashboard = !data.current?.url?.path?.startsWith('/dashboard/');
-  const nowOnDashboard = currentPath.startsWith('/dashboard/');
-  
-  if (navHeader && (cameFromNonDashboard || !nowOnDashboard)) {
-    setTimeout(() => {
-      navHeader.style.transition = 'opacity 0.3s ease';
-      navHeader.style.opacity = '1';
-    }, 50);
-  }    
+  }     
         
 // Remove persisted welcome and restore from new page
   if (g.persistedWelcome) {
