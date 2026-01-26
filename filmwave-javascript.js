@@ -8540,6 +8540,7 @@ async function initDashboardTiles() {
       }
 
       g.dashboardTileWavesurfers.push(wavesurfer);
+      g.allWavesurfers.push(wavesurfer);
       
       g.waveformData.push({
         wavesurfer: wavesurfer,
