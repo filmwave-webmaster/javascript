@@ -455,15 +455,21 @@ function navigateStandaloneTrack(direction) {
   // Use the active song source for navigation
   let songsToNavigate;
   const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
+  const isOnMusicPage = window.location.pathname === '/music' || window.location.pathname === '/music/';
   
-  if (g.activeSongSource === 'dashboard' && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+  // If on music page, always use music page songs
+  if (isOnMusicPage) {
+    g.activeSongSource = 'music';
+  }
+  
+  if (g.activeSongSource === 'dashboard' && isOnDashboard && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+    // Only use dashboard tiles if we're still on dashboard
     songsToNavigate = g.dashboardTileSongs;
-  } else if (g.activeSongSource === 'music' && g.filteredSongIds && g.filteredSongIds.length > 0) {
+  } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
+    // Use filtered songs if available
     songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
-  } else if (g.activeSongSource === 'music') {
-    songsToNavigate = g.MASTER_DATA;
   } else {
-    // Fallback
+    // Fallback to all songs
     songsToNavigate = g.MASTER_DATA;
   }
   
