@@ -431,6 +431,7 @@ async function initMusicPage() {
       initDashboardPlaylists();
     }
   }
+  initVolumeController();
 }
 
 /**
@@ -514,7 +515,14 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, null);
   
   const audio = new Audio(audioUrl);
-  g.standaloneAudio = audio;
+g.standaloneAudio = audio;
+
+// ✅ apply saved/current volume to new audio instances
+const v = Number(localStorage.getItem('fw_volume'));
+const vol = Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;
+audio.volume = vol;
+audio.muted = vol <= 0.0001;
+g._fwVolume = vol;
   
   audio.addEventListener('loadedmetadata', () => {
     if (g.standaloneAudio !== audio) return;
