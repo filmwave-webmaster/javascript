@@ -99,6 +99,41 @@ const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
 const XANO_PLAYLISTS_API = 'https://xuvv-ysql-w1uc.n2.xano.io/api:Pjks2U_C';
 
+// Cache navigation variants
+window.navCache = {
+  default: null,
+  songMatchLoggedIn: null,
+  songMatchLoggedOut: null,
+  loaded: false
+};
+
+(async function preloadNavVariants() {
+  const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
+  
+  // Cache default nav
+  const defaultNav = document.querySelector('.navigation');
+  if (defaultNav) {
+    window.navCache.default = defaultNav.cloneNode(true);
+  }
+  
+  // Fetch and cache Song Match nav variants
+  fetch('/song-match')
+    .then(res => res.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      const loggedInNav = doc.querySelector('.reverse-logged-in-nav');
+      const loggedOutNav = doc.querySelector('.reverse-logged-out-nav');
+      
+      if (loggedInNav) window.navCache.songMatchLoggedIn = loggedInNav.cloneNode(true);
+      if (loggedOutNav) window.navCache.songMatchLoggedOut = loggedOutNav.cloneNode(true);
+      
+      window.navCache.loaded = true;
+      console.log('✅ Nav variants cached');
+    });
+})();
+
 // Force-clear saved search query on hard refresh so field starts empty
 window.addEventListener('load', () => {
   // Only run on full refresh (not Barba)
@@ -4765,37 +4800,27 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
     incomingMainContent.style.transition = '';
   }
 
-  // Swap navigation variant based on page
+  // Swap navigation variant based on page (using cache)
   const nextPath = data.next.url.path;
   const isSongMatchPage = nextPath.includes('song-match');
   const currentNav = document.querySelector('.navigation');
   
-  if (currentNav) {
-    const targetPage = isSongMatchPage ? '/song-match' : '/';
-    
+  if (currentNav && window.navCache.loaded) {
     (async () => {
       const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
       
-      fetch(targetPage)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          let newNav;
-          if (isSongMatchPage) {
-            const variantClass = isLoggedIn ? 'reverse-logged-in-nav' : 'reverse-logged-out-nav';
-            newNav = doc.querySelector('.' + variantClass) || doc.querySelector('.navigation');
-          } else {
-            newNav = doc.querySelector('.navigation');
-          }
-          
-          if (newNav) {
-            currentNav.replaceWith(newNav.cloneNode(true));
-          }
-        });
+      let newNav;
+      if (isSongMatchPage) {
+        newNav = isLoggedIn ? window.navCache.songMatchLoggedIn : window.navCache.songMatchLoggedOut;
+      } else {
+        newNav = window.navCache.default;
+      }
+      
+      if (newNav) {
+        currentNav.replaceWith(newNav.cloneNode(true));
+      }
     })();
-  }     
+  }
        
   const g = window.musicPlayerPersistent;
   
