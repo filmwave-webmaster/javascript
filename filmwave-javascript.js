@@ -8444,12 +8444,20 @@ async function initDashboardTiles() {
     const g = window.musicPlayerPersistent;
   g.isTransitioning = false;
   
-    // Always clean up existing dashboard tile waveforms before reinitializing
+    // Always clean up - filter out any stale wavesurfers not in DOM
+  g.waveformData = (g.waveformData || []).filter(w => 
+    w.wavesurfer?.container && document.body.contains(w.wavesurfer.container)
+  );
+  g.allWavesurfers = (g.allWavesurfers || []).filter(ws => 
+    ws?.container && document.body.contains(ws.container)
+  );
+
+  // Clean up existing dashboard tile waveforms
   if (g.dashboardTileWavesurfers && g.dashboardTileWavesurfers.length > 0) {
     const oldDash = g.dashboardTileWavesurfers.slice();
     console.log(`🧹 Cleaning up ${oldDash.length} old dashboard tile waveforms`);
 
-    // If currentWavesurfer was one of the dashboard tiles, clear it (it’s about to be destroyed)
+    // If currentWavesurfer was one of the dashboard tiles, clear it
     if (g.currentWavesurfer && oldDash.includes(g.currentWavesurfer)) {
       g.currentWavesurfer = null;
     }
@@ -8462,19 +8470,10 @@ async function initDashboardTiles() {
         console.warn('Error destroying dashboard tile wavesurfer:', e);
       }
     });
-
-    // Remove destroyed tile wavesurfers from global arrays so we never reference stale instances
-    g.allWavesurfers = (g.allWavesurfers || []).filter(ws => !oldDash.includes(ws));
-    g.waveformData = (g.waveformData || []).filter(w => !oldDash.includes(w.wavesurfer));
-
-    g.dashboardTileWavesurfers = [];
   }
   
-  // Clear ALL waveform data for dashboard tile songs (ensures fresh entries)
-  if (g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
-    const tileSongIds = g.dashboardTileSongs.map(s => s.id);
-    g.waveformData = g.waveformData.filter(w => !tileSongIds.includes(w.songId));
-  }
+  // Reset dashboard arrays
+  g.dashboardTileWavesurfers = [];
   
   // Reset dataset to allow re-initialization
   tiles.forEach(tile => {
