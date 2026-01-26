@@ -108,12 +108,10 @@ window.navCache = {
 };
 
 (async function preloadNavVariants() {
-  const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
-  
-  // Cache default nav
-  const defaultNav = document.querySelector('.navigation');
-  if (defaultNav) {
-    window.navCache.default = defaultNav.cloneNode(true);
+  // Cache default nav (with its wrapper)
+  const defaultNavWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
+  if (defaultNavWrapper) {
+    window.navCache.default = defaultNavWrapper.cloneNode(true);
   }
   
   // Fetch and cache Song Match nav variants
@@ -123,8 +121,8 @@ window.navCache = {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       
-      const loggedInNav = doc.querySelector('.reverse-logged-in-nav');
-      const loggedOutNav = doc.querySelector('.reverse-logged-out-nav');
+      const loggedInNav = doc.querySelector('.logged-in-nav-wrapper.song-match');
+      const loggedOutNav = doc.querySelector('.logged-out-nav-wrapper.song-match');
       
       if (loggedInNav) window.navCache.songMatchLoggedIn = loggedInNav.cloneNode(true);
       if (loggedOutNav) window.navCache.songMatchLoggedOut = loggedOutNav.cloneNode(true);
@@ -4803,19 +4801,19 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
   // Swap navigation variant based on page (using cache)
   const nextPath = data.next.url.path;
   const isSongMatchPage = nextPath.includes('song-match');
-  const currentNav = document.querySelector('.navigation');
+  const currentNavWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
   
   console.log('🔄 Nav swap check:', {
     nextPath,
     isSongMatchPage,
-    hasCurrentNav: !!currentNav,
+    hasCurrentNav: !!currentNavWrapper,
     cacheLoaded: window.navCache?.loaded,
     hasDefault: !!window.navCache?.default,
     hasLoggedIn: !!window.navCache?.songMatchLoggedIn,
     hasLoggedOut: !!window.navCache?.songMatchLoggedOut
   });
   
-  if (currentNav && window.navCache && window.navCache.loaded) {
+  if (currentNavWrapper && window.navCache && window.navCache.loaded) {
     (async () => {
       const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
       
@@ -4827,7 +4825,7 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
       }
       
       if (newNav) {
-        currentNav.replaceWith(newNav.cloneNode(true));
+        currentNavWrapper.replaceWith(newNav.cloneNode(true));
       }
     })();
   }
