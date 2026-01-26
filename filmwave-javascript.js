@@ -552,6 +552,7 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
   
   const audio = new Audio(audioUrl);
+  audio.volume = g.volume || 1;
   g.standaloneAudio = audio;
   
   audio.addEventListener('loadedmetadata', () => {
@@ -1000,6 +1001,175 @@ if (playerCoverArt) {
   if (controllerPrev) controllerPrev.onclick = () => navigateTrack('prev');
 }
 
+/**
+ * ============================================================
+ * VOLUME CONTROL
+ * ============================================================
+ */
+function initVolumeControl() {
+  const g = window.musicPlayerPersistent;
+  
+  const iconWrapper = document.querySelector('.volume-icon-wrapper');
+  const trackWrapper = document.querySelector('.volume-track-wrapper');
+  const sliderHandle = document.querySelector('.volume-slider-handle');
+  const track = document.querySelector('.volume-track');
+  
+  const iconMute = document.querySelector('.volume-icon-mute');
+  const iconQuiet = document.querySelector('.volume-icon-quiet');
+  const iconMedium = document.querySelector('.volume-icon-medium');
+  const iconLoud = document.querySelector('.volume-icon-loud');
+  
+  if (!iconWrapper || !trackWrapper || !sliderHandle || !track) {
+    console.log('ℹ️ Volume control elements not found');
+    return;
+  }
+  
+  // Load saved volume or default to max (1)
+  let currentVolume = parseFloat(localStorage.getItem('filmwaveVolume')) || 1;
+  
+  // Store volume globally for audio elements to use
+  g.volume = currentVolume;
+  
+  // Apply to current audio if exists
+  if (g.standaloneAudio) {
+    g.standaloneAudio.volume = currentVolume;
+  }
+  
+  // Hide track wrapper initially
+  trackWrapper.style.display = 'none';
+  
+  // Update icons based on volume level
+  function updateVolumeIcon(volume) {
+    iconMute.style.display = 'none';
+    iconQuiet.style.display = 'none';
+    iconMedium.style.display = 'none';
+    iconLoud.style.display = 'none';
+    
+    if (volume === 0) {
+      iconMute.style.display = 'flex';
+    } else if (volume <= 0.33) {
+      iconQuiet.style.display = 'flex';
+    } else if (volume <= 0.66) {
+      iconMedium.style.display = 'flex';
+    } else {
+      iconLoud.style.display = 'flex';
+    }
+  }
+  
+  // Update slider handle position
+  function updateSliderPosition(volume) {
+    const trackWidth = track.offsetWidth;
+    const handleWidth = sliderHandle.offsetWidth;
+    const maxLeft = trackWidth - handleWidth;
+    const left = volume * maxLeft;
+    sliderHandle.style.left = left + 'px';
+  }
+  
+  // Set volume
+  function setVolume(volume) {
+    volume = Math.max(0, Math.min(1, volume));
+    currentVolume = volume;
+    g.volume = volume;
+    
+    if (g.standaloneAudio) {
+      g.standaloneAudio.volume = volume;
+    }
+    
+    localStorage.setItem('filmwaveVolume', volume.toString());
+    updateVolumeIcon(volume);
+    updateSliderPosition(volume);
+    
+    console.log('🔊 Volume set to:', Math.round(volume * 100) + '%');
+  }
+  
+  // Initialize display
+  updateVolumeIcon(currentVolume);
+  
+  // Wait for track to be visible before setting position
+  setTimeout(() => {
+    updateSliderPosition(currentVolume);
+  }, 100);
+  
+  // Toggle track wrapper visibility
+  let isOpen = false;
+  
+  iconWrapper.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isOpen = !isOpen;
+    trackWrapper.style.display = isOpen ? 'flex' : 'none';
+    
+    if (isOpen) {
+      // Update slider position when opening (in case track wasn't visible before)
+      setTimeout(() => updateSliderPosition(currentVolume), 10);
+    }
+  });
+  
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (isOpen && !e.target.closest('.volume-wrapper')) {
+      isOpen = false;
+      trackWrapper.style.display = 'none';
+    }
+  });
+  
+  // Click on track to set volume
+  track.addEventListener('click', (e) => {
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const volume = Math.max(0, Math.min(1, x / rect.width));
+    setVolume(volume);
+  });
+  
+  // Drag slider handle
+  let isDragging = false;
+  
+  sliderHandle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    isDragging = true;
+    document.body.style.userSelect = 'none';
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const volume = Math.max(0, Math.min(1, x / rect.width));
+    setVolume(volume);
+  });
+  
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    }
+  });
+  
+  // Touch support for mobile
+  sliderHandle.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    isDragging = true;
+  });
+  
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const rect = track.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const volume = Math.max(0, Math.min(1, x / rect.width));
+    setVolume(volume);
+  });
+  
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+  });
+  
+  console.log('✅ Volume control initialized');
+}
+
+// End Volume controls
+
 function initMasterPlayer() {
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
@@ -1165,6 +1335,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   }
 
   const audio = new Audio(audioUrl);
+  audio.volume = g.volume || 1;
   g.standaloneAudio = audio;
   g.currentSongData = songData;
   g.currentWavesurfer = wavesurfer;
@@ -4567,8 +4738,10 @@ function initUniversalSearch() {
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
  */
+
 window.addEventListener('load', () => {
   initMusicPage();
+  initVolumeControl();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5374,6 +5547,7 @@ loadingPlaceholders.forEach(placeholder => {
 initializeMemberstackHandlers();
 initializeProfileSortable(); 
 initializePlaylistOverlay();  
+initVolumeControl();      
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
