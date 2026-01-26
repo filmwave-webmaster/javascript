@@ -6036,6 +6036,15 @@ window.addEventListener('load', function() {
   document.querySelectorAll('.filter-dot-active').forEach(dot => {
     dot.style.display = 'none';
   });
+
+   // Show sidebar on dashboard pages (hard refresh)
+  if (window.location.pathname.startsWith('/dashboard/')) {
+    const sidebar = document.querySelector('.sidebar-nav');
+    if (sidebar) {
+      sidebar.style.visibility = 'visible';
+      sidebar.style.opacity = '1';
+    }
+  }
   
   console.log('🔄 Page load event fired');
   filtersRestored = false;
