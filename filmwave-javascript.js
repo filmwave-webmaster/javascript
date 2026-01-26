@@ -4738,6 +4738,13 @@ if (typeof barba !== 'undefined') {
   if (leavingDashboard && !goingToDashboard) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
+      // Reset any transitions on children so they fade with parent
+      const children = sidebar.querySelectorAll('.dashboard-welcome-text, .db-sidebar-nav, .db-sidebar-account-nav');
+      children.forEach(child => {
+        child.style.transition = 'none';
+        child.style.opacity = '1';
+      });
+      
       sidebar.style.transition = 'opacity 0.15s ease';
       sidebar.style.opacity = '0';
       sidebar.style.visibility = 'hidden';
