@@ -8552,6 +8552,9 @@ async function initDashboardTiles() {
       
       // Set initial position immediately when waveform loads (prevents flash)
       if (g.currentSongData?.id === song.id && g.standaloneAudio && g.standaloneAudio.duration > 0) {
+        // Update g.currentWavesurfer to point to this new instance
+        g.currentWavesurfer = wavesurfer;
+        
         wavesurfer.once('ready', () => {
           const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
           wavesurfer.seekTo(progress);
