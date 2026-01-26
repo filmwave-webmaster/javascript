@@ -73,7 +73,6 @@ if (!window.musicPlayerPersistent) {
     autoPlayNext: false,
     wasPlayingBeforeHidden: false,
     filteredSongIds: [],
-    persistedWelcome: null,
     dashboardTileWavesurfers: []
   };
 }
@@ -4793,19 +4792,6 @@ if (typeof barba !== 'undefined') {
     g.persistedWaveformContainer = null;
     g.currentWavesurfer = null;
   }
-
- // Persist welcome message across transitions
-const oldWelcome = data.current.container.querySelector('.dashboard-welcome-text');
-if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
-  g.persistedWelcome = oldWelcome.cloneNode(true);
-  g.persistedWelcome.style.position = 'fixed';
-  g.persistedWelcome.style.zIndex = '10000';
-  // Copy computed position
-  const rect = oldWelcome.getBoundingClientRect();
-  g.persistedWelcome.style.top = rect.top + 'px';
-  g.persistedWelcome.style.left = rect.left + 'px';
-  document.body.appendChild(g.persistedWelcome);
-}
      
   // Fade out filter wrapper when leaving music page
   const filterWrapper = data.current.container.querySelector('.filter-wrapper');
@@ -5083,12 +5069,6 @@ if (shouldHaveSidebar && sidebar) {
     }, 50);
   }     
         
-// Remove persisted welcome and restore from new page
-  if (g.persistedWelcome) {
-    g.persistedWelcome.remove();
-    g.persistedWelcome = null;
-  }        
-
   // Show loading placeholders after transition completes
 const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
 loadingPlaceholders.forEach(placeholder => {
