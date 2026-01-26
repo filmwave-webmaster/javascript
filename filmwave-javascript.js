@@ -4836,7 +4836,15 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
     hasLoggedOut: !!window.navCache?.songMatchLoggedOut
   });
   
+  console.log('🔄 Nav swap executing:', { 
+    needsNavSwap, 
+    hasCurrentNavWrapper: !!currentNavWrapper,
+    cacheLoaded: window.navCache?.loaded,
+    hasDefaultNav: !!window.navCache?.default
+  });
+  
   if (currentNavWrapper && window.navCache && window.navCache.loaded && needsNavSwap) {
+    console.log('🔄 Inside nav swap, replacing with:', window.navCache.default);
     (async () => {
       const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
       
