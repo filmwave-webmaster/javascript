@@ -1565,6 +1565,7 @@ if (songName) {
 }
     
    wavesurfer.on('interaction', function (newProgress) {
+      g.activeSongSource = 'music';
       if (g.currentSongData?.id === songData.id) {
         if (g.standaloneAudio) {
           g.standaloneAudio.currentTime = newProgress;
