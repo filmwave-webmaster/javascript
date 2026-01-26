@@ -5324,6 +5324,16 @@ initializePlaylistOverlay();
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
   if (typeof initDashboardPlaceholderSwap === 'function') initDashboardPlaceholderSwap();
+  
+  // Only init tiles if they exist but aren't populated yet
+  if (typeof initDashboardTiles === 'function') {
+    const tiles = document.querySelectorAll('.masonry-song-tile-wrapper');
+    const firstTileWaveform = tiles[0]?.querySelector('.db-waveform');
+    if (tiles.length > 0 && firstTileWaveform && firstTileWaveform.children.length === 0) {
+      initDashboardTiles();
+    }
+  }
+  
   if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
   if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists();
 }
