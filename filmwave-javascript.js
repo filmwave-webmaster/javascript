@@ -8442,8 +8442,11 @@ async function initDashboardTiles() {
     g.dashboardTileWavesurfers = [];
   }
   
-  // Clear waveform data for dashboard tiles
-  g.waveformData = g.waveformData.filter(w => !g.dashboardTileSongs || !g.dashboardTileSongs.find(s => s.id === w.songId));
+  // Clear ALL waveform data for dashboard tile songs (ensures fresh entries)
+  if (g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+    const tileSongIds = g.dashboardTileSongs.map(s => s.id);
+    g.waveformData = g.waveformData.filter(w => !tileSongIds.includes(w.songId));
+  }
   
   // Reset dataset to allow re-initialization
   tiles.forEach(tile => {
