@@ -4940,6 +4940,8 @@ if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
   initDashboardWelcome();
   
+  console.log('🔍 Sidebar fade check:', { cameFromDashboard, currentPath: data.current?.url?.path });
+  
  // Fade in only if coming from non-dashboard page
   if (!cameFromDashboard) {
     sidebar.style.transition = 'none';
