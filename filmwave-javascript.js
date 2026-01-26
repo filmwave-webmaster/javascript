@@ -4875,7 +4875,8 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
         newNav = window.navCache.default;
       }
       
-      const clonedNav = newNav.cloneNode(true);
+      if (newNav) {
+        const clonedNav = newNav.cloneNode(true);
         clonedNav.style.opacity = '0';
         currentNavWrapper.replaceWith(clonedNav);
         
