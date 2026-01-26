@@ -4810,6 +4810,12 @@ if (typeof barba !== 'undefined') {
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
   document.body.style.height = '';
+  
+  // Wait for sidebar fade if leaving dashboard
+  if (leavingDashboard && !goingToDashboard) {
+    return new Promise(resolve => setTimeout(resolve, 150));
+  }
+  
   return Promise.resolve();
 },
 
