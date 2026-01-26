@@ -514,11 +514,23 @@ function navigateStandaloneTrack(direction) {
     }
   }
 
-  g.currentWavesurfer = null;
+  // Reset old dashboard tile waveform if exists
+  if (g.currentWavesurfer && document.body.contains(g.currentWavesurfer.container)) {
+    g.currentWavesurfer.seekTo(0);
+  }
+  
+  // Find the new dashboard tile wavesurfer for the next song
+  const nextWaveformData = g.waveformData.find(d => 
+    d.songId === nextSong.id && 
+    d.wavesurfer?.container && 
+    document.body.contains(d.wavesurfer.container)
+  );
+  
+  g.currentWavesurfer = nextWaveformData?.wavesurfer || null;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
-  updateMasterPlayerInfo(nextSong, null);
+  updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
   
   const audio = new Audio(audioUrl);
   g.standaloneAudio = audio;
