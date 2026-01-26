@@ -521,7 +521,6 @@ function navigateStandaloneTrack(direction) {
   
   // Find wavesurfer directly from DOM
   let newWavesurfer = null;
-  const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
   
   if (isOnDashboard) {
     const waveformContainers = document.querySelectorAll('.db-waveform');
