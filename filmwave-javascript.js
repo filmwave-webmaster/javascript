@@ -1043,20 +1043,25 @@ function initVolumeController() {
   }
 
   function applyVolumeToPlayer(v) {
-    volume = Math.max(0, Math.min(1, v));
-    localStorage.setItem('fw_volume', String(volume));
+  volume = Math.max(0, Math.min(1, v));
+  localStorage.setItem('fw_volume', String(volume));
 
-    // Apply to your actual playback source
-    if (g.standaloneAudio) {
-      g.standaloneAudio.volume = volume;
-      g.standaloneAudio.muted = volume <= 0.0001;
-    }
-
-    // Store on global state too (useful when new Audio() is created)
-    g._fwVolume = volume;
-
-    renderIconForVolume(volume);
+  // ✅ MUSIC PAGE (WaveSurfer)
+  if (g.currentWavesurfer && typeof g.currentWavesurfer.setVolume === 'function') {
+    g.currentWavesurfer.setVolume(volume);
   }
+
+  // ✅ NON-MUSIC PAGES (standalone Audio())
+  if (g.standaloneAudio) {
+    g.standaloneAudio.volume = volume;
+    g.standaloneAudio.muted = volume <= 0.0001;
+  }
+
+  // store globally so new players can inherit
+  g._fwVolume = volume;
+
+  renderIconForVolume(volume);
+}
 
   function setHandleFromVolume(v) {
     const rect = track.getBoundingClientRect();
