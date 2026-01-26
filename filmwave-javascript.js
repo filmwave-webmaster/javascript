@@ -4804,7 +4804,7 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
     hasLoggedOut: !!window.navCache?.songMatchLoggedOut
   });
   
-  if (currentNavWrapper && window.navCache && window.navCache.loaded) {
+  if (currentNavWrapper && window.navCache && window.navCache.loaded && needsNavSwap) {
     (async () => {
       const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
       
