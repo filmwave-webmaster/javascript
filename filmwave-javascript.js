@@ -4743,7 +4743,16 @@ if (typeof barba !== 'undefined') {
       sidebar.style.opacity = '0';
     }
   }
-  
+
+// Hide nav immediately when going to/from Song Match (before swap)
+  if (goingToSongMatch !== leavingSongMatch) {
+    const navWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
+    if (navWrapper) {
+      navWrapper.style.transition = 'none';
+      navWrapper.style.opacity = '0';
+    }
+  }
+     
     // Fade out ONLY the correct area (prevents random full-page fades)
   const isDashboard = leavingPath.startsWith('/dashboard/');
 
@@ -4868,30 +4877,16 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
       
       const clonedNav = newNav.cloneNode(true);
         clonedNav.style.opacity = '0';
-        clonedNav.style.position = 'absolute';
-        clonedNav.style.top = currentNavWrapper.offsetTop + 'px';
-        clonedNav.style.left = currentNavWrapper.offsetLeft + 'px';
-        clonedNav.style.width = currentNavWrapper.offsetWidth + 'px';
+        currentNavWrapper.replaceWith(clonedNav);
         
-        // Insert new nav, then fade out old and fade in new simultaneously
-        currentNavWrapper.parentNode.insertBefore(clonedNav, currentNavWrapper);
-        
-        currentNavWrapper.style.transition = 'opacity 0.15s ease';
-        currentNavWrapper.style.opacity = '0';
-        
+        // Fade in the new nav
         requestAnimationFrame(() => {
-          clonedNav.style.transition = 'opacity 0.15s ease';
-          clonedNav.style.opacity = '1';
-          
-          // Remove old nav after transition
-          setTimeout(() => {
-            currentNavWrapper.remove();
-            clonedNav.style.position = '';
-            clonedNav.style.top = '';
-            clonedNav.style.left = '';
-            clonedNav.style.width = '';
-          }, 150);
+          requestAnimationFrame(() => {
+            clonedNav.style.transition = 'opacity 0.2s ease';
+            clonedNav.style.opacity = '1';
+          });
         });
+      }
     })();
   }
        
