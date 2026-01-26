@@ -452,10 +452,17 @@ function navigateStandaloneTrack(direction) {
     return;
   }
   
-  // Use filtered songs if available, otherwise use all songs
-  const songsToNavigate = g.filteredSongIds && g.filteredSongIds.length > 0
-    ? g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id))
-    : g.MASTER_DATA;
+  // Use dashboard tile songs if on dashboard, filtered songs if available, otherwise all songs
+  let songsToNavigate;
+  const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
+  
+  if (isOnDashboard && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+    songsToNavigate = g.dashboardTileSongs;
+  } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
+    songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
+  } else {
+    songsToNavigate = g.MASTER_DATA;
+  }
   
   console.log(`🎵 Navigation Debug:`);
   console.log(`   - Total songs in library: ${g.MASTER_DATA.length}`);
