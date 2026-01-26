@@ -5274,15 +5274,6 @@ loadingPlaceholders.forEach(placeholder => {
   if (!hasFeaturedSongs && !hasFavoriteSongs) {
     console.log('⚠️ No song containers found on this page');
   }
-  
-  // Initialize music page search if on music page
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (isMusicPage && typeof initSearchAndFilters === 'function') {
-    setTimeout(() => {
-      console.log('🔍 Initializing music page search after Barba transition');
-      initSearchAndFilters();
-    }, 500);
-  }
 }, 300);
     
     if (g.currentSongData) {
@@ -8638,10 +8629,8 @@ async function initDashboardTiles() {
         e.preventDefault();
         e.stopPropagation();
         
-        // Set source after a tiny delay to override interaction event
-        setTimeout(() => {
-          g.activeSongSource = 'dashboard';
-        }, 10);
+        // Mark that we're now using dashboard tiles for navigation
+        g.activeSongSource = 'dashboard';
         
         // Calculate click position for seeking
         const bounds = waveformContainer.getBoundingClientRect();
