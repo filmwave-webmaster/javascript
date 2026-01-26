@@ -4805,7 +4805,7 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
   const isSongMatchPage = nextPath.includes('song-match');
   const currentNav = document.querySelector('.navigation');
   
-  if (currentNav && window.navCache.loaded) {
+  if (currentNav && window.navCache && window.navCache.loaded) {
     (async () => {
       const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
       
