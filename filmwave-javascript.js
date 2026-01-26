@@ -4927,22 +4927,29 @@ if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
   initDashboardWelcome();
   
-  // Fade in only if coming from non-dashboard page
+ // Fade in only if coming from non-dashboard page
   if (!cameFromDashboard) {
+    sidebar.style.transition = 'none';
+    sidebar.style.opacity = '0';
     requestAnimationFrame(() => {
-      sidebar.style.transition = 'opacity 0.3s ease';
-      sidebar.style.opacity = '1';
-      console.log('✨ Fading in sidebar');
+      requestAnimationFrame(() => {
+        sidebar.style.transition = 'opacity 0.3s ease';
+        sidebar.style.opacity = '1';
+        console.log('✨ Fading in sidebar');
+      });
     });
   } else {
     sidebar.style.opacity = '1';
   }
+  
   console.log('✅ Sidebar visible');
+  
 } else if (!shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
   sidebar.style.opacity = '0';
   console.log('🚫 Sidebar hidden');
 }
+        
 // === END SIDEBAR MANAGEMENT === 
         
 // Fade in filter wrapper
