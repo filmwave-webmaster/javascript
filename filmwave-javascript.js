@@ -4700,8 +4700,21 @@ if (typeof barba !== 'undefined') {
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
-    // Fade out ONLY the correct area (prevents random full-page fades)
+  // Fade out sidebar when leaving dashboard for non-dashboard page
   const leavingPath = data.current?.url?.path || window.location.pathname || '';
+  const goingToPath = data.next?.url?.path || '';
+  const leavingDashboard = leavingPath.startsWith('/dashboard/');
+  const goingToDashboard = goingToPath.startsWith('/dashboard/');
+  
+  if (leavingDashboard && !goingToDashboard) {
+    const sidebar = document.querySelector('.sidebar-nav');
+    if (sidebar) {
+      sidebar.style.transition = 'opacity 0.15s ease';
+      sidebar.style.opacity = '0';
+    }
+  }
+  
+    // Fade out ONLY the correct area (prevents random full-page fades)
   const isDashboard = leavingPath.startsWith('/dashboard/');
 
   const mainContent = isDashboard
