@@ -4870,6 +4870,30 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
 
       after(data) {
   console.log('🚪 BARBA AFTER FIRED');
+
+  // Swap navigation variant for Song Match page
+  const isSongMatchPage = window.location.pathname.includes('song-match');
+  if (isSongMatchPage) {
+    const currentNav = document.querySelector('.navigation');
+    if (currentNav) {
+      (async () => {
+        const isLoggedIn = window.$memberstackDom ? await window.$memberstackDom.getCurrentMember().then(m => !!m?.data).catch(() => false) : false;
+        
+        fetch('/song-match')
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const variantClass = isLoggedIn ? 'reverse-logged-in-nav' : 'reverse-logged-out-nav';
+            const newNav = doc.querySelector('.' + variantClass) || doc.querySelector('.navigation');
+            
+            if (newNav) {
+              currentNav.replaceWith(newNav.cloneNode(true));
+            }
+          });
+      })();
+    }
+  }      
   
   const g = window.musicPlayerPersistent;
 
