@@ -8637,9 +8637,11 @@ async function initDashboardTiles() {
       waveformContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-
-        // Mark that we're now using dashboard tiles for navigation
-        g.activeSongSource = 'dashboard';
+        
+        // Set source after a tiny delay to override interaction event
+        setTimeout(() => {
+          g.activeSongSource = 'dashboard';
+        }, 10);
         
         // Calculate click position for seeking
         const bounds = waveformContainer.getBoundingClientRect();
