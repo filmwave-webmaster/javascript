@@ -5278,8 +5278,10 @@ loadingPlaceholders.forEach(placeholder => {
   // Initialize music page search if on music page
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   if (isMusicPage && typeof initSearchAndFilters === 'function') {
-    console.log('🔍 Initializing music page search after Barba transition');
-    initSearchAndFilters();
+    setTimeout(() => {
+      console.log('🔍 Initializing music page search after Barba transition');
+      initSearchAndFilters();
+    }, 500);
   }
 }, 300);
     
