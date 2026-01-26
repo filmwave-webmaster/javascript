@@ -452,11 +452,11 @@ function navigateStandaloneTrack(direction) {
     return;
   }
   
-  // Use dashboard tile songs if on dashboard, filtered songs if available, otherwise all songs
+  // Use dashboard tile songs only if a tile was clicked, filtered songs if available, otherwise all songs
   let songsToNavigate;
   const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
   
-  if (isOnDashboard && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+  if (isOnDashboard && g.usingDashboardTiles && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
     songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
@@ -4763,7 +4763,12 @@ if (typeof barba !== 'undefined') {
   const goingToDashboard = goingToPath.startsWith('/dashboard/');
   const goingToSongMatch = goingToPath.includes('song-match');
   const leavingSongMatch = leavingPath.includes('song-match');
-  
+
+  // Clear dashboard tiles flag when leaving dashboard
+  if (leavingDashboard && !goingToDashboard) {
+    g.usingDashboardTiles = false;
+  }
+     
   if (leavingDashboard && !goingToDashboard) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
@@ -8610,6 +8615,9 @@ async function initDashboardTiles() {
       waveformContainer.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Mark that we're now using dashboard tiles for navigation
+        g.usingDashboardTiles = true;
         
         // Calculate click position for seeking
         const bounds = waveformContainer.getBoundingClientRect();
