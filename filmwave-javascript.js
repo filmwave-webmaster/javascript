@@ -515,8 +515,13 @@ function navigateStandaloneTrack(direction) {
   }
 
   // Reset old dashboard tile waveform if exists
-  if (g.currentWavesurfer && g.currentWavesurfer.container && document.body.contains(g.currentWavesurfer.container)) {
-    g.currentWavesurfer.seekTo(0);
+  if (isOnDashboard && g.currentSongData) {
+    const waveformContainers = document.querySelectorAll('.db-waveform');
+    waveformContainers.forEach(container => {
+      if (container._songId === g.currentSongData.id && container._wavesurfer) {
+        container._wavesurfer.seekTo(0);
+      }
+    });
   }
   
   // Find wavesurfer directly from DOM
