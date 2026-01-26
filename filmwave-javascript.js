@@ -515,18 +515,24 @@ function navigateStandaloneTrack(direction) {
   }
 
   // Reset old dashboard tile waveform if exists
-  if (g.currentWavesurfer && document.body.contains(g.currentWavesurfer.container)) {
+  if (g.currentWavesurfer && g.currentWavesurfer.container && document.body.contains(g.currentWavesurfer.container)) {
     g.currentWavesurfer.seekTo(0);
   }
   
-  // Find the new dashboard tile wavesurfer for the next song
-  const nextWaveformData = g.waveformData.find(d => 
-    d.songId === nextSong.id && 
-    d.wavesurfer?.container && 
-    document.body.contains(d.wavesurfer.container)
-  );
+  // Find wavesurfer directly from DOM
+  let newWavesurfer = null;
+  const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
   
-  g.currentWavesurfer = nextWaveformData?.wavesurfer || null;
+  if (isOnDashboard) {
+    const waveformContainers = document.querySelectorAll('.db-waveform');
+    waveformContainers.forEach(container => {
+      if (container._songId === nextSong.id && container._wavesurfer) {
+        newWavesurfer = container._wavesurfer;
+      }
+    });
+  }
+  
+  g.currentWavesurfer = newWavesurfer;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
@@ -8571,6 +8577,10 @@ async function initDashboardTiles() {
 
       g.dashboardTileWavesurfers.push(wavesurfer);
       g.allWavesurfers.push(wavesurfer);
+      
+      // Store wavesurfer reference on the container for later retrieval
+      waveformContainer._wavesurfer = wavesurfer;
+      waveformContainer._songId = song.id;
       
       g.waveformData.push({
         wavesurfer: wavesurfer,
