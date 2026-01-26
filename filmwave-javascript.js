@@ -4740,6 +4740,7 @@ if (typeof barba !== 'undefined') {
     if (sidebar) {
       sidebar.style.transition = 'opacity 0.15s ease';
       sidebar.style.opacity = '0';
+      sidebar.style.visibility = 'hidden';
     }
   }
 
