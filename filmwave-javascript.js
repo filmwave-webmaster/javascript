@@ -118,18 +118,27 @@ window.navCache = {
       .then(html => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        const defaultNavWrapper = doc.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
+        const defaultNavWrapper = doc.querySelector('.logged-in-nav-wrapper') || doc.querySelector('.logged-out-nav-wrapper');
         if (defaultNavWrapper) {
           window.navCache.default = defaultNavWrapper.cloneNode(true);
           console.log('✅ Default nav cached from home page');
         }
       });
   } else {
-    // Cache from current page
-    const defaultNavWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
-    if (defaultNavWrapper) {
-      window.navCache.default = defaultNavWrapper.cloneNode(true);
-    }
+    // Cache from current page - wait for Memberstack to determine which nav is visible
+    setTimeout(() => {
+      const loggedInNav = document.querySelector('.logged-in-nav-wrapper');
+      const loggedOutNav = document.querySelector('.logged-out-nav-wrapper');
+      
+      // Check which one is actually visible
+      const loggedInVisible = loggedInNav && getComputedStyle(loggedInNav).display !== 'none';
+      const defaultNavWrapper = loggedInVisible ? loggedInNav : loggedOutNav;
+      
+      if (defaultNavWrapper) {
+        window.navCache.default = defaultNavWrapper.cloneNode(true);
+        console.log('✅ Default nav cached:', defaultNavWrapper.className);
+      }
+    }, 500);
   }
   
   // Fetch and cache Song Match nav variants
