@@ -4936,8 +4936,44 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
         
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
-const sidebar = document.querySelector('.sidebar-nav');
+let sidebar = document.querySelector('.sidebar-nav');
 const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/');
+
+// Inject sidebar if it doesn't exist and we need it
+if (shouldHaveSidebar && !sidebar) {
+  fetch('/dashboard/dashboard')
+    .then(res => res.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const fetchedSidebar = doc.querySelector('.sidebar-nav');
+      
+      if (fetchedSidebar) {
+        const newSidebar = fetchedSidebar.cloneNode(true);
+        newSidebar.style.visibility = 'visible';
+        newSidebar.style.opacity = '0';
+        newSidebar.style.transition = 'none';
+        
+        const mainContent = document.querySelector('[data-barba="container"]');
+        if (mainContent) {
+          mainContent.parentNode.insertBefore(newSidebar, mainContent);
+        } else {
+          document.body.insertBefore(newSidebar, document.body.firstChild);
+        }
+        
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            newSidebar.style.transition = 'opacity 0.3s ease';
+            newSidebar.style.opacity = '1';
+            console.log('✨ Injected and fading in sidebar');
+          });
+        });
+        
+        initDashboardWelcome();
+      }
+    });
+  console.log('✅ Sidebar will be injected');
+}
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
