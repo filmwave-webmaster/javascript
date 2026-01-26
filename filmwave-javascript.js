@@ -452,15 +452,18 @@ function navigateStandaloneTrack(direction) {
     return;
   }
   
-  // Use dashboard tile songs only if a tile was clicked, filtered songs if available, otherwise all songs
+  // Use the active song source for navigation
   let songsToNavigate;
   const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
   
-  if (isOnDashboard && g.usingDashboardTiles && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+  if (g.activeSongSource === 'dashboard' && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
     songsToNavigate = g.dashboardTileSongs;
-  } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
+  } else if (g.activeSongSource === 'music' && g.filteredSongIds && g.filteredSongIds.length > 0) {
     songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
+  } else if (g.activeSongSource === 'music') {
+    songsToNavigate = g.MASTER_DATA;
   } else {
+    // Fallback
     songsToNavigate = g.MASTER_DATA;
   }
   
@@ -1510,6 +1513,9 @@ const handlePlayPause = (e) => {
     e.preventDefault();
   }
   
+  // Mark that we're now using music page songs for navigation
+  g.activeSongSource = 'music';
+  
   if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
   
   console.log('═══════════════════════════════════════════');
@@ -1559,6 +1565,7 @@ if (songName) {
 }
     
     wavesurfer.on('interaction', function (newProgress) {
+      g.activeSongSource = 'music';
       if (g.currentSongData?.id === songData.id) {
         if (g.standaloneAudio) {
           g.standaloneAudio.currentTime = newProgress;
@@ -4766,7 +4773,7 @@ if (typeof barba !== 'undefined') {
 
   // Clear dashboard tiles flag when leaving dashboard
   if (leavingDashboard && !goingToDashboard) {
-    g.usingDashboardTiles = false;
+    // Don't clear activeSongSource - keep using dashboard songs even after leaving
   }
      
   if (leavingDashboard && !goingToDashboard) {
@@ -8617,7 +8624,7 @@ async function initDashboardTiles() {
         e.stopPropagation();
 
         // Mark that we're now using dashboard tiles for navigation
-        g.usingDashboardTiles = true;
+        g.activeSongSource = 'dashboard';
         
         // Calculate click position for seeking
         const bounds = waveformContainer.getBoundingClientRect();
