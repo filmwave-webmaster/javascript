@@ -4733,12 +4733,23 @@ if (typeof barba !== 'undefined') {
   const goingToPath = data.next?.url?.path || '';
   const leavingDashboard = leavingPath.startsWith('/dashboard/');
   const goingToDashboard = goingToPath.startsWith('/dashboard/');
+  const goingToSongMatch = goingToPath.includes('song-match');
+  const leavingSongMatch = leavingPath.includes('song-match');
   
   if (leavingDashboard && !goingToDashboard) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       sidebar.style.transition = 'opacity 0.15s ease';
       sidebar.style.opacity = '0';
+    }
+  }
+  
+  // Hide nav immediately when going to/from Song Match (before swap)
+  if (goingToSongMatch !== leavingSongMatch) {
+    const navWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
+    if (navWrapper) {
+      navWrapper.style.transition = 'none';
+      navWrapper.style.opacity = '0';
     }
   }
   
@@ -4865,7 +4876,17 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
       }
       
       if (newNav) {
-        currentNavWrapper.replaceWith(newNav.cloneNode(true));
+        const clonedNav = newNav.cloneNode(true);
+        clonedNav.style.opacity = '0';
+        currentNavWrapper.replaceWith(clonedNav);
+        
+        // Fade in the new nav
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            clonedNav.style.transition = 'opacity 0.2s ease';
+            clonedNav.style.opacity = '1';
+          });
+        });
       }
     })();
   }
