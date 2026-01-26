@@ -8564,9 +8564,12 @@ async function initDashboardTiles() {
         });
       }
 
-      // Waveform click to play/seek
+     // Waveform click to play/seek
       waveformContainer.style.cursor = 'pointer';
       waveformContainer.addEventListener('click', (e) => {
+        // Get fresh wavesurfer reference from waveformData (not stale closure)
+        const freshData = g.waveformData.find(d => d.songId === song.id && d.cardElement === tile && document.body.contains(d.wavesurfer?.container));
+        const activeWavesurfer = freshData?.wavesurfer || wavesurfer;
         e.preventDefault();
         e.stopPropagation();
         
