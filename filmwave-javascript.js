@@ -107,10 +107,29 @@ window.navCache = {
 };
 
 (async function preloadNavVariants() {
-  // Cache default nav (with its wrapper)
-  const defaultNavWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
-  if (defaultNavWrapper) {
-    window.navCache.default = defaultNavWrapper.cloneNode(true);
+  // Cache default nav - fetch from home page to ensure we get the non-variant
+  const currentPath = window.location.pathname;
+  const isOnSongMatch = currentPath.includes('song-match');
+  
+  if (isOnSongMatch) {
+    // Fetch default nav from home page
+    fetch('/')
+      .then(res => res.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const defaultNavWrapper = doc.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
+        if (defaultNavWrapper) {
+          window.navCache.default = defaultNavWrapper.cloneNode(true);
+          console.log('✅ Default nav cached from home page');
+        }
+      });
+  } else {
+    // Cache from current page
+    const defaultNavWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
+    if (defaultNavWrapper) {
+      window.navCache.default = defaultNavWrapper.cloneNode(true);
+    }
   }
   
   // Fetch and cache Song Match nav variants
