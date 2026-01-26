@@ -73,7 +73,6 @@ if (!window.musicPlayerPersistent) {
     autoPlayNext: false,
     wasPlayingBeforeHidden: false,
     filteredSongIds: [],
-    sidebarClone: null,
     persistedWelcome: null,
     dashboardTileWavesurfers: []
   };
@@ -4756,20 +4755,6 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
   document.body.appendChild(g.persistedWelcome);
 }
      
-   // Hide old sidebar to prevent doubling (fade out if going to non-dashboard)
-  const oldSidebar = data.current.container.querySelector('.sidebar-nav');
-  if (oldSidebar) {
-    const nextUrl = data.next.url.path;
-    const goingToNonDashboard = !nextUrl.startsWith('/dashboard/');
-    
-    if (goingToNonDashboard) {
-      oldSidebar.style.transition = 'opacity 0.3s ease';
-      oldSidebar.style.opacity = '0';
-    } else {
-      oldSidebar.style.opacity = '0';
-    }
-  }  
-
   // Fade out filter wrapper when leaving music page
   const filterWrapper = data.current.container.querySelector('.filter-wrapper');
   if (filterWrapper) {
@@ -4800,7 +4785,13 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
 
   // Swap navigation variant based on page (using cache)
   const nextPath = data.next.url.path;
+  const currentPath = data.current.url.path;
   const isSongMatchPage = nextPath.includes('song-match');
+  const wasOnSongMatchPage = currentPath.includes('song-match');
+  
+  // Only swap nav if entering or leaving Song Match page
+  const needsNavSwap = isSongMatchPage !== wasOnSongMatchPage;
+  
   const currentNavWrapper = document.querySelector('.logged-in-nav-wrapper, .logged-out-nav-wrapper');
   
   console.log('🔄 Nav swap check:', {
@@ -4831,22 +4822,6 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
   }
        
   const g = window.musicPlayerPersistent;
-  
-  // Capture sidebar from incoming page BEFORE Barba processes it
-  const incomingSidebar = data.next.container.querySelector('.sidebar-nav');
-  
-  if (incomingSidebar && !g.sidebarClone) {
-    g.sidebarClone = incomingSidebar.cloneNode(true);
-    console.log('💾 [BEFORE ENTER] Stored sidebar clone from incoming page');
-  }
-
-  // Hide sidebar if transitioning from no-sidebar to sidebar page
-  const currentSidebar = data.current.container.querySelector('.sidebar-nav');
-  if (!currentSidebar && incomingSidebar) {
-    incomingSidebar.style.opacity = '0';
-    incomingSidebar.style.transition = 'none';
-    console.log('🫥 Hiding incoming sidebar during transition');
-  }
 
   // Hide filter wrapper during transition
   const nextFilterWrapper = data.next.container.querySelector('.filter-wrapper');
@@ -4946,23 +4921,16 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
 const sidebar = document.querySelector('.sidebar-nav');
-const prevSidebar = data.current.container.querySelector('.sidebar-nav');
+const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
+  sidebar.style.opacity = '1';
   initDashboardWelcome();
   console.log('✅ Sidebar visible');
-  
-  // Only fade in if came from no-sidebar page (not dashboard-to-dashboard)
-  if (!prevSidebar) {
-    requestAnimationFrame(() => {
-      sidebar.style.transition = 'opacity 0.3s ease';
-      sidebar.style.opacity = '1';
-      console.log('✨ Fading in sidebar');
-    });
-  }
 } else if (!shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
+  sidebar.style.opacity = '0';
   console.log('🚫 Sidebar hidden');
 }
 // === END SIDEBAR MANAGEMENT === 
