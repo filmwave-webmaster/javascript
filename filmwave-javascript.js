@@ -4892,7 +4892,6 @@ if (oldWelcome && window.location.pathname.startsWith('/dashboard/')) {
             clonedNav.style.width = '';
           }, 150);
         });
-      }
     })();
   }
        
