@@ -4925,8 +4925,18 @@ const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/');
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
-  sidebar.style.opacity = '1';
   initDashboardWelcome();
+  
+  // Fade in only if coming from non-dashboard page
+  if (!cameFromDashboard) {
+    requestAnimationFrame(() => {
+      sidebar.style.transition = 'opacity 0.3s ease';
+      sidebar.style.opacity = '1';
+      console.log('✨ Fading in sidebar');
+    });
+  } else {
+    sidebar.style.opacity = '1';
+  }
   console.log('✅ Sidebar visible');
 } else if (!shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
