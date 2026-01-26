@@ -5274,6 +5274,13 @@ loadingPlaceholders.forEach(placeholder => {
   if (!hasFeaturedSongs && !hasFavoriteSongs) {
     console.log('⚠️ No song containers found on this page');
   }
+  
+  // Initialize music page search if on music page
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (isMusicPage && typeof initSearchAndFilters === 'function') {
+    console.log('🔍 Initializing music page search after Barba transition');
+    initSearchAndFilters();
+  }
 }, 300);
     
     if (g.currentSongData) {
