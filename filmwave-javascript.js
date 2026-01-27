@@ -2135,6 +2135,62 @@ document.addEventListener('keydown', function (e) {
 
 /**
  * ============================================================
+ * DARK MODE TOGGLE
+ * ============================================================
+ */
+function initDarkMode() {
+  const g = window.musicPlayerPersistent;
+  
+  const colorModes = document.querySelector('.color-modes');
+  const darkModeIcon = document.querySelector('.dark-mode-icon');
+  const lightModeIcon = document.querySelector('.light-mode-icon');
+  
+  if (!colorModes || !darkModeIcon || !lightModeIcon) {
+    console.log('ℹ️ Dark mode elements not found');
+    return;
+  }
+  
+  // Load saved preference or default to light (base mode)
+  const savedTheme = localStorage.getItem('filmwaveTheme') || 'light';
+  
+  // Apply theme
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-wf-color-mode', 'dark');
+      darkModeIcon.style.display = 'none';
+      lightModeIcon.style.display = 'flex';
+    } else {
+      document.documentElement.removeAttribute('data-wf-color-mode');
+      darkModeIcon.style.display = 'flex';
+      lightModeIcon.style.display = 'none';
+    }
+    
+    // Store in global state
+    g.darkMode = theme === 'dark';
+    
+    console.log('🌓 Theme applied:', theme);
+  }
+  
+  // Apply saved theme on load
+  applyTheme(savedTheme);
+  
+  // Toggle on click
+  colorModes.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    localStorage.setItem('filmwaveTheme', newTheme);
+    applyTheme(newTheme);
+  });
+  
+  console.log('✅ Dark mode initialized');
+}
+
+/**
+ * ============================================================
  * FILTER HELPERS
  * ============================================================
  */
@@ -4842,6 +4898,7 @@ window.addEventListener('load', () => {
   initMusicPage();
   initVolumeControl();
   initPlayerCloseButton();
+  initDarkMode();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5649,6 +5706,7 @@ initializeProfileSortable();
 initializePlaylistOverlay();  
 initVolumeControl();   
 initPlayerCloseButton();
+initDarkMode();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
