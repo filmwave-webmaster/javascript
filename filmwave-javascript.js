@@ -8877,9 +8877,15 @@ async function initDashboardTiles() {
   });
   
   // Ensure songs are loaded
-  if (g.MASTER_DATA.length === 0) {
+  if (!g.MASTER_DATA || g.MASTER_DATA.length === 0) {
     await fetchSongs();
   }
+  
+  if (!g.MASTER_DATA || g.MASTER_DATA.length === 0) {
+    console.log('⚠️ No MASTER_DATA available for dashboard tiles');
+    return;
+  }
+  
   console.log(`📊 Total songs in MASTER_DATA: ${g.MASTER_DATA.length}`);
 
   // Use cached random selection if available, otherwise create new one
