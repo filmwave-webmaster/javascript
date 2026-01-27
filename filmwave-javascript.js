@@ -2133,63 +2133,36 @@ document.addEventListener('keydown', function (e) {
   }
 }, true);
 
-/**
- * ============================================================
- * DARK MODE TOGGLE
- * ============================================================
- */
-function initDarkMode() {
-  const g = window.musicPlayerPersistent;
-  
-  const colorModes = document.querySelector('.color-modes');
-  const darkModeIcon = document.querySelector('.dark-mode-icon');
-  const lightModeIcon = document.querySelector('.light-mode-icon');
-  
-  if (!colorModes || !darkModeIcon || !lightModeIcon) {
-    console.log('ℹ️ Dark mode elements not found');
-    return;
-  }
-  
-  // Load saved preference or default to light (base mode)
-  const savedTheme = localStorage.getItem('filmwaveTheme') || 'light';
-  
-  // Apply theme
-  function applyTheme(theme) {
-    const body = document.body;
-    
+<script>
+  (function() {
+    var theme = localStorage.getItem('filmwaveTheme');
     if (theme === 'dark') {
-      body.classList.add('body');
-      darkModeIcon.style.display = 'none';
-      lightModeIcon.style.display = 'flex';
-    } else {
-      body.classList.remove('body');
-      darkModeIcon.style.display = 'flex';
-      lightModeIcon.style.display = 'none';
+      var darkColors = {
+        '--color-0': 'transparent',
+        '--color-1': '#191919',
+        '--color-2': '#ffffff',
+        '--color-3': '#ddff43',
+        '--color-4': '#7900b6',
+        '--color-5': '#a88419',
+        '--color-6': '#242424',
+        '--color-7': '#eeeee7',
+        '--color-8': '#2c2c2c',
+        '--color-9': '#474747',
+        '--color-10': '#fb8f61',
+        '--color-11': '#3d3d3d',
+        '--color-12': '#2c2c2c',
+        '--color-13': '#2c2c2c',
+        '--color-14': '#ddff43',
+        '--color-15': '#474747',
+        '--color-16': '#474747'
+      };
+      var root = document.documentElement;
+      for (var key in darkColors) {
+        root.style.setProperty(key, darkColors[key]);
+      }
     }
-    
-    // Store in global state
-    g.darkMode = theme === 'dark';
-    
-    console.log('🌓 Theme applied:', theme);
-  }
-  
-  // Apply saved theme on load
-  applyTheme(savedTheme);
-  
-  // Toggle on click
-  colorModes.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    localStorage.setItem('filmwaveTheme', newTheme);
-    applyTheme(newTheme);
-  });
-  
-  console.log('✅ Dark mode initialized');
-}
+  })();
+</script>
 
 /**
  * ============================================================
