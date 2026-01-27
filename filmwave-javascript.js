@@ -2133,36 +2133,110 @@ document.addEventListener('keydown', function (e) {
   }
 }, true);
 
-<script>
-  (function() {
-    var theme = localStorage.getItem('filmwaveTheme');
+/**
+ * ============================================================
+ * DARK MODE TOGGLE
+ * ============================================================
+ */
+function initDarkMode() {
+  const g = window.musicPlayerPersistent;
+  
+  const colorModes = document.querySelector('.color-modes');
+  const darkModeIcon = document.querySelector('.dark-mode-icon');
+  const lightModeIcon = document.querySelector('.light-mode-icon');
+  
+  if (!colorModes || !darkModeIcon || !lightModeIcon) {
+    console.log('ℹ️ Dark mode elements not found');
+    return;
+  }
+  
+  // Dark mode color overrides (from your Webflow variables)
+  const darkColors = {
+    '--color-0': 'transparent',
+    '--color-1': '#191919',
+    '--color-2': '#ffffff',
+    '--color-3': '#ddff43',
+    '--color-4': '#7900b6',
+    '--color-5': '#a88419',
+    '--color-6': '#242424',
+    '--color-7': '#eeeee7',
+    '--color-8': '#2c2c2c',
+    '--color-9': '#474747',
+    '--color-10': '#fb8f61',
+    '--color-11': '#3d3d3d',
+    '--color-12': '#2c2c2c',
+    '--color-13': '#2c2c2c',
+    '--color-14': '#ddff43',
+    '--color-15': '#474747',
+    '--color-16': '#474747'
+  };
+  
+  // Light mode colors (your base Webflow variables)
+  const lightColors = {
+    '--color-0': 'transparent',
+    '--color-1': '#ffffff',
+    '--color-2': '#191919',
+    '--color-3': '#ddff43',
+    '--color-4': '#7900b6',
+    '--color-5': '#a88419',
+    '--color-6': '#f0f0f0',
+    '--color-7': '#eeeee7',
+    '--color-8': '#e2e2e2',
+    '--color-9': '#949494',
+    '--color-10': '#fb8f61',
+    '--color-11': '#ccc',
+    '--color-12': '#191919',
+    '--color-13': '#f0f0f0',
+    '--color-14': '#191919',
+    '--color-15': '#191919',
+    '--color-16': '#ccc'
+  };
+  
+  // Load saved preference or default to light (base mode)
+  const savedTheme = localStorage.getItem('filmwaveTheme') || 'light';
+  
+  // Apply theme
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    const colors = theme === 'dark' ? darkColors : lightColors;
+    
+    // Apply all color variables
+    Object.entries(colors).forEach(([variable, value]) => {
+      root.style.setProperty(variable, value);
+    });
+    
+    // Update icons
     if (theme === 'dark') {
-      var darkColors = {
-        '--color-0': 'transparent',
-        '--color-1': '#191919',
-        '--color-2': '#ffffff',
-        '--color-3': '#ddff43',
-        '--color-4': '#7900b6',
-        '--color-5': '#a88419',
-        '--color-6': '#242424',
-        '--color-7': '#eeeee7',
-        '--color-8': '#2c2c2c',
-        '--color-9': '#474747',
-        '--color-10': '#fb8f61',
-        '--color-11': '#3d3d3d',
-        '--color-12': '#2c2c2c',
-        '--color-13': '#2c2c2c',
-        '--color-14': '#ddff43',
-        '--color-15': '#474747',
-        '--color-16': '#474747'
-      };
-      var root = document.documentElement;
-      for (var key in darkColors) {
-        root.style.setProperty(key, darkColors[key]);
-      }
+      darkModeIcon.style.display = 'none';
+      lightModeIcon.style.display = 'flex';
+    } else {
+      darkModeIcon.style.display = 'flex';
+      lightModeIcon.style.display = 'none';
     }
-  })();
-</script>
+    
+    // Store in global state
+    g.darkMode = theme === 'dark';
+    
+    console.log('🌓 Theme applied:', theme);
+  }
+  
+  // Apply saved theme on load
+  applyTheme(savedTheme);
+  
+  // Toggle on click
+  colorModes.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    localStorage.setItem('filmwaveTheme', newTheme);
+    applyTheme(newTheme);
+  });
+  
+  console.log('✅ Dark mode initialized');
+}
 
 /**
  * ============================================================
