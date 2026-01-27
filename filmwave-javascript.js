@@ -1893,6 +1893,11 @@ if (songName) {
 async function fetchSongs() {
   const g = window.musicPlayerPersistent;
   
+  // Initialize if undefined
+  if (!g.MASTER_DATA) {
+    g.MASTER_DATA = [];
+  }
+  
   if (g.MASTER_DATA.length > 0) {
     return g.MASTER_DATA;
   }
