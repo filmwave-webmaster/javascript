@@ -2155,12 +2155,14 @@ function initDarkMode() {
   
   // Apply theme
   function applyTheme(theme) {
+    const body = document.body;
+    
     if (theme === 'dark') {
-      document.documentElement.setAttribute('data-wf-color-mode', 'dark');
+      body.classList.add('body');
       darkModeIcon.style.display = 'none';
       lightModeIcon.style.display = 'flex';
     } else {
-      document.documentElement.removeAttribute('data-wf-color-mode');
+      body.classList.remove('body');
       darkModeIcon.style.display = 'flex';
       lightModeIcon.style.display = 'none';
     }
