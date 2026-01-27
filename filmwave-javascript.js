@@ -1197,17 +1197,46 @@ function initPlayerCloseButton() {
       g.standaloneAudio = null;
     }
     
-    // Reset waveform progress on song card/tile
-    if (g.currentWavesurfer && g.currentWavesurfer.container && document.body.contains(g.currentWavesurfer.container)) {
-      g.currentWavesurfer.seekTo(0);
-    }
+    // Reset dashboard tile waveform and play/pause icons
+    const dashboardTiles = document.querySelectorAll('.masonry-song-tile-wrapper');
+    dashboardTiles.forEach(tile => {
+      const waveformContainer = tile.querySelector('.db-waveform');
+      if (waveformContainer && waveformContainer._wavesurfer) {
+        waveformContainer._wavesurfer.seekTo(0);
+      }
+      
+      // Reset play/pause icons
+      const playIcon = tile.querySelector('.db-play-icon');
+      const pauseIcon = tile.querySelector('.db-pause-icon');
+      if (playIcon) playIcon.style.display = 'flex';
+      if (pauseIcon) pauseIcon.style.display = 'none';
+    });
     
-    // Also check DOM for dashboard tiles
-    if (g.currentSongData) {
-      const waveformContainers = document.querySelectorAll('.db-waveform');
-      waveformContainers.forEach(container => {
-        if (container._songId === g.currentSongData.id && container._wavesurfer) {
-          container._wavesurfer.seekTo(0);
+    // Reset music page song card waveforms and play buttons
+    const songCards = document.querySelectorAll('.song-wrapper');
+    songCards.forEach(card => {
+      // Reset waveform
+      const waveformData = g.waveformData?.find(d => d.cardElement === card);
+      if (waveformData && waveformData.wavesurfer) {
+        waveformData.wavesurfer.seekTo(0);
+      }
+      
+      // Reset play/pause icons
+      const playIcon = card.querySelector('.play-icon');
+      const pauseIcon = card.querySelector('.pause-icon');
+      if (playIcon) playIcon.style.display = 'flex';
+      if (pauseIcon) pauseIcon.style.display = 'none';
+      
+      // Hide play button
+      const playButton = card.querySelector('.play-button');
+      if (playButton) playButton.style.opacity = '0';
+    });
+    
+    // Reset all wavesurfers in global array
+    if (g.allWavesurfers) {
+      g.allWavesurfers.forEach(ws => {
+        if (ws && ws.container && document.body.contains(ws.container)) {
+          ws.seekTo(0);
         }
       });
     }
