@@ -2150,7 +2150,7 @@ function initDarkMode() {
     return;
   }
   
-  // Dark mode color overrides (from your Webflow variables)
+  // Dark mode color overrides
   const darkColors = {
     '--color-0': 'transparent',
     '--color-1': '#191919',
@@ -2171,52 +2171,27 @@ function initDarkMode() {
     '--color-16': '#474747'
   };
   
-  // Light mode colors (your base Webflow variables)
-  const lightColors = {
-    '--color-0': 'transparent',
-    '--color-1': '#ffffff',
-    '--color-2': '#191919',
-    '--color-3': '#ddff43',
-    '--color-4': '#7900b6',
-    '--color-5': '#a88419',
-    '--color-6': '#f0f0f0',
-    '--color-7': '#eeeee7',
-    '--color-8': '#e2e2e2',
-    '--color-9': '#949494',
-    '--color-10': '#fb8f61',
-    '--color-11': '#ccc',
-    '--color-12': '#191919',
-    '--color-13': '#f0f0f0',
-    '--color-14': '#191919',
-    '--color-15': '#191919',
-    '--color-16': '#ccc'
-  };
-  
-  // Load saved preference or default to light (base mode)
+  // Load saved preference or default to light
   const savedTheme = localStorage.getItem('filmwaveTheme') || 'light';
   
   // Apply theme
   function applyTheme(theme) {
-    const root = document.documentElement;
-    const colors = theme === 'dark' ? darkColors : lightColors;
-    
-    // Apply all color variables
-    Object.entries(colors).forEach(([variable, value]) => {
-      root.style.setProperty(variable, value);
-    });
-    
-    // Update icons
     if (theme === 'dark') {
+      Object.entries(darkColors).forEach(([variable, value]) => {
+        document.body.style.setProperty(variable, value);
+      });
       darkModeIcon.style.display = 'none';
       lightModeIcon.style.display = 'flex';
     } else {
+      // Remove inline styles to revert to Webflow defaults
+      Object.keys(darkColors).forEach(variable => {
+        document.body.style.removeProperty(variable);
+      });
       darkModeIcon.style.display = 'flex';
       lightModeIcon.style.display = 'none';
     }
     
-    // Store in global state
     g.darkMode = theme === 'dark';
-    
     console.log('🌓 Theme applied:', theme);
   }
   
