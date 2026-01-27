@@ -1902,17 +1902,54 @@ async function fetchSongs() {
     return g.MASTER_DATA;
   }
   
+  // Check localStorage cache first
+  const cached = localStorage.getItem('filmwaveSongs');
+  const cacheTime = localStorage.getItem('filmwaveSongsTime');
+  const cacheAge = Date.now() - (parseInt(cacheTime) || 0);
+  
+  // Use cache if less than 5 minutes old
+  if (cached && cacheAge < 5 * 60 * 1000) {
+    console.log('📦 Using cached songs data');
+    g.MASTER_DATA = JSON.parse(cached);
+    return g.MASTER_DATA;
+  }
+  
   try {
     const response = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}?view=${VIEW_ID}`, {
       headers: {
         'Authorization': `Bearer ${AIRTABLE_API_KEY}`
       }
     });
+    
+    // Check for rate limit
+    if (response.status === 429) {
+      console.warn('⚠️ Airtable rate limited - using stale cache if available');
+      if (cached) {
+        g.MASTER_DATA = JSON.parse(cached);
+        return g.MASTER_DATA;
+      }
+      return [];
+    }
+    
     const data = await response.json();
     g.MASTER_DATA = data.records;
+    
+    // Cache the results
+    localStorage.setItem('filmwaveSongs', JSON.stringify(data.records));
+    localStorage.setItem('filmwaveSongsTime', Date.now().toString());
+    console.log('💾 Cached songs data');
+    
     return data.records;
   } catch (error) {
     console.error('Error fetching songs:', error);
+    
+    // Fall back to stale cache on error
+    if (cached) {
+      console.log('📦 Using stale cache due to error');
+      g.MASTER_DATA = JSON.parse(cached);
+      return g.MASTER_DATA;
+    }
+    
     return [];
   }
 }
