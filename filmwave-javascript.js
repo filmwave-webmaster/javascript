@@ -1170,6 +1170,76 @@ function initVolumeControl() {
 
 // End Volume controls
 
+/**
+ * ============================================================
+ * PLAYER CLOSE BUTTON
+ * ============================================================
+ */
+function initPlayerCloseButton() {
+  const g = window.musicPlayerPersistent;
+  const closeButton = document.querySelector('.player-x-button');
+  
+  if (!closeButton) {
+    console.log('ℹ️ Player close button not found');
+    return;
+  }
+  
+  closeButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('❌ Closing player');
+    
+    // Stop and clear audio
+    if (g.standaloneAudio) {
+      g.standaloneAudio.pause();
+      g.standaloneAudio.currentTime = 0;
+      g.standaloneAudio = null;
+    }
+    
+    // Reset waveform progress on song card/tile
+    if (g.currentWavesurfer && g.currentWavesurfer.container && document.body.contains(g.currentWavesurfer.container)) {
+      g.currentWavesurfer.seekTo(0);
+    }
+    
+    // Also check DOM for dashboard tiles
+    if (g.currentSongData) {
+      const waveformContainers = document.querySelectorAll('.db-waveform');
+      waveformContainers.forEach(container => {
+        if (container._songId === g.currentSongData.id && container._wavesurfer) {
+          container._wavesurfer.seekTo(0);
+        }
+      });
+    }
+    
+    // Clear current song state
+    g.currentSongData = null;
+    g.currentWavesurfer = null;
+    g.currentPeaksData = null;
+    g.currentDuration = 0;
+    g.currentTime = 0;
+    g.isPlaying = false;
+    g.hasActiveSong = false;
+    
+    // Update icons
+    updateMasterControllerIcons(false);
+    updatePlayerCoverArtIcons(false);
+    
+    // Hide the player
+    updateMasterPlayerVisibility();
+    
+    console.log('✅ Player closed');
+  });
+  
+  console.log('✅ Player close button initialized');
+}
+
+/**
+ * ============================================================
+ * INIT MASTER PLAYER
+ * ============================================================
+ */
+
 function initMasterPlayer() {
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
@@ -4742,6 +4812,7 @@ function initUniversalSearch() {
 window.addEventListener('load', () => {
   initMusicPage();
   initVolumeControl();
+  initPlayerCloseButton();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5547,7 +5618,8 @@ loadingPlaceholders.forEach(placeholder => {
 initializeMemberstackHandlers();
 initializeProfileSortable(); 
 initializePlaylistOverlay();  
-initVolumeControl();      
+initVolumeControl();   
+initPlayerCloseButton();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
