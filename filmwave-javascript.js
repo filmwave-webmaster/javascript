@@ -638,14 +638,19 @@ function navigateStandaloneTrack(direction) {
     updatePlayerCoverArtIcons(false);
   }
 
-  const tempContainer = document.createElement('div');
+ const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
   
+  // Get computed CSS variable values
+  const styles = getComputedStyle(document.body);
+  const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+  const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+  
   const tempWavesurfer = WaveSurfer.create({
     container: tempContainer,
-    waveColor: '#e2e2e2',
-    progressColor: '#191919',
+    waveColor: waveColor,
+    progressColor: progressColor,
     height: 40,
     barWidth: 2,
     barGap: 1,
