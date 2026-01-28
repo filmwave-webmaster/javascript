@@ -2223,24 +2223,28 @@ function initDarkMode() {
   
   // Apply theme
   function applyTheme(theme) {
-    if (theme === 'dark') {
-      Object.entries(darkColors).forEach(([variable, value]) => {
-        document.body.style.setProperty(variable, value);
-      });
-      darkModeIcon.style.display = 'none';
-      lightModeIcon.style.display = 'flex';
-    } else {
-      // Remove inline styles to revert to Webflow defaults
-      Object.keys(darkColors).forEach(variable => {
-        document.body.style.removeProperty(variable);
-      });
-      darkModeIcon.style.display = 'flex';
-      lightModeIcon.style.display = 'none';
-    }
-    
-    g.darkMode = theme === 'dark';
-    console.log('🌓 Theme applied:', theme);
+  if (theme === 'dark') {
+    Object.entries(darkColors).forEach(([variable, value]) => {
+      document.body.style.setProperty(variable, value);
+    });
+    darkModeIcon.style.display = 'none';
+    lightModeIcon.style.display = 'flex';
+  } else {
+    // Remove inline styles to revert to Webflow defaults
+    Object.keys(darkColors).forEach(variable => {
+      document.body.style.removeProperty(variable);
+    });
+    darkModeIcon.style.display = 'flex';
+    lightModeIcon.style.display = 'none';
   }
+  
+  g.darkMode = theme === 'dark';
+  
+  // Update waveform colors
+  updateWaveformColors();
+  
+  console.log('🌓 Theme applied:', theme);
+}
   
   // Apply saved theme on load
   applyTheme(savedTheme);
