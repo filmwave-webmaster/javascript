@@ -1708,8 +1708,8 @@ function loadWaveformBatch(cardElements) {
     
     const wavesurfer = WaveSurfer.create({
       container: waveformContainer,
-      waveColor: '#e2e2e2',
-      progressColor: '#191919',
+      waveColor: 'var(--color-8)',
+      progressColor: 'var(--color-2)',
       cursorColor: 'transparent',
       cursorWidth: 0,
       height: 30,
