@@ -309,7 +309,7 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
+   // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
@@ -317,6 +317,14 @@ function updateMasterPlayerVisibility() {
         console.log('✅ Added padding to footer-wrapper');
       }
     }
+    
+    // ADD PADDING TO SIDEBAR NAV WHEN PLAYER IS VISIBLE
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    if (sidebarNav) {
+      sidebarNav.style.setProperty('padding-bottom', '197px', 'important');
+      console.log('✅ Added padding to sidebar-nav');
+    }
+    
   } else {
     playerWrapper.style.display = 'none';
     playerWrapper.style.visibility = 'hidden';
