@@ -2268,6 +2268,14 @@ function initDarkMode() {
           }
         });
       }
+
+      // Redraw master player waveform
+    if (g.currentPeaksData) {
+      const progress = g.standaloneAudio 
+        ? g.standaloneAudio.currentTime / g.standaloneAudio.duration 
+        : (g.currentWavesurfer ? g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration() : 0);
+      drawMasterWaveform(g.currentPeaksData, progress || 0);
+    }
       
       console.log('🎨 Waveform colors updated');
     }, 50);
