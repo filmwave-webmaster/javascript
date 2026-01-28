@@ -829,7 +829,8 @@ function drawMasterWaveform(peaks, progress) {
   const centerY = internalHeight / 2;
   
   if (!peaks || peaks.length === 0) {
-    ctx.fillStyle = '#e2e2e2';
+    const fallbackStyles = getComputedStyle(document.body);
+    ctx.fillStyle = fallbackStyles.getPropertyValue('--color-8').trim() || '#e2e2e2';
     ctx.fillRect(0, centerY - (1 * dpr), canvas.width, 2 * dpr);
     return;
   }
@@ -858,7 +859,10 @@ function drawMasterWaveform(peaks, progress) {
     const barHeight = Math.max(peak * internalHeight * 0.85, 2 * dpr);
     const x = i * barTotal;
     const barProgress = i / barsCount;
-    ctx.fillStyle = barProgress < progress ? '#191919' : '#e2e2e2';
+    const styles = getComputedStyle(document.body);
+    const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+    const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+    ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
     ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
   }
 }
