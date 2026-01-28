@@ -5370,6 +5370,15 @@ if (typeof barba !== 'undefined') {
 
      beforeEnter(data) {
 
+  // Apply theme icon visibility immediately to prevent flash
+  const theme = localStorage.getItem('filmwaveTheme') || 'light';
+  data.next.container.querySelectorAll('.dark-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+  });
+  data.next.container.querySelectorAll('.light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  });
+
        // Reset opacity on main content
   const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
   if (incomingMainContent) {
