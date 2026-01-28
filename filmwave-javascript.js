@@ -338,13 +338,20 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+   // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
         console.log('🗑️ Removed padding from footer-wrapper');
       }
+    }
+    
+    // RESET SIDEBAR NAV PADDING WHEN PLAYER IS HIDDEN
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    if (sidebarNav) {
+      sidebarNav.style.setProperty('padding-bottom', '120px', 'important');
+      console.log('🗑️ Reset padding on sidebar-nav');
     }
   }
 }
