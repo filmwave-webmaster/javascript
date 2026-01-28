@@ -2228,40 +2228,45 @@ function initDarkMode() {
   
   // Update waveform colors function
   function updateWaveformColors() {
-    const styles = getComputedStyle(document.body);
-    const waveColor = styles.getPropertyValue('--color-8').trim();
-    const progressColor = styles.getPropertyValue('--color-2').trim();
-    
-    // Update current/standalone wavesurfer (master player)
-    if (g.currentWavesurfer && typeof g.currentWavesurfer.setOptions === 'function') {
-      try {
-        g.currentWavesurfer.setOptions({ waveColor, progressColor });
-      } catch (e) {}
-    }
-    
-    // Update all wavesurfers (music page)
-    if (g.allWavesurfers) {
-      g.allWavesurfers.forEach(ws => {
-        if (ws && typeof ws.setOptions === 'function') {
-          try {
-            ws.setOptions({ waveColor, progressColor });
-          } catch (e) {}
-        }
-      });
-    }
-    
-    // Update dashboard tile wavesurfers
-    if (g.dashboardTileWavesurfers) {
-      g.dashboardTileWavesurfers.forEach(ws => {
-        if (ws && typeof ws.setOptions === 'function') {
-          try {
-            ws.setOptions({ waveColor, progressColor });
-          } catch (e) {}
-        }
-      });
-    }
-    
-    console.log('🎨 Waveform colors updated');
+    // Small delay to ensure CSS variables are applied
+    setTimeout(() => {
+      const styles = getComputedStyle(document.body);
+      const waveColor = styles.getPropertyValue('--color-8').trim();
+      const progressColor = styles.getPropertyValue('--color-2').trim();
+      
+      console.log('🎨 Updating waveforms - wave:', waveColor, 'progress:', progressColor);
+      
+      // Update current/standalone wavesurfer (master player)
+      if (g.currentWavesurfer && typeof g.currentWavesurfer.setOptions === 'function') {
+        try {
+          g.currentWavesurfer.setOptions({ waveColor, progressColor });
+        } catch (e) {}
+      }
+      
+      // Update all wavesurfers (music page)
+      if (g.allWavesurfers) {
+        g.allWavesurfers.forEach(ws => {
+          if (ws && typeof ws.setOptions === 'function') {
+            try {
+              ws.setOptions({ waveColor, progressColor });
+            } catch (e) {}
+          }
+        });
+      }
+      
+      // Update dashboard tile wavesurfers
+      if (g.dashboardTileWavesurfers) {
+        g.dashboardTileWavesurfers.forEach(ws => {
+          if (ws && typeof ws.setOptions === 'function') {
+            try {
+              ws.setOptions({ waveColor, progressColor });
+            } catch (e) {}
+          }
+        });
+      }
+      
+      console.log('🎨 Waveform colors updated');
+    }, 50);
   }
   
   // Apply theme function
