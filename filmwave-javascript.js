@@ -2221,30 +2221,57 @@ function initDarkMode() {
   // Load saved preference or default to light
   const savedTheme = localStorage.getItem('filmwaveTheme') || 'light';
   
-  // Apply theme
-  function applyTheme(theme) {
-  if (theme === 'dark') {
-    Object.entries(darkColors).forEach(([variable, value]) => {
-      document.body.style.setProperty(variable, value);
-    });
-    darkModeIcon.style.display = 'none';
-    lightModeIcon.style.display = 'flex';
-  } else {
-    // Remove inline styles to revert to Webflow defaults
-    Object.keys(darkColors).forEach(variable => {
-      document.body.style.removeProperty(variable);
-    });
-    darkModeIcon.style.display = 'flex';
-    lightModeIcon.style.display = 'none';
+  // Update waveform colors function
+  function updateWaveformColors() {
+    const styles = getComputedStyle(document.body);
+    const waveColor = styles.getPropertyValue('--color-8').trim();
+    const progressColor = styles.getPropertyValue('--color-2').trim();
+    
+    // Update all wavesurfers
+    if (g.allWavesurfers) {
+      g.allWavesurfers.forEach(ws => {
+        if (ws && typeof ws.setOptions === 'function') {
+          try {
+            ws.setOptions({ waveColor, progressColor });
+          } catch (e) {}
+        }
+      });
+    }
+    
+    // Update dashboard tile wavesurfers
+    if (g.dashboardTileWavesurfers) {
+      g.dashboardTileWavesurfers.forEach(ws => {
+        if (ws && typeof ws.setOptions === 'function') {
+          try {
+            ws.setOptions({ waveColor, progressColor });
+          } catch (e) {}
+        }
+      });
+    }
+    
+    console.log('🎨 Waveform colors updated');
   }
   
-  g.darkMode = theme === 'dark';
-  
-  // Update waveform colors
-  updateWaveformColors();
-  
-  console.log('🌓 Theme applied:', theme);
-}
+  // Apply theme function
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      Object.entries(darkColors).forEach(([variable, value]) => {
+        document.body.style.setProperty(variable, value);
+      });
+      darkModeIcon.style.display = 'none';
+      lightModeIcon.style.display = 'flex';
+    } else {
+      Object.keys(darkColors).forEach(variable => {
+        document.body.style.removeProperty(variable);
+      });
+      darkModeIcon.style.display = 'flex';
+      lightModeIcon.style.display = 'none';
+    }
+    
+    g.darkMode = theme === 'dark';
+    updateWaveformColors();
+    console.log('🌓 Theme applied:', theme);
+  }
   
   // Apply saved theme on load
   applyTheme(savedTheme);
