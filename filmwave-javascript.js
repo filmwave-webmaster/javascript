@@ -2232,7 +2232,14 @@ function initDarkMode() {
     const waveColor = styles.getPropertyValue('--color-8').trim();
     const progressColor = styles.getPropertyValue('--color-2').trim();
     
-    // Update all wavesurfers
+    // Update current/standalone wavesurfer (master player)
+    if (g.currentWavesurfer && typeof g.currentWavesurfer.setOptions === 'function') {
+      try {
+        g.currentWavesurfer.setOptions({ waveColor, progressColor });
+      } catch (e) {}
+    }
+    
+    // Update all wavesurfers (music page)
     if (g.allWavesurfers) {
       g.allWavesurfers.forEach(ws => {
         if (ws && typeof ws.setOptions === 'function') {
