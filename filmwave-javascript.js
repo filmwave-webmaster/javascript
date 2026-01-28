@@ -41,11 +41,12 @@
  * 27. PLAYLIST EDIT OVERLAY                                         4685
  * 28. SCROLL LOCK                                                   4992
  * 29. BARBA.JS & PAGE TRANSITIONS                                   5056
- * 30. FAVORITE BUTTON SYNCING                                       5941
- * 31. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6124
- * 32. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6135
- * 33. FAVORITE SONGS PERSISTENCE                                    6863
- * 34. XANO PLAYLIST SYSTEM                                          6950
+ * 30. FAVORITE ICON TOGGLE (SVG Icons)                              5947
+ * 31. FAVORITE BUTTON SYNCING                                       5997
+ * 32. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
+ * 33. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
+ * 34. FAVORITE SONGS PERSISTENCE                                    6919
+ * 35. XANO PLAYLIST SYSTEM                                          7006
  * 
  * ============================================================
  */
@@ -5067,6 +5068,7 @@ window.addEventListener('load', () => {
   initVolumeControl();
   initPlayerCloseButton();
   initDarkMode();
+  initFavoriteIcons();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5884,6 +5886,7 @@ initializePlaylistOverlay();
 initVolumeControl();   
 initPlayerCloseButton();
 initDarkMode();
+initFavoriteIcons();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
@@ -5943,6 +5946,56 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 
 /**
  * ============================================================
+ * FAVORITE ICON TOGGLE (SVG Icons)
+ * ============================================================
+ */
+function updateFavoriteIcons(checkbox) {
+  const button = checkbox.closest('.favourite-button');
+  if (!button) return;
+  
+  const emptyIcon = button.querySelector('.favorite-icon-empty');
+  const filledIcon = button.querySelector('.favorite-icon-filled');
+  
+  if (!emptyIcon || !filledIcon) return;
+  
+  if (checkbox.checked) {
+    emptyIcon.style.display = 'none';
+    filledIcon.style.display = 'flex';
+  } else {
+    emptyIcon.style.display = 'flex';
+    filledIcon.style.display = 'none';
+  }
+}
+
+function initFavoriteIcons() {
+  // Initialize all song card favorite icons
+  document.querySelectorAll('.favorite-checkbox').forEach(checkbox => {
+    updateFavoriteIcons(checkbox);
+    
+    // Remove old listener by cloning
+    const newCheckbox = checkbox.cloneNode(true);
+    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+    
+    newCheckbox.addEventListener('change', () => {
+      updateFavoriteIcons(newCheckbox);
+    });
+  });
+  
+  // Initialize player favorite icon
+  const playerCheckbox = document.querySelector('.player-favourite-checkbox');
+  if (playerCheckbox) {
+    updateFavoriteIcons(playerCheckbox);
+    
+    playerCheckbox.addEventListener('change', () => {
+      updateFavoriteIcons(playerCheckbox);
+    });
+  }
+  
+  console.log('✅ Favorite icons initialized');
+}
+
+/**
+ * ============================================================
  * FAVORITE BUTTON SYNCING
  * ============================================================
  */
@@ -5953,11 +6006,13 @@ function initFavoriteSync() {
     return;
   }
 
-  const playerCheckbox = document.querySelector('.music-player-wrapper input[type="checkbox"]');
+  const playerCheckbox = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
   if (playerCheckbox) {
-    playerCheckbox.classList.add('player-favorite-checkbox');
-    console.log('✅ Added player-favorite-checkbox class to player');
+    console.log('✅ Found player-favourite-checkbox');
   }
+  
+  // Initialize favorite icons
+  initFavoriteIcons();
   
   let currentSongfavorite = null;
   let playerfavorite = null;
@@ -5965,7 +6020,7 @@ function initFavoriteSync() {
   let playerListenerAttached = false;
   
   const observer = new MutationObserver(function() {
-    const player = document.querySelector('.music-player-wrapper input.player-favorite-checkbox');
+    const player = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
     if (player && !playerListenerAttached) {
       console.log('✅ Player favorite appeared in DOM');
       playerfavorite = player;
@@ -6010,7 +6065,7 @@ function initFavoriteSync() {
       currentSongfavorite.removeEventListener('change', handleSongfavoriteChange);
     }
     
-    currentSongfavorite = songCard.querySelector('input.favorite-checkbox');
+    currentSongfavorite = songCard.querySelector('.favorite-checkbox');
     console.log('Set current song favorite:', currentSongfavorite ? 'found' : 'not found');
     
     if (currentSongfavorite) {
