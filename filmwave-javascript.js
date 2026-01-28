@@ -2212,15 +2212,6 @@ document.addEventListener('keydown', function (e) {
 function initDarkMode() {
   const g = window.musicPlayerPersistent;
   
-  const colorModes = document.querySelector('.color-modes');
-  const darkModeIcon = document.querySelector('.dark-mode-icon');
-  const lightModeIcon = document.querySelector('.light-mode-icon');
-  
-  if (!colorModes || !darkModeIcon || !lightModeIcon) {
-    console.log('ℹ️ Dark mode elements not found');
-    return;
-  }
-  
   // Dark mode color overrides
   const darkColors = {
     '--color-0': 'transparent',
@@ -2242,12 +2233,8 @@ function initDarkMode() {
     '--color-16': '#474747'
   };
   
-  // Load saved preference or default to light
-  const savedTheme = localStorage.getItem('filmwaveTheme') || 'light';
-  
   // Update waveform colors function
   function updateWaveformColors() {
-    // Small delay to ensure CSS variables are applied
     setTimeout(() => {
       const styles = getComputedStyle(document.body);
       const waveColor = styles.getPropertyValue('--color-8').trim();
@@ -2255,14 +2242,12 @@ function initDarkMode() {
       
       console.log('🎨 Updating waveforms - wave:', waveColor, 'progress:', progressColor);
       
-      // Update current/standalone wavesurfer (master player)
       if (g.currentWavesurfer && typeof g.currentWavesurfer.setOptions === 'function') {
         try {
           g.currentWavesurfer.setOptions({ waveColor, progressColor });
         } catch (e) {}
       }
       
-      // Update all wavesurfers (music page)
       if (g.allWavesurfers) {
         g.allWavesurfers.forEach(ws => {
           if (ws && typeof ws.setOptions === 'function') {
@@ -2273,7 +2258,6 @@ function initDarkMode() {
         });
       }
       
-      // Update dashboard tile wavesurfers
       if (g.dashboardTileWavesurfers) {
         g.dashboardTileWavesurfers.forEach(ws => {
           if (ws && typeof ws.setOptions === 'function') {
@@ -2283,54 +2267,83 @@ function initDarkMode() {
           }
         });
       }
-
+      
       // Redraw master player waveform
-    if (g.currentPeaksData) {
-      const progress = g.standaloneAudio 
-        ? g.standaloneAudio.currentTime / g.standaloneAudio.duration 
-        : (g.currentWavesurfer ? g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration() : 0);
-      drawMasterWaveform(g.currentPeaksData, progress || 0);
-    }
+      if (g.currentPeaksData) {
+        const progress = g.standaloneAudio 
+          ? g.standaloneAudio.currentTime / g.standaloneAudio.duration 
+          : (g.currentWavesurfer ? g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration() : 0);
+        drawMasterWaveform(g.currentPeaksData, progress || 0);
+      }
       
       console.log('🎨 Waveform colors updated');
     }, 50);
   }
   
-  // Apply theme function
-  function applyTheme(theme) {
+  // Apply theme to CSS variables
+  function applyThemeColors(theme) {
     if (theme === 'dark') {
       Object.entries(darkColors).forEach(([variable, value]) => {
         document.body.style.setProperty(variable, value);
       });
-      darkModeIcon.style.display = 'none';
-      lightModeIcon.style.display = 'flex';
     } else {
       Object.keys(darkColors).forEach(variable => {
         document.body.style.removeProperty(variable);
       });
-      darkModeIcon.style.display = 'flex';
-      lightModeIcon.style.display = 'none';
     }
-    
     g.darkMode = theme === 'dark';
     updateWaveformColors();
     console.log('🌓 Theme applied:', theme);
   }
   
-  // Apply saved theme on load
-  applyTheme(savedTheme);
+  // Update all icon visibility across the page
+  function updateIconVisibility(theme) {
+    const darkIcons = document.querySelectorAll('.dark-mode-icon');
+    const lightIcons = document.querySelectorAll('.light-mode-icon');
+    
+    darkIcons.forEach(icon => {
+      icon.style.display = theme === 'dark' ? 'none' : 'flex';
+    });
+    
+    lightIcons.forEach(icon => {
+      icon.style.display = theme === 'dark' ? 'flex' : 'none';
+    });
+  }
   
-  // Toggle on click
-  colorModes.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Full theme application
+  function applyTheme(theme) {
+    applyThemeColors(theme);
+    updateIconVisibility(theme);
+  }
+  
+  // Get current theme
+  const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+  
+  // Apply current theme (icons + colors)
+  applyTheme(currentTheme);
+  
+  // Attach click handlers to ALL color-modes elements on the page
+  const colorModesElements = document.querySelectorAll('.color-modes');
+  
+  colorModesElements.forEach(colorModes => {
+    // Remove existing listener by cloning
+    const newColorModes = colorModes.cloneNode(true);
+    colorModes.parentNode.replaceChild(newColorModes, colorModes);
     
-    const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    localStorage.setItem('filmwaveTheme', newTheme);
-    applyTheme(newTheme);
+    newColorModes.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      localStorage.setItem('filmwaveTheme', newTheme);
+      applyTheme(newTheme);
+    });
   });
+  
+  // Re-apply icon visibility after cloning
+  updateIconVisibility(currentTheme);
   
   console.log('✅ Dark mode initialized');
 }
