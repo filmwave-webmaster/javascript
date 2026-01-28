@@ -2298,17 +2298,23 @@ function initDarkMode() {
   
   // Update all icon visibility across the page
   function updateIconVisibility(theme) {
-    const darkIcons = document.querySelectorAll('.dark-mode-icon');
-    const lightIcons = document.querySelectorAll('.light-mode-icon');
-    
-    darkIcons.forEach(icon => {
-      icon.style.display = theme === 'dark' ? 'none' : 'flex';
-    });
-    
-    lightIcons.forEach(icon => {
-      icon.style.display = theme === 'dark' ? 'flex' : 'none';
-    });
+  // Remove the head-injected style so JS can take over
+  if (window._themeStyleElement) {
+    window._themeStyleElement.remove();
+    window._themeStyleElement = null;
   }
+  
+  const darkIcons = document.querySelectorAll('.dark-mode-icon');
+  const lightIcons = document.querySelectorAll('.light-mode-icon');
+  
+  darkIcons.forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+  });
+  
+  lightIcons.forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  });
+}
   
   // Full theme application
   function applyTheme(theme) {
