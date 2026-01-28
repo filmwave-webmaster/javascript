@@ -5,44 +5,47 @@
  * ============================================================
  */
 /**
+/**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - CODE INDEX
+ * FILMWAVE MUSIC PLATFORM - CODE INDEX (UPDATED)
  * ============================================================
  * 
- * SECTION                                    LINE #
- * ------------------------------------------------
- * 1.  GLOBAL STATE                           ~20
- * 2.  UTILITY FUNCTIONS                      ~65
- * 3.  MASTER PLAYER POSITIONING              ~100
- * 4.  MASTER PLAYER VISIBILITY CONTROL       ~115
- * 5.  MAIN INITIALIZATION                    ~175
- * 6.  STANDALONE AUDIO PLAYER                ~280
- * 7.  MASTER PLAYER FUNCTIONS                ~450
- * 8.  SONG CARD FUNCTIONS                    ~650
- * 9.  LINK STANDALONE AUDIO TO WAVEFORM      ~750
- * 10. CREATE STANDALONE AUDIO                ~820
- * 11. PLAY STANDALONE SONG                   ~950
- * 12. INITIALIZE WAVEFORMS (LAZY LOADING)    ~1000
- * 13. LOAD WAVEFORM BATCH                    ~1090
- * 14. FETCH & DISPLAY SONGS                  ~1350
- * 15. DISPLAY FEATURED SONGS                 ~1400
- * 16. DISPLAY FAVORITE SONGS                 ~1470
- * 17. KEYBOARD CONTROLS                      ~1540
- * 18. FILTER HELPERS                         ~1620
- * 19. KEY FILTER SYSTEM                      ~1750
- * 20. BPM FILTER SYSTEM                      ~2350
- * 21. DRAG AND DROP - SORTABLE ITEMS         ~2950
- * 22. PLAYLIST EDIT OVERLAY                  ~3150
- * 23. UNIVERSAL SEARCH FOR NON-MUSIC PAGES   ~3500
- * 24. SCROLL LOCK                            ~4218
- * 25. BARBA.JS & PAGE TRANSITIONS            ~3600
- * 26. FAVORITE BUTTON SYNCING                ~4100
- * 27. LOCALSTORAGE PERSISTENCE               ~4250
- * 28. FILTER STATE SAVE/RESTORE              ~4280
- * 29. FAVORITE SONGS PERSISTENCE             ~4750
- * 30. XANO PLAYLIST SYSTEM                   ~5870
- * 31.                         ~7900
- * 32. DASHBOARD PLAYLISTS                    ~8100
+ * SECTION                                                           LINE #
+ * -------------------------------------------------------------------------
+ * 1.  GLOBAL STATE - Persists across Barba page transitions         50
+ * 2.  UTILITY FUNCTIONS                                             207
+ * 3.  MASTER PLAYER POSITIONING - DO NOT MODIFY                     261
+ * 4.  MASTER PLAYER VISIBILITY CONTROL                              279
+ * 5.  MAIN INITIALIZATION                                           359
+ * 6.  STANDALONE AUDIO PLAYER (for non-music pages)                 451
+ * 7.  MASTER PLAYER FUNCTIONS                                       699
+ * 8.  VOLUME CONTROL                                                1028
+ * 9.  PLAYER CLOSE BUTTON                                           1197
+ * 10. INIT MASTER PLAYER                                            1290
+ * 11. SONG CARD FUNCTIONS                                           1303
+ * 12. LINK EXISTING STANDALONE AUDIO TO WAVEFORM                    1407
+ * 13. CREATE STANDALONE AUDIO FOR SONG                              1440
+ * 14. PLAY STANDALONE SONG                                          1578
+ * 15. INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)     1617
+ * 16. LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER                1693
+ * 17. FETCH & DISPLAY SONGS                                         1917
+ * 18. DISPLAY FEATURED SONGS ON HOME PAGE                           2010
+ * 19. DISPLAY FAVORITE SONGS ON BACKEND PAGE                        2067
+ * 20. KEYBOARD CONTROLS                                             2135
+ * 21. DARK MODE TOGGLE                                              2207
+ * 22. FILTER HELPERS                                                2357
+ * 23. REMOVE DUPLICATE IDS                                          3522
+ * 24. HANDLE TAB VISIBILITY                                         3539
+ * 25. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
+ * 26. DRAG AND DROP - SORTABLE PROFILE ITEMS                        4417
+ * 27. PLAYLIST EDIT OVERLAY                                         4685
+ * 28. SCROLL LOCK                                                   4992
+ * 29. BARBA.JS & PAGE TRANSITIONS                                   5056
+ * 30. FAVORITE BUTTON SYNCING                                       5941
+ * 31. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6124
+ * 32. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6135
+ * 33. FAVORITE SONGS PERSISTENCE                                    6863
+ * 34. XANO PLAYLIST SYSTEM                                          6950
  * 
  * ============================================================
  */
