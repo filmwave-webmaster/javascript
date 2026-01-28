@@ -1706,25 +1706,30 @@ function loadWaveformBatch(cardElements) {
       });
     }
     
-    const wavesurfer = WaveSurfer.create({
-      container: waveformContainer,
-      waveColor: 'var(--color-8)',
-      progressColor: 'var(--color-2)',
-      cursorColor: 'transparent',
-      cursorWidth: 0,
-      height: 30,
-      barWidth: 2,
-      barGap: 1,
-      normalize: true,
-      backend: 'WebAudio',
-      fillParent: true,
-      scrollParent: false,
-      responsive: 300,
-      interact: true,
-      hideScrollbar: true,
-      minPxPerSec: 1,
-      audioContext: window.sharedAudioContext,
-    });
+   // Get computed CSS variable values
+const styles = getComputedStyle(document.body);
+const waveColor = styles.getPropertyValue('--color-8').trim();
+const progressColor = styles.getPropertyValue('--color-2').trim();
+
+const wavesurfer = WaveSurfer.create({
+  container: waveformContainer,
+  waveColor: waveColor,
+  progressColor: progressColor,
+  cursorColor: 'transparent',
+  cursorWidth: 0,
+  height: 30,
+  barWidth: 2,
+  barGap: 1,
+  normalize: true,
+  backend: 'WebAudio',
+  fillParent: true,
+  scrollParent: false,
+  responsive: 300,
+  interact: true,
+  hideScrollbar: true,
+  minPxPerSec: 1,
+  audioContext: window.sharedAudioContext,
+});
     
     const peaksData = songData.fields['Waveform Peaks'];
     const storedDuration = songData.fields['Duration'];
