@@ -2394,7 +2394,7 @@ function initCheckboxTextColor() {
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
-        label.style.color = this.checked ? 'var(--color-2)' : '';
+        label.style.color = this.checked ? 'var(--color-10)' : '';
       }
     });
   });
