@@ -6806,6 +6806,44 @@ if (typeof barba !== 'undefined') {
 console.log('💾 localStorage persistence initialized');
 
 /**
+// Sync player favorite checkbox with song card (by song ID)
+*/
+
+document.addEventListener('change', (e) => {
+  if (!e.target.matches('input[type="checkbox"]')) return;
+
+  const songCard = e.target.closest('.song-wrapper');
+  const songId = songCard?.dataset.songId;
+
+  // If change came from SONG CARD → update PLAYER
+  if (songId && e.target.classList.contains('favorite-checkbox')) {
+    const playerCheckbox =
+      document.querySelector('.music-player-wrapper input[type="checkbox"]');
+
+    if (playerCheckbox && playerCheckbox.checked !== e.target.checked) {
+      playerCheckbox.checked = e.target.checked;
+      playerCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  // If change came from PLAYER → update SONG CARD
+  if (
+    e.target.closest('.music-player-wrapper') &&
+    window.musicPlayerPersistent?.currentSongData?.id
+  ) {
+    const id = window.musicPlayerPersistent.currentSongData.id;
+    const cardCheckbox = document.querySelector(
+      `[data-song-id="${id}"] input.favorite-checkbox`
+    );
+
+    if (cardCheckbox && cardCheckbox.checked !== e.target.checked) {
+      cardCheckbox.checked = e.target.checked;
+      cardCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+});
+
+/**
  * ============================================================
  * XANO PLAYLIST SYSTEM
  * ============================================================
