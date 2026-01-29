@@ -6805,37 +6805,62 @@ if (typeof barba !== 'undefined') {
 
 console.log('💾 localStorage persistence initialized');
 
-// Sync song card <-> player by song id (prevents previous-song double toggle)
+// Sync song card <-> player (robust selectors + avoids stale song id)
 let favSyncLock = false;
-let activeSongId = null;
+let lastSongId = null;
 
-// Keep activeSongId updated from the player
+function getPlayerInput() {
+  return (
+    document.querySelector('.music-player-wrapper input.player-favorite-checkbox') ||
+    document.querySelector('.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]') ||
+    document.querySelector('.music-player-wrapper input.w-checkbox-input') ||
+    document.querySelector('.music-player-wrapper input[type="checkbox"]')
+  );
+}
+
+function getSongInputById(songId) {
+  return (
+    document.querySelector(`[data-song-id="${songId}"] input.favorite-checkbox`) ||
+    document.querySelector(`[data-song-id="${songId}"] .favorite-checkbox input[type="checkbox"]`) ||
+    document.querySelector(`[data-song-id="${songId}"] input[type="checkbox"]`)
+  );
+}
+
+// Keep player reflecting the CURRENT song card state (prevents stale previous-song sync)
 setInterval(() => {
   const id = window.musicPlayerPersistent?.currentSongData?.id;
-  if (id != null) activeSongId = String(id);
+  if (id == null) return;
+
+  const songId = String(id);
+  if (songId === lastSongId) return;
+  lastSongId = songId;
+
+  const songInput = getSongInputById(songId);
+  const playerInput = getPlayerInput();
+  if (!songInput || !playerInput) return;
+
+  if (playerInput.checked !== songInput.checked) {
+    favSyncLock = true;
+    playerInput.checked = songInput.checked;
+    playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+    favSyncLock = false;
+  }
 }, 250);
 
 document.addEventListener('change', (e) => {
   const input = e.target;
   if (!input || input.type !== 'checkbox') return;
-
-  // Prevent re-entrant sync loops (icons still update via your other change listener)
   if (favSyncLock) return;
 
-  const isSongCard = !!input.closest('.song-wrapper');
   const isPlayer = !!input.closest('.music-player-wrapper');
+  const isSong = !!input.closest('.song-wrapper');
 
-  // SONG CARD -> PLAYER
-  if (isSongCard) {
-    const songWrapper = input.closest('.song-wrapper');
-    const songId = songWrapper?.dataset?.songId;
+  // SONG -> PLAYER
+  if (isSong) {
+    const songId = input.closest('.song-wrapper')?.dataset?.songId;
     if (!songId) return;
 
-    activeSongId = String(songId);
-
-    const playerInput = document.querySelector(
-      '.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]'
-    );
+    const playerInput = getPlayerInput();
     if (!playerInput) return;
 
     if (playerInput.checked !== input.checked) {
@@ -6847,20 +6872,18 @@ document.addEventListener('change', (e) => {
     return;
   }
 
-  // PLAYER -> SONG CARD
+  // PLAYER -> CURRENT SONG
   if (isPlayer) {
-    const songId = activeSongId || String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
     if (!songId) return;
 
-    const cardInput = document.querySelector(
-      `.song-wrapper[data-song-id="${songId}"] .favorite-checkbox input[type="checkbox"]`
-    );
-    if (!cardInput) return;
+    const songInput = getSongInputById(songId);
+    if (!songInput) return;
 
-    if (cardInput.checked !== input.checked) {
+    if (songInput.checked !== input.checked) {
       favSyncLock = true;
-      cardInput.checked = input.checked;
-      cardInput.dispatchEvent(new Event('change', { bubbles: true }));
+      songInput.checked = input.checked;
+      songInput.dispatchEvent(new Event('change', { bubbles: true }));
       favSyncLock = false;
     }
   }
