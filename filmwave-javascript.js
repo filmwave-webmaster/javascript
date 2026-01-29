@@ -5944,12 +5944,30 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 
 /**
 * ============================================================
-* FAVORITE CHECKBOX → SVG VISUAL STATE (SONG CARDS + PLAYER)
+* FAVORITE ICON TOGGLE (SONG CARDS + PLAYER)
 * ============================================================
 */
 
-// Update SVGs based on checkbox state
-function updateFavoriteUI(checkbox) {
+// Click SVG → toggle the real checkbox
+document.addEventListener('click', (e) => {
+  const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
+  if (!icon) return;
+
+  const checkbox = icon
+    .closest('.w-checkbox')
+    ?.querySelector('input[type="checkbox"]');
+
+  if (!checkbox) return;
+
+  checkbox.checked = !checkbox.checked;
+  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+// Checkbox change → update SVG visibility
+document.addEventListener('change', (e) => {
+  const checkbox = e.target;
+  if (checkbox.type !== 'checkbox') return;
+
   const button = checkbox.closest('.favorite-button');
   if (!button) return;
 
@@ -5959,37 +5977,7 @@ function updateFavoriteUI(checkbox) {
 
   emptyIcon.style.display = checkbox.checked ? 'none' : 'flex';
   filledIcon.style.display = checkbox.checked ? 'flex' : 'none';
-}
-
-// Init + bind
-function initFavoriteUI() {
-  document
-    .querySelectorAll('.favorite-checkbox, .player-favorite-checkbox')
-    .forEach(cb => {
-      updateFavoriteUI(cb);
-
-      if (cb.dataset.favBound === '1') return;
-      cb.dataset.favBound = '1';
-
-      cb.addEventListener('change', () => {
-        updateFavoriteUI(cb);
-      });
-    });
-
-  console.log('✅ Favorite UI bound');
-}
-
-// Initial load
-window.addEventListener('load', () => {
-  initFavoriteUI();
 });
-
-// After Barba transitions
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', () => {
-    initFavoriteUI();
-  });
-}
 
 /**
  * ============================================================
