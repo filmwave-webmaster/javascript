@@ -5068,12 +5068,6 @@ window.addEventListener('load', () => {
   initVolumeControl();
   initPlayerCloseButton();
   initDarkMode();
-  initFavoriteIcons();
-
-  // Re-init favorite icons when song cards are added
-const songIconObserver = new MutationObserver(() => {
-  initFavoriteIcons();
-});
 
 songIconObserver.observe(document.body, {
   childList: true,
@@ -5896,7 +5890,6 @@ initializePlaylistOverlay();
 initVolumeControl();   
 initPlayerCloseButton();
 initDarkMode();
-initFavoriteIcons();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
@@ -5956,199 +5949,50 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 
 /**
 * ============================================================
-* FAVORITE ICON + SYNC SYSTEM (SONG CARDS + PLAYER)
+* FAVORITE CHECKBOX → SVG VISUAL STATE (SONG CARDS + PLAYER)
 * ============================================================
 */
 
-// Helpers
-function getCheckboxInput(wrapper) {
-  if (!wrapper) return null;
-
-  // direct
-  if (wrapper.matches?.('input[type="checkbox"]')) return wrapper;
-
-  // inside
-  const inside = wrapper.querySelector?.('input[type="checkbox"]');
-  if (inside) return inside;
-
-  // Webflow checkbox structure
-  const wf = wrapper.closest('.w-checkbox');
-  if (wf) {
-    const input = wf.querySelector('input[type="checkbox"]');
-    if (input) return input;
-  }
-
-  return null;
-}
-
-// Safely set checkbox state + emit change
-function setCheckbox(input, value) {
-  if (!input) return;
-  if (input.checked === value) return;
-  input.checked = value;
-  input.dispatchEvent(new Event('change', { bubbles: true }));
-}
-
-// SVG click → toggle checkbox
-document.addEventListener(
-'click',
-(e) => {
-const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
-if (!icon) return;
-const button = icon.closest('.favorite-button');
-if (!button) return;
-const wrapper =
-button.querySelector('.favorite-checkbox') ||
-button.querySelector('.player-favorite-checkbox');
-if (!wrapper) return;
-const input = getCheckboxInput(wrapper);
-if (!input) return;
-setCheckbox(input, !input.checked);
-updateFavoriteIcons(wrapper); // ← THIS FIXES SONG CARDS
-},
-true
-);
-
-// Icon state
-function updateFavoriteIcons(wrapper) {
-  const input = getCheckboxInput(wrapper);
-  if (!input) return;
-
-  const button = wrapper.closest('.favorite-button');
+// Update SVGs based on checkbox state
+function updateFavoriteUI(checkbox) {
+  const button = checkbox.closest('.favorite-button');
   if (!button) return;
 
   const emptyIcon = button.querySelector('.favorite-icon-empty');
   const filledIcon = button.querySelector('.favorite-icon-filled');
   if (!emptyIcon || !filledIcon) return;
 
-  emptyIcon.style.display = input.checked ? 'none' : 'flex';
-  filledIcon.style.display = input.checked ? 'flex' : 'none';
+  emptyIcon.style.display = checkbox.checked ? 'none' : 'flex';
+  filledIcon.style.display = checkbox.checked ? 'flex' : 'none';
 }
 
-function initFavoriteIcons() {
+// Init + bind
+function initFavoriteUI() {
   document
     .querySelectorAll('.favorite-checkbox, .player-favorite-checkbox')
-    .forEach((wrapper) => {
-      const input = getCheckboxInput(wrapper);
-      if (!input) return;
+    .forEach(cb => {
+      updateFavoriteUI(cb);
 
-      updateFavoriteIcons(wrapper);
+      if (cb.dataset.favBound === '1') return;
+      cb.dataset.favBound = '1';
 
-      if (input.dataset.favBound === '1') return;
-      input.dataset.favBound = '1';
-
-      input.addEventListener('change', () =>
-        updateFavoriteIcons(wrapper)
-      );
+      cb.addEventListener('change', () => {
+        updateFavoriteUI(cb);
+      });
     });
 
-  console.log('✅ Favorite icons initialized');
+  console.log('✅ Favorite UI bound');
 }
 
-// Song ↔ Player sync
-function initFavoriteSync() {
-  const g = window.musicPlayerPersistent;
-  if (!g) return;
-
-  initFavoriteIcons();
-
-  let currentSongWrapper = null;
-  let playerWrapper = null;
-  let syncing = false;
-
-  function getPlayerWrapper() {
-    if (!playerWrapper || !document.body.contains(playerWrapper)) {
-      playerWrapper = document.querySelector(
-        '.music-player-wrapper .player-favorite-checkbox'
-      );
-    }
-    return playerWrapper;
-  }
-
-  function syncSongToPlayer() {
-    const songInput = getCheckboxInput(currentSongWrapper);
-    const playerInput = getCheckboxInput(getPlayerWrapper());
-    if (!songInput || !playerInput) return;
-
-    syncing = true;
-    setCheckbox(playerInput, songInput.checked);
-    syncing = false;
-  }
-
-  function syncPlayerToSong() {
-    const songInput = getCheckboxInput(currentSongWrapper);
-    const playerInput = getCheckboxInput(getPlayerWrapper());
-    if (!songInput || !playerInput) return;
-
-    syncing = true;
-    setCheckbox(songInput, playerInput.checked);
-    syncing = false;
-  }
-
-  function bindCurrentSong(card) {
-    if (currentSongWrapper) {
-      const oldInput = getCheckboxInput(currentSongWrapper);
-      oldInput?.removeEventListener('change', onSongChange);
-    }
-
-    currentSongWrapper = card.querySelector('.favorite-checkbox');
-    if (!currentSongWrapper) return;
-
-    const input = getCheckboxInput(currentSongWrapper);
-    if (!input) return;
-
-    input.addEventListener('change', onSongChange);
-    syncSongToPlayer();
-  }
-
-  function onSongChange() {
-    if (syncing) return;
-    syncSongToPlayer();
-  }
-
-  function onPlayerChange() {
-    if (syncing) return;
-    syncPlayerToSong();
-  }
-
-  const observer = new MutationObserver(() => {
-    const pw = getPlayerWrapper();
-    const input = getCheckboxInput(pw);
-    if (input && !input.dataset.playerBound) {
-      input.dataset.playerBound = '1';
-      input.addEventListener('change', onPlayerChange);
-      syncSongToPlayer();
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  let lastSongId = null;
-
-  setInterval(() => {
-    if (!g.currentSongData) return;
-    if (g.currentSongData.id === lastSongId) return;
-
-    lastSongId = g.currentSongData.id;
-
-    const match = g.waveformData.find(
-      (d) => d.songData?.id === g.currentSongData.id
-    );
-
-    if (match?.cardElement) {
-      bindCurrentSong(match.cardElement);
-    }
-  }, 500);
-}
-
-// Init
+// Initial load
 window.addEventListener('load', () => {
-  setTimeout(initFavoriteSync, 2000);
+  initFavoriteUI();
 });
 
+// After Barba transitions
 if (typeof barba !== 'undefined') {
   window.addEventListener('barbaAfterTransition', () => {
-    setTimeout(initFavoriteSync, 1000);
+    initFavoriteUI();
   });
 }
 
