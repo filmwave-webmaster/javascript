@@ -629,18 +629,20 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-  audio.addEventListener('play', () => {
+    audio.addEventListener('play', () => {
     if (g.standaloneAudio !== audio) return;
     g.isPlaying = true;
     updateMasterControllerIcons(true);
     updatePlayerCoverArtIcons(true);
+    document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: nextSong.id, isPlaying: true } }));
   });
   
-  audio.addEventListener('pause', () => {
+    audio.addEventListener('pause', () => {
     if (g.standaloneAudio !== audio) return;
     g.isPlaying = false;
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
+    document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: nextSong.id, isPlaying: false } }));
   });
   
   audio.addEventListener('ended', () => {
