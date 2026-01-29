@@ -5952,12 +5952,11 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 function updateFavoriteIcons(checkbox) {
   const button = checkbox.closest('.favourite-button');
   if (!button) return;
-  
+
   const emptyIcon = button.querySelector('.favorite-icon-empty');
   const filledIcon = button.querySelector('.favorite-icon-filled');
-  
   if (!emptyIcon || !filledIcon) return;
-  
+
   if (checkbox.checked) {
     emptyIcon.style.display = 'none';
     filledIcon.style.display = 'flex';
@@ -5968,31 +5967,48 @@ function updateFavoriteIcons(checkbox) {
 }
 
 function initFavoriteIcons() {
-  // Initialize all song card favorite icons
-  document.querySelectorAll('.favorite-checkbox').forEach(checkbox => {
-    updateFavoriteIcons(checkbox);
-    
-    // Remove old listener by cloning
-    const newCheckbox = checkbox.cloneNode(true);
-    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
-    
-    newCheckbox.addEventListener('change', () => {
-      updateFavoriteIcons(newCheckbox);
-    });
+  // Song cards
+  document.querySelectorAll('.favorite-checkbox').forEach(cb => {
+    updateFavoriteIcons(cb);
+
+    if (cb.dataset.favIconsBound === '1') return;
+    cb.dataset.favIconsBound = '1';
+
+    cb.addEventListener('change', () => updateFavoriteIcons(cb));
   });
-  
-  // Initialize player favorite icon
-  const playerCheckbox = document.querySelector('.player-favourite-checkbox');
-  if (playerCheckbox) {
-    updateFavoriteIcons(playerCheckbox);
-    
-    playerCheckbox.addEventListener('change', () => {
-      updateFavoriteIcons(playerCheckbox);
-    });
-  }
-  
+
+  // Player
+  document.querySelectorAll('.player-favourite-checkbox').forEach(cb => {
+    updateFavoriteIcons(cb);
+
+    if (cb.dataset.favIconsBound === '1') return;
+    cb.dataset.favIconsBound = '1';
+
+    cb.addEventListener('change', () => updateFavoriteIcons(cb));
+  });
+
   console.log('✅ Favorite icons initialized');
 }
+
+/**
+ * Click SVG -> toggle checkbox -> fire change (so your existing favorite sync runs)
+ */
+document.addEventListener('click', (e) => {
+  const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
+  if (!icon) return;
+
+  const button = icon.closest('.favourite-button');
+  if (!button) return;
+
+  const checkbox =
+    button.querySelector('.favorite-checkbox') ||
+    button.querySelector('.player-favourite-checkbox');
+
+  if (!checkbox) return;
+
+  checkbox.checked = !checkbox.checked;
+  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+});
 
 /**
  * ============================================================
