@@ -5069,7 +5069,6 @@ window.addEventListener('load', () => {
   initPlayerCloseButton();
   initDarkMode();
   initFavoriteIcons();
-  initPlayerFavoriteIcons();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5888,7 +5887,6 @@ initVolumeControl();
 initPlayerCloseButton();
 initDarkMode();
 initFavoriteIcons();
-initPlayerFavoriteIcons();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
