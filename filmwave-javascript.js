@@ -5068,11 +5068,6 @@ window.addEventListener('load', () => {
   initVolumeControl();
   initPlayerCloseButton();
   initDarkMode();
-
-songIconObserver.observe(document.body, {
-  childList: true,
-  subtree: true,
-});
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
