@@ -5953,9 +5953,25 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 // Helpers
 function getCheckboxInput(wrapper) {
   if (!wrapper) return null;
-  return wrapper.querySelector('input[type="checkbox"]');
+
+  // direct
+  if (wrapper.matches?.('input[type="checkbox"]')) return wrapper;
+
+  // inside
+  const inside = wrapper.querySelector?.('input[type="checkbox"]');
+  if (inside) return inside;
+
+  // Webflow checkbox structure
+  const wf = wrapper.closest('.w-checkbox');
+  if (wf) {
+    const input = wf.querySelector('input[type="checkbox"]');
+    if (input) return input;
+  }
+
+  return null;
 }
 
+// Safely set checkbox state + emit change
 function setCheckbox(input, value) {
   if (!input) return;
   if (input.checked === value) return;
