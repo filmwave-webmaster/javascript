@@ -5069,6 +5069,7 @@ window.addEventListener('load', () => {
   initPlayerCloseButton();
   initDarkMode();
   initFavoriteIcons();
+  initPlayerFavoriteIcons();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5887,6 +5888,7 @@ initVolumeControl();
 initPlayerCloseButton();
 initDarkMode();
 initFavoriteIcons();
+initPlayerFavoriteIcons();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
@@ -5946,10 +5948,11 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 
 /**
  * ============================================================
- * FAVORITE ICON TOGGLE (SVG Icons)
+ * PLAYER FAVORITE ICON TOGGLE
  * ============================================================
  */
-function updateFavoriteIcons(checkbox) {
+
+function updatePlayerFavoriteIcons(checkbox) {
   const button = checkbox.closest('.favorite-button');
   if (!button) return;
 
@@ -5966,29 +5969,39 @@ function updateFavoriteIcons(checkbox) {
   }
 }
 
-function initFavoriteIcons() {
-  // Song cards
-  document.querySelectorAll('.favorite-checkbox').forEach(cb => {
-    updateFavoriteIcons(cb);
-
-    if (cb.dataset.favIconsBound === '1') return;
-    cb.dataset.favIconsBound = '1';
-
-    cb.addEventListener('change', () => updateFavoriteIcons(cb));
-  });
-
-  // Player
+function initPlayerFavoriteIcons() {
   document.querySelectorAll('.player-favorite-checkbox').forEach(cb => {
-    updateFavoriteIcons(cb);
+    updatePlayerFavoriteIcons(cb);
 
-    if (cb.dataset.favIconsBound === '1') return;
-    cb.dataset.favIconsBound = '1';
+    if (cb.dataset.playerFavBound === '1') return;
+    cb.dataset.playerFavBound = '1';
 
-    cb.addEventListener('change', () => updateFavoriteIcons(cb));
+    cb.addEventListener('change', () => {
+      updatePlayerFavoriteIcons(cb);
+    });
   });
 
-  console.log('✅ Favorite icons initialized');
+  console.log('✅ Player favorite icons initialized');
 }
+
+/**
+ * Click SVG → toggle checkbox → trigger existing logic
+ */
+document.addEventListener('click', (e) => {
+  const icon = e.target.closest(
+    '.favorite-icon-empty, .favorite-icon-filled'
+  );
+  if (!icon) return;
+
+  const button = icon.closest('.favorite-button');
+  if (!button) return;
+
+  const checkbox = button.querySelector('.player-favorite-checkbox');
+  if (!checkbox) return;
+
+  checkbox.checked = !checkbox.checked;
+  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+});
 
 /**
  * Click SVG -> toggle checkbox -> fire change (so your existing favorite sync runs)
