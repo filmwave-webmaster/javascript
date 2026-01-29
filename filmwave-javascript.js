@@ -5981,26 +5981,22 @@ function setCheckbox(input, value) {
 
 // SVG click → toggle checkbox
 document.addEventListener(
-  'click',
-  (e) => {
-    const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
-    if (!icon) return;
-
-    const button = icon.closest('.favorite-button');
-    if (!button) return;
-
-    const wrapper =
-      button.querySelector('.favorite-checkbox') ||
-      button.querySelector('.player-favorite-checkbox');
-
-    if (!wrapper) return;
-
-    const input = getCheckboxInput(wrapper);
-    if (!input) return;
-
-    setCheckbox(input, !input.checked);
-  },
-  true
+'click',
+(e) => {
+const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
+if (!icon) return;
+const button = icon.closest('.favorite-button');
+if (!button) return;
+const wrapper =
+button.querySelector('.favorite-checkbox') ||
+button.querySelector('.player-favorite-checkbox');
+if (!wrapper) return;
+const input = getCheckboxInput(wrapper);
+if (!input) return;
+setCheckbox(input, !input.checked);
+updateFavoriteIcons(wrapper); // ← THIS FIXES SONG CARDS
+},
+true
 );
 
 // Icon state
