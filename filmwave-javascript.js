@@ -6031,6 +6031,30 @@ filledIcon.style.display = 'none';
 }
 }
 
+function initFavoriteIcons() {
+  // Song cards
+  document.querySelectorAll('.favorite-checkbox').forEach(cb => {
+    updateFavoriteIcons(cb);
+
+    if (cb.dataset.favIconsBound === '1') return;
+    cb.dataset.favIconsBound = '1';
+
+    cb.addEventListener('change', () => updateFavoriteIcons(cb));
+  });
+
+  // Player
+  document.querySelectorAll('.player-favorite-checkbox').forEach(cb => {
+    updateFavoriteIcons(cb);
+
+    if (cb.dataset.favIconsBound === '1') return;
+    cb.dataset.favIconsBound = '1';
+
+    cb.addEventListener('change', () => updateFavoriteIcons(cb));
+  });
+
+  console.log('✅ Favorite icons initialized');
+}
+
 function initFavoriteSync() {
   const g = window.musicPlayerPersistent;
   if (!g) {
@@ -6082,7 +6106,7 @@ function initFavoriteSync() {
   
   function getPlayerfavorite() {
     if (!playerfavorite || !document.body.contains(playerfavorite)) {
-      playerfavorite = document.querySelector('.music-player-wrapper input.player-favorite-checkbox');
+      playerfavorite = document.querySelector('.music-player-wrapper .player-favorite-checkbox');
       if (playerfavorite && !playerListenerAttached) {
         console.log('✅ Player favorite found via getter');
         playerfavorite.addEventListener('change', handlePlayerfavoriteChange);
