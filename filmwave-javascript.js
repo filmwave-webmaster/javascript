@@ -5069,6 +5069,16 @@ window.addEventListener('load', () => {
   initPlayerCloseButton();
   initDarkMode();
   initFavoriteIcons();
+
+  // Re-init favorite icons when song cards are added
+const songIconObserver = new MutationObserver(() => {
+  initFavoriteIcons();
+});
+
+songIconObserver.observe(document.body, {
+  childList: true,
+  subtree: true,
+});
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
