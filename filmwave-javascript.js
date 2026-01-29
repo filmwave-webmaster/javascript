@@ -6011,6 +6011,26 @@ document.addEventListener('click', (e) => {
  * FAVORITE BUTTON SYNCING
  * ============================================================
  */
+
+function updateFavoriteIcons(checkbox) {
+const button = checkbox.closest('.favorite-button');
+if (!button) return;
+
+
+const emptyIcon = button.querySelector('.favorite-icon-empty');
+const filledIcon = button.querySelector('.favorite-icon-filled');
+if (!emptyIcon || !filledIcon) return;
+
+
+if (checkbox.checked) {
+emptyIcon.style.display = 'none';
+filledIcon.style.display = 'flex';
+} else {
+emptyIcon.style.display = 'flex';
+filledIcon.style.display = 'none';
+}
+}
+
 function initFavoriteSync() {
   const g = window.musicPlayerPersistent;
   if (!g) {
