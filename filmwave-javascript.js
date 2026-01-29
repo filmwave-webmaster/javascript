@@ -459,47 +459,29 @@ async function initMusicPage() {
  */
 function navigateStandaloneTrack(direction) {
   console.log('🚨 NAVIGATION FUNCTION CALLED - Direction:', direction);
-  
+
   const g = window.musicPlayerPersistent;
-  
+
   console.log('🚨 CHECKING CONDITIONS:');
   console.log('   - g.currentSongData exists:', !!g.currentSongData);
   console.log('   - g.MASTER_DATA.length:', g.MASTER_DATA.length);
-  
+
   if (!g.currentSongData || g.MASTER_DATA.length === 0) {
     console.log('🚨 RETURNING EARLY - conditions not met');
     return;
   }
-  
-    // Use the active song source for navigation
+
+  // Use the active song source for navigation
   let songsToNavigate;
-  const path = window.location.pathname;
-  const isOnDashboard = path.startsWith('/dashboard/');
-  const isOnMusicPage = path === '/music' || path === '/music/';
-  const isOnPlaylistTemplate = path.includes('playlist-template');
+  const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
+  const isOnMusicPage = window.location.pathname === '/music' || window.location.pathname === '/music/';
 
   // If on music page, always use music page songs
   if (isOnMusicPage) {
     g.activeSongSource = 'music';
   }
 
-  // PLAYLIST TEMPLATE: navigate only the songs rendered on this page (DOM order)
-  if (isOnPlaylistTemplate) {
-    g.activeSongSource = 'playlist';
-
-    const domIds = Array.from(document.querySelectorAll('.song-wrapper[data-song-id]'))
-      .map(el => String(el.dataset.songId))
-      .filter(Boolean);
-
-    songsToNavigate = domIds
-      .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
-      .filter(Boolean);
-  } else if (
-    g.activeSongSource === 'dashboard' &&
-    isOnDashboard &&
-    g.dashboardTileSongs &&
-    g.dashboardTileSongs.length > 0
-  ) {
+  if (g.activeSongSource === 'dashboard' && isOnDashboard && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
     // Only use dashboard tiles if we're still on dashboard
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
@@ -509,24 +491,24 @@ function navigateStandaloneTrack(direction) {
     // Fallback to all songs
     songsToNavigate = g.MASTER_DATA;
   }
-  
+
   console.log(`🎵 Navigation Debug:`);
   console.log(`   - Total songs in library: ${g.MASTER_DATA.length}`);
   console.log(`   - Filtered song IDs stored: ${g.filteredSongIds ? g.filteredSongIds.length : 0}`);
   console.log(`   - Songs to navigate through: ${songsToNavigate.length}`);
   console.log(`   - Using filters: ${g.filteredSongIds && g.filteredSongIds.length > 0}`);
-  
+
   const currentIndex = songsToNavigate.findIndex(r => r.id === g.currentSongData.id);
-  
+
   if (currentIndex === -1) {
     console.warn(`⚠️ Current song not found in navigation list!`);
     console.warn(`   - Current song ID: ${g.currentSongData.id}`);
     console.warn(`   - Current song: ${g.currentSongData.fields?.['Song Title']}`);
     return;
   }
-  
+
   let nextIndex = -1;
-  
+
   if (direction === 'next') {
     nextIndex = currentIndex + 1;
     if (nextIndex >= songsToNavigate.length) {
@@ -540,16 +522,29 @@ function navigateStandaloneTrack(direction) {
       return;
     }
   }
-  
+
   const nextSong = songsToNavigate[nextIndex];
   const audioUrl = nextSong.fields['R2 Audio URL'];
-  
+
   console.log(`➡️ Navigating ${direction}: ${nextSong.fields?.['Song Title']}`);
-  
+
   if (!audioUrl) return;
-  
+
   const wasPlaying = g.isPlaying;
-  
+
+  // ✅ UI: turn OFF the previous card immediately (prevents “stuck” / delayed icon state)
+  const prevId = String(g.currentSongData?.id || '');
+  if (prevId) {
+    const prevCard = document.querySelector(`[data-song-id="${prevId}"]`);
+    if (prevCard) {
+      if (typeof updatePlayPauseIcons === 'function') {
+        updatePlayPauseIcons(prevCard, false);
+      }
+      const prevBtn = prevCard.querySelector('.play-button');
+      if (prevBtn) prevBtn.style.opacity = '0';
+    }
+  }
+
   if (g.standaloneAudio) {
     try {
       g.standaloneAudio.pause();
@@ -569,10 +564,10 @@ function navigateStandaloneTrack(direction) {
       }
     });
   }
-  
+
   // Find wavesurfer directly from DOM
   let newWavesurfer = null;
-  
+
   if (isOnDashboard) {
     const waveformContainers = document.querySelectorAll('.db-waveform');
     waveformContainers.forEach(container => {
@@ -581,36 +576,52 @@ function navigateStandaloneTrack(direction) {
       }
     });
   }
-  
+
   g.currentWavesurfer = newWavesurfer;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
-  
+
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
-  
+
+  // ✅ UI: set the new card “selected” immediately
+  const nextId = String(nextSong?.id || '');
+  const shouldPlayNow = wasPlaying || g.autoPlayNext;
+
+  if (nextId) {
+    const nextCard = document.querySelector(`[data-song-id="${nextId}"]`);
+    if (nextCard) {
+      const nextBtn = nextCard.querySelector('.play-button');
+      if (nextBtn) nextBtn.style.opacity = '1';
+
+      if (typeof updatePlayPauseIcons === 'function') {
+        updatePlayPauseIcons(nextCard, shouldPlayNow);
+      }
+    }
+  }
+
   const audio = new Audio(audioUrl);
   audio.volume = g.volume || 1;
   g.standaloneAudio = audio;
-  
+
   audio.addEventListener('loadedmetadata', () => {
     if (g.standaloneAudio !== audio) return;
-    
+
     g.currentDuration = audio.duration;
     const masterDuration = document.querySelector('.player-duration');
     if (masterDuration) {
       masterDuration.textContent = formatDuration(audio.duration);
     }
   });
-  
-    audio.addEventListener('timeupdate', () => {
+
+  audio.addEventListener('timeupdate', () => {
     if (g.standaloneAudio !== audio) return;
-    
+
     if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
     if (!isFinite(audio.currentTime)) return;
-    
+
     g.currentTime = audio.currentTime;
 
-        if (g.currentWavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+    if (g.currentWavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
       if (isFinite(progress)) {
         g.currentWavesurfer.seekTo(progress);
@@ -628,29 +639,27 @@ function navigateStandaloneTrack(direction) {
       }
     }
   });
-  
-    audio.addEventListener('play', () => {
+
+  audio.addEventListener('play', () => {
     if (g.standaloneAudio !== audio) return;
     g.isPlaying = true;
     updateMasterControllerIcons(true);
     updatePlayerCoverArtIcons(true);
-    document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: nextSong.id, isPlaying: true } }));
   });
-  
-    audio.addEventListener('pause', () => {
+
+  audio.addEventListener('pause', () => {
     if (g.standaloneAudio !== audio) return;
     g.isPlaying = false;
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
-    document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: nextSong.id, isPlaying: false } }));
   });
-  
+
   audio.addEventListener('ended', () => {
     if (g.standaloneAudio !== audio) return;
     g.autoPlayNext = true;
     navigateStandaloneTrack('next');
   });
-  
+
   audio.addEventListener('error', (e) => {
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.error('❌ AUDIO ERROR DETAILS:');
@@ -663,7 +672,7 @@ function navigateStandaloneTrack(direction) {
     console.error('Ready state:', audio.readyState);
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
-  
+
   if (wasPlaying || g.autoPlayNext) {
     audio.play().catch(err => {
       if (err.name !== 'AbortError') {
@@ -677,15 +686,15 @@ function navigateStandaloneTrack(direction) {
     updatePlayerCoverArtIcons(false);
   }
 
- const tempContainer = document.createElement('div');
+  const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
-  
+
   // Get computed CSS variable values
   const styles = getComputedStyle(document.body);
   const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
   const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
-  
+
   const tempWavesurfer = WaveSurfer.create({
     container: tempContainer,
     waveColor: waveColor,
@@ -695,9 +704,9 @@ function navigateStandaloneTrack(direction) {
     barGap: 1,
     normalize: true
   });
-  
+
   tempWavesurfer.load(audioUrl);
-  
+
   tempWavesurfer.on('decode', () => {
     try {
       const decodedData = tempWavesurfer.getDecodedData();
@@ -708,7 +717,7 @@ function navigateStandaloneTrack(direction) {
     } catch (e) {
       console.error('Error getting peaks:', e);
     }
-    
+
     try {
       tempWavesurfer.destroy();
       if (document.body.contains(tempContainer)) {
