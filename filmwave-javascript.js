@@ -589,7 +589,7 @@ function navigateStandaloneTrack(direction) {
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
   
   const audio = new Audio(audioUrl);
-  audio.volume = g.volume || 1;
+  audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
   
   audio.addEventListener('loadedmetadata', () => {
@@ -1480,7 +1480,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   }
 
   const audio = new Audio(audioUrl);
-  audio.volume = g.volume || 1;
+  audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
   g.currentSongData = songData;
   g.currentWavesurfer = wavesurfer;
