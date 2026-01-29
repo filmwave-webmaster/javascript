@@ -6805,6 +6805,12 @@ if (typeof barba !== 'undefined') {
 
 console.log('💾 localStorage persistence initialized');
 
+/**
+ * ============================================================
+ * SYNC FAVORITE ICONS (Syncs Song Card and Music Player Icons)
+ * ============================================================
+ */
+
 // Sync song card <-> player (robust selectors + avoids stale song id)
 let favSyncLock = false;
 let lastSongId = null;
@@ -6826,8 +6832,8 @@ function getSongInputById(songId) {
   );
 }
 
-// Keep player reflecting the CURRENT song card state (prevents stale previous-song sync)
-setInterval(() => {
+// Instant: watch current song changes and sync player immediately
+const songIdObserver = new MutationObserver(() => {
   const id = window.musicPlayerPersistent?.currentSongData?.id;
   if (id == null) return;
 
@@ -6845,8 +6851,29 @@ setInterval(() => {
     playerInput.dispatchEvent(new Event('change', { bubbles: true }));
     favSyncLock = false;
   }
-}, 250);
+});
 
+songIdObserver.observe(document.body, { childList: true, subtree: true });
+
+// Also run once immediately (first load)
+(() => {
+  const id = window.musicPlayerPersistent?.currentSongData?.id;
+  if (id == null) return;
+
+  const songId = String(id);
+  lastSongId = songId;
+
+  const songInput = getSongInputById(songId);
+  const playerInput = getPlayerInput();
+  if (!songInput || !playerInput) return;
+
+  if (playerInput.checked !== songInput.checked) {
+    favSyncLock = true;
+    playerInput.checked = songInput.checked;
+    playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+    favSyncLock = false;
+  }
+})();
 document.addEventListener('change', (e) => {
   const input = e.target;
   if (!input || input.type !== 'checkbox') return;
