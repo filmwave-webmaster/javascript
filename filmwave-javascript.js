@@ -5948,42 +5948,25 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 
 /**
  * ============================================================
- * PLAYER FAVORITE ICON TOGGLE
+ * FAVORITE ICON CLICK -> TOGGLE CHECKBOX (SONG CARDS + PLAYER)
  * ============================================================
  */
+document.addEventListener('click', (e) => {
+  const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
+  if (!icon) return;
 
-function updatePlayerFavoriteIcons(checkbox) {
-  const button = checkbox.closest('.favorite-button');
+  const button = icon.closest('.favorite-button');
   if (!button) return;
 
-  const emptyIcon = button.querySelector('.favorite-icon-empty');
-  const filledIcon = button.querySelector('.favorite-icon-filled');
-  if (!emptyIcon || !filledIcon) return;
+  const checkbox =
+    button.querySelector('.favorite-checkbox') ||
+    button.querySelector('.player-favorite-checkbox');
 
-  if (checkbox.checked) {
-    emptyIcon.style.display = 'none';
-    filledIcon.style.display = 'flex';
-  } else {
-    emptyIcon.style.display = 'flex';
-    filledIcon.style.display = 'none';
-  }
-}
+  if (!checkbox) return;
 
-function initPlayerFavoriteIcons() {
-  document.querySelectorAll('.player-favorite-checkbox').forEach(cb => {
-    updatePlayerFavoriteIcons(cb);
-
-    if (cb.dataset.playerFavBound === '1') return;
-    cb.dataset.playerFavBound = '1';
-
-    cb.addEventListener('change', () => {
-      updatePlayerFavoriteIcons(cb);
-    });
-  });
-
-  console.log('✅ Player favorite icons initialized');
-}
-
+  checkbox.checked = !checkbox.checked;
+  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+});
 /**
  * Click SVG → toggle checkbox → trigger existing logic
  */
