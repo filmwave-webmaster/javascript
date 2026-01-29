@@ -5950,7 +5950,7 @@ if (window.location.pathname.startsWith('/dashboard/')) {
  * ============================================================
  */
 function updateFavoriteIcons(checkbox) {
-  const button = checkbox.closest('.favourite-button');
+  const button = checkbox.closest('.favorite-button');
   if (!button) return;
 
   const emptyIcon = button.querySelector('.favorite-icon-empty');
@@ -5978,7 +5978,7 @@ function initFavoriteIcons() {
   });
 
   // Player
-  document.querySelectorAll('.player-favourite-checkbox').forEach(cb => {
+  document.querySelectorAll('.player-favorite-checkbox').forEach(cb => {
     updateFavoriteIcons(cb);
 
     if (cb.dataset.favIconsBound === '1') return;
@@ -5997,12 +5997,12 @@ document.addEventListener('click', (e) => {
   const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
   if (!icon) return;
 
-  const button = icon.closest('.favourite-button');
+  const button = icon.closest('.favorite-button');
   if (!button) return;
 
   const checkbox =
     button.querySelector('.favorite-checkbox') ||
-    button.querySelector('.player-favourite-checkbox');
+    button.querySelector('.player-favorite-checkbox');
 
   if (!checkbox) return;
 
@@ -6022,9 +6022,9 @@ function initFavoriteSync() {
     return;
   }
 
-  const playerCheckbox = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
+  const playerCheckbox = document.querySelector('.music-player-wrapper .player-favorite-checkbox');
   if (playerCheckbox) {
-    console.log('✅ Found player-favourite-checkbox');
+    console.log('✅ Found player-favorite-checkbox');
   }
   
   // Initialize favorite icons
@@ -6036,7 +6036,7 @@ function initFavoriteSync() {
   let playerListenerAttached = false;
   
   const observer = new MutationObserver(function() {
-    const player = document.querySelector('.music-player-wrapper .player-favourite-checkbox');
+    const player = document.querySelector('.music-player-wrapper .player-favorite-checkbox');
     if (player && !playerListenerAttached) {
       console.log('✅ Player favorite appeared in DOM');
       playerfavorite = player;
