@@ -5967,44 +5967,6 @@ document.addEventListener('click', (e) => {
   checkbox.checked = !checkbox.checked;
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
 });
-/**
- * Click SVG → toggle checkbox → trigger existing logic
- */
-document.addEventListener('click', (e) => {
-  const icon = e.target.closest(
-    '.favorite-icon-empty, .favorite-icon-filled'
-  );
-  if (!icon) return;
-
-  const button = icon.closest('.favorite-button');
-  if (!button) return;
-
-  const checkbox = button.querySelector('.player-favorite-checkbox');
-  if (!checkbox) return;
-
-  checkbox.checked = !checkbox.checked;
-  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-});
-
-/**
- * Click SVG -> toggle checkbox -> fire change (so your existing favorite sync runs)
- */
-document.addEventListener('click', (e) => {
-  const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
-  if (!icon) return;
-
-  const button = icon.closest('.favorite-button');
-  if (!button) return;
-
-  const checkbox =
-    button.querySelector('.favorite-checkbox') ||
-    button.querySelector('.player-favorite-checkbox');
-
-  if (!checkbox) return;
-
-  checkbox.checked = !checkbox.checked;
-  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-});
 
 /**
  * ============================================================
@@ -6089,7 +6051,8 @@ function initFavoriteSync() {
           if (playerfavorite.checked !== currentSongfavorite.checked) {
             console.log(`🔄 Syncing: Song is ${currentSongfavorite.checked}, Player is ${playerfavorite.checked}`);
             lastChangeSource = 'sync';
-            playerfavorite.click();
+            playerfavorite.checked = currentSongfavorite.checked;
+            playerfavorite.dispatchEvent(new Event('change', { bubbles: true }));
             setTimeout(() => { lastChangeSource = null; }, 100);
           }
         }, 500);
@@ -6179,7 +6142,8 @@ function initFavoriteSync() {
     if (currentSongfavorite && currentSongfavorite.checked !== this.checked) {
       lastChangeSource = 'player';
       console.log('💛 Player favorite clicked, syncing song to:', this.checked);
-      currentSongfavorite.click();
+      currentSongfavorite.checked = this.checked;
+      currentSongfavorite.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }
   
