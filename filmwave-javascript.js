@@ -471,17 +471,35 @@ function navigateStandaloneTrack(direction) {
     return;
   }
   
-  // Use the active song source for navigation
+    // Use the active song source for navigation
   let songsToNavigate;
-  const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
-  const isOnMusicPage = window.location.pathname === '/music' || window.location.pathname === '/music/';
-  
+  const path = window.location.pathname;
+  const isOnDashboard = path.startsWith('/dashboard/');
+  const isOnMusicPage = path === '/music' || path === '/music/';
+  const isOnPlaylistTemplate = path.includes('playlist-template');
+
   // If on music page, always use music page songs
   if (isOnMusicPage) {
     g.activeSongSource = 'music';
   }
-  
-  if (g.activeSongSource === 'dashboard' && isOnDashboard && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+
+  // PLAYLIST TEMPLATE: navigate only the songs rendered on this page (DOM order)
+  if (isOnPlaylistTemplate) {
+    g.activeSongSource = 'playlist';
+
+    const domIds = Array.from(document.querySelectorAll('.song-wrapper[data-song-id]'))
+      .map(el => String(el.dataset.songId))
+      .filter(Boolean);
+
+    songsToNavigate = domIds
+      .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
+      .filter(Boolean);
+  } else if (
+    g.activeSongSource === 'dashboard' &&
+    isOnDashboard &&
+    g.dashboardTileSongs &&
+    g.dashboardTileSongs.length > 0
+  ) {
     // Only use dashboard tiles if we're still on dashboard
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
