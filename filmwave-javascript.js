@@ -6855,7 +6855,7 @@ document.addEventListener('change', (e) => {
   const isPlayer = !!input.closest('.music-player-wrapper');
   const isSong = !!input.closest('.song-wrapper');
 
-  // SONG -> PLAYER
+   // SONG -> PLAYER
   if (isSong) {
     const songId = input.closest('.song-wrapper')?.dataset?.songId;
     if (!songId) return;
