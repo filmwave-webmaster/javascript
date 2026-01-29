@@ -6855,10 +6855,16 @@ document.addEventListener('change', (e) => {
   const isPlayer = !!input.closest('.music-player-wrapper');
   const isSong = !!input.closest('.song-wrapper');
 
-   // SONG -> PLAYER
+     // SONG -> PLAYER (ONLY if this card is the currently playing song)
   if (isSong) {
     const songId = input.closest('.song-wrapper')?.dataset?.songId;
     if (!songId) return;
+
+    const currentId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (!currentId) return;
+
+    // Not the current song → do NOT sync the player
+    if (String(songId) !== currentId) return;
 
     const playerInput = getPlayerInput();
     if (!playerInput) return;
