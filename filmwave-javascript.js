@@ -6805,40 +6805,63 @@ if (typeof barba !== 'undefined') {
 
 console.log('💾 localStorage persistence initialized');
 
-/**
-// Sync player favorite checkbox with song card (by song ID)
-*/
+// Sync song card <-> player by song id (prevents previous-song double toggle)
+let favSyncLock = false;
+let activeSongId = null;
+
+// Keep activeSongId updated from the player
+setInterval(() => {
+  const id = window.musicPlayerPersistent?.currentSongData?.id;
+  if (id != null) activeSongId = String(id);
+}, 250);
 
 document.addEventListener('change', (e) => {
-  if (!e.target.matches('input[type="checkbox"]')) return;
+  const input = e.target;
+  if (!input || input.type !== 'checkbox') return;
 
-  const songCard = e.target.closest('.song-wrapper');
-  const songId = songCard?.dataset.songId;
+  // Prevent re-entrant sync loops (icons still update via your other change listener)
+  if (favSyncLock) return;
 
-  // If change came from SONG CARD → update PLAYER
-  if (songId && e.target.classList.contains('favorite-checkbox')) {
-    const playerCheckbox =
-      document.querySelector('.music-player-wrapper input[type="checkbox"]');
+  const isSongCard = !!input.closest('.song-wrapper');
+  const isPlayer = !!input.closest('.music-player-wrapper');
 
-    if (playerCheckbox && playerCheckbox.checked !== e.target.checked) {
-      playerCheckbox.checked = e.target.checked;
-      playerCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+  // SONG CARD -> PLAYER
+  if (isSongCard) {
+    const songWrapper = input.closest('.song-wrapper');
+    const songId = songWrapper?.dataset?.songId;
+    if (!songId) return;
+
+    activeSongId = String(songId);
+
+    const playerInput = document.querySelector(
+      '.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]'
+    );
+    if (!playerInput) return;
+
+    if (playerInput.checked !== input.checked) {
+      favSyncLock = true;
+      playerInput.checked = input.checked;
+      playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+      favSyncLock = false;
     }
+    return;
   }
 
-  // If change came from PLAYER → update SONG CARD
-  if (
-    e.target.closest('.music-player-wrapper') &&
-    window.musicPlayerPersistent?.currentSongData?.id
-  ) {
-    const id = window.musicPlayerPersistent.currentSongData.id;
-    const cardCheckbox = document.querySelector(
-      `[data-song-id="${id}"] input.favorite-checkbox`
-    );
+  // PLAYER -> SONG CARD
+  if (isPlayer) {
+    const songId = activeSongId || String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (!songId) return;
 
-    if (cardCheckbox && cardCheckbox.checked !== e.target.checked) {
-      cardCheckbox.checked = e.target.checked;
-      cardCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    const cardInput = document.querySelector(
+      `.song-wrapper[data-song-id="${songId}"] .favorite-checkbox input[type="checkbox"]`
+    );
+    if (!cardInput) return;
+
+    if (cardInput.checked !== input.checked) {
+      favSyncLock = true;
+      cardInput.checked = input.checked;
+      cardInput.dispatchEvent(new Event('change', { bubbles: true }));
+      favSyncLock = false;
     }
   }
 });
