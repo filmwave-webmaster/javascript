@@ -1018,27 +1018,40 @@ if (playerCoverArt) {
     }
     
     if (targetWS) {
-      const wasPlaying = g.isPlaying;
-      const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-      if (prevData?.cardElement.querySelector('.play-button')) {
-        prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-      }
-      
-      if (g.standaloneAudio) {
-        g.standaloneAudio.pause();
-        g.standaloneAudio = null;
-      }
-      
-      g.currentWavesurfer.seekTo(0);
-      const nextData = g.waveformData.find(data => data.wavesurfer === targetWS);
-      
-      if (nextData?.cardElement.querySelector('.play-button')) {
-        nextData.cardElement.querySelector('.play-button').style.opacity = '1';
-      }
-      scrollToSelected(nextData.cardElement);
-      
-      playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
-    }
+  const wasPlaying = g.isPlaying;
+
+  const prevData = g.waveformData.find(d => d.wavesurfer === g.currentWavesurfer);
+  const prevCard = prevData?.cardElement;
+  const prevBtn = prevCard?.querySelector('.play-button');
+  if (prevCard) updatePlayPauseIcons(prevCard, false);
+  if (prevBtn) prevBtn.style.opacity = '0';
+
+  if (g.standaloneAudio) {
+    g.standaloneAudio.pause();
+    g.standaloneAudio = null;
+  }
+
+  if (g.currentWavesurfer) g.currentWavesurfer.seekTo(0);
+  g.currentWavesurfer = targetWS;
+
+  const nextData = g.waveformData.find(d => d.wavesurfer === targetWS);
+  const nextCard = nextData?.cardElement;
+  const nextBtn = nextCard?.querySelector('.play-button');
+  if (nextCard) updatePlayPauseIcons(nextCard, wasPlaying);
+  if (nextBtn) nextBtn.style.opacity = '1';
+  if (nextCard) scrollToSelected(nextCard);
+
+  if (nextData) {
+    playStandaloneSong(
+      nextData.audioUrl,
+      nextData.songData,
+      targetWS,
+      nextCard,
+      null,
+      wasPlaying
+    );
+  }
+}
   } else {
     // Not on music page or no waveforms - use standalone navigation
     navigateStandaloneTrack(direction);
@@ -2201,27 +2214,40 @@ document.addEventListener('keydown', function (e) {
       }
       
       if (nextWS) {
-        const wasPlaying = g.isPlaying;
-        const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
-        if (prevData?.cardElement.querySelector('.play-button')) {
-          prevData.cardElement.querySelector('.play-button').style.opacity = '0';
-        }
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-          g.standaloneAudio = null;
-        }
-        
-        g.currentWavesurfer.seekTo(0);
-        g.currentWavesurfer = nextWS;
-        const nextD = g.waveformData.find(wf => wf.wavesurfer === nextWS);
-        if (nextD?.cardElement.querySelector('.play-button')) {
-          nextD.cardElement.querySelector('.play-button').style.opacity = '1';
-        }
-        scrollToSelected(nextD.cardElement);
-        
-        playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
-      }
+  const wasPlaying = g.isPlaying;
+
+  const prevData = g.waveformData.find(d => d.wavesurfer === g.currentWavesurfer);
+  const prevCard = prevData?.cardElement;
+  const prevBtn = prevCard?.querySelector('.play-button');
+  if (prevCard) updatePlayPauseIcons(prevCard, false);
+  if (prevBtn) prevBtn.style.opacity = '0';
+
+  if (g.standaloneAudio) {
+    g.standaloneAudio.pause();
+    g.standaloneAudio = null;
+  }
+
+  if (g.currentWavesurfer) g.currentWavesurfer.seekTo(0);
+  g.currentWavesurfer = nextWS;
+
+  const nextD = g.waveformData.find(d => d.wavesurfer === nextWS);
+  const nextCard = nextD?.cardElement;
+  const nextBtn = nextCard?.querySelector('.play-button');
+  if (nextCard) updatePlayPauseIcons(nextCard, wasPlaying);
+  if (nextBtn) nextBtn.style.opacity = '1';
+  if (nextCard) scrollToSelected(nextCard);
+
+  if (nextD) {
+    playStandaloneSong(
+      nextD.audioUrl,
+      nextD.songData,
+      nextWS,
+      nextCard,
+      null,
+      wasPlaying
+    );
+  }
+}
     } else {
       navigateStandaloneTrack(e.code === 'ArrowDown' ? 'next' : 'prev');
     }
