@@ -1141,11 +1141,8 @@ function initVolumeControl() {
   
   // Update slider handle position
   function updateSliderPosition(volume) {
-    const trackWidth = track.offsetWidth;
-    const handleWidth = sliderHandle.offsetWidth;
-    const maxLeft = trackWidth - handleWidth;
-    const left = volume * maxLeft;
-    sliderHandle.style.left = left + 'px';
+    // Use percentage for consistent positioning even when track is hidden
+    sliderHandle.style.left = (volume * 100) + '%';
   }
   
   // Set volume
@@ -1250,8 +1247,6 @@ function initVolumeControl() {
   
   console.log('✅ Volume control initialized');
 }
-
-// End Volume controls
 
 /**
  * ============================================================
