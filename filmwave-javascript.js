@@ -5125,49 +5125,17 @@ function initUniversalSearch() {
 * ============================================================
 */
 
-function forcePlaylistsCurrentState() {
-  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
-    a.classList.add('w--current');
-    a.setAttribute('aria-current', 'page');
-  });
-}
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a');
+  if (!a) return;
 
-function shouldForceFromPath(pathname) {
-  return (pathname || '').includes('/dashboard/playlist-template');
-}
-
-// Run on normal load
-if (shouldForceFromPath(window.location.pathname)) {
-  forcePlaylistsCurrentState();
-}
-
-// Barba hooks (use next url)
-if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.beforeEnter((data) => {
-    const nextPath = data?.next?.url?.path || '';
-    if (!shouldForceFromPath(nextPath)) return;
-
-    forcePlaylistsCurrentState();
-  });
-
-  barba.hooks.afterEnter((data) => {
-    const nextPath = data?.next?.url?.path || '';
-    if (!shouldForceFromPath(nextPath)) return;
-
-    forcePlaylistsCurrentState();
-    requestAnimationFrame(forcePlaylistsCurrentState);
-    setTimeout(forcePlaylistsCurrentState, 0);
-  });
-}
-
-// Your existing custom event (keep compatibility)
-window.addEventListener('barbaAfterTransition', () => {
-  if (!shouldForceFromPath(window.location.pathname)) return;
-
-  forcePlaylistsCurrentState();
-  requestAnimationFrame(forcePlaylistsCurrentState);
-});
-
+  const href = a.getAttribute('href') || '';
+  if (href.includes('/dashboard/playlist-template')) {
+    sessionStorage.setItem('fw_is_playlist_template', '1');
+  } else {
+    sessionStorage.removeItem('fw_is_playlist_template');
+  }
+}, true);
 
 /**
  * ============================================================
