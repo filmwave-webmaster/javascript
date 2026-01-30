@@ -5125,47 +5125,67 @@ function initUniversalSearch() {
 * ============================================================
 */
 
-function forcePlaylistsCurrentState() {
-  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
-    a.classList.add('w--current');
-    a.setAttribute('aria-current', 'page');
-  });
-}
-
 function shouldForceFromPath(pathname) {
   return (pathname || '').includes('/dashboard/playlist-template');
 }
 
-// Run on normal load
-if (shouldForceFromPath(window.location.pathname)) {
+function forcePlaylistsCurrentState() {
+  const links = document.querySelectorAll('a[href*="/dashboard/playlists"]');
+  if (!links.length) return false;
+
+  links.forEach((a) => {
+    a.classList.add('w--current');
+    a.setAttribute('aria-current', 'page');
+  });
+
+  return true;
+}
+
+function forcePlaylistsCurrentStateWithRetries() {
+  // try immediately + a few more times for late-rendered nav
   forcePlaylistsCurrentState();
+  requestAnimationFrame(forcePlaylistsCurrentState);
+  setTimeout(forcePlaylistsCurrentState, 0);
+  setTimeout(forcePlaylistsCurrentState, 50);
+  setTimeout(forcePlaylistsCurrentState, 150);
+  setTimeout(forcePlaylistsCurrentState, 300);
+}
+
+function runIfNeeded(pathname) {
+  if (!shouldForceFromPath(pathname)) return;
+  forcePlaylistsCurrentStateWithRetries();
+
+  // if nav swaps in later, catch it once
+  const obs = new MutationObserver(() => {
+    if (forcePlaylistsCurrentState()) obs.disconnect();
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+
+  // safety disconnect
+  setTimeout(() => obs.disconnect(), 2000);
+}
+
+// Fresh page load (DOM ready)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => runIfNeeded(window.location.pathname));
+} else {
+  runIfNeeded(window.location.pathname);
 }
 
 // Barba hooks (use next url)
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.beforeEnter((data) => {
-    const nextPath = data?.next?.url?.path || '';
-    if (!shouldForceFromPath(nextPath)) return;
-
-    forcePlaylistsCurrentState();
+    runIfNeeded(data?.next?.url?.path || '');
   });
 
   barba.hooks.afterEnter((data) => {
-    const nextPath = data?.next?.url?.path || '';
-    if (!shouldForceFromPath(nextPath)) return;
-
-    forcePlaylistsCurrentState();
-    requestAnimationFrame(forcePlaylistsCurrentState);
-    setTimeout(forcePlaylistsCurrentState, 0);
+    runIfNeeded(data?.next?.url?.path || '');
   });
 }
 
 // Your existing custom event (keep compatibility)
 window.addEventListener('barbaAfterTransition', () => {
-  if (!shouldForceFromPath(window.location.pathname)) return;
-
-  forcePlaylistsCurrentState();
-  requestAnimationFrame(forcePlaylistsCurrentState);
+  runIfNeeded(window.location.pathname);
 });
 
 /**
