@@ -5658,6 +5658,15 @@ if (shouldHaveSidebar && !sidebar) {
   newSidebar.querySelectorAll('.light-mode-icon').forEach(icon => {
     icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
   });
+
+  // Set volume slider position on injected sidebar
+  const savedVolume = localStorage.getItem('filmwaveVolume');
+  if (savedVolume !== null) {
+    const volumePercent = parseFloat(savedVolume) * 100;
+    newSidebar.querySelectorAll('.volume-slider-handle').forEach(handle => {
+      handle.style.left = `${volumePercent}%`;
+    });
+  }      
   
   newSidebar.style.visibility = 'visible';
   newSidebar.style.opacity = '0';
