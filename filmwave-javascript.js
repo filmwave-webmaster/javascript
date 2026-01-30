@@ -5284,13 +5284,9 @@ if (typeof barba !== 'undefined') {
       
    beforeLeave(data) {
 
-  // Apply theme icon visibility BEFORE leaving to prevent flash on next page
-  const theme = localStorage.getItem('filmwaveTheme') || 'light';
-  document.querySelectorAll('.dark-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
-  });
-  document.querySelectorAll('.light-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  // Hide ALL theme icons immediately to prevent flash during transition
+  document.querySelectorAll('.dark-mode-icon, .light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', 'none', 'important');
   });
 
   const g = window.musicPlayerPersistent;
