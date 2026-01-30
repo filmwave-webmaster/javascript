@@ -5295,9 +5295,6 @@ if (typeof barba !== 'undefined') {
 
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
-     
-  const g = window.musicPlayerPersistent;
-  g.isTransitioning = true;
   
   // Fade out sidebar when leaving dashboard for non-dashboard page
   const leavingPath = data.current?.url?.path || window.location.pathname || '';
