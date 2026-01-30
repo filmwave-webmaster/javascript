@@ -5121,7 +5121,7 @@ function initUniversalSearch() {
 
 /**
 * ============================================================
-* FORCE "PLAYLISTS" CURRENT STATE ON PLAYLIST TEMPLATE
+* FORCE + LOCK "PLAYLISTS" CURRENT STATE ON PLAYLIST TEMPLATE
 * ============================================================
 */
 
@@ -5129,63 +5129,78 @@ function shouldForceFromPath(pathname) {
   return (pathname || '').includes('/dashboard/playlist-template');
 }
 
-function forcePlaylistsCurrentState() {
-  const links = document.querySelectorAll('a[href*="/dashboard/playlists"]');
-  if (!links.length) return false;
+let fwCurrentLockObserver = null;
+let fwCurrentLockTimer = null;
 
-  links.forEach((a) => {
+function applyPlaylistsCurrent() {
+  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
     a.classList.add('w--current');
     a.setAttribute('aria-current', 'page');
   });
-
-  return true;
 }
 
-function forcePlaylistsCurrentStateWithRetries() {
-  // try immediately + a few more times for late-rendered nav
-  forcePlaylistsCurrentState();
-  requestAnimationFrame(forcePlaylistsCurrentState);
-  setTimeout(forcePlaylistsCurrentState, 0);
-  setTimeout(forcePlaylistsCurrentState, 50);
-  setTimeout(forcePlaylistsCurrentState, 150);
-  setTimeout(forcePlaylistsCurrentState, 300);
-}
+function startLock() {
+  stopLock();
 
-function runIfNeeded(pathname) {
-  if (!shouldForceFromPath(pathname)) return;
-  forcePlaylistsCurrentStateWithRetries();
+  // Apply immediately a few times (catches late nav rendering)
+  applyPlaylistsCurrent();
+  requestAnimationFrame(applyPlaylistsCurrent);
+  setTimeout(applyPlaylistsCurrent, 0);
+  setTimeout(applyPlaylistsCurrent, 50);
 
-  // if nav swaps in later, catch it once
-  const obs = new MutationObserver(() => {
-    if (forcePlaylistsCurrentState()) obs.disconnect();
+  // LOCK: if Webflow removes w--current, put it back
+  fwCurrentLockObserver = new MutationObserver(() => {
+    if (!shouldForceFromPath(window.location.pathname)) return;
+    applyPlaylistsCurrent();
   });
-  obs.observe(document.body, { childList: true, subtree: true });
 
-  // safety disconnect
-  setTimeout(() => obs.disconnect(), 2000);
+  fwCurrentLockObserver.observe(document.body, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ['class'],
+  });
+
+  // Safety: stop locking after 2.5s (enough to survive Webflow/nav swaps)
+  fwCurrentLockTimer = setTimeout(() => {
+    stopLock();
+  }, 2500);
 }
 
-// Fresh page load (DOM ready)
+function stopLock() {
+  if (fwCurrentLockObserver) {
+    fwCurrentLockObserver.disconnect();
+    fwCurrentLockObserver = null;
+  }
+  if (fwCurrentLockTimer) {
+    clearTimeout(fwCurrentLockTimer);
+    fwCurrentLockTimer = null;
+  }
+}
+
+function runForPath(pathname) {
+  if (!shouldForceFromPath(pathname)) {
+    stopLock();
+    return;
+  }
+  startLock();
+}
+
+// Fresh load
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => runIfNeeded(window.location.pathname));
+  document.addEventListener('DOMContentLoaded', () => runForPath(window.location.pathname));
 } else {
-  runIfNeeded(window.location.pathname);
+  runForPath(window.location.pathname);
 }
 
-// Barba hooks (use next url)
+// Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.beforeEnter((data) => {
-    runIfNeeded(data?.next?.url?.path || '');
-  });
-
-  barba.hooks.afterEnter((data) => {
-    runIfNeeded(data?.next?.url?.path || '');
-  });
+  barba.hooks.beforeEnter((data) => runForPath(data?.next?.url?.path || ''));
+  barba.hooks.afterEnter((data) => runForPath(data?.next?.url?.path || ''));
 }
 
-// Your existing custom event (keep compatibility)
+// Your existing custom event
 window.addEventListener('barbaAfterTransition', () => {
-  runIfNeeded(window.location.pathname);
+  runForPath(window.location.pathname);
 });
 
 /**
