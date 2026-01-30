@@ -5120,6 +5120,41 @@ function initUniversalSearch() {
 })();
 
 /**
+* ============================================================
+* FORCE "PLAYLISTS" CURRENT STATE (NO FLASH)
+* ============================================================
+*/
+
+function forcePlaylistsCurrentState() {
+  const isPlaylistTemplate =
+    window.location.pathname.includes('/dashboard/playlist-template');
+
+  if (!isPlaylistTemplate) return;
+
+  // Target by href (better than text)
+  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
+    a.classList.add('w--current');
+    a.setAttribute('aria-current', 'page');
+  });
+}
+
+// run immediately on load
+forcePlaylistsCurrentState();
+
+// run BEFORE the new page is shown (prevents flash)
+if (typeof barba !== 'undefined' && barba.hooks) {
+  barba.hooks.beforeEnter(() => {
+    forcePlaylistsCurrentState();
+  });
+
+  // run again right after enter (covers late DOM updates)
+  barba.hooks.afterEnter(() => {
+    forcePlaylistsCurrentState();
+    requestAnimationFrame(forcePlaylistsCurrentState);
+  });
+}
+
+/**
  * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
