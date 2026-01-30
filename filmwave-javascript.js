@@ -5392,12 +5392,24 @@ if (typeof barba !== 'undefined') {
 
      beforeEnter(data) {
 
+ beforeEnter(data) {
+  
   // Apply theme icon visibility immediately to prevent flash
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
+  
+  // Update icons in incoming container
   data.next.container.querySelectorAll('.dark-mode-icon').forEach(icon => {
     icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
   });
   data.next.container.querySelectorAll('.light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  });
+  
+  // Also update icons in sidebar (persists outside container)
+  document.querySelectorAll('.sidebar-nav .dark-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+  });
+  document.querySelectorAll('.sidebar-nav .light-mode-icon').forEach(icon => {
     icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
   });
 
