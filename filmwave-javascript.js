@@ -5125,48 +5125,25 @@ function initUniversalSearch() {
 * ============================================================
 */
 
-function fwForcePlaylistsCurrent() {
-  const isTemplate = window.location.pathname.includes('/dashboard/playlist-template');
+function forcePlaylistsCurrentState() {
+  // only on playlist-template
+  const isTemplate = location.pathname.includes('/dashboard/playlist-template');
+  document.documentElement.classList.toggle('fw-playlist-template', isTemplate);
 
-  // kill transitions for this paint
-  document.documentElement.classList.add('fw-no-nav-flash');
-
-  // remove old forced state
-  document.querySelectorAll('a.fw-forced-current').forEach((a) => {
-    a.classList.remove('w--current', 'fw-forced-current');
-    a.removeAttribute('aria-current');
-  });
-
-  if (isTemplate) {
-    document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
-      a.classList.add('w--current', 'fw-forced-current');
-      a.setAttribute('aria-current', 'page');
-    });
-  }
-
-  // re-enable transitions next frame
-  requestAnimationFrame(() => {
-    document.documentElement.classList.remove('fw-no-nav-flash');
+  // mark ALL playlists links (sidebar + top nav)
+  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
+    if (isTemplate) a.classList.add('fw-forced-current');
+    else a.classList.remove('fw-forced-current');
   });
 }
 
-fwForcePlaylistsCurrent();
+// run immediately
+forcePlaylistsCurrentState();
 
-window.addEventListener('load', () => {
-  fwForcePlaylistsCurrent();
-  requestAnimationFrame(fwForcePlaylistsCurrent);
-});
-
-window.addEventListener('barbaAfterTransition', () => {
-  fwForcePlaylistsCurrent();
-  requestAnimationFrame(fwForcePlaylistsCurrent);
-});
-
-if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.afterEnter(() => {
-    fwForcePlaylistsCurrent();
-    requestAnimationFrame(fwForcePlaylistsCurrent);
-  });
+// run after barba transitions
+if (window.barba) {
+  barba.hooks.beforeEnter(() => forcePlaylistsCurrentState());
+  barba.hooks.after(() => forcePlaylistsCurrentState());
 }
 
 /**
