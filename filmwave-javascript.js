@@ -582,9 +582,29 @@ function navigateStandaloneTrack(direction) {
     });
   }
   
+  // Hide play button on previous song card
+  if (g.currentSongData) {
+    const prevCard = document.querySelector(`.song-wrapper[data-song-id="${g.currentSongData.id}"]`);
+    if (prevCard) {
+      const prevPlayBtn = prevCard.querySelector('.play-button');
+      if (prevPlayBtn) {
+        prevPlayBtn.style.setProperty('opacity', '0', 'important');
+      }
+    }
+  }
+  
   g.currentWavesurfer = newWavesurfer;
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
+  
+  // Show play button on new song card
+  const newCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
+  if (newCard) {
+    const newPlayBtn = newCard.querySelector('.play-button');
+    if (newPlayBtn) {
+      newPlayBtn.style.setProperty('opacity', '1', 'important');
+    }
+  }
   
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
   
