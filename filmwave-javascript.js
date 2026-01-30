@@ -5121,21 +5121,51 @@ function initUniversalSearch() {
 
 /**
 * ============================================================
-* FORCE "PLAYLISTS" CURRENT STATE ON PLAYLIST TEMPLATE
+* FORCE PLAYLISTS "CURRENT" STATE ON PLAYLIST-TEMPLATE
 * ============================================================
 */
 
-document.addEventListener('click', (e) => {
-  const a = e.target.closest('a');
-  if (!a) return;
+function fwForcePlaylistsCurrent() {
+  const isTemplate = window.location.pathname.includes('/dashboard/playlist-template');
 
-  const href = a.getAttribute('href') || '';
-  if (href.includes('/dashboard/playlist-template')) {
-    sessionStorage.setItem('fw_is_playlist_template', '1');
-  } else {
-    sessionStorage.removeItem('fw_is_playlist_template');
-  }
-}, true);
+  // Remove forced state everywhere first
+  document.querySelectorAll('a.fw-forced-current').forEach((a) => {
+    a.classList.remove('w--current', 'fw-forced-current');
+    a.removeAttribute('aria-current');
+  });
+
+  if (!isTemplate) return;
+
+  // Add forced current to ANY Playlists link (sidebar + top nav)
+  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
+    a.classList.add('w--current', 'fw-forced-current');
+    a.setAttribute('aria-current', 'page');
+  });
+}
+
+// run now
+fwForcePlaylistsCurrent();
+
+// run after load
+window.addEventListener('load', () => {
+  fwForcePlaylistsCurrent();
+  requestAnimationFrame(fwForcePlaylistsCurrent);
+});
+
+// run after barba transitions (your custom event)
+window.addEventListener('barbaAfterTransition', () => {
+  fwForcePlaylistsCurrent();
+  requestAnimationFrame(fwForcePlaylistsCurrent);
+});
+
+// also hook Barba if available
+if (typeof barba !== 'undefined' && barba.hooks) {
+  barba.hooks.afterEnter(() => {
+    fwForcePlaylistsCurrent();
+    requestAnimationFrame(fwForcePlaylistsCurrent);
+  });
+}
+
 
 /**
  * ============================================================
