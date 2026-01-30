@@ -5391,8 +5391,6 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
-
- beforeEnter(data) {
   
   // Apply theme icon visibility immediately to prevent flash
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
