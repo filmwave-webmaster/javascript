@@ -9276,11 +9276,16 @@ async function initDashboardTiles() {
       waveformContainer.innerHTML = '';
       waveformContainer.dataset.songId = song.id;
       
+      // Get computed CSS variable values for current theme
+      const styles = getComputedStyle(document.body);
+      const waveColor = styles.getPropertyValue('--color-8').trim() || '#808080';
+      const progressColor = styles.getPropertyValue('--color-2').trim() || '#ffffff';
+
       // Initialize waveform
       const wavesurfer = WaveSurfer.create({
         container: waveformContainer,
-        waveColor: '#808080',
-        progressColor: '#ffffff',
+        waveColor: waveColor,
+        progressColor: progressColor,
         cursorColor: 'transparent',
         barWidth: 1.5,
         barGap: 1.5,
@@ -9291,7 +9296,7 @@ async function initDashboardTiles() {
         interact: true,
         audioContext: window.sharedAudioContext
       });
-
+      
       const peaksData = fields['Waveform Peaks'] ? JSON.parse(fields['Waveform Peaks']) : null;
       const duration = fields['Duration'];
       
