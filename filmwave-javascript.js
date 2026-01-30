@@ -5440,10 +5440,19 @@ if (typeof barba !== 'undefined') {
   return Promise.resolve();
 },
 
-     beforeEnter(data) {
+     beforeEnter(data) {     
   
   // Apply theme icon visibility immediately to prevent flash
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
+
+  // Set volume slider position immediately to prevent flash
+  const savedVolume = localStorage.getItem('filmwaveVolume');
+  if (savedVolume !== null) {
+    const volumePercent = parseFloat(savedVolume) * 100;
+    document.querySelectorAll('.volume-slider-handle').forEach(handle => {
+      handle.style.left = `${volumePercent}%`;
+    });
+  }     
   
   // Update icons in incoming container
   data.next.container.querySelectorAll('.dark-mode-icon').forEach(icon => {
