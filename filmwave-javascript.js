@@ -2211,6 +2211,18 @@ document.addEventListener('keydown', function (e) {
       } else {
         g.standaloneAudio.pause();
       }
+      
+      // Update song card play/pause icons
+      if (g.currentSongData) {
+        const currentCard = document.querySelector(`.song-wrapper[data-song-id="${g.currentSongData.id}"]`);
+        if (currentCard) {
+          const playIcon = currentCard.querySelector('.play-icon');
+          const pauseIcon = currentCard.querySelector('.pause-icon');
+          const isPlaying = !g.standaloneAudio.paused;
+          if (playIcon) playIcon.style.display = isPlaying ? 'none' : 'flex';
+          if (pauseIcon) pauseIcon.style.display = isPlaying ? 'flex' : 'none';
+        }
+      }
     }
     return false;
   }
