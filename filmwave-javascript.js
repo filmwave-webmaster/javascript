@@ -5121,51 +5121,53 @@ function initUniversalSearch() {
 
 /**
 * ============================================================
-* FORCE PLAYLISTS "CURRENT" STATE ON PLAYLIST-TEMPLATE
+* FORCE PLAYLISTS "CURRENT" STATE ON PLAYLIST-TEMPLATE (NO FLASH)
 * ============================================================
 */
 
 function fwForcePlaylistsCurrent() {
   const isTemplate = window.location.pathname.includes('/dashboard/playlist-template');
 
-  // Remove forced state everywhere first
+  // kill transitions for this paint
+  document.documentElement.classList.add('fw-no-nav-flash');
+
+  // remove old forced state
   document.querySelectorAll('a.fw-forced-current').forEach((a) => {
     a.classList.remove('w--current', 'fw-forced-current');
     a.removeAttribute('aria-current');
   });
 
-  if (!isTemplate) return;
+  if (isTemplate) {
+    document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
+      a.classList.add('w--current', 'fw-forced-current');
+      a.setAttribute('aria-current', 'page');
+    });
+  }
 
-  // Add forced current to ANY Playlists link (sidebar + top nav)
-  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
-    a.classList.add('w--current', 'fw-forced-current');
-    a.setAttribute('aria-current', 'page');
+  // re-enable transitions next frame
+  requestAnimationFrame(() => {
+    document.documentElement.classList.remove('fw-no-nav-flash');
   });
 }
 
-// run now
 fwForcePlaylistsCurrent();
 
-// run after load
 window.addEventListener('load', () => {
   fwForcePlaylistsCurrent();
   requestAnimationFrame(fwForcePlaylistsCurrent);
 });
 
-// run after barba transitions (your custom event)
 window.addEventListener('barbaAfterTransition', () => {
   fwForcePlaylistsCurrent();
   requestAnimationFrame(fwForcePlaylistsCurrent);
 });
 
-// also hook Barba if available
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.afterEnter(() => {
     fwForcePlaylistsCurrent();
     requestAnimationFrame(fwForcePlaylistsCurrent);
   });
 }
-
 
 /**
  * ============================================================
