@@ -9660,13 +9660,14 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
    33. PLAYLISTS PAGE
    ============================================================ */
 async function initPlaylistsPage() {
-  const container = document.querySelector('.playlists-grid');
-  if (!container) {
-    console.log('ℹ️ No playlists grid container found');
+  const sortableContainer = document.querySelector('.playlists-grid .sortable-container');
+  if (!sortableContainer) {
+    console.log('ℹ️ No playlists sortable container found');
     return;
   }
   
-  const template = container.querySelector('.playlist-card-template.is-template');
+  const template = sortableContainer.querySelector('.playlist-card-template.is-template');
+  
   if (!template) {
     console.log('❌ No playlist template found');
     return;
@@ -9675,12 +9676,12 @@ async function initPlaylistsPage() {
   console.log('🎵 Initializing playlists page...');
   
   // Clear ALL non-template cards
-  container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
+  sortableContainer.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
     card.remove();
   });
   
   // Show placeholders while loading
-  container.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
     el.style.display = '';
   });
   
@@ -9745,7 +9746,7 @@ async function initPlaylistsPage() {
     }
     
     // Append everything at once
-    container.appendChild(frag);
+    sortableContainer.appendChild(frag);
     console.log(`✅ Rendered ${playlists.length} playlist cards`);
     
     if (window.Webflow?.require) {
@@ -9756,10 +9757,10 @@ async function initPlaylistsPage() {
     }
   } finally {
     // Hide all placeholders once real cards exist
-    container.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
       el.style.display = 'none';
     });
-    container.style.opacity = '1';
-    container.style.pointerEvents = '';
+    sortableContainer.style.opacity = '1';
+    sortableContainer.style.pointerEvents = '';
   }
 }
