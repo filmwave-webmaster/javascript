@@ -5121,38 +5121,53 @@ function initUniversalSearch() {
 
 /**
 * ============================================================
-* FORCE "PLAYLISTS" CURRENT STATE (NO FLASH)
+* FORCE "PLAYLISTS" CURRENT STATE ON PLAYLIST TEMPLATE
 * ============================================================
 */
 
 function forcePlaylistsCurrentState() {
-  const isPlaylistTemplate =
-    window.location.pathname.includes('/dashboard/playlist-template');
-
-  if (!isPlaylistTemplate) return;
-
-  // Target by href (better than text)
   document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
     a.classList.add('w--current');
     a.setAttribute('aria-current', 'page');
   });
 }
 
-// run immediately on load
-forcePlaylistsCurrentState();
+function shouldForceFromPath(pathname) {
+  return (pathname || '').includes('/dashboard/playlist-template');
+}
 
-// run BEFORE the new page is shown (prevents flash)
+// Run on normal load
+if (shouldForceFromPath(window.location.pathname)) {
+  forcePlaylistsCurrentState();
+}
+
+// Barba hooks (use next url)
 if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.beforeEnter(() => {
+  barba.hooks.beforeEnter((data) => {
+    const nextPath = data?.next?.url?.path || '';
+    if (!shouldForceFromPath(nextPath)) return;
+
     forcePlaylistsCurrentState();
   });
 
-  // run again right after enter (covers late DOM updates)
-  barba.hooks.afterEnter(() => {
+  barba.hooks.afterEnter((data) => {
+    const nextPath = data?.next?.url?.path || '';
+    if (!shouldForceFromPath(nextPath)) return;
+
     forcePlaylistsCurrentState();
     requestAnimationFrame(forcePlaylistsCurrentState);
+    setTimeout(forcePlaylistsCurrentState, 0);
   });
 }
+
+// Your existing custom event (keep compatibility)
+window.addEventListener('barbaAfterTransition', () => {
+  if (!shouldForceFromPath(window.location.pathname)) return;
+
+  forcePlaylistsCurrentState();
+  requestAnimationFrame(forcePlaylistsCurrentState);
+});
+
 
 /**
  * ============================================================
