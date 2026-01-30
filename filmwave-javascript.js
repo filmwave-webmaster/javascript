@@ -2345,6 +2345,8 @@ function initDarkMode() {
       console.log('🎨 Waveform colors updated');
     }, 50);
   }
+
+  
   
   // Apply theme to CSS variables
   function applyThemeColors(theme) {
@@ -2381,9 +2383,23 @@ function initDarkMode() {
     icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
   });
 }
+
+  
   
   // Full theme application
   function applyTheme(theme) {
+
+      // Remove preload style so JS can take over
+    const preloadStyle = document.getElementById('dark-mode-preload');
+    if (preloadStyle) {
+      preloadStyle.remove();
+    }
+    
+    if (theme === 'dark') {
+      Object.entries(darkColors).forEach(([variable, value]) => {
+        document.body.style.setProperty(variable, value);
+      });
+    
     applyThemeColors(theme);
     updateIconVisibility(theme);
   }
