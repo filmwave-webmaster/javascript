@@ -582,7 +582,7 @@ function navigateStandaloneTrack(direction) {
     });
   }
   
-  // Hide play button on previous song card
+  // Hide play button and reset icons on previous song card
   if (g.currentSongData) {
     const prevCard = document.querySelector(`.song-wrapper[data-song-id="${g.currentSongData.id}"]`);
     if (prevCard) {
@@ -590,6 +590,11 @@ function navigateStandaloneTrack(direction) {
       if (prevPlayBtn) {
         prevPlayBtn.style.setProperty('opacity', '0', 'important');
       }
+      // Reset to play icon (not pause)
+      const prevPlayIcon = prevCard.querySelector('.play-icon');
+      const prevPauseIcon = prevCard.querySelector('.pause-icon');
+      if (prevPlayIcon) prevPlayIcon.style.display = 'flex';
+      if (prevPauseIcon) prevPauseIcon.style.display = 'none';
     }
   }
   
@@ -597,12 +602,24 @@ function navigateStandaloneTrack(direction) {
   g.currentSongData = nextSong;
   g.hasActiveSong = true;
   
-  // Show play button on new song card
+  // Show play button and set correct icon on new song card
   const newCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
   if (newCard) {
     const newPlayBtn = newCard.querySelector('.play-button');
     if (newPlayBtn) {
       newPlayBtn.style.setProperty('opacity', '1', 'important');
+    }
+    // Set icon based on whether we'll be playing
+    const newPlayIcon = newCard.querySelector('.play-icon');
+    const newPauseIcon = newCard.querySelector('.pause-icon');
+    if (wasPlaying || g.autoPlayNext) {
+      // Will be playing - show pause icon
+      if (newPlayIcon) newPlayIcon.style.display = 'none';
+      if (newPauseIcon) newPauseIcon.style.display = 'flex';
+    } else {
+      // Won't be playing - show play icon
+      if (newPlayIcon) newPlayIcon.style.display = 'flex';
+      if (newPauseIcon) newPauseIcon.style.display = 'none';
     }
   }
   
