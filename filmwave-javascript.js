@@ -5132,38 +5132,51 @@ function shouldForceFromPath(pathname) {
 let fwCurrentLockObserver = null;
 let fwCurrentLockTimer = null;
 
-function applyPlaylistsCurrent() {
-  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
-    a.classList.add('w--current');
-    a.setAttribute('aria-current', 'page');
+function ensurePlaylistsCurrent() {
+  const links = document.querySelectorAll('a[href*="/dashboard/playlists"]');
+  if (!links.length) return false;
+
+  let changed = false;
+
+  links.forEach((a) => {
+    if (!a.classList.contains('w--current')) {
+      a.classList.add('w--current');
+      changed = true;
+    }
+    if (a.getAttribute('aria-current') !== 'page') {
+      a.setAttribute('aria-current', 'page');
+      changed = true;
+    }
   });
+
+  return changed;
 }
 
 function startLock() {
   stopLock();
 
-  // Apply immediately a few times (catches late nav rendering)
-  applyPlaylistsCurrent();
-  requestAnimationFrame(applyPlaylistsCurrent);
-  setTimeout(applyPlaylistsCurrent, 0);
-  setTimeout(applyPlaylistsCurrent, 50);
+  // Apply a few times (handles late-rendered nav)
+  ensurePlaylistsCurrent();
+  requestAnimationFrame(ensurePlaylistsCurrent);
+  setTimeout(ensurePlaylistsCurrent, 0);
+  setTimeout(ensurePlaylistsCurrent, 50);
 
-  // LOCK: if Webflow removes w--current, put it back
+  // LOCK: only re-apply if it got removed (prevents infinite loop)
   fwCurrentLockObserver = new MutationObserver(() => {
     if (!shouldForceFromPath(window.location.pathname)) return;
-    applyPlaylistsCurrent();
+
+    // If nothing changed / nothing missing, do nothing (prevents recursion)
+    ensurePlaylistsCurrent();
   });
 
   fwCurrentLockObserver.observe(document.body, {
-    attributes: true,
     subtree: true,
-    attributeFilter: ['class'],
+    attributes: true,
+    attributeFilter: ['class', 'aria-current'],
   });
 
-  // Safety: stop locking after 2.5s (enough to survive Webflow/nav swaps)
-  fwCurrentLockTimer = setTimeout(() => {
-    stopLock();
-  }, 2500);
+  // Stop locking after nav settles
+  fwCurrentLockTimer = setTimeout(() => stopLock(), 2000);
 }
 
 function stopLock() {
