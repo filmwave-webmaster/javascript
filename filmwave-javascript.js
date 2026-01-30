@@ -2383,8 +2383,6 @@ function initDarkMode() {
     icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
   });
 }
-
-  
   
   // Full theme application
   function applyTheme(theme) {
@@ -2399,6 +2397,7 @@ function initDarkMode() {
       Object.entries(darkColors).forEach(([variable, value]) => {
         document.body.style.setProperty(variable, value);
       });
+    }
     
     applyThemeColors(theme);
     updateIconVisibility(theme);
