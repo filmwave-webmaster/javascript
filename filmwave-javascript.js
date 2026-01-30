@@ -5284,11 +5284,6 @@ if (typeof barba !== 'undefined') {
       
    beforeLeave(data) {
 
-  // Hide ALL theme icons immediately to prevent flash during transition
-  document.querySelectorAll('.dark-mode-icon, .light-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', 'none', 'important');
-  });
-
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
   
@@ -5595,10 +5590,20 @@ if (shouldHaveSidebar && !sidebar) {
       const fetchedSidebar = doc.querySelector('.sidebar-nav');
       
       if (fetchedSidebar) {
-        const newSidebar = fetchedSidebar.cloneNode(true);
-        newSidebar.style.visibility = 'visible';
-        newSidebar.style.opacity = '0';
-        newSidebar.style.transition = 'none';
+  const newSidebar = fetchedSidebar.cloneNode(true);
+  
+  // Apply correct theme icon visibility to injected sidebar
+  const theme = localStorage.getItem('filmwaveTheme') || 'light';
+  newSidebar.querySelectorAll('.dark-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+  });
+  newSidebar.querySelectorAll('.light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  });
+  
+  newSidebar.style.visibility = 'visible';
+  newSidebar.style.opacity = '0';
+  newSidebar.style.transition = 'none';
         
         const mainContent = document.querySelector('[data-barba="container"]');
         if (mainContent) {
