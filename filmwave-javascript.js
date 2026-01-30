@@ -5120,33 +5120,6 @@ function initUniversalSearch() {
 })();
 
 /**
-* ============================================================
-* FORCE PLAYLISTS "CURRENT" STATE ON PLAYLIST-TEMPLATE (NO FLASH)
-* ============================================================
-*/
-
-function forcePlaylistsCurrentState() {
-  // only on playlist-template
-  const isTemplate = location.pathname.includes('/dashboard/playlist-template');
-  document.documentElement.classList.toggle('fw-playlist-template', isTemplate);
-
-  // mark ALL playlists links (sidebar + top nav)
-  document.querySelectorAll('a[href*="/dashboard/playlists"]').forEach((a) => {
-    if (isTemplate) a.classList.add('fw-forced-current');
-    else a.classList.remove('fw-forced-current');
-  });
-}
-
-// run immediately
-forcePlaylistsCurrentState();
-
-// run after barba transitions
-if (window.barba) {
-  barba.hooks.beforeEnter(() => forcePlaylistsCurrentState());
-  barba.hooks.after(() => forcePlaylistsCurrentState());
-}
-
-/**
  * ============================================================
  * BARBA.JS & PAGE TRANSITIONS
  * ============================================================
