@@ -5855,13 +5855,18 @@ if (shouldHaveSidebar && sidebar) {
 // Fade in the page content (not persistent nav/sidebar)
   const pageContent = document.querySelector('.db-content-container');
   if (pageContent) {
-    pageContent.style.opacity = '0';
-    pageContent.style.transition = 'none';
-    setTimeout(() => {
-      pageContent.style.transition = 'opacity 0.3s ease';
+    // Don't reset opacity if content has already been populated
+    if (pageContent.offsetHeight > 100) {
       pageContent.style.opacity = '1';
-    }, 50);
-  }     
+    } else {
+      pageContent.style.opacity = '0';
+      pageContent.style.transition = 'none';
+      setTimeout(() => {
+        pageContent.style.transition = 'opacity 0.3s ease';
+        pageContent.style.opacity = '1';
+      }, 50);
+    }
+  }  
         
   // Show loading placeholders after transition completes
 const loadingPlaceholders = document.querySelectorAll('.loading-placeholder');
