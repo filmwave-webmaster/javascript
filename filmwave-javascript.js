@@ -2183,6 +2183,10 @@ async function displayFavoriteSongs(limit = null) {
   }
   
   console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
+
+   // Fade in the container
+  container.style.transition = 'opacity 0.3s ease';
+  container.style.opacity = '1';
   
   // Initialize waveforms for these cards
   setTimeout(() => {
@@ -5559,7 +5563,13 @@ if (typeof barba !== 'undefined') {
   return Promise.resolve();
 },
 
-     beforeEnter(data) {     
+     beforeEnter(data) {   
+
+  // Hide favorite-songs-wrapper on incoming page to prevent flash
+  const favoriteSongsWrapper = data.next.container.querySelector('.favorite-songs-wrapper');
+  if (favoriteSongsWrapper) {
+    favoriteSongsWrapper.style.opacity = '0';
+  }     
   
   // Apply theme icon visibility immediately to prevent flash
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
