@@ -2188,13 +2188,21 @@ async function displayFavoriteSongs(limit = null) {
   container.style.transition = 'opacity 0.3s ease';
   container.style.opacity = '1';
   
-  // Initialize waveforms for these cards
+ // Initialize waveforms for these cards
   setTimeout(() => {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
       loadWaveformBatch(Array.from(cards));
     }
+    
+    // Fade in the page container after content is loaded
+    const barbaContainer = document.querySelector('[data-barba="container"]');
+    if (barbaContainer) {
+      barbaContainer.style.transition = 'opacity 0.3s ease';
+      barbaContainer.style.opacity = '1';
+    }
   }, 100);
+  
 }
 
 /**
@@ -5563,7 +5571,10 @@ if (typeof barba !== 'undefined') {
   return Promise.resolve();
 },
 
-     beforeEnter(data) {   
+     beforeEnter(data) { 
+
+       // Hide the entire incoming container to prevent any flash
+  data.next.container.style.opacity = '0';
 
   // Hide favorite-songs-wrapper on incoming page to prevent flash
   const favoriteSongsWrapper = data.next.container.querySelector('.favorite-songs-wrapper');
