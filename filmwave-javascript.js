@@ -2123,14 +2123,7 @@ async function displayFeaturedSongs(limit = 6) {
  * DISPLAY FAVORITE SONGS ON BACKEND PAGE
  * ============================================================
  */
-async function displayFavoriteSongs(limit = null) {
-  // Prevent duplicate calls
-  if (favoriteSongsDisplayed) {
-    console.log('⏭️ Skipping displayFavoriteSongs - already displayed');
-    return;
-  }
-  favoriteSongsDisplayed = true;
-  
+async function displayFavoriteSongs(limit = null) {  
   const container = document.querySelector('.favorite-songs-wrapper');
   if (!container) {
     console.log('No favorite songs container found on this page');
@@ -2183,10 +2176,6 @@ async function displayFavoriteSongs(limit = null) {
   }
   
   console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
-
-   // Fade in the container
-  container.style.transition = 'opacity 0.3s ease';
-  container.style.opacity = '1';
   
  // Initialize waveforms for these cards
   setTimeout(() => {
@@ -2194,15 +2183,7 @@ async function displayFavoriteSongs(limit = null) {
     if (cards.length > 0) {
       loadWaveformBatch(Array.from(cards));
     }
-    
-    // Fade in the page container after content is loaded
-    const barbaContainer = document.querySelector('[data-barba="container"]');
-    if (barbaContainer) {
-      barbaContainer.style.transition = 'opacity 0.3s ease';
-      barbaContainer.style.opacity = '1';
-    }
   }, 100);
-  
 }
 
 /**
@@ -5256,9 +5237,7 @@ window.addEventListener('barbaAfterTransition', () => {
  * ============================================================
  */
 
-window.addEventListener('load', () => {
-  favoriteSongsDisplayed = false;
-  
+window.addEventListener('load', () => {  
   initMusicPage();
   initVolumeControl();
   initPlayerCloseButton();
@@ -5463,9 +5442,6 @@ if (typeof barba !== 'undefined') {
 
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
-
-  // Reset display flags for next page
-  favoriteSongsDisplayed = false;   
   
   // Fade out sidebar when leaving dashboard for non-dashboard page
   const leavingPath = data.current?.url?.path || window.location.pathname || '';
@@ -5573,15 +5549,6 @@ if (typeof barba !== 'undefined') {
 
      beforeEnter(data) { 
 
-       // Hide the entire incoming container to prevent any flash
-  data.next.container.style.opacity = '0';
-
-  // Hide favorite-songs-wrapper on incoming page to prevent flash
-  const favoriteSongsWrapper = data.next.container.querySelector('.favorite-songs-wrapper');
-  if (favoriteSongsWrapper) {
-    favoriteSongsWrapper.style.opacity = '0';
-  }     
-  
   // Apply theme icon visibility immediately to prevent flash
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
 
@@ -5876,17 +5843,12 @@ if (shouldHaveSidebar && sidebar) {
 // Fade in the page content (not persistent nav/sidebar)
   const pageContent = document.querySelector('.db-content-container');
   if (pageContent) {
-    // Don't reset opacity if content has already been populated
-    if (pageContent.offsetHeight > 100) {
+    pageContent.style.opacity = '0';
+    pageContent.style.transition = 'none';
+    setTimeout(() => {
+      pageContent.style.transition = 'opacity 0.3s ease';
       pageContent.style.opacity = '1';
-    } else {
-      pageContent.style.opacity = '0';
-      pageContent.style.transition = 'none';
-      setTimeout(() => {
-        pageContent.style.transition = 'opacity 0.3s ease';
-        pageContent.style.opacity = '1';
-      }, 50);
-    }
+    }, 50);
   }  
         
   // Show loading placeholders after transition completes
@@ -6238,7 +6200,6 @@ document.addEventListener('change', (e) => {
  */
 let filtersRestored = false;
 let favoritesRestored = false;
-let favoriteSongsDisplayed = false;
 let isClearing = false;
 let searchSaveTimeout;
 
