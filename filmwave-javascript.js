@@ -2124,6 +2124,13 @@ async function displayFeaturedSongs(limit = 6) {
  * ============================================================
  */
 async function displayFavoriteSongs(limit = null) {
+  // Prevent duplicate calls
+  if (favoriteSongsDisplayed) {
+    console.log('⏭️ Skipping displayFavoriteSongs - already displayed');
+    return;
+  }
+  favoriteSongsDisplayed = true;
+  
   const container = document.querySelector('.favorite-songs-wrapper');
   if (!container) {
     console.log('No favorite songs container found on this page');
@@ -5238,6 +5245,8 @@ window.addEventListener('barbaAfterTransition', () => {
  */
 
 window.addEventListener('load', () => {
+  favoriteSongsDisplayed = false;
+  
   initMusicPage();
   initVolumeControl();
   initPlayerCloseButton();
@@ -5442,6 +5451,9 @@ if (typeof barba !== 'undefined') {
 
   const g = window.musicPlayerPersistent;
   g.isTransitioning = true;
+
+  // Reset display flags for next page
+  favoriteSongsDisplayed = false;   
   
   // Fade out sidebar when leaving dashboard for non-dashboard page
   const leavingPath = data.current?.url?.path || window.location.pathname || '';
@@ -6200,6 +6212,7 @@ document.addEventListener('change', (e) => {
  */
 let filtersRestored = false;
 let favoritesRestored = false;
+let favoriteSongsDisplayed = false;
 let isClearing = false;
 let searchSaveTimeout;
 
