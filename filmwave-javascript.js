@@ -9777,22 +9777,30 @@ function initMobileFilterToggle() {
   
   if (!filterWrapper) return;
   
+  // Track mobile filter state
+  let mobileFilterOpen = false;
+  
   if (filterButton) {
     filterButton.addEventListener('click', () => {
       filterWrapper.style.display = 'flex';
+      mobileFilterOpen = true;
     });
   }
   
   if (filterClose) {
     filterClose.addEventListener('click', () => {
       filterWrapper.style.display = 'none';
+      mobileFilterOpen = false;
     });
   }
   
-  // Force visible on desktop
+  // Handle screen width changes
   function checkScreenWidth() {
     if (window.innerWidth >= 768) {
       filterWrapper.style.display = 'flex';
+    } else {
+      // Restore mobile state
+      filterWrapper.style.display = mobileFilterOpen ? 'flex' : 'none';
     }
   }
   
