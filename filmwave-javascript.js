@@ -9777,20 +9777,31 @@ function initMobileFilterToggle() {
   
   if (!filterWrapper) return;
   
-  // Track mobile filter state
-  let mobileFilterOpen = false;
+  // Use global state to persist mobile filter state across transitions
+  const g = window.musicPlayerPersistent;
+  if (typeof g.mobileFilterOpen === 'undefined') {
+    g.mobileFilterOpen = false;
+  }
   
   if (filterButton) {
-    filterButton.addEventListener('click', () => {
+    // Clone to remove old listeners
+    const newFilterButton = filterButton.cloneNode(true);
+    filterButton.parentNode.replaceChild(newFilterButton, filterButton);
+    
+    newFilterButton.addEventListener('click', () => {
       filterWrapper.style.display = 'flex';
-      mobileFilterOpen = true;
+      g.mobileFilterOpen = true;
     });
   }
   
   if (filterClose) {
-    filterClose.addEventListener('click', () => {
+    // Clone to remove old listeners
+    const newFilterClose = filterClose.cloneNode(true);
+    filterClose.parentNode.replaceChild(newFilterClose, filterClose);
+    
+    newFilterClose.addEventListener('click', () => {
       filterWrapper.style.display = 'none';
-      mobileFilterOpen = false;
+      g.mobileFilterOpen = false;
     });
   }
   
@@ -9799,16 +9810,19 @@ function initMobileFilterToggle() {
     if (window.innerWidth >= 768) {
       filterWrapper.style.display = 'flex';
     } else {
-      // Restore mobile state
-      filterWrapper.style.display = mobileFilterOpen ? 'flex' : 'none';
+      filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
     }
   }
   
   // Check on load
   checkScreenWidth();
   
-  // Check on resize
-  window.addEventListener('resize', checkScreenWidth);
+  // Remove old resize listener and add new one
+  if (g._mobileFilterResizeHandler) {
+    window.removeEventListener('resize', g._mobileFilterResizeHandler);
+  }
+  g._mobileFilterResizeHandler = checkScreenWidth;
+  window.addEventListener('resize', g._mobileFilterResizeHandler);
   
   console.log('✅ Mobile filter toggle initialized');
 }
