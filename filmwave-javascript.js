@@ -9789,5 +9789,18 @@ function initMobileFilterToggle() {
     });
   }
   
+  // Force visible on desktop
+  function checkScreenWidth() {
+    if (window.innerWidth >= 768) {
+      filterWrapper.style.display = 'flex';
+    }
+  }
+  
+  // Check on load
+  checkScreenWidth();
+  
+  // Check on resize
+  window.addEventListener('resize', checkScreenWidth);
+  
   console.log('✅ Mobile filter toggle initialized');
 }
