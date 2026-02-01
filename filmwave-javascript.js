@@ -5242,6 +5242,7 @@ window.addEventListener('load', () => {
   initVolumeControl();
   initPlayerCloseButton();
   initDarkMode();
+  initMobileFilterToggle();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -9763,4 +9764,30 @@ async function initPlaylistsPage() {
     sortableContainer.style.opacity = '1';
     sortableContainer.style.pointerEvents = '';
   }
+}
+
+/* ============================================================
+   33. TOGGLE SEARCH FILTERS MUSIC PAGE
+   ============================================================ */
+
+function initMobileFilterToggle() {
+  const filterButton = document.querySelector('.search-filter-button');
+  const filterClose = document.querySelector('.search-filter-close');
+  const filterWrapper = document.querySelector('.filter-wrapper');
+  
+  if (!filterWrapper) return;
+  
+  if (filterButton) {
+    filterButton.addEventListener('click', () => {
+      filterWrapper.style.display = 'flex';
+    });
+  }
+  
+  if (filterClose) {
+    filterClose.addEventListener('click', () => {
+      filterWrapper.style.display = 'none';
+    });
+  }
+  
+  console.log('✅ Mobile filter toggle initialized');
 }
