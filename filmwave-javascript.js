@@ -356,13 +356,12 @@ if (sidebarNav) {
       }
     }
     
-    // RESET SIDEBAR NAV PADDING WHEN PLAYER IS HIDDEN
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    if (sidebarNav) {
-      sidebarNav.style.setProperty('padding-bottom', '120px', 'important');
-      console.log('🗑️ Reset padding on sidebar-nav');
-    }
-  }
+   // RESET SIDEBAR NAV PADDING WHEN PLAYER IS HIDDEN
+const sidebarNav = document.querySelector('.sidebar-nav');
+if (sidebarNav) {
+  sidebarNav.style.removeProperty('padding-bottom');
+  console.log('🗑️ Reset padding on sidebar-nav to Webflow defaults');
+}
 }
 
 /**
