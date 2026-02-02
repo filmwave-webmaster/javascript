@@ -9929,17 +9929,6 @@ function syncAirtablePlayer() {
   }
 }
 
-// --- Barba.js Integration ---
-barba.init({
-  transitions: [{
-    name: 'default',
-    afterEnter() {
-      // Re-initialize everything on the new page
-      initMusicPage();
-    }
-  }]
-});
-
 // Initial load
 document.addEventListener('DOMContentLoaded', () => {
   // Make sure to include the Lenis script in your HTML:
