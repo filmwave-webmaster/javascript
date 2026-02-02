@@ -9858,28 +9858,3 @@ function initMobileFilterToggle(container = document) {
 }
 
 
-
-
-
-
-
-
-
-// Add to your code (e.g., in initMusicPage or as a standalone IIFE)
-(function initOverscrollFix() {
-  const musicList = document.querySelector('.music-list-wrapper');
-  if (!musicList) return;
-  
-  musicList.addEventListener('scroll', function() {
-    if (musicList.scrollTop <= 0) {
-      // At top - prevent upward overscroll
-      musicList.style.overscrollBehavior = 'contain';
-    } else {
-      // Scrolling down - allow normal behavior
-      musicList.style.overscrollBehavior = 'auto';
-    }
-  }, { passive: true });
-  
-  // Set initial state
-  musicList.style.overscrollBehavior = 'contain';
-})();
