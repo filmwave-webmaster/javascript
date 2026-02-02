@@ -9769,7 +9769,6 @@ async function initPlaylistsPage() {
 /* ============================================================
    33. TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
-
 function initMobileFilterToggle() {
   const filterButton = document.querySelector('.search-filter-button');
   const filterClose = document.querySelector('.search-filter-close');
@@ -9783,6 +9782,16 @@ function initMobileFilterToggle() {
     g.mobileFilterOpen = false;
   }
   
+  function lockBodyScroll() {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+  }
+  
+  function unlockBodyScroll() {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+  
   if (filterButton) {
     // Clone to remove old listeners
     const newFilterButton = filterButton.cloneNode(true);
@@ -9791,6 +9800,9 @@ function initMobileFilterToggle() {
     newFilterButton.addEventListener('click', () => {
       filterWrapper.style.display = 'flex';
       g.mobileFilterOpen = true;
+      if (window.innerWidth < 768) {
+        lockBodyScroll();
+      }
     });
   }
   
@@ -9802,6 +9814,7 @@ function initMobileFilterToggle() {
     newFilterClose.addEventListener('click', () => {
       filterWrapper.style.display = 'none';
       g.mobileFilterOpen = false;
+      unlockBodyScroll();
     });
   }
   
@@ -9809,8 +9822,14 @@ function initMobileFilterToggle() {
   function checkScreenWidth() {
     if (window.innerWidth >= 768) {
       filterWrapper.style.display = 'flex';
+      unlockBodyScroll();
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
+      if (g.mobileFilterOpen) {
+        lockBodyScroll();
+      } else {
+        unlockBodyScroll();
+      }
     }
   }
   
