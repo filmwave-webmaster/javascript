@@ -9878,9 +9878,11 @@ function initMobileFilterToggle(container = document) {
 
 function resetMobileProgress() {
   const el = document.querySelector('.mobile-volume-tracker');
-  if (el) {
-    el.style.transform = 'scaleX(0)';
-  }
+  if (!el) return;
+
+  el.style.transformOrigin = 'left center';
+  el.style.transform = 'scaleX(0)';
+}
 }
 
 function updateMobileProgress(current, duration) {
