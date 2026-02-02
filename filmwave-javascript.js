@@ -1802,15 +1802,19 @@ function loadWaveformBatch(cardElements) {
     waveformContainer.id = `waveform-${songId}`;
     waveformContainers.push(waveformContainer);
     
-    if (playButton) {
+   if (playButton) {
+      const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      
       playButton.style.opacity = '0';
-      cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
-      cardElement.addEventListener('mouseleave', () => {
-        if (g.currentSongData?.id === songId && (g.isPlaying || g.standaloneAudio)) {
-          playButton.style.opacity = '1';
-        } else {
-          playButton.style.opacity = '0';
-        }
+      
+      if (!isTouchDevice) {
+        cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
+        cardElement.addEventListener('mouseleave', () => {
+          if (g.currentSongData?.id === songId && (g.isPlaying || g.standaloneAudio)) {
+            playButton.style.opacity = '1';
+          } else {
+            playButton.style.opacity = '0';
+          }
       });
     }
     
