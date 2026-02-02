@@ -9921,37 +9921,7 @@ const SiteManager = {
     }, 150);
   },
 
-  initSearchFormPrevention() {
-    // Prevents search form from reloading the page/breaking Barba state
-    const searchForm = document.querySelector('form[role="search"], #search-form');
-    if (searchForm) {
-      searchForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        console.log("Search intercepted - persistence maintained.");
-      });
-    }
-  },
-
-  syncAirtablePlayer() {
-    /**
-     * MASTER PLAYER DATA PERSISTENCE
-     * Ensures Cover, Artist, and Title remain synced across Barba transitions.
-     */
-    const ui = {
-      title: document.querySelector('.master-track-title'),
-      artist: document.querySelector('.master-track-artist'),
-      cover: document.querySelector('.master-track-cover')
-    };
-
-    // Assume window.globalMusicState holds the current Airtable record
-    if (window.globalMusicState) {
-      const { title, artist, cover } = window.globalMusicState;
-      if (ui.title) ui.title.innerText = title;
-      if (ui.artist) ui.artist.innerText = artist;
-      if (ui.cover) ui.cover.src = cover;
-    }
-  }
-};
+ 
 
 /**
  * MANDATORY BARBA STRUCTURE
