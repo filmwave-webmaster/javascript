@@ -9857,3 +9857,61 @@ function initMobileFilterToggle(container = document) {
   
   console.log('✅ Mobile filter toggle initialized');
 }
+
+
+
+
+
+
+
+
+
+
+
+(function () {
+  function getAudio() {
+    return window.musicPlayerPersistent?.audio || document.querySelector('audio');
+  }
+
+  function getTracker() {
+    return document.querySelector('.mobile-volume-tracker');
+  }
+
+  function resetTracker() {
+    const tracker = getTracker();
+    if (tracker) tracker.style.width = '0%';
+  }
+
+  function updateTracker() {
+    const audio = getAudio();
+    const tracker = getTracker();
+    if (!audio || !tracker || !audio.duration) return;
+
+    const progress = (audio.currentTime / audio.duration) * 100;
+    tracker.style.width = progress + '%';
+  }
+
+  function attachListeners() {
+    const audio = getAudio();
+    if (!audio) return;
+
+    audio.addEventListener('timeupdate', updateTracker);
+    audio.addEventListener('ended', resetTracker);
+    audio.addEventListener('emptied', resetTracker); // source changed
+    audio.addEventListener('loadstart', resetTracker);
+  }
+
+  // initial attach
+  attachListeners();
+
+  // re-attach after Barba transitions
+  if (typeof barba !== 'undefined') {
+    window.addEventListener('barbaAfterTransition', () => {
+      resetTracker();
+      attachListeners();
+    });
+  }
+
+  // optional: expose reset if you already close the player elsewhere
+  window.resetMobileProgressTracker = resetTracker;
+})();
