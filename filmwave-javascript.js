@@ -5693,9 +5693,9 @@ if (typeof barba !== 'undefined') {
     const mainContent = nextContainer.querySelector('.main-content');
     if (mainContent) mainContent.style.overflow = 'visible';
   } else {
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
+   // document.body.style.overflow = 'hidden';
+   // document.documentElement.style.overflow = 'hidden';
+  //  document.body.style.height = '100vh';
     nextContainer.style.overflow = 'hidden';
     
     const musicArea = nextContainer.querySelector('.music-area-wrapper');
