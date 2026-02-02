@@ -9876,92 +9876,109 @@ function initMobileFilterToggle(container = document) {
  * Ensures internal elements trigger a whole-page bounce.
  */
 
-const GlobalBounce = {
-  intensity: 0.4,
-  friction: 0.9,
-  y: 0,
-  velocity: 0,
-  
+/**
+ * GLOBAL ELASTIC ENGINE
+ * Targets [data-barba="wrapper"] for a unified Safari-style bounce.
+ */
+
+const SiteController = {
+  isBouncing: false,
+
   init() {
-    this.wrapper = document.querySelector('#smooth-wrapper');
+    this.wrapper = document.querySelector('[data-barba="wrapper"]');
     if (!this.wrapper) return;
 
-    // Listen for wheel events globally
-    window.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
-    this.animate();
+    // Global listener for all scroll interactions
+    window.addEventListener('wheel', (e) => this.handlePhysics(e), { passive: false });
+    
+    // Core Site Functions
+    this.preventSearchLogic();
+    this.syncAirtablePlayer();
   },
 
-  handleWheel(e) {
-    const isAtTop = window.scrollY === 0 && e.deltaY < 0;
-    const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight && e.deltaY > 0;
+  handlePhysics(e) {
+    // 1. Identify what is being scrolled (Global Detection)
+    const path = e.composedPath();
+    const targetScroller = path.find(el => {
+      if (el === window || el === document || !el.tagName) return false;
+      const style = window.getComputedStyle(el);
+      return (style.overflowY === 'auto' || style.overflowY === 'scroll');
+    }) || this.wrapper;
 
-    // If we are at the very top or bottom of the WHOLE page
+    // 2. Check Boundary Conditions
+    const isAtTop = targetScroller.scrollTop <= 0 && e.deltaY < 0;
+    const isAtBottom = (targetScroller.scrollHeight - targetScroller.scrollTop <= targetScroller.clientHeight + 1) && e.deltaY > 0;
+
+    // 3. If hitting an edge, move the WHOLE Barba wrapper
     if (isAtTop || isAtBottom) {
       e.preventDefault();
-      this.velocity += e.deltaY * this.intensity;
+      this.triggerElasticEffect(e.deltaY);
     }
   },
 
-  animate() {
-    // Physics loop for the rubber-band snap
-    this.velocity *= this.friction;
-    this.y += this.velocity;
-    
-    // Snap back force
-    this.y *= 0.8; 
+  triggerElasticEffect(delta) {
+    if (this.isBouncing) return;
+    this.isBouncing = true;
 
-    if (this.wrapper) {
-      this.wrapper.style.transform = `translate3d(0, ${-this.y}px, 0)`;
+    // Calculate displacement (clamped for subtlety)
+    const moveAmount = delta > 0 ? -25 : 25; 
+    this.wrapper.style.transform = `translate3d(0, ${moveAmount}px, 0)`;
+
+    // Snap back to 0
+    setTimeout(() => {
+      this.wrapper.style.transform = `translate3d(0, 0, 0)`;
+      // Cooling period before next bounce
+      setTimeout(() => { this.isBouncing = false; }, 400);
+    }, 150);
+  },
+
+  preventSearchLogic() {
+    // Search form prevention logic as requested
+    const searchForm = document.querySelector('form[role="search"], .search-form');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+      });
     }
+  },
 
-    requestAnimationFrame(() => this.animate());
+  syncAirtablePlayer() {
+    /**
+     * Pulls correct Airtable data (Cover, Artist, Title) 
+     * even when navigating between pages via Barba.
+     */
+    const masterPlayer = {
+      title: document.querySelector('.master-track-title'),
+      artist: document.querySelector('.master-track-artist'),
+      cover: document.querySelector('.master-track-cover')
+    };
+
+    // Ensure data persists from global state if defined
+    if (window.currentTrackData) {
+      if (masterPlayer.title) masterPlayer.title.innerText = window.currentTrackData.title;
+      if (masterPlayer.artist) masterPlayer.artist.innerText = window.currentTrackData.artist;
+      if (masterPlayer.cover) masterPlayer.cover.src = window.currentTrackData.cover;
+    }
   }
 };
 
 /**
- * Full Production initMusicPage
- * Restores all requested logic: Airtable, Search, and Global Bounce
+ * BARBA INITIALIZATION
+ * Restore the entire structure inside initMusicPage
  */
 function initMusicPage() {
-  // 1. Initialize the Global Body Bounce
-  GlobalBounce.init();
-
-  // 2. Persistent Search Prevention
-  const searchForm = document.querySelector('#search-form');
-  if (searchForm) {
-    searchForm.onsubmit = (e) => {
-      e.preventDefault();
-      console.log("Search logic preserved.");
-    };
-  }
-
-  // 3. Master Player Airtable Data Persistence
-  // Pulling Cover, Artist, Title even after Barba navigation
-  syncAirtablePlayer();
+  SiteController.init();
 }
 
-function syncAirtablePlayer() {
-  // Assuming data is stored in a global state or data-attributes
-  const masterPlayer = document.querySelector('.master-player');
-  if (masterPlayer) {
-    const title = masterPlayer.getAttribute('data-title');
-    const artist = masterPlayer.getAttribute('data-artist');
-    const cover = masterPlayer.getAttribute('data-cover');
-
-    if (title) document.querySelector('.player-title').innerText = title;
-    if (artist) document.querySelector('.player-artist').innerText = artist;
-    if (cover) document.querySelector('.player-cover').src = cover;
-  }
-}
-
-// Barba Transition Handling
 barba.init({
   transitions: [{
-    afterEnter() {
+    name: 'fade-transition',
+    afterEnter(data) {
+      // Re-initialize physics and player data on new container
       initMusicPage();
     }
   }]
 });
 
-// Initial Load
+// Initial kick-off
 document.addEventListener('DOMContentLoaded', initMusicPage);
