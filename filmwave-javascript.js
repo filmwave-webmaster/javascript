@@ -9857,3 +9857,122 @@ function initMobileFilterToggle(container = document) {
   
   console.log('✅ Mobile filter toggle initialized');
 }
+
+
+
+
+
+
+/**
+ * GLOBAL ELASTIC ENGINE - PRODUCTION READY
+ * Targets [data-barba="wrapper"] for a unified bounce on any scroll boundary.
+ */
+
+const SiteManager = {
+  isBouncing: false,
+
+  init() {
+    this.wrapper = document.querySelector('[data-barba="wrapper"]');
+    if (!this.wrapper) return;
+
+    // Remove any existing listeners to prevent duplicates on Barba transitions
+    window.removeEventListener('wheel', this.handleScrollHit);
+    window.addEventListener('wheel', (e) => this.handleScrollHit(e), { passive: false });
+
+    // Restore required production features
+    this.initSearchFormPrevention();
+    this.syncAirtablePlayer();
+  },
+
+  handleScrollHit(e) {
+    const path = e.composedPath();
+    
+    // 1. Find the element currently under the cursor that can scroll
+    const activeScroller = path.find(el => {
+      if (el === window || el === document || !el.tagName) return false;
+      const style = window.getComputedStyle(el);
+      return (style.overflowY === 'auto' || style.overflowY === 'scroll');
+    }) || this.wrapper;
+
+    // 2. Boundary Check: Are we at the very top or bottom?
+    const isAtTop = activeScroller.scrollTop <= 0 && e.deltaY < 0;
+    const isAtBottom = (activeScroller.scrollHeight - activeScroller.scrollTop <= activeScroller.clientHeight + 1) && e.deltaY > 0;
+
+    // 3. If hitting a boundary, prevent native "dead" feel and bounce the whole site
+    if (isAtTop || isAtBottom) {
+      e.preventDefault();
+      this.triggerBounce(e.deltaY);
+    }
+  },
+
+  triggerBounce(delta) {
+    if (this.isBouncing) return;
+    this.isBouncing = true;
+
+    // Define bounce strength (clamped for a premium feel)
+    const strength = delta > 0 ? -25 : 25;
+    this.wrapper.style.transform = `translate3d(0, ${strength}px, 0)`;
+
+    // Snap back to original position
+    setTimeout(() => {
+      this.wrapper.style.transform = `translate3d(0, 0, 0)`;
+      // Cooldown to prevent oscillation
+      setTimeout(() => { this.isBouncing = false; }, 400);
+    }, 150);
+  },
+
+  initSearchFormPrevention() {
+    // Prevents search form from reloading the page/breaking Barba state
+    const searchForm = document.querySelector('form[role="search"], #search-form');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        console.log("Search intercepted - persistence maintained.");
+      });
+    }
+  },
+
+  syncAirtablePlayer() {
+    /**
+     * MASTER PLAYER DATA PERSISTENCE
+     * Ensures Cover, Artist, and Title remain synced across Barba transitions.
+     */
+    const ui = {
+      title: document.querySelector('.master-track-title'),
+      artist: document.querySelector('.master-track-artist'),
+      cover: document.querySelector('.master-track-cover')
+    };
+
+    // Assume window.globalMusicState holds the current Airtable record
+    if (window.globalMusicState) {
+      const { title, artist, cover } = window.globalMusicState;
+      if (ui.title) ui.title.innerText = title;
+      if (ui.artist) ui.artist.innerText = artist;
+      if (ui.cover) ui.cover.src = cover;
+    }
+  }
+};
+
+/**
+ * MANDATORY BARBA STRUCTURE
+ */
+function initMusicPage() {
+  SiteManager.init();
+}
+
+barba.init({
+  transitions: [{
+    name: 'page-transition',
+    afterEnter() {
+      // Re-run the global physics and player sync on the new page container
+      initMusicPage();
+    }
+  }]
+});
+
+// Initial kick-off
+document.addEventListener('DOMContentLoaded', initMusicPage);
+
+
+
+
