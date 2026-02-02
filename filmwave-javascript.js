@@ -323,11 +323,16 @@ function updateMasterPlayerVisibility() {
     }
     
     // ADD PADDING TO SIDEBAR NAV WHEN PLAYER IS VISIBLE
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    if (sidebarNav) {
-      sidebarNav.style.setProperty('padding-bottom', '197px', 'important');
-      console.log('✅ Added padding to sidebar-nav');
+   const sidebarNav = document.querySelector('.sidebar-nav');
+if (sidebarNav) {
+    // Check if we've already added the adjustment to prevent compounding
+    if (!sidebarNav.dataset.paddingAdjusted) {
+        const currentPadding = parseFloat(window.getComputedStyle(sidebarNav).paddingBottom) || 0;
+        sidebarNav.style.setProperty('padding-bottom', `${currentPadding + 77}px`, 'important');
+        sidebarNav.setAttribute('data-padding-adjusted', 'true');
+        console.log('✅ Added padding to sidebar-nav');
     }
+}
     
   } else {
     playerWrapper.style.display = 'none';
