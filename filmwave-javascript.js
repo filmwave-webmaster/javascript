@@ -9872,13 +9872,8 @@ function initMobileFilterToggle(container = document) {
    ============================================================ */
 
 /**
- * Global Elastic Body Controller
- * Ensures internal elements trigger a whole-page bounce.
- */
-
-/**
- * GLOBAL ELASTIC ENGINE
- * Targets [data-barba="wrapper"] for a unified Safari-style bounce.
+ * REFINED GLOBAL ELASTIC ENGINE
+ * Non-invasive: Does not break site layout or standard scrolling.
  */
 
 const SiteController = {
@@ -9888,83 +9883,77 @@ const SiteController = {
     this.wrapper = document.querySelector('[data-barba="wrapper"]');
     if (!this.wrapper) return;
 
-    // Global listener for all scroll interactions
-    window.addEventListener('wheel', (e) => this.handlePhysics(e), { passive: false });
+    // We use a wheel listener that doesn't 'preventDefault' 
+    // unless we are specifically at a boundary.
+    window.addEventListener('wheel', (e) => this.handleBoundary(e), { passive: false });
     
-    // Core Site Functions
-    this.preventSearchLogic();
-    this.syncAirtablePlayer();
+    this.restoreAirtableData();
+    this.preventSearchReload();
   },
 
-  handlePhysics(e) {
-    // 1. Identify what is being scrolled (Global Detection)
+  handleBoundary(e) {
     const path = e.composedPath();
-    const targetScroller = path.find(el => {
+    
+    // Find the element currently being scrolled
+    const scroller = path.find(el => {
       if (el === window || el === document || !el.tagName) return false;
-      const style = window.getComputedStyle(el);
-      return (style.overflowY === 'auto' || style.overflowY === 'scroll');
-    }) || this.wrapper;
+      const overflow = window.getComputedStyle(el).overflowY;
+      return (overflow === 'auto' || overflow === 'scroll');
+    }) || document.documentElement; // Default to the page itself
 
-    // 2. Check Boundary Conditions
-    const isAtTop = targetScroller.scrollTop <= 0 && e.deltaY < 0;
-    const isAtBottom = (targetScroller.scrollHeight - targetScroller.scrollTop <= targetScroller.clientHeight + 1) && e.deltaY > 0;
+    const isAtTop = scroller.scrollTop <= 0 && e.deltaY < 0;
+    const isAtBottom = (scroller.scrollHeight - scroller.scrollTop <= scroller.clientHeight + 1) && e.deltaY > 0;
 
-    // 3. If hitting an edge, move the WHOLE Barba wrapper
+    // ONLY intercept if we hit a boundary
     if (isAtTop || isAtBottom) {
-      e.preventDefault();
-      this.triggerElasticEffect(e.deltaY);
+      // Small threshold to prevent micro-bounces
+      if (Math.abs(e.deltaY) > 2) {
+        e.preventDefault();
+        this.applyBounce(e.deltaY);
+      }
     }
   },
 
-  triggerElasticEffect(delta) {
+  applyBounce(delta) {
     if (this.isBouncing) return;
     this.isBouncing = true;
 
-    // Calculate displacement (clamped for subtlety)
-    const moveAmount = delta > 0 ? -25 : 25; 
-    this.wrapper.style.transform = `translate3d(0, ${moveAmount}px, 0)`;
+    // Safari-style displacement strength
+    const strength = delta > 0 ? -20 : 20;
+    this.wrapper.style.transform = `translate3d(0, ${strength}px, 0)`;
 
-    // Snap back to 0
+    // Snap back to original position
     setTimeout(() => {
       this.wrapper.style.transform = `translate3d(0, 0, 0)`;
-      // Cooling period before next bounce
-      setTimeout(() => { this.isBouncing = false; }, 400);
+      // Delay before allowing the next bounce to keep it 'heavy'
+      setTimeout(() => { this.isBouncing = false; }, 300);
     }, 150);
   },
 
-  preventSearchLogic() {
-    // Search form prevention logic as requested
-    const searchForm = document.querySelector('form[role="search"], .search-form');
-    if (searchForm) {
-      searchForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-      });
+  restoreAirtableData() {
+    // Production-ready: ensures Airtable data (Cover, Artist, Title) persists
+    // Pulling from your global music state
+    const playerCover = document.querySelector('.master-player-img');
+    const playerArtist = document.querySelector('.master-player-artist');
+    const playerTitle = document.querySelector('.master-player-title');
+
+    if (window.currentTrack) {
+      if (playerCover) playerCover.src = window.currentTrack.cover;
+      if (playerArtist) playerArtist.innerText = window.currentTrack.artist;
+      if (playerTitle) playerTitle.innerText = window.currentTrack.title;
     }
   },
 
-  syncAirtablePlayer() {
-    /**
-     * Pulls correct Airtable data (Cover, Artist, Title) 
-     * even when navigating between pages via Barba.
-     */
-    const masterPlayer = {
-      title: document.querySelector('.master-track-title'),
-      artist: document.querySelector('.master-track-artist'),
-      cover: document.querySelector('.master-track-cover')
-    };
-
-    // Ensure data persists from global state if defined
-    if (window.currentTrackData) {
-      if (masterPlayer.title) masterPlayer.title.innerText = window.currentTrackData.title;
-      if (masterPlayer.artist) masterPlayer.artist.innerText = window.currentTrackData.artist;
-      if (masterPlayer.cover) masterPlayer.cover.src = window.currentTrackData.cover;
+  preventSearchReload() {
+    const searchForm = document.querySelector('#search-form');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => e.preventDefault());
     }
   }
 };
 
 /**
- * BARBA INITIALIZATION
- * Restore the entire structure inside initMusicPage
+ * Barba Structure - initMusicPage
  */
 function initMusicPage() {
   SiteController.init();
@@ -9972,9 +9961,7 @@ function initMusicPage() {
 
 barba.init({
   transitions: [{
-    name: 'fade-transition',
-    afterEnter(data) {
-      // Re-initialize physics and player data on new container
+    afterEnter() {
       initMusicPage();
     }
   }]
