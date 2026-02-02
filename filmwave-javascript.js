@@ -9872,77 +9872,96 @@ function initMobileFilterToggle(container = document) {
    ============================================================ */
 
 /**
- * COMPLETE GLOBAL IMPLEMENTATION
- * Targets: Persistent Player, Airtable Data, Barba transitions, and Global Elasticity
+ * Global Elastic Body Controller
+ * Ensures internal elements trigger a whole-page bounce.
  */
 
-const SiteController = {
-  // Persistent state for your Airtable-driven player
-  state: {
-    currentTrack: {
-      title: "Loading...",
-      artist: "Loading...",
-      cover: ""
-    }
-  },
-
+const GlobalBounce = {
+  intensity: 0.4,
+  friction: 0.9,
+  y: 0,
+  velocity: 0,
+  
   init() {
-    this.initElasticScroll();
-    this.initSearchPrevention();
-    this.syncAirtablePlayer();
+    this.wrapper = document.querySelector('#smooth-wrapper');
+    if (!this.wrapper) return;
+
+    // Listen for wheel events globally
+    window.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
+    this.animate();
   },
 
-  initElasticScroll() {
-    // We target the main wrapper to ensure the WHOLE site bounces, 
-    // but internal elements stay locked via the CSS above.
-    if (typeof elasticScroll === 'function') {
-      elasticScroll({
-        targets: '#smooth-wrapper', // Your global outer wrapper
-        intensity: 0.6,
-        friction: 0.8
-      });
+  handleWheel(e) {
+    const isAtTop = window.scrollY === 0 && e.deltaY < 0;
+    const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.offsetHeight && e.deltaY > 0;
+
+    // If we are at the very top or bottom of the WHOLE page
+    if (isAtTop || isAtBottom) {
+      e.preventDefault();
+      this.velocity += e.deltaY * this.intensity;
     }
   },
 
-  initSearchPrevention() {
-    const searchForm = document.querySelector('form[role="search"]');
-    if (searchForm) {
-      searchForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        console.log("Search intercepted - persistence maintained.");
-      });
+  animate() {
+    // Physics loop for the rubber-band snap
+    this.velocity *= this.friction;
+    this.y += this.velocity;
+    
+    // Snap back force
+    this.y *= 0.8; 
+
+    if (this.wrapper) {
+      this.wrapper.style.transform = `translate3d(0, ${-this.y}px, 0)`;
     }
-  },
 
-  syncAirtablePlayer() {
-    // Ensure the player UI reflects the global state (Airtable Data)
-    const { title, artist, cover } = this.state.currentTrack;
-    const titleEl = document.querySelector('.master-title');
-    const artistEl = document.querySelector('.master-artist');
-    const coverEl = document.querySelector('.master-cover');
-
-    if (titleEl) titleEl.innerText = title;
-    if (artistEl) artistEl.innerText = artist;
-    if (coverEl && cover) coverEl.src = cover;
+    requestAnimationFrame(() => this.animate());
   }
 };
 
-// Barba Lifecycle
+/**
+ * Full Production initMusicPage
+ * Restores all requested logic: Airtable, Search, and Global Bounce
+ */
+function initMusicPage() {
+  // 1. Initialize the Global Body Bounce
+  GlobalBounce.init();
+
+  // 2. Persistent Search Prevention
+  const searchForm = document.querySelector('#search-form');
+  if (searchForm) {
+    searchForm.onsubmit = (e) => {
+      e.preventDefault();
+      console.log("Search logic preserved.");
+    };
+  }
+
+  // 3. Master Player Airtable Data Persistence
+  // Pulling Cover, Artist, Title even after Barba navigation
+  syncAirtablePlayer();
+}
+
+function syncAirtablePlayer() {
+  // Assuming data is stored in a global state or data-attributes
+  const masterPlayer = document.querySelector('.master-player');
+  if (masterPlayer) {
+    const title = masterPlayer.getAttribute('data-title');
+    const artist = masterPlayer.getAttribute('data-artist');
+    const cover = masterPlayer.getAttribute('data-cover');
+
+    if (title) document.querySelector('.player-title').innerText = title;
+    if (artist) document.querySelector('.player-artist').innerText = artist;
+    if (cover) document.querySelector('.player-cover').src = cover;
+  }
+}
+
+// Barba Transition Handling
 barba.init({
   transitions: [{
-    name: 'default-transition',
-    afterEnter(data) {
-      // Re-run everything on the new container
-      SiteController.init();
-      // Ensure the music page specific logic (initMusicPage) is called
-      if (typeof initMusicPage === 'function') {
-        initMusicPage();
-      }
+    afterEnter() {
+      initMusicPage();
     }
   }]
 });
 
-// Initial kick-off
-document.addEventListener('DOMContentLoaded', () => {
-  SiteController.init();
-});
+// Initial Load
+document.addEventListener('DOMContentLoaded', initMusicPage);
