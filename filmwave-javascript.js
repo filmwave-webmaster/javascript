@@ -9821,7 +9821,7 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.display = 'flex';
       g.mobileFilterOpen = true;
       if (window.innerWidth < 768) {
-       // lockBodyScroll();
+        lockBodyScroll();
       }
     });
   }
@@ -9834,7 +9834,7 @@ function initMobileFilterToggle(container = document) {
     newFilterClose.addEventListener('click', () => {
       filterWrapper.style.display = 'none';
       g.mobileFilterOpen = false;
-     // unlockBodyScroll();
+      unlockBodyScroll();
     });
   }
   
@@ -9842,14 +9842,14 @@ function initMobileFilterToggle(container = document) {
   function checkScreenWidth() {
     if (window.innerWidth >= 768) {
       filterWrapper.style.display = 'flex';
-    //  unlockBodyScroll();
+      unlockBodyScroll();
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
-     // if (g.mobileFilterOpen) {
-     //   lockBodyScroll();
-    //  } else {
-     //   unlockBodyScroll();
-    //  }
+      if (g.mobileFilterOpen) {
+        lockBodyScroll();
+      } else {
+        unlockBodyScroll();
+      }
     }
   }
   
