@@ -1561,9 +1561,10 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     audio.addEventListener('timeupdate', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
-
+      
     g.currentTime = audio.currentTime;
-
+      
+    updateMobileProgress(audio.currentTime, audio.duration);
     if (g.currentWavesurfer && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
       g.currentWavesurfer.seekTo(progress);
