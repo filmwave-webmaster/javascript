@@ -9766,3 +9766,82 @@ async function initPlaylistsPage() {
   }
 }
 
+/* ============================================================
+   33. TOGGLE SEARCH FILTERS MUSIC PAGE
+   ============================================================ */
+function initMobileFilterToggle() {
+  const filterButton = document.querySelector('.search-filter-button');
+  const filterClose = document.querySelector('.search-filter-close');
+  const filterWrapper = document.querySelector('.filter-wrapper');
+  
+  if (!filterWrapper) return;
+  
+  // Use global state to persist mobile filter state across transitions
+  const g = window.musicPlayerPersistent;
+  if (typeof g.mobileFilterOpen === 'undefined') {
+    g.mobileFilterOpen = false;
+  }
+  
+  function lockBodyScroll() {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+  }
+  
+  function unlockBodyScroll() {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+  
+  if (filterButton) {
+    // Clone to remove old listeners
+    const newFilterButton = filterButton.cloneNode(true);
+    filterButton.parentNode.replaceChild(newFilterButton, filterButton);
+    
+    newFilterButton.addEventListener('click', () => {
+      filterWrapper.style.display = 'flex';
+      g.mobileFilterOpen = true;
+      if (window.innerWidth < 768) {
+        lockBodyScroll();
+      }
+    });
+  }
+  
+  if (filterClose) {
+    // Clone to remove old listeners
+    const newFilterClose = filterClose.cloneNode(true);
+    filterClose.parentNode.replaceChild(newFilterClose, filterClose);
+    
+    newFilterClose.addEventListener('click', () => {
+      filterWrapper.style.display = 'none';
+      g.mobileFilterOpen = false;
+      unlockBodyScroll();
+    });
+  }
+  
+  // Handle screen width changes
+  function checkScreenWidth() {
+    if (window.innerWidth >= 768) {
+      filterWrapper.style.display = 'flex';
+      unlockBodyScroll();
+    } else {
+      filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
+      if (g.mobileFilterOpen) {
+        lockBodyScroll();
+      } else {
+        unlockBodyScroll();
+      }
+    }
+  }
+  
+  // Check on load
+  checkScreenWidth();
+  
+  // Remove old resize listener and add new one
+  if (g._mobileFilterResizeHandler) {
+    window.removeEventListener('resize', g._mobileFilterResizeHandler);
+  }
+  g._mobileFilterResizeHandler = checkScreenWidth;
+  window.addEventListener('resize', g._mobileFilterResizeHandler);
+  
+  console.log('✅ Mobile filter toggle initialized');
+}
