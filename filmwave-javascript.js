@@ -5536,10 +5536,6 @@ if (typeof barba !== 'undefined') {
     playerWrapper.style.transition = 'none';
   }
   
-  document.body.style.overflow = '';
-  document.documentElement.style.overflow = '';
-  document.body.style.height = '';
-  
   // Wait for sidebar fade if leaving dashboard
   if (leavingDashboard && !goingToDashboard) {
     return new Promise(resolve => setTimeout(resolve, 150));
@@ -5684,23 +5680,16 @@ if (typeof barba !== 'undefined') {
        
   style.textContent = '.login-section { opacity: 0 !important; transition: none !important; }';
 
-  if (!isMusicPage) {
-    document.body.style.overflow = 'visible';
-    document.documentElement.style.overflow = 'visible';
-    document.body.style.height = 'auto';
-    nextContainer.style.overflow = 'visible';
-    
-    const mainContent = nextContainer.querySelector('.main-content');
-    if (mainContent) mainContent.style.overflow = 'visible';
-  } else {
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.height = '100vh';
-    nextContainer.style.overflow = 'hidden';
-    
-    const musicArea = nextContainer.querySelector('.music-area-wrapper');
-    if (musicArea) musicArea.style.overflow = 'hidden';
-  }
+ document.body.style.overflow = '';
+document.documentElement.style.overflow = '';
+document.body.style.height = '';
+
+nextContainer.style.overflow = '';
+
+const musicArea = nextContainer.querySelector('.music-area-wrapper');
+if (musicArea) {
+  musicArea.style.overflow = '';
+}
 },
 
       enter(data) {
