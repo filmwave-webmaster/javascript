@@ -9845,11 +9845,11 @@ function initMobileFilterToggle(container = document) {
       unlockBodyScroll();
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
-      if (g.mobileFilterOpen) {
-        lockBodyScroll();
-      } else {
-        unlockBodyScroll();
-      }
+     // if (g.mobileFilterOpen) {
+     //   lockBodyScroll();
+    //  } else {
+     //   unlockBodyScroll();
+    //  }
     }
   }
   
