@@ -645,6 +645,8 @@ function navigateStandaloneTrack(direction) {
   }
   
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
+
+  resetMobileProgress();
   
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
@@ -661,12 +663,12 @@ function navigateStandaloneTrack(direction) {
   });
   
     audio.addEventListener('timeupdate', () => {
-    if (g.standaloneAudio !== audio) return;
-    
-    if (!audio.duration || !isFinite(audio.duration) || audio.duration === 0) return;
-    if (!isFinite(audio.currentTime)) return;
-    
-    g.currentTime = audio.currentTime;
+  if (g.standaloneAudio !== audio) return;
+  if (!audio.duration || !isFinite(audio.duration)) return;
+
+  g.currentTime = audio.currentTime;
+
+  updateMobileProgress(audio.currentTime, audio.duration);
 
         if (g.currentWavesurfer && audio.duration && isFinite(audio.duration) && audio.duration > 0) {
       const progress = audio.currentTime / audio.duration;
@@ -701,11 +703,12 @@ function navigateStandaloneTrack(direction) {
     updatePlayerCoverArtIcons(false);
   });
   
-  audio.addEventListener('ended', () => {
-    if (g.standaloneAudio !== audio) return;
-    g.autoPlayNext = true;
-    navigateStandaloneTrack('next');
-  });
+ audio.addEventListener('ended', () => {
+  if (g.standaloneAudio !== audio) return;
+  resetMobileProgress();
+  g.autoPlayNext = true;
+  navigateStandaloneTrack('next');
+});
   
   audio.addEventListener('error', (e) => {
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -1295,6 +1298,9 @@ function initPlayerCloseButton() {
       g.standaloneAudio.currentTime = 0;
       g.standaloneAudio = null;
     }
+
+    // reset mobile progress tracker
+    resetMobileProgress();
     
     // Reset dashboard tile waveform and play/pause icons
     const dashboardTiles = document.querySelectorAll('.masonry-song-tile-wrapper');
@@ -1532,6 +1538,8 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     g.currentWavesurfer.seekTo(0);
   }
 
+  resetMobileProgress();
+  
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
@@ -9868,50 +9876,22 @@ function initMobileFilterToggle(container = document) {
 
 
 
-(function () {
-  function getAudio() {
-    return window.musicPlayerPersistent?.audio || document.querySelector('audio');
+function resetMobileProgress() {
+  const el = document.querySelector('.mobile-volume-tracker');
+  if (el) {
+    el.style.transform = 'scaleX(0)';
   }
+}
 
-  function getTracker() {
-    return document.querySelector('.mobile-volume-tracker');
-  }
+function updateMobileProgress(current, duration) {
+  const el = document.querySelector('.mobile-volume-tracker');
+  if (!el || !duration || !isFinite(duration)) return;
 
-  function resetTracker() {
-    const tracker = getTracker();
-    if (tracker) tracker.style.width = '0%';
-  }
+  const progress = Math.min(current / duration, 1);
+  el.style.transform = `scaleX(${progress})`;
+}
 
-  function updateTracker() {
-    const audio = getAudio();
-    const tracker = getTracker();
-    if (!audio || !tracker || !audio.duration) return;
 
-    const progress = (audio.currentTime / audio.duration) * 100;
-    tracker.style.width = progress + '%';
-  }
 
-  function attachListeners() {
-    const audio = getAudio();
-    if (!audio) return;
 
-    audio.addEventListener('timeupdate', updateTracker);
-    audio.addEventListener('ended', resetTracker);
-    audio.addEventListener('emptied', resetTracker); // source changed
-    audio.addEventListener('loadstart', resetTracker);
-  }
 
-  // initial attach
-  attachListeners();
-
-  // re-attach after Barba transitions
-  if (typeof barba !== 'undefined') {
-    window.addEventListener('barbaAfterTransition', () => {
-      resetTracker();
-      attachListeners();
-    });
-  }
-
-  // optional: expose reset if you already close the player elsewhere
-  window.resetMobileProgressTracker = resetTracker;
-})();
