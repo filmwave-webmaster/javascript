@@ -333,6 +333,14 @@ if (sidebarNav) {
         console.log('✅ Added padding to sidebar-nav');
     }
 }
+
+    // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
+    const filterWrapper = document.querySelector('.filter-wrapper');
+    if (filterWrapper && !filterWrapper.dataset.paddingAdjusted) {
+      const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
+      filterWrapper.style.setProperty('padding-bottom', `${currentPadding + 77}px`, 'important');
+      filterWrapper.setAttribute('data-padding-adjusted', 'true');
+    }
     
   } else {
     playerWrapper.style.display = 'none';
@@ -360,7 +368,15 @@ if (sidebarNav) {
   const sidebarNav = document.querySelector('.sidebar-nav');
   if (sidebarNav) {
     sidebarNav.style.removeProperty('padding-bottom');
+    sidebarNav.removeAttribute('data-padding-adjusted');
     console.log('🗑️ Reset padding on sidebar-nav to Webflow defaults');
+    }
+    
+    // RESET FILTER WRAPPER PADDING WHEN PLAYER IS HIDDEN
+    const filterWrapper = document.querySelector('.filter-wrapper');
+    if (filterWrapper) {
+      filterWrapper.style.removeProperty('padding-bottom');
+      filterWrapper.removeAttribute('data-padding-adjusted');
     }
   }
 }
