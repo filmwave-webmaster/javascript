@@ -9780,6 +9780,7 @@ async function initPlaylistsPage() {
 /* ============================================================
    33. TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
+
 function initMobileFilterToggle(container = document) {
   const filterButton = container.querySelector('.search-filter-button');
   const filterClose = container.querySelector('.search-filter-close');
@@ -9858,3 +9859,90 @@ function initMobileFilterToggle(container = document) {
 }
 
 
+
+
+
+
+
+
+
+
+/* ============================================================
+   34. OVERFLOW BLOUNCE
+   ============================================================ */
+
+/**
+ * COMPLETE GLOBAL IMPLEMENTATION
+ * Targets: Persistent Player, Airtable Data, Barba transitions, and Global Elasticity
+ */
+
+const SiteController = {
+  // Persistent state for your Airtable-driven player
+  state: {
+    currentTrack: {
+      title: "Loading...",
+      artist: "Loading...",
+      cover: ""
+    }
+  },
+
+  init() {
+    this.initElasticScroll();
+    this.initSearchPrevention();
+    this.syncAirtablePlayer();
+  },
+
+  initElasticScroll() {
+    // We target the main wrapper to ensure the WHOLE site bounces, 
+    // but internal elements stay locked via the CSS above.
+    if (typeof elasticScroll === 'function') {
+      elasticScroll({
+        targets: '#smooth-wrapper', // Your global outer wrapper
+        intensity: 0.6,
+        friction: 0.8
+      });
+    }
+  },
+
+  initSearchPrevention() {
+    const searchForm = document.querySelector('form[role="search"]');
+    if (searchForm) {
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        console.log("Search intercepted - persistence maintained.");
+      });
+    }
+  },
+
+  syncAirtablePlayer() {
+    // Ensure the player UI reflects the global state (Airtable Data)
+    const { title, artist, cover } = this.state.currentTrack;
+    const titleEl = document.querySelector('.master-title');
+    const artistEl = document.querySelector('.master-artist');
+    const coverEl = document.querySelector('.master-cover');
+
+    if (titleEl) titleEl.innerText = title;
+    if (artistEl) artistEl.innerText = artist;
+    if (coverEl && cover) coverEl.src = cover;
+  }
+};
+
+// Barba Lifecycle
+barba.init({
+  transitions: [{
+    name: 'default-transition',
+    afterEnter(data) {
+      // Re-run everything on the new container
+      SiteController.init();
+      // Ensure the music page specific logic (initMusicPage) is called
+      if (typeof initMusicPage === 'function') {
+        initMusicPage();
+      }
+    }
+  }]
+});
+
+// Initial kick-off
+document.addEventListener('DOMContentLoaded', () => {
+  SiteController.init();
+});
