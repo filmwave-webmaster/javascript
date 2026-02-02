@@ -1,4 +1,4 @@
-/**
+  /**
  * ============================================================
  * FILMWAVE MUSIC PLATFORM - VERSION 31
  * Updated: January 17, 2026
@@ -5222,14 +5222,15 @@ if (document.readyState === 'loading') {
 
 // Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.beforeEnter((data) => runForPath(data?.next?.url?.path || ''));
-  barba.hooks.afterEnter((data) => runForPath(data?.next?.url?.path || ''));
-}
+  barba.hooks.beforeEnter((data) => {
+    runForPath(data?.next?.url?.path || '');
+  });
 
-// Your existing custom event
-window.addEventListener('barbaAfterTransition', () => {
-  runForPath(window.location.pathname);
-});
+  barba.hooks.afterEnter((data) => {
+    runForPath(data?.next?.url?.path || '');
+    initMobileFilterToggle(data.next.container);
+  });
+}
 
 /**
  * ============================================================
@@ -9758,10 +9759,10 @@ async function initPlaylistsPage() {
 /* ============================================================
    33. TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
-function initMobileFilterToggle() {
-  const filterButton = document.querySelector('.search-filter-button');
-  const filterClose = document.querySelector('.search-filter-close');
-  const filterWrapper = document.querySelector('.filter-wrapper');
+function initMobileFilterToggle(container = document) {
+  const filterButton = container.querySelector('.search-filter-button');
+  const filterClose = container.querySelector('.search-filter-close');
+  const filterWrapper = container.querySelector('.filter-wrapper');
   
   if (!filterWrapper) return;
   
