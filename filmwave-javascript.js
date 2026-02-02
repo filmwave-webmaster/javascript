@@ -9883,7 +9883,6 @@ function resetMobileProgress() {
   el.style.transformOrigin = 'left center';
   el.style.transform = 'scaleX(0)';
 }
-}
 
 function updateMobileProgress(current, duration) {
   const el = document.querySelector('.mobile-volume-tracker');
