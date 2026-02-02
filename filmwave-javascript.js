@@ -9871,3 +9871,78 @@ function initMobileFilterToggle(container = document) {
    34. OVERFLOW BLOUNCE
    ============================================================ */
 
+/**
+ * RESTORE PRODUCTION STRUCTURE
+ * Full Barba-ready initMusicPage with Lenis Physics
+ */
+
+let lenis;
+
+function initMusicPage() {
+  // 1. Initialize Lenis for Global Safari-like Physics
+  if (lenis) lenis.destroy(); // Clean up old instance for Barba
+  
+  lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    orientation: 'vertical',
+    gestureOrientation: 'vertical',
+    smoothWheel: true,
+    // This creates the "Safari Bounce" effect
+    infinite: false, 
+    wheelMultiplier: 1,
+    touchMultiplier: 2,
+    lerp: 0.1, // Adjust this for 'heavier' or 'lighter' feel
+  });
+
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+
+  // 2. Search Form Prevention Logic
+  const searchForm = document.querySelector('form[role="search"]');
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+    });
+  }
+
+  // 3. Persistent Global State / Master Player
+  // Ensures Cover, Artist, Title pull correctly from Airtable data
+  syncAirtablePlayer();
+}
+
+function syncAirtablePlayer() {
+  // Pulling from your persistent music state
+  const player = {
+    title: document.querySelector('.master-player-title'),
+    artist: document.querySelector('.master-player-artist'),
+    cover: document.querySelector('.master-player-cover')
+  };
+
+  if (window.currentTrackData) {
+    if (player.title) player.title.innerText = window.currentTrackData.title;
+    if (player.artist) player.artist.innerText = window.currentTrackData.artist;
+    if (player.cover) player.cover.src = window.currentTrackData.cover;
+  }
+}
+
+// --- Barba.js Integration ---
+barba.init({
+  transitions: [{
+    name: 'default',
+    afterEnter() {
+      // Re-initialize everything on the new page
+      initMusicPage();
+    }
+  }]
+});
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+  // Make sure to include the Lenis script in your HTML:
+  // <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  initMusicPage();
+});
