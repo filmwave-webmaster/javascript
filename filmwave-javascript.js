@@ -1815,7 +1815,8 @@ function loadWaveformBatch(cardElements) {
           } else {
             playButton.style.opacity = '0';
           }
-      });
+        });
+      }
     }
     
    // Get computed CSS variable values
