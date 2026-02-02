@@ -9867,15 +9867,9 @@ function initMobileFilterToggle(container = document) {
   console.log('✅ Mobile filter toggle initialized');
 }
 
-
-
-
-
-
-
-
-
-
+/* ============================================================
+   34. SIMPLE PROGRESS TRACKER
+   ============================================================ */
 
 function resetMobileProgress() {
   const el = document.querySelector('.mobile-volume-tracker');
@@ -9893,7 +9887,34 @@ function updateMobileProgress(current, duration) {
   el.style.transform = `scaleX(${progress})`;
 }
 
+/* ============================================================
+   35. TOUCH DEVICE DOUBLE-TAP FIX
+   ============================================================ */
+(function initTouchFix() {
+  if (!('ontouchstart' in window)) return; // Only run on touch devices
+  
+  let touchMoved = false;
 
+  document.addEventListener('touchstart', () => {
+    touchMoved = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', () => {
+    touchMoved = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (touchMoved) return;
+    
+    const target = e.target.closest('a, button, [role="button"], .w-dropdown-toggle');
+    if (target && !target.closest('input, textarea, select')) {
+      e.preventDefault();
+      target.click();
+    }
+  }, { passive: false });
+  
+  console.log('✅ Touch double-tap fix initialized');
+})();
 
 
 
