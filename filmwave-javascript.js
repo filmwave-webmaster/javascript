@@ -3824,16 +3824,16 @@ function restoreBPMState() {
    // Restore mode
     const mode = bpmState.mode || 'range';
     if (mode === 'exact') {
-      exactToggle.setAttribute('style', 'color: var(--color-2) !important; text-decoration: underline !important;');
-      rangeToggle.setAttribute('style', 'color: var(--color-9) !important; text-decoration: none !important;');
+      exactToggle.classList.add('active');
+      rangeToggle.classList.remove('active');
       
       if (exactInput) exactInput.style.display = 'block';
       if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
       if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
       if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
     } else {
-      rangeToggle.setAttribute('style', 'color: var(--color-2) !important; text-decoration: underline !important;');
-      exactToggle.setAttribute('style', 'color: var(--color-9) !important; text-decoration: none !important;');
+      rangeToggle.classList.add('active');
+      exactToggle.classList.remove('active');
       
       if (exactInput) exactInput.style.display = 'none';
       if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
