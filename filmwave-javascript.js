@@ -9033,18 +9033,19 @@ template.style.display = 'none';
             const songs = await this.getPlaylistSongs(p.id);
             const card = container.querySelector(`.playlist-card-template[data-playlist-id="${p.id}"]`);
             const countEl = card?.querySelector('.playlist-song-count');
-            const bracketsEl = card?.querySelector('.song-count-brackets');
             if (countEl) countEl.textContent = String(songs.length);
-            if (bracketsEl) bracketsEl.style.opacity = '1';
           } catch {
             const card = container.querySelector(`.playlist-card-template[data-playlist-id="${p.id}"]`);
             const countEl = card?.querySelector('.playlist-song-count');
-            const bracketsEl = card?.querySelector('.song-count-brackets');
             if (countEl) countEl.textContent = '0';
-            if (bracketsEl) bracketsEl.style.opacity = '1';
           }
         })
-      );
+      ).then(() => {
+        // Fade in all brackets at once after all counts are loaded
+        container.querySelectorAll('.song-count-brackets').forEach(el => {
+          el.style.opacity = '1';
+        });
+      });
   
       reinitWebflowIX2();
 
