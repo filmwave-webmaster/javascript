@@ -5625,7 +5625,10 @@ if (typeof barba !== 'undefined') {
   return Promise.resolve();
 },
 
-     beforeEnter(data) { 
+  beforeEnter(data) { 
+
+  // Reset playlist rendering flag for new page
+  window._playlistsPageRendering = false;
 
   // Apply theme icon visibility immediately to prevent flash
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
@@ -9731,9 +9734,14 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
    33. PLAYLISTS PAGE
    ============================================================ */
 async function initPlaylistsPage() {
+  // Prevent double rendering
+  if (window._playlistsPageRendering) return;
+  window._playlistsPageRendering = true;
+  
   const sortableContainer = document.querySelector('.playlists-grid .sortable-container');
   if (!sortableContainer) {
     console.log('ℹ️ No playlists sortable container found');
+    window._playlistsPageRendering = false;
     return;
   }
   
@@ -9819,6 +9827,7 @@ async function initPlaylistsPage() {
     // Append everything at once
     sortableContainer.appendChild(frag);
     console.log(`✅ Rendered ${playlists.length} playlist cards`);
+    window._playlistsPageRendering = false;
     
     if (window.Webflow?.require) {
       try {
