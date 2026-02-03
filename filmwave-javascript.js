@@ -1487,7 +1487,7 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
   // Update song wrapper border for active song
   const songWrapper = cardElement.querySelector('.song-wrapper');
   if (songWrapper) {
-    songWrapper.style.borderColor = 'var(--color-8)';
+    songWrapper.style.border = '1px solid var(--color-8)';
   }
 }
 
