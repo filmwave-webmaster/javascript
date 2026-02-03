@@ -9853,7 +9853,7 @@ function initMobileFilterToggle(container = document) {
     g._lastTouchY = e.touches[0].clientY;
   }
   
-  function enableScrollLimit() {
+ function enableScrollLimit() {
     // Remove first to prevent duplicates
     window.removeEventListener('scroll', g._mobileFilterScrollHandler);
     window.removeEventListener('touchstart', g._mobileFilterTouchStart);
@@ -9869,6 +9869,10 @@ function initMobileFilterToggle(container = document) {
     
     document.documentElement.style.overscrollBehavior = 'none';
     document.body.style.overscrollBehavior = 'none';
+    
+    // Hide content below filter
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) musicList.style.visibility = 'hidden';
   }
   
   function disableScrollLimit() {
@@ -9883,6 +9887,10 @@ function initMobileFilterToggle(container = document) {
     }
     document.documentElement.style.overscrollBehavior = '';
     document.body.style.overscrollBehavior = '';
+    
+    // Show content below filter
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) musicList.style.visibility = '';
   }
   
   if (filterButton) {
