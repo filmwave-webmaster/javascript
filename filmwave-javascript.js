@@ -8977,19 +8977,6 @@ try {
 template.style.display = 'none';
 
       // ✅ Pre-fetch counts in parallel (prevents sequential await lag)
-      const playlistCounts = await Promise.all(
-        playlists.map(async (p) => {
-          try {
-            const songs = await this.getPlaylistSongs(p.id);
-            return { id: Number(p.id), count: songs.length };
-          } catch {
-            return { id: Number(p.id), count: 0 };
-          }
-        })
-      );
-
-      const countsById = new Map(playlistCounts.map((x) => [x.id, x.count]));
-
       // ✅ Build off-DOM, then append once
       const frag = document.createDocumentFragment();
 
@@ -9019,14 +9006,17 @@ template.style.display = 'none';
 
         card.dataset.playlistId = playlist.id;
 
+        // Hide song count brackets initially
         const countEl = card.querySelector('.playlist-song-count');
-        if (countEl) {
-          const count = countsById.get(Number(playlist.id)) ?? 0;
-          countEl.textContent = String(count);
+        const bracketsEl = card.querySelector('.song-count-brackets');
+        if (countEl) countEl.textContent = '';
+        if (bracketsEl) {
+          bracketsEl.style.opacity = '0';
+          bracketsEl.style.transition = 'opacity 0.3s ease';
         }
 
         card.style.removeProperty('display'); // removes inline display:none copied from template
-card.style.display = 'block';         // force visible (use 'flex' if your card needs flex)
+        card.style.display = 'block';         // force visible (use 'flex' if your card needs flex)
         frag.appendChild(card);
       }
 
@@ -9034,7 +9024,27 @@ card.style.display = 'block';         // force visible (use 'flex' if your card 
       container.appendChild(frag);
 
       console.log(`✅ Rendered ${playlists.length} playlist cards`);
-
+      
+      // ✅ Fetch counts in background and update cards
+      Promise.all(
+        playlists.map(async (p) => {
+          try {
+            const songs = await this.getPlaylistSongs(p.id);
+            const card = container.querySelector(`.playlist-card-template[data-playlist-id="${p.id}"]`);
+            const countEl = card?.querySelector('.playlist-song-count');
+            const bracketsEl = card?.querySelector('.song-count-brackets');
+            if (countEl) countEl.textContent = String(songs.length);
+            if (bracketsEl) bracketsEl.style.opacity = '1';
+          } catch {
+            const card = container.querySelector(`.playlist-card-template[data-playlist-id="${p.id}"]`);
+            const countEl = card?.querySelector('.playlist-song-count');
+            const bracketsEl = card?.querySelector('.song-count-brackets');
+            if (countEl) countEl.textContent = '0';
+            if (bracketsEl) bracketsEl.style.opacity = '1';
+          }
+        })
+      );
+  
       reinitWebflowIX2();
 
       if (typeof initializePlaylistOverlay === 'function') {
