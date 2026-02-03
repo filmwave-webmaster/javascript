@@ -4090,14 +4090,12 @@ function initBPMFilter() {
   /**
    * Toggle between Exact and Range modes
    */
-  function setMode(mode, shouldSave = true) {
+function setMode(mode, shouldSave = true) {
   currentMode = mode;
   
   if (mode === 'exact') {
-    exactToggle.style.color = '#191919';
-    exactToggle.style.textDecoration = 'underline';
-    rangeToggle.style.color = '#9e9e9e';
-    rangeToggle.style.textDecoration = 'none';
+    exactToggle.classList.add('active');
+    rangeToggle.classList.remove('active');
     
     if (exactInput) exactInput.style.display = 'block';
     if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
@@ -4105,10 +4103,8 @@ function initBPMFilter() {
     if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
     
   } else {
-    rangeToggle.style.color = '#191919';
-    rangeToggle.style.textDecoration = 'underline';
-    exactToggle.style.color = '#9e9e9e';
-    exactToggle.style.textDecoration = 'none';
+    rangeToggle.classList.add('active');
+    exactToggle.classList.remove('active');
     
     if (exactInput) exactInput.style.display = 'none';
     if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
