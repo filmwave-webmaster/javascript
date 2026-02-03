@@ -9969,7 +9969,7 @@ function resetMobileProgress() {
 }
 
 function updateMobileProgress(current, duration) {
-  const el = document.querySelector('.mobile-volume-tracker');
+  const el = document.querySelector('.simple-progress-tracker');
   if (!el || !duration || !isFinite(duration) || duration <= 0) return;
   const progress = Math.max(0, Math.min(current / duration, 1));
   if (!isFinite(progress)) return;
