@@ -1842,12 +1842,6 @@ function loadWaveformBatch(cardElements) {
     const playButton = cardElement.querySelector('.play-button');
     const songName = cardElement.querySelector('.song-name');
     
-    // Set duration immediately from Airtable data
-    const initialDuration = songData.fields['Duration'];
-    if (durationElement && initialDuration) {
-      durationElement.textContent = formatDuration(initialDuration);
-    }
-    
     waveformContainer.id = `waveform-${songId}`;
     waveformContainers.push(waveformContainer);
     
@@ -1895,6 +1889,11 @@ const wavesurfer = WaveSurfer.create({
     
     const peaksData = songData.fields['Waveform Peaks'];
     const storedDuration = songData.fields['Duration'];
+    
+    // Set duration immediately from Airtable data
+    if (durationElement && storedDuration) {
+      durationElement.textContent = formatDuration(storedDuration);
+    }
 
     if (peaksData && peaksData.trim().length > 0 && storedDuration) {
       try {
