@@ -8952,8 +8952,8 @@ try {
   });
 
   // Clear existing cards except template
-  container.querySelectorAll('.playlist-card-template').forEach((card, i) => {
-    if (i > 0) card.remove();
+  container.querySelectorAll('.playlist-card-template').forEach((card) => {
+    if (!card.classList.contains('is-template')) card.remove();
   });
 
 // ✅ Hide the template
