@@ -8935,16 +8935,9 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   },
 
   async renderPlaylistsGrid() {
-    // Prevent double rendering
-    if (window._playlistsPageRendering) return;
-    window._playlistsPageRendering = true;
-    
     const container = document.querySelector('.sortable-container');
     const template = container?.querySelector('.playlist-card-template.is-template');
-    if (!container || !template) {
-      window._playlistsPageRendering = false;
-      return;
-    }
+    if (!container || !template) return;
 
    // ✅ Placeholders: show once, then only ever hide (never re-show)
 if (!window.__fw_placeholders_initialized) {
@@ -9060,7 +9053,6 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       // ✅ Reveal + return container to normal sizing
       container.style.opacity = '1';
       container.style.pointerEvents = '';
-      window._playlistsPageRendering = false;
     }
   },
 
