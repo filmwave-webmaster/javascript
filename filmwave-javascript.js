@@ -2013,6 +2013,15 @@ if (songName) {
       
       const wasPlaying = g.isPlaying;
       
+      // Set border on clicked song wrapper immediately
+      document.querySelectorAll('.song-wrapper').forEach(sw => {
+        sw.style.removeProperty('border');
+      });
+      const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
+      if (songWrapper) {
+        songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+      }
+      
       if (g.standaloneAudio) {
         g.standaloneAudio.pause();
         g.standaloneAudio = null;
