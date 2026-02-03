@@ -9808,6 +9808,7 @@ async function initPlaylistsPage() {
 /* ============================================================
    33. TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
+
 function initMobileFilterToggle(container = document) {
   const filterButton = container.querySelector('.search-filter-button');
   const filterClose = container.querySelector('.search-filter-close');
@@ -9867,15 +9868,12 @@ function initMobileFilterToggle(container = document) {
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     
-   document.documentElement.style.overscrollBehavior = 'none';
+  document.documentElement.style.overscrollBehavior = 'none';
     document.body.style.overscrollBehavior = 'none';
     
-    // Match main content height to filter wrapper
-    const mainContent = document.querySelector('.main-content-music');
-    if (mainContent) {
-      mainContent.style.height = filterWrapper.offsetHeight + 'px';
-      mainContent.style.overflow = 'hidden';
-    }
+    // Hide music list so page ends at filter
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) musicList.style.display = 'none';
   }
   
   function disableScrollLimit() {
@@ -9891,12 +9889,9 @@ function initMobileFilterToggle(container = document) {
     document.documentElement.style.overscrollBehavior = '';
     document.body.style.overscrollBehavior = '';
     
-    // Reset main content height
-    const mainContent = document.querySelector('.main-content-music');
-    if (mainContent) {
-      mainContent.style.height = '';
-      mainContent.style.overflow = '';
-    }
+    // Show music list
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) musicList.style.display = '';
   }
   
   if (filterButton) {
