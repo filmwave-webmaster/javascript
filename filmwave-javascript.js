@@ -9961,7 +9961,7 @@ function initMobileFilterToggle(container = document) {
    ============================================================ */
 
 function resetMobileProgress() {
-  const el = document.querySelector('.mobile-volume-tracker');
+  const el = document.querySelector('.simple-progress-tracker');
   if (!el) return;
 
   el.style.transformOrigin = 'left center';
@@ -9969,7 +9969,7 @@ function resetMobileProgress() {
 }
 
 function updateMobileProgress(current, duration) {
-  const el = document.querySelector('.mobile-volume-tracker');
+  const el = document.querySelector('.simple-progress-tracker');
   if (!el || !duration || !isFinite(duration)) return;
 
   const progress = Math.min(current / duration, 1);
