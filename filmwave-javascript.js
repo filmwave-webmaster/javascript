@@ -9821,21 +9821,52 @@ function initMobileFilterToggle(container = document) {
     g.mobileFilterOpen = false;
   }
   
-  function limitScroll() {
+  function getMaxScroll() {
     const filterRect = filterWrapper.getBoundingClientRect();
     const filterBottom = filterRect.bottom + window.scrollY;
-    const maxScroll = Math.max(0, filterBottom - window.innerHeight);
-    
+    return Math.max(0, filterBottom - window.innerHeight);
+  }
+  
+  function limitScroll() {
+    const maxScroll = getMaxScroll();
     if (window.scrollY > maxScroll) {
       window.scrollTo(0, maxScroll);
     }
   }
   
- function enableScrollLimit() {
+  function handleTouchMove(e) {
+    const maxScroll = getMaxScroll();
+    // If at or past limit and trying to scroll down, prevent it
+    if (window.scrollY >= maxScroll) {
+      const touch = e.touches[0];
+      const lastTouchY = g._lastTouchY || touch.clientY;
+      const deltaY = lastTouchY - touch.clientY; // positive = scrolling down
+      
+      if (deltaY > 0) {
+        e.preventDefault();
+      }
+      g._lastTouchY = touch.clientY;
+    }
+  }
+  
+  function handleTouchStart(e) {
+    g._lastTouchY = e.touches[0].clientY;
+  }
+  
+  function enableScrollLimit() {
     // Remove first to prevent duplicates
     window.removeEventListener('scroll', g._mobileFilterScrollHandler);
+    window.removeEventListener('touchstart', g._mobileFilterTouchStart);
+    window.removeEventListener('touchmove', g._mobileFilterTouchMove);
+    
     g._mobileFilterScrollHandler = limitScroll;
+    g._mobileFilterTouchStart = handleTouchStart;
+    g._mobileFilterTouchMove = handleTouchMove;
+    
     window.addEventListener('scroll', limitScroll);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    
     document.documentElement.style.overscrollBehavior = 'none';
     document.body.style.overscrollBehavior = 'none';
   }
@@ -9843,6 +9874,12 @@ function initMobileFilterToggle(container = document) {
   function disableScrollLimit() {
     if (g._mobileFilterScrollHandler) {
       window.removeEventListener('scroll', g._mobileFilterScrollHandler);
+    }
+    if (g._mobileFilterTouchStart) {
+      window.removeEventListener('touchstart', g._mobileFilterTouchStart);
+    }
+    if (g._mobileFilterTouchMove) {
+      window.removeEventListener('touchmove', g._mobileFilterTouchMove);
     }
     document.documentElement.style.overscrollBehavior = '';
     document.body.style.overscrollBehavior = '';
