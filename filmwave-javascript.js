@@ -1485,9 +1485,9 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
   }
   
   // Update song wrapper border for active song
-  const songWrapper = cardElement.querySelector('.song-wrapper');
+  const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
   if (songWrapper) {
-    songWrapper.style.border = '1px solid var(--color-8)';
+    songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
   }
 }
 
