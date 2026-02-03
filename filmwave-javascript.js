@@ -1842,6 +1842,12 @@ function loadWaveformBatch(cardElements) {
     const playButton = cardElement.querySelector('.play-button');
     const songName = cardElement.querySelector('.song-name');
     
+    // Set duration immediately from Airtable data
+    const storedDuration = songData.fields['Duration'];
+    if (durationElement && storedDuration) {
+      durationElement.textContent = formatDuration(storedDuration);
+    }
+    
     waveformContainer.id = `waveform-${songId}`;
     waveformContainers.push(waveformContainer);
     
