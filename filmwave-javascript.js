@@ -9822,10 +9822,10 @@ function initMobileFilterToggle(container = document) {
     g.mobileFilterOpen = false;
   }
   
-  function lockBodyScroll() {
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-  }
+ // function lockBodyScroll() {
+   // document.body.style.overflow = 'hidden';
+   // document.documentElement.style.overflow = 'hidden';
+  //}
   
   function unlockBodyScroll() {
     document.body.style.overflow = '';
