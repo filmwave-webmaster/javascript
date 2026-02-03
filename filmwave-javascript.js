@@ -9831,17 +9831,21 @@ function initMobileFilterToggle(container = document) {
     }
   }
   
-  function enableScrollLimit() {
+ function enableScrollLimit() {
     // Remove first to prevent duplicates
     window.removeEventListener('scroll', g._mobileFilterScrollHandler);
     g._mobileFilterScrollHandler = limitScroll;
     window.addEventListener('scroll', limitScroll);
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
   }
   
   function disableScrollLimit() {
     if (g._mobileFilterScrollHandler) {
       window.removeEventListener('scroll', g._mobileFilterScrollHandler);
     }
+    document.documentElement.style.overscrollBehavior = '';
+    document.body.style.overscrollBehavior = '';
   }
   
   if (filterButton) {
