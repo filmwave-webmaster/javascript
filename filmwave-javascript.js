@@ -9854,6 +9854,10 @@ function initMobileFilterToggle(container = document) {
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
     
     newFilterButton.addEventListener('click', () => {
+      // Save scroll position before opening
+      g.savedScrollPosition = window.scrollY;
+      // Scroll to top first so filter fills the view
+      window.scrollTo(0, 0);
       filterWrapper.style.display = 'flex';
       g.mobileFilterOpen = true;
       if (window.innerWidth < 768) {
@@ -9871,6 +9875,10 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.display = 'none';
       g.mobileFilterOpen = false;
       disableScrollLimit();
+      // Restore scroll position
+      if (typeof g.savedScrollPosition === 'number') {
+        window.scrollTo(0, g.savedScrollPosition);
+      }
     });
   }
   
