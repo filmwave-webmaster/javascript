@@ -9808,7 +9808,6 @@ async function initPlaylistsPage() {
 /* ============================================================
    33. TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
-
 function initMobileFilterToggle(container = document) {
   const filterButton = container.querySelector('.search-filter-button');
   const filterClose = container.querySelector('.search-filter-close');
@@ -9823,21 +9822,26 @@ function initMobileFilterToggle(container = document) {
   }
   
   function limitScroll() {
-    const filterBottom = filterWrapper.getBoundingClientRect().bottom + window.scrollY;
-    const maxScroll = filterBottom - window.innerHeight;
+    const filterRect = filterWrapper.getBoundingClientRect();
+    const filterBottom = filterRect.bottom + window.scrollY;
+    const maxScroll = Math.max(0, filterBottom - window.innerHeight);
     
-    if (window.scrollY > maxScroll && maxScroll > 0) {
+    if (window.scrollY > maxScroll) {
       window.scrollTo(0, maxScroll);
     }
   }
   
   function enableScrollLimit() {
+    // Remove first to prevent duplicates
+    window.removeEventListener('scroll', g._mobileFilterScrollHandler);
+    g._mobileFilterScrollHandler = limitScroll;
     window.addEventListener('scroll', limitScroll);
-    limitScroll(); // Apply immediately
   }
   
   function disableScrollLimit() {
-    window.removeEventListener('scroll', limitScroll);
+    if (g._mobileFilterScrollHandler) {
+      window.removeEventListener('scroll', g._mobileFilterScrollHandler);
+    }
   }
   
   if (filterButton) {
