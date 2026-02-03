@@ -558,6 +558,16 @@ function navigateStandaloneTrack(direction) {
         sw.style.removeProperty('border');
       });
       
+      // Reset song card waveform
+      if (g.currentWavesurfer) {
+        g.currentWavesurfer.seekTo(0);
+      }
+      
+      // Reset master player waveform
+      if (g.currentPeaksData) {
+        drawMasterWaveform(g.currentPeaksData, 0);
+      }
+      
       // Reset player state
       g.isPlaying = false;
       updateMasterControllerIcons(false);
