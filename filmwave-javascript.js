@@ -1484,6 +1484,11 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
     pauseIcon.style.display = isPlaying ? 'block' : 'none';
   }
   
+  // Reset all song wrapper borders first
+  document.querySelectorAll('.song-wrapper').forEach(sw => {
+    sw.style.removeProperty('border');
+  });
+  
   // Update song wrapper border for active song
   const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
   if (songWrapper) {
