@@ -1507,15 +1507,18 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
     pauseIcon.style.display = isPlaying ? 'block' : 'none';
   }
   
-  // Reset all song wrapper borders first
-  document.querySelectorAll('.song-wrapper').forEach(sw => {
-    sw.style.removeProperty('border');
-  });
-  
-  // Update song wrapper border for active song
-  const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
-  if (songWrapper) {
-    songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+  // Only update border when setting a song as active
+  if (isPlaying) {
+    // Reset all song wrapper borders first
+    document.querySelectorAll('.song-wrapper').forEach(sw => {
+      sw.style.removeProperty('border');
+    });
+    
+    // Update song wrapper border for active song
+    const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
+    if (songWrapper) {
+      songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+    }
   }
 }
 
