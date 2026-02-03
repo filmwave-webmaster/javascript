@@ -552,6 +552,18 @@ function navigateStandaloneTrack(direction) {
     nextIndex = currentIndex + 1;
     if (nextIndex >= songsToNavigate.length) {
       console.log('🛑 Already at last song');
+      
+      // Reset border on current song wrapper
+      document.querySelectorAll('.song-wrapper').forEach(sw => {
+        sw.style.removeProperty('border');
+      });
+      
+      // Reset player state
+      g.isPlaying = false;
+      updateMasterControllerIcons(false);
+      updatePlayerCoverArtIcons(false);
+      resetMobileProgress();
+      
       return;
     }
   } else {
