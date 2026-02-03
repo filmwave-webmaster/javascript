@@ -1499,7 +1499,7 @@ function populateSongCard(cardElement, song) {
   cardElement.setAttribute('data-airtable-id', song.id);
 }
 
-function updatePlayPauseIcons(cardElement, isPlaying) {
+function updatePlayPauseIcons(cardElement, isPlaying, isActive = null) {
   const playIcon = cardElement.querySelector('.play-icon');
   const pauseIcon = cardElement.querySelector('.pause-icon');
   if (playIcon && pauseIcon) {
@@ -1507,8 +1507,10 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
     pauseIcon.style.display = isPlaying ? 'block' : 'none';
   }
   
-  // Only update border when setting a song as active
-  if (isPlaying) {
+  // Update border if explicitly set as active, or if playing
+  const shouldShowBorder = isActive === true || (isActive === null && isPlaying);
+  
+  if (shouldShowBorder) {
     // Reset all song wrapper borders first
     document.querySelectorAll('.song-wrapper').forEach(sw => {
       sw.style.removeProperty('border');
@@ -1518,6 +1520,12 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
     const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
     if (songWrapper) {
       songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+    }
+  } else if (isActive === false) {
+    // Explicitly removing active state - remove border from this card
+    const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
+    if (songWrapper) {
+      songWrapper.style.removeProperty('border');
     }
   }
 }
