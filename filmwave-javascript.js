@@ -9867,12 +9867,15 @@ function initMobileFilterToggle(container = document) {
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     
-    document.documentElement.style.overscrollBehavior = 'none';
+   document.documentElement.style.overscrollBehavior = 'none';
     document.body.style.overscrollBehavior = 'none';
     
-    // Hide content below filter
-    const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) musicList.style.visibility = 'hidden';
+    // Match main content height to filter wrapper
+    const mainContent = document.querySelector('.main-content-music');
+    if (mainContent) {
+      mainContent.style.height = filterWrapper.offsetHeight + 'px';
+      mainContent.style.overflow = 'hidden';
+    }
   }
   
   function disableScrollLimit() {
@@ -9888,9 +9891,12 @@ function initMobileFilterToggle(container = document) {
     document.documentElement.style.overscrollBehavior = '';
     document.body.style.overscrollBehavior = '';
     
-    // Show content below filter
-    const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) musicList.style.visibility = '';
+    // Reset main content height
+    const mainContent = document.querySelector('.main-content-music');
+    if (mainContent) {
+      mainContent.style.height = '';
+      mainContent.style.overflow = '';
+    }
   }
   
   if (filterButton) {
