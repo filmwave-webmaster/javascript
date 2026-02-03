@@ -3824,20 +3824,16 @@ function restoreBPMState() {
     // Restore mode
     const mode = bpmState.mode || 'range';
     if (mode === 'exact') {
-      exactToggle.style.setProperty('color', 'var(--color-2)', 'important');
-      exactToggle.style.textDecoration = 'underline';
-      rangeToggle.style.setProperty('color', 'var(--color-9)', 'important');
-      rangeToggle.style.textDecoration = 'none';
+      exactToggle.style.cssText = 'color: var(--color-2) !important; text-decoration: underline !important;';
+      rangeToggle.style.cssText = 'color: var(--color-9) !important; text-decoration: none !important;';
       
       if (exactInput) exactInput.style.display = 'block';
       if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'none';
       if (sliderExactWrapper) sliderExactWrapper.style.display = 'block';
       if (sliderRangeWrapper) sliderRangeWrapper.style.display = 'none';
     } else {
-      rangeToggle.style.setProperty('color', 'var(--color-2)', 'important');
-      rangeToggle.style.textDecoration = 'underline';
-      exactToggle.style.setProperty('color', 'var(--color-9)', 'important');
-      exactToggle.style.textDecoration = 'none';
+      rangeToggle.style.cssText = 'color: var(--color-2) !important; text-decoration: underline !important;';
+      exactToggle.style.cssText = 'color: var(--color-9) !important; text-decoration: none !important;';
       
       if (exactInput) exactInput.style.display = 'none';
       if (lowInput) lowInput.closest('.bpm-range-field-wrapper').style.display = 'flex';
