@@ -1335,6 +1335,9 @@ function initPlayerCloseButton() {
       // Hide play button
       const playButton = card.querySelector('.play-button');
       if (playButton) playButton.style.opacity = '0';
+      
+      // Reset border
+      card.style.removeProperty('border');
     });
     
     // Reset all wavesurfers in global array
