@@ -8935,6 +8935,9 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
   },
 
   async renderPlaylistsGrid() {
+    // Skip if on playlists grid page - initPlaylistsPage handles it
+    if (document.querySelector('.playlists-grid')) return;
+    
     const container = document.querySelector('.sortable-container');
     const template = container?.querySelector('.playlist-card-template.is-template');
     if (!container || !template) return;
