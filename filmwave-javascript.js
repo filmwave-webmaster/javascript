@@ -1163,12 +1163,8 @@ function initVolumeControl() {
   
   // Update slider handle position
   function updateSliderPosition(volume) {
-    // Use percentage for consistent positioning, accounting for handle width
-    const handleWidth = sliderHandle.offsetWidth || 12;
-    const trackWidth = track.offsetWidth || 100;
-    const maxLeft = trackWidth - handleWidth;
-    const left = volume * maxLeft;
-    sliderHandle.style.left = left + 'px';
+    // Use calc to account for handle width at edges
+    sliderHandle.style.left = `calc(${volume * 100}% - ${volume * sliderHandle.offsetWidth}px)`;
   }
   
   // Set volume
