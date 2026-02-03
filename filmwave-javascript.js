@@ -1423,6 +1423,8 @@ function populateSongCard(cardElement, song) {
   if (key) key.textContent = fields['Key'] || '-';
   const bpm = cardElement.querySelector('.bpm');
   if (bpm) bpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
+  const duration = cardElement.querySelector('.duration');
+  if (duration && fields['Duration']) duration.textContent = formatDuration(fields['Duration']);
   const downloadLink = cardElement.querySelector('.download-icon');
   if (downloadLink && fields['R2 Audio URL']) downloadLink.href = fields['R2 Audio URL'];
   
