@@ -1552,7 +1552,7 @@ function linkStandaloneToWaveform() {
     
     g.currentWavesurfer = wavesurfer;
     
-    updatePlayPauseIcons(cardElement, g.isPlaying);
+    updatePlayPauseIcons(cardElement, g.isPlaying, true);
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     
