@@ -1980,9 +1980,6 @@ if (songName) {
       
       const wasPlaying = g.isPlaying;
       
-      // Set progress immediately to avoid flash
-      updateMobileProgress(newProgress, 1);
-      
       if (g.standaloneAudio) {
         g.standaloneAudio.pause();
         g.standaloneAudio = null;
