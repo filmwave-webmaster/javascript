@@ -9822,14 +9822,22 @@ function initMobileFilterToggle(container = document) {
     g.mobileFilterOpen = false;
   }
   
- // function lockBodyScroll() {
-   // document.body.style.overflow = 'hidden';
-   // document.documentElement.style.overflow = 'hidden';
-  //}
+  function limitScroll() {
+    const filterBottom = filterWrapper.getBoundingClientRect().bottom + window.scrollY;
+    const maxScroll = filterBottom - window.innerHeight;
+    
+    if (window.scrollY > maxScroll && maxScroll > 0) {
+      window.scrollTo(0, maxScroll);
+    }
+  }
   
-  function unlockBodyScroll() {
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
+  function enableScrollLimit() {
+    window.addEventListener('scroll', limitScroll);
+    limitScroll(); // Apply immediately
+  }
+  
+  function disableScrollLimit() {
+    window.removeEventListener('scroll', limitScroll);
   }
   
   if (filterButton) {
@@ -9841,7 +9849,7 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.display = 'flex';
       g.mobileFilterOpen = true;
       if (window.innerWidth < 768) {
-        lockBodyScroll();
+        enableScrollLimit();
       }
     });
   }
@@ -9854,7 +9862,7 @@ function initMobileFilterToggle(container = document) {
     newFilterClose.addEventListener('click', () => {
       filterWrapper.style.display = 'none';
       g.mobileFilterOpen = false;
-      unlockBodyScroll();
+      disableScrollLimit();
     });
   }
   
@@ -9862,13 +9870,13 @@ function initMobileFilterToggle(container = document) {
   function checkScreenWidth() {
     if (window.innerWidth >= 768) {
       filterWrapper.style.display = 'flex';
-      unlockBodyScroll();
+      disableScrollLimit();
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
       if (g.mobileFilterOpen) {
-        lockBodyScroll();
+        enableScrollLimit();
       } else {
-        unlockBodyScroll();
+        disableScrollLimit();
       }
     }
   }
