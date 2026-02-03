@@ -9040,10 +9040,17 @@ template.style.display = 'none';
             if (countEl) countEl.textContent = '0';
           }
         })
-      ).then(() => {
+      }).then(() => {
         // Fade in all brackets at once after all counts are loaded
         container.querySelectorAll('.song-count-brackets').forEach(el => {
           el.style.opacity = '1';
+        });
+        
+        // Reset any Webflow scroll interactions on playlist cards
+        container.querySelectorAll('.playlist-title-count-wrapper, .playlist-title').forEach(el => {
+          el.style.opacity = '1';
+          el.style.visibility = 'visible';
+          el.style.transform = 'none';
         });
       });
   
