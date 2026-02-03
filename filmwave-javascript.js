@@ -1483,6 +1483,12 @@ function updatePlayPauseIcons(cardElement, isPlaying) {
     playIcon.style.display = isPlaying ? 'none' : 'block';
     pauseIcon.style.display = isPlaying ? 'block' : 'none';
   }
+  
+  // Update song wrapper border for active song
+  const songWrapper = cardElement.querySelector('.song-wrapper');
+  if (songWrapper) {
+    songWrapper.style.borderColor = 'var(--color-8)';
+  }
 }
 
 /**
