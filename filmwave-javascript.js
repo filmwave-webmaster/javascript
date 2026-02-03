@@ -645,8 +645,6 @@ function navigateStandaloneTrack(direction) {
   }
   
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
-
-  resetMobileProgress();
   
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
@@ -1551,8 +1549,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
     g.currentWavesurfer.seekTo(0);
   }
-
-  resetMobileProgress();
   
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
