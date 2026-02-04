@@ -9988,7 +9988,35 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.display = 'none';
       g.mobileFilterOpen = false;
       disableScrollLimit();
-      // Restore scroll position
+      
+      // Reset all accordions to closed state
+      filterWrapper.querySelectorAll('.w-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('w--open');
+        const toggle = dropdown.querySelector('.w-dropdown-toggle');
+        const list = dropdown.querySelector('.w-dropdown-list');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        if (list) {
+          list.classList.remove('w--open');
+          list.style.display = 'none';
+        }
+      });
+      
+      // Also reset any Webflow accordion elements
+      filterWrapper.querySelectorAll('.w-accordion-item').forEach(item => {
+        item.classList.remove('w--open');
+        const content = item.querySelector('.w-accordion-content');
+        if (content) content.style.display = 'none';
+      });
+      
+      // Scroll filter wrapper content to top
+      filterWrapper.scrollTop = 0;
+      
+      // Scroll any inner scrollable lists to top
+      filterWrapper.querySelectorAll('.filter-dropdown-list, .w-dropdown-list').forEach(list => {
+        list.scrollTop = 0;
+      });
+      
+      // Restore page scroll position
       if (typeof g.savedScrollPosition === 'number') {
         window.scrollTo(0, g.savedScrollPosition);
       }
