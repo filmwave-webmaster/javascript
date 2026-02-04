@@ -9989,32 +9989,18 @@ function initMobileFilterToggle(container = document) {
       g.mobileFilterOpen = false;
       disableScrollLimit();
       
-      // Reset all accordions to closed state
-      filterWrapper.querySelectorAll('.w-dropdown').forEach(dropdown => {
-        dropdown.classList.remove('w--open');
-        const toggle = dropdown.querySelector('.w-dropdown-toggle');
-        const list = dropdown.querySelector('.w-dropdown-list');
-        if (toggle) toggle.setAttribute('aria-expanded', 'false');
-        if (list) {
-          list.classList.remove('w--open');
-          list.style.display = 'none';
-        }
-      });
-      
-      // Also reset any Webflow accordion elements
-      filterWrapper.querySelectorAll('.w-accordion-item').forEach(item => {
-        item.classList.remove('w--open');
-        const content = item.querySelector('.w-accordion-content');
-        if (content) content.style.display = 'none';
-      });
-      
-      // Scroll filter wrapper content to top
-      filterWrapper.scrollTop = 0;
-      
-      // Scroll any inner scrollable lists to top
-      filterWrapper.querySelectorAll('.filter-dropdown-list, .w-dropdown-list').forEach(list => {
+      // Close all filter accordions
+      filterWrapper.querySelectorAll('.filter-list').forEach(list => {
+        list.classList.remove('open');
+        list.style.maxHeight = '';
         list.scrollTop = 0;
       });
+      
+      // Scroll filter wrapper to top
+      filterWrapper.scrollTop = 0;
+      
+      // Scroll page to top before restoring position
+      window.scrollTo(0, 0);
       
       // Restore page scroll position
       if (typeof g.savedScrollPosition === 'number') {
