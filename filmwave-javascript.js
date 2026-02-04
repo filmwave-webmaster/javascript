@@ -9985,27 +9985,27 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
     
     newFilterClose.addEventListener('click', () => {
-      filterWrapper.style.display = 'none';
-      g.mobileFilterOpen = false;
-      disableScrollLimit();
-      
-      // Close all filter accordions
+      // Close all filter accordions and reset scroll positions
       filterWrapper.querySelectorAll('.filter-list').forEach(list => {
+        list.scrollTop = 0;
         list.classList.remove('open');
         list.style.maxHeight = '';
-        list.scrollTop = 0;
       });
       
       // Scroll filter wrapper to top
       filterWrapper.scrollTop = 0;
       
-      // Scroll page to top before restoring position
-      window.scrollTo(0, 0);
-      
-      // Restore page scroll position
-      if (typeof g.savedScrollPosition === 'number') {
-        window.scrollTo(0, g.savedScrollPosition);
-      }
+      // Hide after resetting
+      setTimeout(() => {
+        filterWrapper.style.display = 'none';
+        g.mobileFilterOpen = false;
+        disableScrollLimit();
+        
+        // Restore page scroll position
+        if (typeof g.savedScrollPosition === 'number') {
+          window.scrollTo(0, g.savedScrollPosition);
+        }
+      }, 10);
     });
   }
   
