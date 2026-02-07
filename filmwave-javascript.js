@@ -9966,9 +9966,16 @@ function initMobileFilterToggle(container = document) {
       
       // Fade out background content first
       const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList && window.innerWidth < 768) {
-        musicList.style.transition = 'opacity 0.2s ease';
-        musicList.style.opacity = '0';
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      
+      if (window.innerWidth < 768) {
+        [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+          if (el) {
+            el.style.transition = 'opacity 0.2s ease';
+            el.style.opacity = '0';
+          }
+        });
       }
       
       // After fade out, scroll to top and slide in filter
@@ -10024,13 +10031,18 @@ function initMobileFilterToggle(container = document) {
         
         // Fade background content back in
         const musicList = document.querySelector('.music-list-wrapper');
-        if (musicList) {
-          musicList.style.opacity = '0';
-          musicList.style.transition = 'opacity 0.2s ease';
-          requestAnimationFrame(() => {
-            musicList.style.opacity = '1';
-          });
-        }
+        const mobileSearchHeader = document.querySelector('.mobile-search-header');
+        const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+        
+        [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+          if (el) {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.2s ease';
+            requestAnimationFrame(() => {
+              el.style.opacity = '1';
+            });
+          }
+        });
         
         if (typeof g.savedScrollPosition === 'number') {
           window.scrollTo(0, g.savedScrollPosition);
@@ -10038,9 +10050,9 @@ function initMobileFilterToggle(container = document) {
         
         // Clean up transition after fade in
         setTimeout(() => {
-          if (musicList) {
-            musicList.style.transition = '';
-          }
+          [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+            if (el) el.style.transition = '';
+          });
         }, 200);
       }, 350);
     });
@@ -10054,10 +10066,15 @@ function initMobileFilterToggle(container = document) {
       disableScrollLimit();
       
       const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.opacity = '';
-        musicList.style.transition = '';
-      }
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      
+      [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+        if (el) {
+          el.style.opacity = '';
+          el.style.transition = '';
+        }
+      });
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
       if (g.mobileFilterOpen) {
