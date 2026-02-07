@@ -3710,7 +3710,6 @@ function initPlaylistFilter() {
   
   const g = window.musicPlayerPersistent;
   
-  // Check if user is logged in
   async function checkUserLoggedIn() {
     try {
       if (window.$memberstackDom) {
@@ -3723,7 +3722,6 @@ function initPlaylistFilter() {
     return false;
   }
   
-  // Hide section for logged out users
   async function initVisibility() {
     const isLoggedIn = await checkUserLoggedIn();
     if (!isLoggedIn) {
@@ -3735,28 +3733,20 @@ function initPlaylistFilter() {
     return true;
   }
   
-  // Get DOM elements
   const filterHeader = playlistSection.querySelector('.filter-header');
   const filterList = playlistSection.querySelector('.filter-list');
-  const filterItemTemplate = filterList?.querySelector('.filter-item');
   const activePlaylistWrapper = playlistSection.querySelector('.active-playlist-wrapper');
   const activePlaylistsText = playlistSection.querySelector('.active-playlists');
   const filterDotActive = playlistSection.querySelector('.filter-dot-active');
   
-  if (!filterList || !filterItemTemplate) {
-    console.warn('Playlist filter: missing required elements');
+  if (!filterList) {
+    console.warn('Playlist filter: missing filter-list');
     return;
   }
   
-  // Store template and clear list
-  const template = filterItemTemplate.cloneNode(true);
-  filterList.innerHTML = '';
-  
-  // Track selected playlist
   let selectedPlaylistId = null;
   let selectedPlaylistName = null;
   
-  // Update active playlist display
   function updateActivePlaylistDisplay() {
     if (selectedPlaylistId && selectedPlaylistName) {
       if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
@@ -3769,12 +3759,10 @@ function initPlaylistFilter() {
     }
   }
   
-  // Filter songs by playlist
   async function filterSongsByPlaylist(playlistId) {
     const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     
     if (!playlistId) {
-      // Clear playlist filter - show all (respecting other filters)
       songCards.forEach(card => {
         if (card.getAttribute('data-hidden-by-playlist') === 'true') {
           card.style.display = '';
@@ -3782,7 +3770,6 @@ function initPlaylistFilter() {
         }
       });
       
-      // Re-apply other active filters
       if (typeof applyAllFilters === 'function') {
         applyAllFilters();
       }
@@ -3792,7 +3779,6 @@ function initPlaylistFilter() {
     }
     
     try {
-      // Get songs in the selected playlist
       const playlistSongs = await PlaylistManager.getPlaylistSongs(playlistId);
       const playlistSongIds = playlistSongs.map(s => String(s.song_id || s.airtable_id || s.id));
       
@@ -3802,19 +3788,16 @@ function initPlaylistFilter() {
         const cardSongId = String(card.dataset.songId || card.dataset.airtableId || '');
         
         if (playlistSongIds.includes(cardSongId)) {
-          // Song is in playlist - show it (unless hidden by other filters)
           if (card.getAttribute('data-hidden-by-playlist') === 'true') {
             card.style.display = '';
             card.removeAttribute('data-hidden-by-playlist');
           }
         } else {
-          // Song not in playlist - hide it
           card.style.display = 'none';
           card.setAttribute('data-hidden-by-playlist', 'true');
         }
       });
       
-      // Update filtered song IDs for navigation
       const visibleSongIds = [];
       songCards.forEach(card => {
         if (card.style.display !== 'none') {
@@ -3828,10 +3811,8 @@ function initPlaylistFilter() {
     }
   }
   
-  // Handle checkbox change (single-select behavior)
   function handleCheckboxChange(checkbox, playlistId, playlistName) {
     if (checkbox.checked) {
-      // Uncheck all other checkboxes
       filterList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         if (cb !== checkbox) {
           cb.checked = false;
@@ -3856,17 +3837,13 @@ function initPlaylistFilter() {
     
     updateActivePlaylistDisplay();
     filterSongsByPlaylist(selectedPlaylistId);
-    
-    // Create/remove filter tag
     updatePlaylistFilterTag();
   }
   
-  // Update filter tag
   function updatePlaylistFilterTag() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
     
-    // Remove existing playlist tag
     const existingTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
     if (existingTag) existingTag.remove();
     
@@ -3880,7 +3857,6 @@ function initPlaylistFilter() {
       `;
       
       tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
-        // Uncheck the selected checkbox
         const checkedBox = filterList.querySelector('input[type="checkbox"]:checked');
         if (checkedBox) {
           checkedBox.checked = false;
@@ -3899,19 +3875,26 @@ function initPlaylistFilter() {
     }
   }
   
-  // Populate playlist filter items
   async function populatePlaylistFilter() {
+    // Get template INSIDE this function to avoid timing issues
+    const filterItemTemplate = filterList.querySelector('.filter-item');
+    if (!filterItemTemplate) {
+      console.warn('Playlist filter: missing filter-item template');
+      return;
+    }
+    
+    const template = filterItemTemplate.cloneNode(true);
+    
     if (!PlaylistManager.currentUserId) {
       await PlaylistManager.getUserId();
     }
     
     const playlists = await PlaylistManager.getUserPlaylists(true);
     
-    // Clear existing items
+    // Clear AFTER cloning template
     filterList.innerHTML = '';
     
     if (!playlists || playlists.length === 0) {
-      // No playlists - show message
       const emptyItem = template.cloneNode(true);
       const textEl = emptyItem.querySelector('.filter-text');
       if (textEl) textEl.textContent = 'No playlists yet';
@@ -3921,7 +3904,6 @@ function initPlaylistFilter() {
       return;
     }
     
-    // Create filter item for each playlist
     playlists.forEach(playlist => {
       const item = template.cloneNode(true);
       const textEl = item.querySelector('.filter-text');
@@ -3933,7 +3915,6 @@ function initPlaylistFilter() {
         checkbox.dataset.playlistId = playlist.id;
         checkbox.dataset.playlistName = playlist.name;
         
-        // Add change listener
         checkbox.addEventListener('change', () => {
           handleCheckboxChange(checkbox, playlist.id, playlist.name);
         });
@@ -3945,7 +3926,6 @@ function initPlaylistFilter() {
     console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
   }
   
-  // Initialize accordion behavior for filter header
   function initAccordion() {
     if (!filterHeader) return;
     
@@ -3953,7 +3933,6 @@ function initPlaylistFilter() {
       const isOpen = filterList.classList.contains('open');
       const arrow = this.querySelector('.arrow-icon');
       
-      // Close all other filter lists first
       document.querySelectorAll('.filter-list').forEach(list => {
         list.style.maxHeight = '0px';
         list.classList.remove('open');
@@ -3972,7 +3951,6 @@ function initPlaylistFilter() {
     });
   }
   
-  // Main initialization
   async function init() {
     const isLoggedIn = await initVisibility();
     if (!isLoggedIn) return;
@@ -3986,7 +3964,6 @@ function initPlaylistFilter() {
   
   init();
   
-  // Expose refresh function
   window.refreshPlaylistFilter = async function() {
     const isLoggedIn = await initVisibility();
     if (!isLoggedIn) return;
