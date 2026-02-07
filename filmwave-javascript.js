@@ -3772,7 +3772,7 @@ function initPlaylistFilter() {
     if (currentActiveText) currentActiveText.textContent = selectedPlaylistName;
     if (currentDot) currentDot.style.display = 'block';
   } else {
-    if (currentActiveText) currentActiveText.textContent = 'No playlist selected';
+    if (currentActiveText) currentActiveText.textContent = 'Select Playlist';
     if (currentDot) currentDot.style.display = 'none';
   }
 }
