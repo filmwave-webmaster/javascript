@@ -419,6 +419,7 @@ async function initMusicPage() {
       initKeyFilterSystem();
       initBPMFilter();
       initSearchAndFilters();
+      initPlaylistFilter();
       g.filtersInitialized = true;
     }
     
@@ -3695,6 +3696,302 @@ function initSearchAndFilters() {
       toggleClearButton();
     });
   });
+}
+
+/**
+ * ============================================================
+ * PLAYLIST FILTER SYSTEM
+ * ============================================================
+ */
+
+function initPlaylistFilter() {
+  const playlistSection = document.querySelector('.filter-category.playlists');
+  if (!playlistSection) return;
+  
+  const g = window.musicPlayerPersistent;
+  
+  // Check if user is logged in
+  async function checkUserLoggedIn() {
+    try {
+      if (window.$memberstackDom) {
+        const member = await window.$memberstackDom.getCurrentMember();
+        return !!(member && member.data);
+      }
+    } catch (e) {
+      console.warn('Could not check Memberstack login:', e);
+    }
+    return false;
+  }
+  
+  // Hide section for logged out users
+  async function initVisibility() {
+    const isLoggedIn = await checkUserLoggedIn();
+    if (!isLoggedIn) {
+      playlistSection.style.display = 'none';
+      console.log('🎵 Playlist filter hidden (user not logged in)');
+      return false;
+    }
+    playlistSection.style.display = '';
+    return true;
+  }
+  
+  // Get DOM elements
+  const filterHeader = playlistSection.querySelector('.filter-header');
+  const filterList = playlistSection.querySelector('.filter-list');
+  const filterItemTemplate = filterList?.querySelector('.filter-item');
+  const activePlaylistWrapper = playlistSection.querySelector('.active-playlist-wrapper');
+  const activePlaylistsText = playlistSection.querySelector('.active-playlists');
+  const filterDotActive = playlistSection.querySelector('.filter-dot-active');
+  
+  if (!filterList || !filterItemTemplate) {
+    console.warn('Playlist filter: missing required elements');
+    return;
+  }
+  
+  // Store template and clear list
+  const template = filterItemTemplate.cloneNode(true);
+  filterList.innerHTML = '';
+  
+  // Track selected playlist
+  let selectedPlaylistId = null;
+  let selectedPlaylistName = null;
+  
+  // Update active playlist display
+  function updateActivePlaylistDisplay() {
+    if (selectedPlaylistId && selectedPlaylistName) {
+      if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
+      if (activePlaylistWrapper) activePlaylistWrapper.style.display = '';
+      if (filterDotActive) filterDotActive.style.display = 'block';
+    } else {
+      if (activePlaylistsText) activePlaylistsText.textContent = '';
+      if (activePlaylistWrapper) activePlaylistWrapper.style.display = 'none';
+      if (filterDotActive) filterDotActive.style.display = 'none';
+    }
+  }
+  
+  // Filter songs by playlist
+  async function filterSongsByPlaylist(playlistId) {
+    const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+    
+    if (!playlistId) {
+      // Clear playlist filter - show all (respecting other filters)
+      songCards.forEach(card => {
+        if (card.getAttribute('data-hidden-by-playlist') === 'true') {
+          card.style.display = '';
+          card.removeAttribute('data-hidden-by-playlist');
+        }
+      });
+      
+      // Re-apply other active filters
+      if (typeof applyAllFilters === 'function') {
+        applyAllFilters();
+      }
+      
+      console.log('🎵 Playlist filter cleared');
+      return;
+    }
+    
+    try {
+      // Get songs in the selected playlist
+      const playlistSongs = await PlaylistManager.getPlaylistSongs(playlistId);
+      const playlistSongIds = playlistSongs.map(s => String(s.song_id || s.airtable_id || s.id));
+      
+      console.log(`🎵 Filtering by playlist ${playlistId}, contains ${playlistSongIds.length} songs`);
+      
+      songCards.forEach(card => {
+        const cardSongId = String(card.dataset.songId || card.dataset.airtableId || '');
+        
+        if (playlistSongIds.includes(cardSongId)) {
+          // Song is in playlist - show it (unless hidden by other filters)
+          if (card.getAttribute('data-hidden-by-playlist') === 'true') {
+            card.style.display = '';
+            card.removeAttribute('data-hidden-by-playlist');
+          }
+        } else {
+          // Song not in playlist - hide it
+          card.style.display = 'none';
+          card.setAttribute('data-hidden-by-playlist', 'true');
+        }
+      });
+      
+      // Update filtered song IDs for navigation
+      const visibleSongIds = [];
+      songCards.forEach(card => {
+        if (card.style.display !== 'none') {
+          visibleSongIds.push(card.dataset.songId);
+        }
+      });
+      g.filteredSongIds = visibleSongIds;
+      
+    } catch (error) {
+      console.error('Error filtering by playlist:', error);
+    }
+  }
+  
+  // Handle checkbox change (single-select behavior)
+  function handleCheckboxChange(checkbox, playlistId, playlistName) {
+    if (checkbox.checked) {
+      // Uncheck all other checkboxes
+      filterList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        if (cb !== checkbox) {
+          cb.checked = false;
+          const wrapper = cb.closest('.filter-item');
+          if (wrapper) wrapper.classList.remove('is-selected');
+        }
+      });
+      
+      selectedPlaylistId = playlistId;
+      selectedPlaylistName = playlistName;
+      
+      const wrapper = checkbox.closest('.filter-item');
+      if (wrapper) wrapper.classList.add('is-selected');
+      
+    } else {
+      selectedPlaylistId = null;
+      selectedPlaylistName = null;
+      
+      const wrapper = checkbox.closest('.filter-item');
+      if (wrapper) wrapper.classList.remove('is-selected');
+    }
+    
+    updateActivePlaylistDisplay();
+    filterSongsByPlaylist(selectedPlaylistId);
+    
+    // Create/remove filter tag
+    updatePlaylistFilterTag();
+  }
+  
+  // Update filter tag
+  function updatePlaylistFilterTag() {
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (!tagsContainer) return;
+    
+    // Remove existing playlist tag
+    const existingTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
+    if (existingTag) existingTag.remove();
+    
+    if (selectedPlaylistId && selectedPlaylistName) {
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      tag.setAttribute('data-playlist-filter-tag', 'true');
+      tag.innerHTML = `
+        <span class="filter-tag-text">${selectedPlaylistName}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
+      
+      tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+        // Uncheck the selected checkbox
+        const checkedBox = filterList.querySelector('input[type="checkbox"]:checked');
+        if (checkedBox) {
+          checkedBox.checked = false;
+          const wrapper = checkedBox.closest('.filter-item');
+          if (wrapper) wrapper.classList.remove('is-selected');
+        }
+        
+        selectedPlaylistId = null;
+        selectedPlaylistName = null;
+        updateActivePlaylistDisplay();
+        filterSongsByPlaylist(null);
+        tag.remove();
+      });
+      
+      tagsContainer.appendChild(tag);
+    }
+  }
+  
+  // Populate playlist filter items
+  async function populatePlaylistFilter() {
+    if (!PlaylistManager.currentUserId) {
+      await PlaylistManager.getUserId();
+    }
+    
+    const playlists = await PlaylistManager.getUserPlaylists(true);
+    
+    // Clear existing items
+    filterList.innerHTML = '';
+    
+    if (!playlists || playlists.length === 0) {
+      // No playlists - show message
+      const emptyItem = template.cloneNode(true);
+      const textEl = emptyItem.querySelector('.filter-text');
+      if (textEl) textEl.textContent = 'No playlists yet';
+      const checkbox = emptyItem.querySelector('input[type="checkbox"]');
+      if (checkbox) checkbox.disabled = true;
+      filterList.appendChild(emptyItem);
+      return;
+    }
+    
+    // Create filter item for each playlist
+    playlists.forEach(playlist => {
+      const item = template.cloneNode(true);
+      const textEl = item.querySelector('.filter-text');
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      
+      if (textEl) textEl.textContent = playlist.name;
+      
+      if (checkbox) {
+        checkbox.dataset.playlistId = playlist.id;
+        checkbox.dataset.playlistName = playlist.name;
+        
+        // Add change listener
+        checkbox.addEventListener('change', () => {
+          handleCheckboxChange(checkbox, playlist.id, playlist.name);
+        });
+      }
+      
+      filterList.appendChild(item);
+    });
+    
+    console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
+  }
+  
+  // Initialize accordion behavior for filter header
+  function initAccordion() {
+    if (!filterHeader) return;
+    
+    filterHeader.addEventListener('click', function() {
+      const isOpen = filterList.classList.contains('open');
+      const arrow = this.querySelector('.arrow-icon');
+      
+      // Close all other filter lists first
+      document.querySelectorAll('.filter-list').forEach(list => {
+        list.style.maxHeight = '0px';
+        list.classList.remove('open');
+      });
+      
+      document.querySelectorAll('.arrow-icon').forEach(arr => {
+        arr.style.transform = 'rotate(0deg)';
+      });
+      
+      if (!isOpen) {
+        const actualHeight = Math.min(filterList.scrollHeight, 300);
+        filterList.style.maxHeight = actualHeight + 'px';
+        filterList.classList.add('open');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      }
+    });
+  }
+  
+  // Main initialization
+  async function init() {
+    const isLoggedIn = await initVisibility();
+    if (!isLoggedIn) return;
+    
+    initAccordion();
+    updateActivePlaylistDisplay();
+    await populatePlaylistFilter();
+    
+    console.log('✅ Playlist filter initialized');
+  }
+  
+  init();
+  
+  // Expose refresh function
+  window.refreshPlaylistFilter = async function() {
+    const isLoggedIn = await initVisibility();
+    if (!isLoggedIn) return;
+    await populatePlaylistFilter();
+  };
 }
 
 /**
