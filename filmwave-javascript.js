@@ -9984,6 +9984,7 @@ function initMobileFilterToggle(container = document) {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
             el.style.transform = 'translateX(-30%)';
+            el.style.zIndex = '1';
           }
         });
         
@@ -10099,6 +10100,7 @@ function initMobileFilterToggle(container = document) {
           if (el) {
             el.style.transform = '';
             el.style.transition = '';
+            el.style.zIndex = '';
           }
         });
       }, 350);
