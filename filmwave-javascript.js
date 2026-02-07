@@ -9970,14 +9970,7 @@ function initMobileFilterToggle(container = document) {
       // Save scroll position before opening
       g.savedScrollPosition = window.scrollY;
       
-      // Set up for slide-in animation with fixed positioning
-      filterWrapper.style.position = 'fixed';
-      filterWrapper.style.top = '0';
-      filterWrapper.style.left = '0';
-      filterWrapper.style.right = '0';
-      filterWrapper.style.bottom = '0';
-      filterWrapper.style.zIndex = '9999';
-      filterWrapper.style.overflowY = 'auto';
+      // Set up for slide-in animation
       filterWrapper.style.display = 'flex';
       filterWrapper.style.transform = 'translateX(100%)';
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -9991,9 +9984,10 @@ function initMobileFilterToggle(container = document) {
       
       g.mobileFilterOpen = true;
       
-      // Hide content after slide-in completes
+      // After slide-in completes: scroll to top and hide content
       if (window.innerWidth < 768) {
         setTimeout(() => {
+          window.scrollTo(0, 0);
           enableScrollLimit();
         }, 350);
       }
@@ -10023,18 +10017,11 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Hide after animation completes
+     // Hide after animation completes
       setTimeout(() => {
         filterWrapper.style.display = 'none';
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
-        filterWrapper.style.position = '';
-        filterWrapper.style.top = '';
-        filterWrapper.style.left = '';
-        filterWrapper.style.right = '';
-        filterWrapper.style.bottom = '';
-        filterWrapper.style.zIndex = '';
-        filterWrapper.style.overflowY = '';
         g.mobileFilterOpen = false;
         
         // Restore page scroll position
