@@ -9985,19 +9985,14 @@ function initMobileFilterToggle(container = document) {
           }
         });
         
-        // Set up filter slide-in at the same time
-        filterWrapper.style.display = 'flex';
-        filterWrapper.style.transform = 'translateX(100%)';
-        filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        
-        // Restore accordion states if saved
-        if (g.filterAccordionStates) {
-          filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-            const state = g.filterAccordionStates[index];
-            if (state && state.isOpen) {
-              list.classList.add('open');
-              list.style.maxHeight = state.maxHeight;
-            }
+        // Set up slide-left animation for content with fade
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
+            el.style.transform = 'translateX(-100%)';
+            el.style.opacity = '0';
+          }
+        });
           });
         }
         
@@ -10069,11 +10064,12 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // First set content to start position off-screen (in case already at translateX(0))
+      // First set content to start position off-screen
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
           el.style.transform = 'translateX(-100%)';
+          el.style.opacity = '0';
         }
       });
       
@@ -10082,8 +10078,9 @@ function initMobileFilterToggle(container = document) {
         requestAnimationFrame(() => {
           [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
             if (el) {
-              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
               el.style.transform = 'translateX(0)';
+              el.style.opacity = '1';
             }
           });
         });
@@ -10109,6 +10106,7 @@ function initMobileFilterToggle(container = document) {
           if (el) {
             el.style.transform = '';
             el.style.transition = '';
+            el.style.opacity = '';
           }
         });
       }, 350);
