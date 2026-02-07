@@ -10045,14 +10045,13 @@ function initMobileFilterToggle(container = document) {
           
           // Restore accordion scroll positions
           if (g.filterAccordionStates) {
-              filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-                const state = g.filterAccordionStates[index];
-                if (state && state.isOpen && state.scrollTop) {
-                  list.scrollTop = state.scrollTop;
-                }
-              });
-            }
-          });
+            filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+              const state = g.filterAccordionStates[index];
+              if (state && state.isOpen && state.scrollTop) {
+                list.scrollTop = state.scrollTop;
+              }
+            });
+          }
         }, 350);
         
         g.mobileFilterOpen = true;
@@ -10110,7 +10109,8 @@ function initMobileFilterToggle(container = document) {
       });
       
       // Clean up after animation completes
-      filterWrapper.style.display = 'none';
+      setTimeout(() => {
+        filterWrapper.style.display = 'none';
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
@@ -10123,7 +10123,7 @@ function initMobileFilterToggle(container = document) {
         });
         filterWrapper.scrollTop = 0;
         
-       // Clean up content transitions
+        // Clean up content transitions
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transform = '';
