@@ -9970,6 +9970,17 @@ function initMobileFilterToggle(container = document) {
       // Save scroll position before opening
       g.savedScrollPosition = window.scrollY;
       
+      // Make filter fixed and full-screen on mobile
+      filterWrapper.style.position = 'fixed';
+      filterWrapper.style.top = 'var(--navbar--height, 60px)';
+      filterWrapper.style.left = '0';
+      filterWrapper.style.right = '0';
+      filterWrapper.style.bottom = '0';
+      filterWrapper.style.width = '100%';
+      filterWrapper.style.height = 'auto';
+      filterWrapper.style.zIndex = '999';
+      filterWrapper.style.overflowY = 'auto';
+      
       // Set up for slide-in animation
       filterWrapper.style.display = 'flex';
       filterWrapper.style.transform = 'translateX(100%)';
@@ -9984,10 +9995,9 @@ function initMobileFilterToggle(container = document) {
       
       g.mobileFilterOpen = true;
       
-      // After slide-in completes: scroll to top and hide content
+      // Hide background content after slide-in completes
       if (window.innerWidth < 768) {
         setTimeout(() => {
-          window.scrollTo(0, 0);
           enableScrollLimit();
         }, 350);
       }
@@ -10022,6 +10032,15 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.display = 'none';
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
+        filterWrapper.style.position = '';
+        filterWrapper.style.top = '';
+        filterWrapper.style.left = '';
+        filterWrapper.style.right = '';
+        filterWrapper.style.bottom = '';
+        filterWrapper.style.width = '';
+        filterWrapper.style.height = '';
+        filterWrapper.style.zIndex = '';
+        filterWrapper.style.overflowY = '';
         g.mobileFilterOpen = false;
         
         // Restore page scroll position
