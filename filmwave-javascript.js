@@ -9971,7 +9971,10 @@ function initMobileFilterToggle(container = document) {
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
       
-      if (window.innerWidth < 768) {
+     if (window.innerWidth < 768) {
+        // Always scroll to top instantly before animation
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
         filterWrapper.style.top = 'var(--navbar--height, 60px)';
@@ -9979,19 +9982,32 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content to the left with fade
+        // Set up filter starting position off-screen
+        filterWrapper.style.display = 'flex';
+        filterWrapper.style.transform = 'translateX(100%)';
+        filterWrapper.style.transition = 'none';
+        
+        // Set content starting position (visible, at 0)
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.5s ease';
-            el.style.transform = 'translateX(-100%)';
-            el.style.opacity = '0';
+            el.style.transition = 'none';
+            el.style.transform = 'translateX(0)';
           }
         });
         
-        // Set up filter slide-in at the same time
-        filterWrapper.style.display = 'flex';
-        filterWrapper.style.transform = 'translateX(100%)';
+        // Force reflow to ensure starting positions are applied
+        void filterWrapper.offsetWidth;
+        
+        // Now animate filter in and content out
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        filterWrapper.style.transform = 'translateX(0)';
+        
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+            el.style.transform = 'translateX(-150%)';
+          }
+        });
         
         // Restore accordion states if saved
         if (g.filterAccordionStates) {
@@ -10007,16 +10023,11 @@ function initMobileFilterToggle(container = document) {
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
         
-        // Trigger both animations on next frame
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            filterWrapper.style.transform = 'translateX(0)';
-          });
-        });
-        
-        // After animations complete: adjust scroll, hide content, restore accordion scroll
+       // After animations complete: adjust scroll, hide content, restore accordion scroll
         setTimeout(() => {
-          window.scrollTo(0, 0);
+          // Scroll to top while filter is covering everything
+          window.scrollTo({ top: 0, behavior: 'instant' });
+          
           enableScrollLimit();
           
           // Reset filter to normal positioning now that we're at top
@@ -10072,12 +10083,11 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set all content to start position off-screen, fully visible, with no transition
+      // Set content to start position off-screen with no transition
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
           el.style.transform = 'translateX(-100%)';
-          el.style.opacity = '1';
         }
       });
       
@@ -10112,7 +10122,6 @@ function initMobileFilterToggle(container = document) {
           if (el) {
             el.style.transform = '';
             el.style.transition = '';
-            el.style.opacity = '';
           }
         });
       }, 350);
