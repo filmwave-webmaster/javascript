@@ -2542,7 +2542,9 @@ function initFilterAccordions() {
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
       
+      // Reset scroll position on all accordions before closing
       document.querySelectorAll('.filter-list').forEach(list => {
+        list.scrollTop = 0;
         list.style.maxHeight = '0px';
         list.classList.remove('open');
       });
@@ -9873,7 +9875,7 @@ async function initPlaylistsPage() {
 }
 
 /* ============================================================
-   33. TOGGLE SEARCH FILTERS MUSIC PAGE
+   34. TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
 
 function initMobileFilterToggle(container = document) {
@@ -10158,7 +10160,7 @@ function initMobileFilterToggle(container = document) {
 }
 
 /* ============================================================
-   34. SIMPLE PROGRESS TRACKER
+   35. SIMPLE PROGRESS TRACKER
    ============================================================ */
 
 function resetMobileProgress() {
@@ -10178,7 +10180,7 @@ function updateMobileProgress(current, duration) {
 }
 
 /* ============================================================
-   35. TOUCH DEVICE DOUBLE-TAP FIX
+   36. TOUCH DEVICE DOUBLE-TAP FIX
    ============================================================ */
 (function initTouchFix() {
   if (!('ontouchstart' in window)) return; // Only run on touch devices
