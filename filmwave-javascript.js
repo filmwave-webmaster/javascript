@@ -10020,15 +10020,6 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
     
     newFilterClose.addEventListener('click', () => {
-      // Close all filter accordions and reset scroll positions
-      filterWrapper.querySelectorAll('.filter-list').forEach(list => {
-        list.scrollTop = 0;
-        list.classList.remove('open');
-        list.style.maxHeight = '';
-      });
-      
-      filterWrapper.scrollTop = 0;
-      
       // Slide out animation
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
@@ -10040,6 +10031,14 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
         disableScrollLimit();
+        
+        // Reset accordions and scroll positions after hidden
+        filterWrapper.querySelectorAll('.filter-list').forEach(list => {
+          list.scrollTop = 0;
+          list.classList.remove('open');
+          list.style.maxHeight = '';
+        });
+        filterWrapper.scrollTop = 0;
         
        // Fade background content back in
         const musicList = document.querySelector('.music-list-wrapper');
