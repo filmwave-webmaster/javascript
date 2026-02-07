@@ -9982,7 +9982,7 @@ function initMobileFilterToggle(container = document) {
        // Slide all content to the left with fade
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease';
             el.style.transform = 'translateX(-100%)';
             el.style.opacity = '0';
           }
