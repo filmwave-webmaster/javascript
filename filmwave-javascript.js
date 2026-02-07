@@ -9961,19 +9961,15 @@ function initMobileFilterToggle(container = document) {
     const newFilterButton = filterButton.cloneNode(true);
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
     
-    newFilterButton.addEventListener('click', () => {
-      g.savedScrollPosition = window.scrollY;
-      
-      const musicList = document.querySelector('.music-list-wrapper');
-      const mobileSearchHeader = document.querySelector('.mobile-search-header');
-      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-      const footerContainer = document.querySelector('.footer-container');
-      
-     if (window.innerWidth < 768) {
-        // Scroll to top first before any animation
-        window.scrollTo(0, 0);
+    if (window.innerWidth < 768) {
+        // Make filter fixed so it doesn't depend on scroll position
+        filterWrapper.style.position = 'fixed';
+        filterWrapper.style.top = 'var(--navbar--height, 60px)';
+        filterWrapper.style.left = '0';
+        filterWrapper.style.right = '0';
+        filterWrapper.style.zIndex = '999';
         
-        // Set up slide-left animation for content (no fade)
+        // Set up slide-left animation for content
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -10011,6 +10007,13 @@ function initMobileFilterToggle(container = document) {
         setTimeout(() => {
           window.scrollTo(0, 0);
           enableScrollLimit();
+          
+          // Reset filter to normal positioning now that we're at top
+          filterWrapper.style.position = '';
+          filterWrapper.style.top = '';
+          filterWrapper.style.left = '';
+          filterWrapper.style.right = '';
+          filterWrapper.style.zIndex = '';
           
           // Restore accordion scroll positions
           if (g.filterAccordionStates) {
@@ -10058,11 +10061,24 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
+      // First set content to start position off-screen (in case already at translateX(0))
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
-          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-          el.style.transform = 'translateX(0)';
+          el.style.transition = 'none';
+          el.style.transform = 'translateX(-100%)';
         }
+      });
+      
+      // Then animate back in on next frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+            if (el) {
+              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+              el.style.transform = 'translateX(0)';
+            }
+          });
+        });
       });
       
       // Clean up after animation completes
