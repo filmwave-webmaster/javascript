@@ -3903,7 +3903,8 @@ function initPlaylistFilter() {
     playlists.forEach(playlist => {
       const item = template.cloneNode(true);
       const textEl = item.querySelector('.filter-text');
-      const checkbox = item.querySelector('input[type="checkbox"]');
+      const checkbox = item.querySelector('.checkbox-include input[type="checkbox"]') || 
+                 item.querySelector('input[type="checkbox"]');
       
       if (textEl) textEl.textContent = playlist.name;
       
