@@ -9979,18 +9979,32 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-        // Slide all content further left to fully disappear
+        // Set up filter starting position off-screen
+        filterWrapper.style.display = 'flex';
+        filterWrapper.style.transform = 'translateX(100%)';
+        filterWrapper.style.transition = 'none';
+        
+        // Set content starting position (visible, at 0)
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transition = 'none';
+            el.style.transform = 'translateX(0)';
+          }
+        });
+        
+        // Force reflow to ensure starting positions are applied
+        void filterWrapper.offsetWidth;
+        
+        // Now animate filter in and content out
+        filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        filterWrapper.style.transform = 'translateX(0)';
+        
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
             el.style.transform = 'translateX(-150%)';
           }
         });
-        
-        // Set up filter slide-in at the same time
-        filterWrapper.style.display = 'flex';
-        filterWrapper.style.transform = 'translateX(100%)';
-        filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
         
         // Restore accordion states if saved
         if (g.filterAccordionStates) {
@@ -10005,13 +10019,6 @@ function initMobileFilterToggle(container = document) {
         
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
-        
-        // Trigger both animations on next frame
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            filterWrapper.style.transform = 'translateX(0)';
-          });
-        });
         
         // After animations complete: adjust scroll, hide content, restore accordion scroll
         setTimeout(() => {
