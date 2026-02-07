@@ -3897,6 +3897,11 @@ function initPlaylistFilter() {
   updateActivePlaylistDisplay();
   filterSongsByPlaylist(selectedPlaylistId);
   updatePlaylistFilterTag();
+  
+  // Update clear button visibility
+  if (typeof toggleClearButton === 'function') {
+    toggleClearButton();
+  }
 }
   
   function updatePlaylistFilterTag() {
