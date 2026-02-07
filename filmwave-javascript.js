@@ -3748,16 +3748,14 @@ function initPlaylistFilter() {
   let selectedPlaylistName = null;
   
   function updateActivePlaylistDisplay() {
-    if (selectedPlaylistId && selectedPlaylistName) {
-      if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
-      if (activePlaylistWrapper) activePlaylistWrapper.style.display = '';
-      if (filterDotActive) filterDotActive.style.display = 'block';
-    } else {
-      if (activePlaylistsText) activePlaylistsText.textContent = '';
-      if (activePlaylistWrapper) activePlaylistWrapper.style.display = 'none';
-      if (filterDotActive) filterDotActive.style.display = 'none';
-    }
+  if (selectedPlaylistId && selectedPlaylistName) {
+    if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
+    if (filterDotActive) filterDotActive.style.display = 'block';
+  } else {
+    if (activePlaylistsText) activePlaylistsText.textContent = 'No playlist selected';
+    if (filterDotActive) filterDotActive.style.display = 'none';
   }
+}
   
   async function filterSongsByPlaylist(playlistId) {
     const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
@@ -3924,31 +3922,6 @@ function initPlaylistFilter() {
     });
     
     console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
-  }
-  
-  function initAccordion() {
-    if (!filterHeader) return;
-    
-    filterHeader.addEventListener('click', function() {
-      const isOpen = filterList.classList.contains('open');
-      const arrow = this.querySelector('.arrow-icon');
-      
-      document.querySelectorAll('.filter-list').forEach(list => {
-        list.style.maxHeight = '0px';
-        list.classList.remove('open');
-      });
-      
-      document.querySelectorAll('.arrow-icon').forEach(arr => {
-        arr.style.transform = 'rotate(0deg)';
-      });
-      
-      if (!isOpen) {
-        const actualHeight = Math.min(filterList.scrollHeight, 300);
-        filterList.style.maxHeight = actualHeight + 'px';
-        filterList.classList.add('open');
-        if (arrow) arrow.style.transform = 'rotate(180deg)';
-      }
-    });
   }
   
   async function init() {
