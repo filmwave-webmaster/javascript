@@ -3744,9 +3744,11 @@ function initSearchAndFilters() {
 function initPlaylistFilter() {
   const playlistSection = document.querySelector('.filter-category.playlists');
   if (!playlistSection) return;
-
+  
   // Hide section until playlists are loaded
   playlistSection.style.display = 'none';
+  playlistSection.style.opacity = '0';
+  playlistSection.style.transition = 'opacity 0.3s ease';
   
   const g = window.musicPlayerPersistent;
   
@@ -3988,8 +3990,13 @@ function initPlaylistFilter() {
     const checkbox = emptyItem.querySelector('input[type="checkbox"]');
     if (checkbox) checkbox.disabled = true;
     filterList.appendChild(emptyItem);
-    // Show section even if empty
+    // Show section with fade in
     playlistSection.style.display = '';
+    requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+    playlistSection.style.opacity = '1';
+  });
+});
     return;
   }
   
@@ -4012,8 +4019,13 @@ function initPlaylistFilter() {
     filterList.appendChild(item);
   });
   
-  // Show section after playlists are loaded
-  playlistSection.style.display = '';
+    // Show section with fade in
+    playlistSection.style.display = '';
+    requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+    playlistSection.style.opacity = '1';
+  });
+});
   
   console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
 }
