@@ -9972,28 +9972,34 @@ function initMobileFilterToggle(container = document) {
       const footerContainer = document.querySelector('.footer-container');
       
      if (window.innerWidth < 768) {
-        // Check if scrolled partway through mobile search header
-        const headerHeight = mobileSearchHeader ? mobileSearchHeader.offsetHeight : 0;
-        const isPartiallyScrolled = window.scrollY > 0 && window.scrollY < headerHeight;
-        
-        // If partially scrolled through header, scroll to top immediately
-        if (isPartiallyScrolled) {
-          window.scrollTo(0, 0);
-        }
-        
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
         filterWrapper.style.top = 'var(--navbar--height, 60px)';
         filterWrapper.style.left = '0';
         filterWrapper.style.right = '0';
+        filterWrapper.style.bottom = '0';
         filterWrapper.style.zIndex = '999';
+        filterWrapper.style.overflowY = 'auto';
         
-        // Slide all content further left to fully disappear
+        // Fix content in place during animation to prevent jump
+        const currentScroll = window.scrollY;
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-            el.style.transform = 'translateX(-150%)';
+            el.style.position = 'fixed';
+            el.style.left = '0';
+            el.style.right = '0';
+            el.style.top = el.getBoundingClientRect().top + 'px';
           }
+        });
+        
+        // Now slide all content further left to fully disappear
+        requestAnimationFrame(() => {
+          [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+            if (el) {
+              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+              el.style.transform = 'translateX(-150%)';
+            }
+          });
         });
         
         // Set up filter slide-in at the same time
@@ -10015,24 +10021,38 @@ function initMobileFilterToggle(container = document) {
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
         
-        // Trigger both animations on next frame
+        // Trigger filter animation on next frame
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             filterWrapper.style.transform = 'translateX(0)';
           });
         });
         
-        // After animations complete: adjust scroll, hide content, restore accordion scroll
+        // After animations complete: reset everything
         setTimeout(() => {
           window.scrollTo(0, 0);
           enableScrollLimit();
+          
+          // Reset content positioning
+          [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+            if (el) {
+              el.style.position = '';
+              el.style.left = '';
+              el.style.right = '';
+              el.style.top = '';
+              el.style.transform = '';
+              el.style.transition = '';
+            }
+          });
           
           // Reset filter to normal positioning now that we're at top
           filterWrapper.style.position = '';
           filterWrapper.style.top = '';
           filterWrapper.style.left = '';
           filterWrapper.style.right = '';
+          filterWrapper.style.bottom = '';
           filterWrapper.style.zIndex = '';
+          filterWrapper.style.overflowY = '';
           
           // Restore accordion scroll positions
           if (g.filterAccordionStates) {
