@@ -3538,8 +3538,9 @@ function toggleClearButton() {
 
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+  const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
 
-  clearBtn.style.display = (hasSearch || hasFilters) ? 'flex' : 'none';
+  clearBtn.style.display = (hasSearch || hasFilters || hasPlaylistFilter) ? 'flex' : 'none';
 }
 
 function clearAllFilters() {
@@ -3571,6 +3572,23 @@ function clearAllFilters() {
       }
     });
   }
+
+// Clear playlist filter
+  const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
+  if (playlistCheckbox) {
+    playlistCheckbox.checked = false;
+    const wrapper = playlistCheckbox.closest('.filter-item');
+    if (wrapper) {
+      wrapper.classList.remove('is-selected');
+      const textEl = wrapper.querySelector('.filter-text');
+      if (textEl) textEl.style.color = '';
+    }
+    playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  
+  // Remove playlist filter tag
+  const playlistTag = document.querySelector('[data-playlist-filter-tag]');
+  if (playlistTag) playlistTag.remove();
   
   // Show all songs manually, but respect playlist filter
 document.querySelectorAll('.song-wrapper').forEach(song => {
