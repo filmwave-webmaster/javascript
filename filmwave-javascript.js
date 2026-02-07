@@ -9979,31 +9979,14 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content to the left
+       // Slide all content to the left with fade
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
             el.style.transform = 'translateX(-100%)';
-          }
-        });
-        
-        // Fade music list and footer first
-        [musicList, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
             el.style.opacity = '0';
           }
         });
-        
-        // Fade search bar and header after music list has faded
-        setTimeout(() => {
-          [mobileSearchHeader, searchBarWrapper].forEach(el => {
-            if (el) {
-              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
-              el.style.opacity = '0';
-            }
-          });
-        }, 150);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
