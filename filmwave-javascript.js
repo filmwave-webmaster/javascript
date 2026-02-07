@@ -9979,14 +9979,26 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide content slightly left for parallax effect
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+       // Hide search bar immediately if scrolled down (it's sticky so behaves differently)
+        if (window.scrollY > 0 && searchBarWrapper) {
+          searchBarWrapper.style.opacity = '0';
+        }
+        
+        // Slide content slightly left for parallax effect
+        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
             el.style.transform = 'translateX(-30%)';
             el.style.zIndex = '1';
           }
         });
+        
+        // Search bar only slides if at top of page
+        if (window.scrollY === 0 && searchBarWrapper) {
+          searchBarWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+          searchBarWrapper.style.transform = 'translateX(-30%)';
+          searchBarWrapper.style.zIndex = '1';
+        }
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10072,7 +10084,19 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Content is at -30%, animate back to 0
+      // Set content to starting position first
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transition = 'none';
+          el.style.transform = 'translateX(-30%)';
+          el.style.opacity = '1';
+        }
+      });
+      
+      // Force reflow
+      void filterWrapper.offsetWidth;
+      
+      // Then animate back to 0
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -10101,6 +10125,7 @@ function initMobileFilterToggle(container = document) {
             el.style.transform = '';
             el.style.transition = '';
             el.style.zIndex = '';
+            el.style.opacity = '';
           }
         });
       }, 350);
