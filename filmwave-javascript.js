@@ -3748,14 +3748,18 @@ function initPlaylistFilter() {
   let selectedPlaylistName = null;
   
   function updateActivePlaylistDisplay() {
-    if (selectedPlaylistId && selectedPlaylistName) {
-      if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
-      if (filterDotActive) filterDotActive.style.display = 'block';
-    } else {
-      if (activePlaylistsText) activePlaylistsText.textContent = 'No playlist selected';
-      if (filterDotActive) filterDotActive.style.display = 'none';
-    }
+  // Re-query elements each time to avoid stale references
+  const currentActiveText = playlistSection.querySelector('.active-playlists');
+  const currentDot = playlistSection.querySelector('.filter-dot-active');
+  
+  if (selectedPlaylistId && selectedPlaylistName) {
+    if (currentActiveText) currentActiveText.textContent = selectedPlaylistName;
+    if (currentDot) currentDot.style.display = 'block';
+  } else {
+    if (currentActiveText) currentActiveText.textContent = 'No playlist selected';
+    if (currentDot) currentDot.style.display = 'none';
   }
+}
   
   async function filterSongsByPlaylist(playlistId) {
     const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
