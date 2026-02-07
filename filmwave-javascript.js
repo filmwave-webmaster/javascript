@@ -9964,41 +9964,22 @@ function initMobileFilterToggle(container = document) {
     newFilterButton.addEventListener('click', () => {
       g.savedScrollPosition = window.scrollY;
       
-      // Fade out background content first
       const musicList = document.querySelector('.music-list-wrapper');
       const mobileSearchHeader = document.querySelector('.mobile-search-header');
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
       
-     if (window.innerWidth < 768) {
-        // First batch: fade out music list and footer
-        [musicList, footerContainer].forEach(el => {
+      if (window.innerWidth < 768) {
+        // Set up slide-left animation for content
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'opacity 0.2s ease';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease';
+            el.style.transform = 'translateX(-100%)';
             el.style.opacity = '0';
           }
         });
         
-        // Second batch: fade out search bar and header after first batch completes
-        setTimeout(() => {
-          [searchBarWrapper, mobileSearchHeader].forEach(el => {
-            if (el) {
-              el.style.transition = 'opacity 0.2s ease';
-              el.style.opacity = '0';
-            }
-          });
-        }, 200);
-      }
-      
-      // After all fade out, scroll to top and slide in filter
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        
-        if (window.innerWidth < 768) {
-          enableScrollLimit();
-        }
-        
-      // Set up for slide-in animation
+        // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -10010,7 +9991,6 @@ function initMobileFilterToggle(container = document) {
             if (state && state.isOpen) {
               list.classList.add('open');
               list.style.maxHeight = state.maxHeight;
-              list.scrollTop = state.scrollTop;
             }
           });
         }
@@ -10018,15 +9998,31 @@ function initMobileFilterToggle(container = document) {
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
         
-        // Trigger animation on next frame
+        // Trigger both animations on next frame
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             filterWrapper.style.transform = 'translateX(0)';
           });
         });
         
+        // After animations complete: adjust scroll, hide content, restore accordion scroll
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          enableScrollLimit();
+          
+          // Restore accordion scroll positions
+          if (g.filterAccordionStates) {
+            filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+              const state = g.filterAccordionStates[index];
+              if (state && state.isOpen && state.scrollTop) {
+                list.scrollTop = state.scrollTop;
+              }
+            });
+          }
+        }, 350);
+        
         g.mobileFilterOpen = true;
-      }, 400);
+      }
     });
   }
   
@@ -10035,29 +10031,47 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
     
     newFilterClose.addEventListener('click', () => {
-      // Slide out animation
+      const musicList = document.querySelector('.music-list-wrapper');
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
+      
+      // Save accordion states before resetting
+      g.filterAccordionStates = [];
+      filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+        g.filterAccordionStates[index] = {
+          isOpen: list.classList.contains('open'),
+          scrollTop: list.scrollTop,
+          maxHeight: list.style.maxHeight
+        };
+      });
+      
+      // Restore scroll position while content is hidden
+      disableScrollLimit();
+      if (typeof g.savedScrollPosition === 'number') {
+        window.scrollTo(0, g.savedScrollPosition);
+      }
+      
+      // Slide filter out to right and content back in from left simultaneously
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Hide after animation completes
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.35s ease';
+          el.style.transform = 'translateX(0)';
+          el.style.opacity = '1';
+        }
+      });
+      
+      // Clean up after animation completes
       setTimeout(() => {
         filterWrapper.style.display = 'none';
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
-        disableScrollLimit();
         
-        // Save accordion states before resetting visually
-        g.filterAccordionStates = [];
-        filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-          g.filterAccordionStates[index] = {
-            isOpen: list.classList.contains('open'),
-            scrollTop: list.scrollTop,
-            maxHeight: list.style.maxHeight
-          };
-        });
-        
-        // Reset visual state after hidden
+        // Reset accordion visual state
         filterWrapper.querySelectorAll('.filter-list').forEach(list => {
           list.scrollTop = 0;
           list.classList.remove('open');
@@ -10065,46 +10079,14 @@ function initMobileFilterToggle(container = document) {
         });
         filterWrapper.scrollTop = 0;
         
-       // Fade background content back in
-        const musicList = document.querySelector('.music-list-wrapper');
-        const mobileSearchHeader = document.querySelector('.mobile-search-header');
-        const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-        const footerContainer = document.querySelector('.footer-container');
-        
-        // First: fade in search bar and header
-        [searchBarWrapper, mobileSearchHeader].forEach(el => {
+        // Clean up content transitions
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.opacity = '0';
-            el.style.transition = 'opacity 0.2s ease';
-            requestAnimationFrame(() => {
-              el.style.opacity = '1';
-            });
+            el.style.transform = '';
+            el.style.transition = '';
+            el.style.opacity = '';
           }
         });
-        
-        // Then: fade in music list and footer after a delay
-        setTimeout(() => {
-          [musicList, footerContainer].forEach(el => {
-            if (el) {
-              el.style.opacity = '0';
-              el.style.transition = 'opacity 0.2s ease';
-              requestAnimationFrame(() => {
-                el.style.opacity = '1';
-              });
-            }
-          });
-        }, 200);
-        
-        if (typeof g.savedScrollPosition === 'number') {
-          window.scrollTo(0, g.savedScrollPosition);
-        }
-        
-        // Clean up transition after fade in
-        setTimeout(() => {
-          [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-            if (el) el.style.transition = '';
-          });
-        }, 400);
       }, 350);
     });
   }
@@ -10125,6 +10107,7 @@ function initMobileFilterToggle(container = document) {
         if (el) {
           el.style.opacity = '';
           el.style.transition = '';
+          el.style.transform = '';
         }
       });
     } else {
