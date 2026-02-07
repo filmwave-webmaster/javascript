@@ -9971,7 +9971,17 @@ function initMobileFilterToggle(container = document) {
       g.savedScrollPosition = window.scrollY;
       // Scroll to top first so filter fills the view
       window.scrollTo(0, 0);
+      
+      // Set up for slide-in animation
       filterWrapper.style.display = 'flex';
+      filterWrapper.style.transform = 'translateX(100%)';
+      filterWrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      
+      // Trigger animation on next frame
+      requestAnimationFrame(() => {
+        filterWrapper.style.transform = 'translateX(0)';
+      });
+      
       g.mobileFilterOpen = true;
       if (window.innerWidth < 768) {
         enableScrollLimit();
@@ -9995,9 +10005,15 @@ function initMobileFilterToggle(container = document) {
       // Scroll filter wrapper to top
       filterWrapper.scrollTop = 0;
       
-      // Hide after resetting
+      // Slide out animation
+      filterWrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      filterWrapper.style.transform = 'translateX(100%)';
+      
+      // Hide after animation completes
       setTimeout(() => {
         filterWrapper.style.display = 'none';
+        filterWrapper.style.transform = '';
+        filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
         disableScrollLimit();
         
@@ -10005,7 +10021,7 @@ function initMobileFilterToggle(container = document) {
         if (typeof g.savedScrollPosition === 'number') {
           window.scrollTo(0, g.savedScrollPosition);
         }
-      }, 10);
+      }, 300);
     });
   }
   
