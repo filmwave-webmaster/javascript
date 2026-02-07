@@ -9977,14 +9977,31 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Set up slide-left animation for content with fade
+       // Slide all content to the left
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
             el.style.transform = 'translateX(-100%)';
+          }
+        });
+        
+        // Fade music list and footer first (0.15s)
+        [musicList, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
             el.style.opacity = '0';
           }
         });
+        
+        // Fade search bar and header after music list fades
+        setTimeout(() => {
+          [mobileSearchHeader, searchBarWrapper].forEach(el => {
+            if (el) {
+              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
+              el.style.opacity = '0';
+            }
+          });
+        }, 150);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10070,46 +10087,48 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set content to start position off-screen
-      [musicList, footerContainer].forEach(el => {
+      // Set all content to start position off-screen with no transition
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
           el.style.transform = 'translateX(-100%)';
+        }
+      });
+      
+      // Music list and footer start invisible
+      [musicList, footerContainer].forEach(el => {
+        if (el) {
           el.style.opacity = '0';
         }
       });
       
-      // Search bar and header start off-screen but fully opaque
+      // Search bar and header start fully opaque
       [mobileSearchHeader, searchBarWrapper].forEach(el => {
         if (el) {
-          el.style.transition = 'none';
-          el.style.transform = 'translateX(-100%)';
           el.style.opacity = '1';
         }
       });
       
-      // Then animate back in on next frame
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Slide everything back in together
-          [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-            if (el) {
-              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-              el.style.transform = 'translateX(0)';
-            }
-          });
-          
-          // Fade in music list and footer after search bar is in position
-          setTimeout(() => {
-            [musicList, footerContainer].forEach(el => {
-              if (el) {
-                el.style.transition = 'opacity 0.2s ease';
-                el.style.opacity = '1';
-              }
-            });
-          }, 150);
-        });
+      // Force reflow to ensure starting positions are applied
+      void filterWrapper.offsetWidth;
+      
+      // Then animate back in
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+          el.style.transform = 'translateX(0)';
+        }
       });
+      
+      // Fade in music list and footer after search bar is in position
+      setTimeout(() => {
+        [musicList, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transition = 'opacity 0.2s ease';
+            el.style.opacity = '1';
+          }
+        });
+      }, 150);
       
       // Clean up after animation completes
       setTimeout(() => {
