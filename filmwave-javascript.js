@@ -3744,6 +3744,9 @@ function initSearchAndFilters() {
 function initPlaylistFilter() {
   const playlistSection = document.querySelector('.filter-category.playlists');
   if (!playlistSection) return;
+
+  // Hide section until playlists are loaded
+  playlistSection.style.display = 'none';
   
   const g = window.musicPlayerPersistent;
   
@@ -3760,15 +3763,15 @@ function initPlaylistFilter() {
   }
   
   async function initVisibility() {
-    const isLoggedIn = await checkUserLoggedIn();
-    if (!isLoggedIn) {
-      playlistSection.style.display = 'none';
-      console.log('🎵 Playlist filter hidden (user not logged in)');
-      return false;
-    }
-    playlistSection.style.display = '';
-    return true;
+  const isLoggedIn = await checkUserLoggedIn();
+  if (!isLoggedIn) {
+    playlistSection.style.display = 'none';
+    console.log('🎵 Playlist filter hidden (user not logged in)');
+    return false;
   }
+  // Don't show yet - wait for playlists to load
+  return true;
+}
   
   let filterHeader = playlistSection.querySelector('.filter-header');
   const filterList = playlistSection.querySelector('.filter-list');
@@ -3962,54 +3965,58 @@ function initPlaylistFilter() {
 }
   
   async function populatePlaylistFilter() {
-    const filterItemTemplate = filterList.querySelector('.filter-item');
-    if (!filterItemTemplate) {
-      console.warn('Playlist filter: missing filter-item template');
-      return;
-    }
-    
-    const template = filterItemTemplate.cloneNode(true);
-    
-    if (!PlaylistManager.currentUserId) {
-      await PlaylistManager.getUserId();
-    }
-    
-    const playlists = await PlaylistManager.getUserPlaylists(true);
-    
-    filterList.innerHTML = '';
-    
-    if (!playlists || playlists.length === 0) {
-      const emptyItem = template.cloneNode(true);
-      const textEl = emptyItem.querySelector('.filter-text');
-      if (textEl) textEl.textContent = 'No playlists yet';
-      const checkbox = emptyItem.querySelector('input[type="checkbox"]');
-      if (checkbox) checkbox.disabled = true;
-      filterList.appendChild(emptyItem);
-      return;
-    }
-    
-    playlists.forEach(playlist => {
-      const item = template.cloneNode(true);
-      const textEl = item.querySelector('.filter-text');
-      const checkbox = item.querySelector('.checkbox-include input[type="checkbox"]') || 
-                 item.querySelector('input[type="checkbox"]');
-      
-      if (textEl) textEl.textContent = playlist.name;
-      
-      if (checkbox) {
-        checkbox.dataset.playlistId = playlist.id;
-        checkbox.dataset.playlistName = playlist.name;
-        
-        checkbox.addEventListener('change', () => {
-          handleCheckboxChange(checkbox, playlist.id, playlist.name);
-        });
-      }
-      
-      filterList.appendChild(item);
-    });
-    
-    console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
+  const filterItemTemplate = filterList.querySelector('.filter-item');
+  if (!filterItemTemplate) {
+    console.warn('Playlist filter: missing filter-item template');
+    return;
   }
+  
+  const template = filterItemTemplate.cloneNode(true);
+  
+  if (!PlaylistManager.currentUserId) {
+    await PlaylistManager.getUserId();
+  }
+  
+  const playlists = await PlaylistManager.getUserPlaylists(true);
+  
+  filterList.innerHTML = '';
+  
+  if (!playlists || playlists.length === 0) {
+    const emptyItem = template.cloneNode(true);
+    const textEl = emptyItem.querySelector('.filter-text');
+    if (textEl) textEl.textContent = 'No playlists yet';
+    const checkbox = emptyItem.querySelector('input[type="checkbox"]');
+    if (checkbox) checkbox.disabled = true;
+    filterList.appendChild(emptyItem);
+    // Show section even if empty
+    playlistSection.style.display = '';
+    return;
+  }
+  
+  playlists.forEach(playlist => {
+    const item = template.cloneNode(true);
+    const textEl = item.querySelector('.filter-text');
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    
+    if (textEl) textEl.textContent = playlist.name;
+    
+    if (checkbox) {
+      checkbox.dataset.playlistId = playlist.id;
+      checkbox.dataset.playlistName = playlist.name;
+      
+      checkbox.addEventListener('change', () => {
+        handleCheckboxChange(checkbox, playlist.id, playlist.name);
+      });
+    }
+    
+    filterList.appendChild(item);
+  });
+  
+  // Show section after playlists are loaded
+  playlistSection.style.display = '';
+  
+  console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
+}
   
   function initAccordion() {
     if (!filterHeader) return;
