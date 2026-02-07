@@ -3672,12 +3672,14 @@ function initSearchAndFilters() {
   const matchesOtherFilters = visibleIds.includes(card.dataset.songId);
   const hiddenByPlaylist = card.getAttribute('data-hidden-by-playlist') === 'true';
   
+  // Clear previous other-filter state first
+  card.removeAttribute('data-hidden-by-other');
+  
   if (hiddenByPlaylist) {
     // Always hide if not in selected playlist
     card.style.display = 'none';
   } else if (matchesOtherFilters) {
     card.style.display = 'flex';
-    card.removeAttribute('data-hidden-by-other');
   } else {
     card.style.display = 'none';
     card.setAttribute('data-hidden-by-other', 'true');
