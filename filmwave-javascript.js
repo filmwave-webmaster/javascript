@@ -9971,20 +9971,22 @@ function initMobileFilterToggle(container = document) {
       const footerContainer = document.querySelector('.footer-container');
       
      if (window.innerWidth < 768) {
-        // First batch: fade out music list, header, and footer
-        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
+        // First batch: fade out music list and footer
+        [musicList, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'opacity 0.2s ease';
             el.style.opacity = '0';
           }
         });
         
-        // Second batch: fade out search bar after first batch completes
+        // Second batch: fade out search bar and header after first batch completes
         setTimeout(() => {
-          if (searchBarWrapper) {
-            searchBarWrapper.style.transition = 'opacity 0.2s ease';
-            searchBarWrapper.style.opacity = '0';
-          }
+          [searchBarWrapper, mobileSearchHeader].forEach(el => {
+            if (el) {
+              el.style.transition = 'opacity 0.2s ease';
+              el.style.opacity = '0';
+            }
+          });
         }, 200);
       }
       
@@ -10045,18 +10047,20 @@ function initMobileFilterToggle(container = document) {
         const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
         const footerContainer = document.querySelector('.footer-container');
         
-        // First: fade in search bar
-        if (searchBarWrapper) {
-          searchBarWrapper.style.opacity = '0';
-          searchBarWrapper.style.transition = 'opacity 0.2s ease';
-          requestAnimationFrame(() => {
-            searchBarWrapper.style.opacity = '1';
-          });
-        }
+        // First: fade in search bar and header
+        [searchBarWrapper, mobileSearchHeader].forEach(el => {
+          if (el) {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.2s ease';
+            requestAnimationFrame(() => {
+              el.style.opacity = '1';
+            });
+          }
+        });
         
-        // Then: fade in the rest after a delay
+        // Then: fade in music list and footer after a delay
         setTimeout(() => {
-          [musicList, mobileSearchHeader, footerContainer].forEach(el => {
+          [musicList, footerContainer].forEach(el => {
             if (el) {
               el.style.opacity = '0';
               el.style.transition = 'opacity 0.2s ease';
@@ -10065,7 +10069,7 @@ function initMobileFilterToggle(container = document) {
               });
             }
           });
-        }, 100);
+        }, 200);
         
         if (typeof g.savedScrollPosition === 'number') {
           window.scrollTo(0, g.savedScrollPosition);
