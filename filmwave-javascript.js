@@ -3572,10 +3572,14 @@ function clearAllFilters() {
     });
   }
   
-  // Show all songs manually (in case applyFilters doesn't exist yet)
-  document.querySelectorAll('.song-wrapper').forEach(song => {
+  // Show all songs manually, but respect playlist filter
+document.querySelectorAll('.song-wrapper').forEach(song => {
+  song.removeAttribute('data-hidden-by-other');
+  // Only show if not hidden by playlist filter
+  if (song.getAttribute('data-hidden-by-playlist') !== 'true') {
     song.style.display = '';
-  });
+  }
+});
   
   // Save empty state so restoration knows it was intentionally cleared
   localStorage.setItem('musicFilters', JSON.stringify({
@@ -3665,8 +3669,20 @@ function initSearchAndFilters() {
   }
   
   document.querySelectorAll('.song-wrapper').forEach(card => {
-    card.style.display = visibleIds.includes(card.dataset.songId) ? 'flex' : 'none';
-  });
+  const matchesOtherFilters = visibleIds.includes(card.dataset.songId);
+  const hiddenByPlaylist = card.getAttribute('data-hidden-by-playlist') === 'true';
+  
+  if (hiddenByPlaylist) {
+    // Always hide if not in selected playlist
+    card.style.display = 'none';
+  } else if (matchesOtherFilters) {
+    card.style.display = 'flex';
+    card.removeAttribute('data-hidden-by-other');
+  } else {
+    card.style.display = 'none';
+    card.setAttribute('data-hidden-by-other', 'true');
+  }
+});
   
   toggleClearButton();
 }
@@ -3762,56 +3778,58 @@ function initPlaylistFilter() {
 }
   
   async function filterSongsByPlaylist(playlistId) {
-    const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
-    
-    if (!playlistId) {
-      songCards.forEach(card => {
-        if (card.getAttribute('data-hidden-by-playlist') === 'true') {
-          card.style.display = '';
-          card.removeAttribute('data-hidden-by-playlist');
-        }
-      });
-      
-      if (typeof applyAllFilters === 'function') {
-        applyAllFilters();
+  const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+  
+  if (!playlistId) {
+    // Clear playlist filter - remove playlist-hidden attribute
+    songCards.forEach(card => {
+      card.removeAttribute('data-hidden-by-playlist');
+      // Only show if not hidden by other filters
+      if (card.getAttribute('data-hidden-by-other') !== 'true') {
+        card.style.display = '';
       }
-      
-      console.log('🎵 Playlist filter cleared');
-      return;
-    }
+    });
     
-    try {
-      const playlistSongs = await PlaylistManager.getPlaylistSongs(playlistId);
-      const playlistSongIds = playlistSongs.map(s => String(s.song_id || s.airtable_id || s.id));
-      
-      console.log(`🎵 Filtering by playlist ${playlistId}, contains ${playlistSongIds.length} songs`);
-      
-      songCards.forEach(card => {
-        const cardSongId = String(card.dataset.songId || card.dataset.airtableId || '');
-        
-        if (playlistSongIds.includes(cardSongId)) {
-          if (card.getAttribute('data-hidden-by-playlist') === 'true') {
-            card.style.display = '';
-            card.removeAttribute('data-hidden-by-playlist');
-          }
-        } else {
-          card.style.display = 'none';
-          card.setAttribute('data-hidden-by-playlist', 'true');
-        }
-      });
-      
-      const visibleSongIds = [];
-      songCards.forEach(card => {
-        if (card.style.display !== 'none') {
-          visibleSongIds.push(card.dataset.songId);
-        }
-      });
-      g.filteredSongIds = visibleSongIds;
-      
-    } catch (error) {
-      console.error('Error filtering by playlist:', error);
-    }
+    console.log('🎵 Playlist filter cleared');
+    return;
   }
+  
+  try {
+    const playlistSongs = await PlaylistManager.getPlaylistSongs(playlistId);
+    const playlistSongIds = playlistSongs.map(s => String(s.song_id || s.airtable_id || s.id));
+    
+    console.log(`🎵 Filtering by playlist ${playlistId}, contains ${playlistSongIds.length} songs`);
+    
+    songCards.forEach(card => {
+      const cardSongId = String(card.dataset.songId || card.dataset.airtableId || '');
+      
+      if (playlistSongIds.includes(cardSongId)) {
+        // Song is in playlist
+        card.removeAttribute('data-hidden-by-playlist');
+        // Only show if not hidden by other filters
+        if (card.getAttribute('data-hidden-by-other') !== 'true') {
+          card.style.display = '';
+        }
+      } else {
+        // Song not in playlist - hide it
+        card.style.display = 'none';
+        card.setAttribute('data-hidden-by-playlist', 'true');
+      }
+    });
+    
+    // Update filtered song IDs for navigation
+    const visibleSongIds = [];
+    songCards.forEach(card => {
+      if (card.style.display !== 'none') {
+        visibleSongIds.push(card.dataset.songId);
+      }
+    });
+    g.filteredSongIds = visibleSongIds;
+    
+  } catch (error) {
+    console.error('Error filtering by playlist:', error);
+  }
+}
   
   function handleCheckboxChange(checkbox, playlistId, playlistName) {
     if (checkbox.checked) {
