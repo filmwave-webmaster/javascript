@@ -9977,14 +9977,6 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-        // Set up slide-left animation for content
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-            el.style.transform = 'translateX(-100%)';
-          }
-        });
-        
         // Set up slide-left animation for content with fade
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
@@ -9993,6 +9985,20 @@ function initMobileFilterToggle(container = document) {
             el.style.opacity = '0';
           }
         });
+        
+        // Set up filter slide-in at the same time
+        filterWrapper.style.display = 'flex';
+        filterWrapper.style.transform = 'translateX(100%)';
+        filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        
+        // Restore accordion states if saved
+        if (g.filterAccordionStates) {
+          filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+            const state = g.filterAccordionStates[index];
+            if (state && state.isOpen) {
+              list.classList.add('open');
+              list.style.maxHeight = state.maxHeight;
+            }
           });
         }
         
