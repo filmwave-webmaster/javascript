@@ -9986,6 +9986,11 @@ function initMobileFilterToggle(container = document) {
           }
         });
         
+        // Give search bar a solid background so music list doesn't show through
+        if (searchBarWrapper) {
+          searchBarWrapper.style.backgroundColor = 'var(--color-1)';
+        }
+        
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
@@ -10107,7 +10112,7 @@ function initMobileFilterToggle(container = document) {
         });
         filterWrapper.scrollTop = 0;
         
-        // Clean up content transitions
+       // Clean up content transitions
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transform = '';
@@ -10115,6 +10120,11 @@ function initMobileFilterToggle(container = document) {
             el.style.opacity = '';
           }
         });
+        
+        // Remove temporary background
+        if (searchBarWrapper) {
+          searchBarWrapper.style.backgroundColor = '';
+        }
       }, 350);
     });
   }
@@ -10131,13 +10141,19 @@ function initMobileFilterToggle(container = document) {
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
       
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-        if (el) {
-          el.style.opacity = '';
-          el.style.transition = '';
-          el.style.transform = '';
+      // Clean up content transitions
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transform = '';
+            el.style.transition = '';
+            el.style.opacity = '';
+          }
+        });
+        
+        // Remove temporary background
+        if (searchBarWrapper) {
+          searchBarWrapper.style.backgroundColor = '';
         }
-      });
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
       if (g.mobileFilterOpen) {
