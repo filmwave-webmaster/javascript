@@ -9975,16 +9975,22 @@ function initMobileFilterToggle(container = document) {
       // Set up for slide-in animation
       filterWrapper.style.display = 'flex';
       filterWrapper.style.transform = 'translateX(100%)';
-      filterWrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       
       // Trigger animation on next frame
       requestAnimationFrame(() => {
-        filterWrapper.style.transform = 'translateX(0)';
+        requestAnimationFrame(() => {
+          filterWrapper.style.transform = 'translateX(0)';
+        });
       });
       
       g.mobileFilterOpen = true;
+      
+      // Hide content after slide-in completes
       if (window.innerWidth < 768) {
-        enableScrollLimit();
+        setTimeout(() => {
+          enableScrollLimit();
+        }, 350);
       }
     });
   }
@@ -10005,8 +10011,11 @@ function initMobileFilterToggle(container = document) {
       // Scroll filter wrapper to top
       filterWrapper.scrollTop = 0;
       
+      // Show content before slide-out starts
+      disableScrollLimit();
+      
       // Slide out animation
-      filterWrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
       // Hide after animation completes
@@ -10015,13 +10024,12 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
-        disableScrollLimit();
         
         // Restore page scroll position
         if (typeof g.savedScrollPosition === 'number') {
           window.scrollTo(0, g.savedScrollPosition);
         }
-      }, 300);
+      }, 350);
     });
   }
   
