@@ -9970,7 +9970,7 @@ function initMobileFilterToggle(container = document) {
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
       
-      if (window.innerWidth < 768) {
+     if (window.innerWidth < 768) {
         // First batch: fade out music list, header, and footer
         [musicList, mobileSearchHeader, footerContainer].forEach(el => {
           if (el) {
@@ -9979,16 +9979,16 @@ function initMobileFilterToggle(container = document) {
           }
         });
         
-        // Second batch: fade out search bar after a delay
+        // Second batch: fade out search bar after first batch completes
         setTimeout(() => {
           if (searchBarWrapper) {
             searchBarWrapper.style.transition = 'opacity 0.2s ease';
             searchBarWrapper.style.opacity = '0';
           }
-        }, 100);
+        }, 200);
       }
       
-      // After fade out, scroll to top and slide in filter
+      // After all fade out, scroll to top and slide in filter
       setTimeout(() => {
         window.scrollTo(0, 0);
         
@@ -10009,7 +10009,7 @@ function initMobileFilterToggle(container = document) {
         });
         
         g.mobileFilterOpen = true;
-      }, 200);
+      }, 400);
     });
   }
   
