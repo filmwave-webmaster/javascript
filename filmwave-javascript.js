@@ -9977,31 +9977,14 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content to the left
+       // Set up slide-left animation for content with fade
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
             el.style.transform = 'translateX(-100%)';
-          }
-        });
-        
-        // Fade music list and footer immediately (0.15s)
-        [musicList, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
             el.style.opacity = '0';
           }
         });
-        
-        // Fade search bar and header after music list fades (starts at 0.15s, completes by 0.30s)
-        setTimeout(() => {
-          [mobileSearchHeader, searchBarWrapper].forEach(el => {
-            if (el) {
-              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
-              el.style.opacity = '0';
-            }
-          });
-        }, 150);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10096,16 +10079,33 @@ function initMobileFilterToggle(container = document) {
         }
       });
       
+      // Search bar and header start opaque and slide in immediately
+      [mobileSearchHeader, searchBarWrapper].forEach(el => {
+        if (el) {
+          el.style.opacity = '1';
+        }
+      });
+      
       // Then animate back in on next frame
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          // Slide everything back in
           [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
             if (el) {
-              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
+              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
               el.style.transform = 'translateX(0)';
-              el.style.opacity = '1';
             }
           });
+          
+          // Fade in music list and footer after search bar is in position
+          setTimeout(() => {
+            [musicList, footerContainer].forEach(el => {
+              if (el) {
+                el.style.transition = 'opacity 0.2s ease';
+                el.style.opacity = '1';
+              }
+            });
+          }, 150);
         });
       });
       
