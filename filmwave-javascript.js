@@ -9972,14 +9972,8 @@ function initMobileFilterToggle(container = document) {
       const footerContainer = document.querySelector('.footer-container');
       
      if (window.innerWidth < 768) {
-        // Get header height to check if partially scrolled through it
-        const headerRect = mobileSearchHeader ? mobileSearchHeader.getBoundingClientRect() : null;
-        const isPartiallyThroughHeader = headerRect && headerRect.top < 0 && headerRect.bottom > 0;
-        
-        // If partially scrolled through header, scroll to top instantly before animation
-        if (isPartiallyThroughHeader) {
-          window.scrollTo({ top: 0, behavior: 'instant' });
-        }
+        // Always scroll to top instantly before animation
+        window.scrollTo({ top: 0, behavior: 'instant' });
         
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
