@@ -3574,17 +3574,22 @@ function clearAllFilters() {
   }
   
   // Clear playlist filter
-  const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
-  if (playlistCheckbox) {
-    playlistCheckbox.checked = false;
-    const wrapper = playlistCheckbox.closest('.filter-item');
-    if (wrapper) {
-      wrapper.classList.remove('is-selected');
-      const textEl = wrapper.querySelector('.filter-text');
-      if (textEl) textEl.style.color = '';
-    }
-    playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
+if (playlistCheckbox) {
+  playlistCheckbox.checked = false;
+  const wrapper = playlistCheckbox.closest('.filter-item');
+  if (wrapper) {
+    wrapper.classList.remove('is-selected');
+    const textEl = wrapper.querySelector('.filter-text');
+    if (textEl) textEl.style.color = '';
   }
+  // Reset checkbox icon state
+  const checkboxIcon = playlistCheckbox.closest('.w-checkbox')?.querySelector('.w-checkbox-input');
+  if (checkboxIcon) {
+    checkboxIcon.classList.remove('w--redirected-checked');
+  }
+  playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+}
   
   // Remove playlist filter tag
   const playlistTag = document.querySelector('[data-playlist-filter-tag]');
@@ -3851,17 +3856,29 @@ function initPlaylistFilter() {
 }
   
   function handleCheckboxChange(checkbox, playlistId, playlistName) {
+  // Get the custom checkbox icon elements
+  const wrapper = checkbox.closest('.filter-item');
+  const checkboxWrapper = checkbox.closest('.checkbox-wrapper');
+  
   if (checkbox.checked) {
-    // Uncheck all other checkboxes
+    // Uncheck all other checkboxes and reset their states
     filterList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       if (cb !== checkbox) {
         cb.checked = false;
-        const wrapper = cb.closest('.filter-item');
-        if (wrapper) {
-          wrapper.classList.remove('is-selected');
-          // Reset text color on unselected items
-          const textEl = wrapper.querySelector('.filter-text');
+        const otherWrapper = cb.closest('.filter-item');
+        const otherCheckboxWrapper = cb.closest('.checkbox-wrapper');
+        if (otherWrapper) {
+          otherWrapper.classList.remove('is-selected');
+          const textEl = otherWrapper.querySelector('.filter-text');
           if (textEl) textEl.style.color = '';
+        }
+        // Reset checkbox icon state
+        if (otherCheckboxWrapper) {
+          otherCheckboxWrapper.classList.remove('w--redirected-checked');
+        }
+        const otherCheckboxIcon = cb.closest('.w-checkbox')?.querySelector('.w-checkbox-input');
+        if (otherCheckboxIcon) {
+          otherCheckboxIcon.classList.remove('w--redirected-checked');
         }
       }
     });
@@ -3869,10 +3886,8 @@ function initPlaylistFilter() {
     selectedPlaylistId = playlistId;
     selectedPlaylistName = playlistName;
     
-    const wrapper = checkbox.closest('.filter-item');
     if (wrapper) {
       wrapper.classList.add('is-selected');
-      // Set text color on selected item
       const textEl = wrapper.querySelector('.filter-text');
       if (textEl) textEl.style.color = 'var(--color-2)';
     }
@@ -3881,10 +3896,8 @@ function initPlaylistFilter() {
     selectedPlaylistId = null;
     selectedPlaylistName = null;
     
-    const wrapper = checkbox.closest('.filter-item');
     if (wrapper) {
       wrapper.classList.remove('is-selected');
-      // Reset text color
       const textEl = wrapper.querySelector('.filter-text');
       if (textEl) textEl.style.color = '';
     }
@@ -3894,46 +3907,59 @@ function initPlaylistFilter() {
   filterSongsByPlaylist(selectedPlaylistId);
   updatePlaylistFilterTag();
   
-  // Update clear button visibility
   if (typeof toggleClearButton === 'function') {
     toggleClearButton();
   }
 }
   
   function updatePlaylistFilterTag() {
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (!tagsContainer) return;
+  const tagsContainer = document.querySelector('.filter-tags-container');
+  if (!tagsContainer) return;
+  
+  const existingTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
+  if (existingTag) existingTag.remove();
+  
+  if (selectedPlaylistId && selectedPlaylistName) {
+    const tag = document.createElement('div');
+    tag.className = 'filter-tag';
+    tag.setAttribute('data-playlist-filter-tag', 'true');
+    tag.innerHTML = `
+      <span class="filter-tag-text">${selectedPlaylistName}</span>
+      <span class="filter-tag-remove x-button-style">×</span>
+    `;
     
-    const existingTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
-    if (existingTag) existingTag.remove();
-    
-    if (selectedPlaylistId && selectedPlaylistName) {
-      const tag = document.createElement('div');
-      tag.className = 'filter-tag';
-      tag.setAttribute('data-playlist-filter-tag', 'true');
-      tag.innerHTML = `
-        <span class="filter-tag-text">${selectedPlaylistName}</span>
-        <span class="filter-tag-remove x-button-style">×</span>
-      `;
-      
-      tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
-        const checkedBox = filterList.querySelector('input[type="checkbox"]:checked');
-        if (checkedBox) {
-          checkedBox.checked = false;
-          const wrapper = checkedBox.closest('.filter-item');
-          if (wrapper) wrapper.classList.remove('is-selected');
+    tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+      const checkedBox = filterList.querySelector('input[type="checkbox"]:checked');
+      if (checkedBox) {
+        checkedBox.checked = false;
+        const wrapper = checkedBox.closest('.filter-item');
+        if (wrapper) {
+          wrapper.classList.remove('is-selected');
+          const textEl = wrapper.querySelector('.filter-text');
+          if (textEl) textEl.style.color = '';
         }
-        
-        selectedPlaylistId = null;
-        selectedPlaylistName = null;
-        updateActivePlaylistDisplay();
-        filterSongsByPlaylist(null);
-        tag.remove();
-      });
+        // Reset checkbox icon state
+        const checkboxIcon = checkedBox.closest('.w-checkbox')?.querySelector('.w-checkbox-input');
+        if (checkboxIcon) {
+          checkboxIcon.classList.remove('w--redirected-checked');
+        }
+      }
       
-      tagsContainer.appendChild(tag);
-    }
+      selectedPlaylistId = null;
+      selectedPlaylistName = null;
+      updateActivePlaylistDisplay();
+      filterSongsByPlaylist(null);
+      tag.remove();
+      
+      // Update clear button visibility
+      if (typeof toggleClearButton === 'function') {
+        toggleClearButton();
+      }
+    });
+    
+    tagsContainer.appendChild(tag);
   }
+}
   
   async function populatePlaylistFilter() {
     const filterItemTemplate = filterList.querySelector('.filter-item');
