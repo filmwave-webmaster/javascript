@@ -9977,19 +9977,25 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-        // Set up slide-left animation for content with fade
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+       // Slide music list and footer first
+        [musicList, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
+            el.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
             el.style.transform = 'translateX(-100%)';
             el.style.opacity = '0';
           }
         });
         
-        // Give search bar a solid background so music list doesn't show through
-        if (searchBarWrapper) {
-          searchBarWrapper.style.backgroundColor = 'var(--color-1)';
-        }
+        // Slide search bar and header after a slight delay so they cover the content behind
+        setTimeout(() => {
+          [mobileSearchHeader, searchBarWrapper].forEach(el => {
+            if (el) {
+              el.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
+              el.style.transform = 'translateX(-100%)';
+              el.style.opacity = '0';
+            }
+          });
+        }, 50);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
