@@ -9979,14 +9979,23 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide content slightly left for parallax effect
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+       // Slide content slightly left for parallax effect (except sticky search bar when scrolled)
+        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
             el.style.transform = 'translateX(-30%)';
             el.style.zIndex = '1';
           }
         });
+        
+        // Search bar needs special handling - only animate if at top of page
+        if (searchBarWrapper) {
+          if (window.scrollY === 0) {
+            searchBarWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+            searchBarWrapper.style.transform = 'translateX(-30%)';
+          }
+          searchBarWrapper.style.zIndex = '1';
+        }
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10025,6 +10034,11 @@ function initMobileFilterToggle(container = document) {
           filterWrapper.style.left = '';
           filterWrapper.style.right = '';
           filterWrapper.style.zIndex = '';
+          
+          // Reset search bar transform now that it's hidden
+          if (searchBarWrapper) {
+            searchBarWrapper.style.transform = 'translateX(-30%)';
+          }
           
           // Restore accordion scroll positions
           if (g.filterAccordionStates) {
