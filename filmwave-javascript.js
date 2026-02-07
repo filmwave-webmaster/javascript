@@ -3733,7 +3733,7 @@ function initPlaylistFilter() {
     return true;
   }
   
-  const filterHeader = playlistSection.querySelector('.filter-header');
+  let filterHeader = playlistSection.querySelector('.filter-header');
   const filterList = playlistSection.querySelector('.filter-list');
   const activePlaylistWrapper = playlistSection.querySelector('.active-playlist-wrapper');
   const activePlaylistsText = playlistSection.querySelector('.active-playlists');
@@ -3748,14 +3748,14 @@ function initPlaylistFilter() {
   let selectedPlaylistName = null;
   
   function updateActivePlaylistDisplay() {
-  if (selectedPlaylistId && selectedPlaylistName) {
-    if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
-    if (filterDotActive) filterDotActive.style.display = 'block';
-  } else {
-    if (activePlaylistsText) activePlaylistsText.textContent = 'No playlist selected';
-    if (filterDotActive) filterDotActive.style.display = 'none';
+    if (selectedPlaylistId && selectedPlaylistName) {
+      if (activePlaylistsText) activePlaylistsText.textContent = selectedPlaylistName;
+      if (filterDotActive) filterDotActive.style.display = 'block';
+    } else {
+      if (activePlaylistsText) activePlaylistsText.textContent = 'No playlist selected';
+      if (filterDotActive) filterDotActive.style.display = 'none';
+    }
   }
-}
   
   async function filterSongsByPlaylist(playlistId) {
     const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
@@ -3874,7 +3874,6 @@ function initPlaylistFilter() {
   }
   
   async function populatePlaylistFilter() {
-    // Get template INSIDE this function to avoid timing issues
     const filterItemTemplate = filterList.querySelector('.filter-item');
     if (!filterItemTemplate) {
       console.warn('Playlist filter: missing filter-item template');
@@ -3889,7 +3888,6 @@ function initPlaylistFilter() {
     
     const playlists = await PlaylistManager.getUserPlaylists(true);
     
-    // Clear AFTER cloning template
     filterList.innerHTML = '';
     
     if (!playlists || playlists.length === 0) {
@@ -3924,13 +3922,46 @@ function initPlaylistFilter() {
     console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
   }
   
+  function initAccordion() {
+    if (!filterHeader) return;
+    
+    // Clone to remove any existing listeners from initFilterAccordions
+    const newHeader = filterHeader.cloneNode(true);
+    filterHeader.parentNode.replaceChild(newHeader, filterHeader);
+    filterHeader = newHeader;
+    
+    newHeader.addEventListener('click', function(e) {
+      e.stopPropagation();
+      
+      const isOpen = filterList.classList.contains('open');
+      const arrow = newHeader.querySelector('.arrow-icon');
+      
+      // Close all other filter lists
+      document.querySelectorAll('.filter-list').forEach(list => {
+        list.style.maxHeight = '0px';
+        list.classList.remove('open');
+      });
+      
+      document.querySelectorAll('.arrow-icon').forEach(arr => {
+        arr.style.transform = 'rotate(0deg)';
+      });
+      
+      if (!isOpen) {
+        const actualHeight = Math.min(filterList.scrollHeight, 300);
+        filterList.style.maxHeight = actualHeight + 'px';
+        filterList.classList.add('open');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      }
+    });
+  }
+  
   async function init() {
     const isLoggedIn = await initVisibility();
     if (!isLoggedIn) return;
     
-    initAccordion();
     updateActivePlaylistDisplay();
     await populatePlaylistFilter();
+    initAccordion();
     
     console.log('✅ Playlist filter initialized');
   }
