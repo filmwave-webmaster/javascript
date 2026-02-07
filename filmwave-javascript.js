@@ -9971,7 +9971,16 @@ function initMobileFilterToggle(container = document) {
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
       
-      if (window.innerWidth < 768) {
+     if (window.innerWidth < 768) {
+        // Check if scrolled partway through mobile search header
+        const headerHeight = mobileSearchHeader ? mobileSearchHeader.offsetHeight : 0;
+        const isPartiallyScrolled = window.scrollY > 0 && window.scrollY < headerHeight;
+        
+        // If partially scrolled through header, scroll to top immediately
+        if (isPartiallyScrolled) {
+          window.scrollTo(0, 0);
+        }
+        
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
         filterWrapper.style.top = 'var(--navbar--height, 60px)';
@@ -9979,7 +9988,7 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content further left to fully disappear
+        // Slide all content further left to fully disappear
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
