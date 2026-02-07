@@ -3833,7 +3833,7 @@ function initPlaylistFilter() {
         currentDot.style.setProperty('display', 'block', 'important');
       }
     } else {
-      if (currentActiveText) currentActiveText.textContent = 'No playlist selected';
+      if (currentActiveText) currentActiveText.textContent = 'Select Playlist';
       if (currentDot) {
         currentDot.style.setProperty('display', 'none', 'important');
       }
