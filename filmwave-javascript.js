@@ -9961,7 +9961,15 @@ function initMobileFilterToggle(container = document) {
     const newFilterButton = filterButton.cloneNode(true);
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
     
-    if (window.innerWidth < 768) {
+    newFilterButton.addEventListener('click', () => {
+      g.savedScrollPosition = window.scrollY;
+      
+      const musicList = document.querySelector('.music-list-wrapper');
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
+      
+      if (window.innerWidth < 768) {
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
         filterWrapper.style.top = 'var(--navbar--height, 60px)';
