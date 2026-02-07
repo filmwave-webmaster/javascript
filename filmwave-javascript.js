@@ -3766,16 +3766,19 @@ function initPlaylistFilter() {
   let selectedPlaylistName = null;
   
   function updateActivePlaylistDisplay() {
-  // Re-query elements each time to avoid stale references
   const currentActiveText = playlistSection.querySelector('.active-playlists');
   const currentDot = playlistSection.querySelector('.filter-dot-active');
   
   if (selectedPlaylistId && selectedPlaylistName) {
     if (currentActiveText) currentActiveText.textContent = selectedPlaylistName;
-    if (currentDot) currentDot.style.display = 'block';
+    if (currentDot) {
+      currentDot.style.setProperty('display', 'block', 'important');
+    }
   } else {
-    if (currentActiveText) currentActiveText.textContent = 'Select Playlist';
-    if (currentDot) currentDot.style.display = 'none';
+    if (currentActiveText) currentActiveText.textContent = 'No playlist selected';
+    if (currentDot) {
+      currentDot.style.setProperty('display', 'none', 'important');
+    }
   }
 }
   
@@ -3834,33 +3837,49 @@ function initPlaylistFilter() {
 }
   
   function handleCheckboxChange(checkbox, playlistId, playlistName) {
-    if (checkbox.checked) {
-      filterList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        if (cb !== checkbox) {
-          cb.checked = false;
-          const wrapper = cb.closest('.filter-item');
-          if (wrapper) wrapper.classList.remove('is-selected');
+  if (checkbox.checked) {
+    // Uncheck all other checkboxes
+    filterList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      if (cb !== checkbox) {
+        cb.checked = false;
+        const wrapper = cb.closest('.filter-item');
+        if (wrapper) {
+          wrapper.classList.remove('is-selected');
+          // Reset text color on unselected items
+          const textEl = wrapper.querySelector('.filter-text');
+          if (textEl) textEl.style.color = '';
         }
-      });
-      
-      selectedPlaylistId = playlistId;
-      selectedPlaylistName = playlistName;
-      
-      const wrapper = checkbox.closest('.filter-item');
-      if (wrapper) wrapper.classList.add('is-selected');
-      
-    } else {
-      selectedPlaylistId = null;
-      selectedPlaylistName = null;
-      
-      const wrapper = checkbox.closest('.filter-item');
-      if (wrapper) wrapper.classList.remove('is-selected');
+      }
+    });
+    
+    selectedPlaylistId = playlistId;
+    selectedPlaylistName = playlistName;
+    
+    const wrapper = checkbox.closest('.filter-item');
+    if (wrapper) {
+      wrapper.classList.add('is-selected');
+      // Set text color on selected item
+      const textEl = wrapper.querySelector('.filter-text');
+      if (textEl) textEl.style.color = 'var(--color-2)';
     }
     
-    updateActivePlaylistDisplay();
-    filterSongsByPlaylist(selectedPlaylistId);
-    updatePlaylistFilterTag();
+  } else {
+    selectedPlaylistId = null;
+    selectedPlaylistName = null;
+    
+    const wrapper = checkbox.closest('.filter-item');
+    if (wrapper) {
+      wrapper.classList.remove('is-selected');
+      // Reset text color
+      const textEl = wrapper.querySelector('.filter-text');
+      if (textEl) textEl.style.color = '';
+    }
   }
+  
+  updateActivePlaylistDisplay();
+  filterSongsByPlaylist(selectedPlaylistId);
+  updatePlaylistFilterTag();
+}
   
   function updatePlaylistFilterTag() {
     const tagsContainer = document.querySelector('.filter-tags-container');
@@ -3987,6 +4006,19 @@ function initPlaylistFilter() {
     updateActivePlaylistDisplay();
     await populatePlaylistFilter();
     initAccordion();
+
+    // Keep playlist dot visible when other filters change
+document.addEventListener('change', function(e) {
+  if (e.target.matches('[data-filter-group]')) {
+    // Re-assert playlist dot visibility after other filter changes
+    setTimeout(() => {
+      const currentDot = playlistSection.querySelector('.filter-dot-active');
+      if (selectedPlaylistId && currentDot) {
+        currentDot.style.setProperty('display', 'block', 'important');
+      }
+    }, 50);
+  }
+});
     
     console.log('✅ Playlist filter initialized');
   }
