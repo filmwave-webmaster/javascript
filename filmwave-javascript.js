@@ -9968,14 +9968,24 @@ function initMobileFilterToggle(container = document) {
       const musicList = document.querySelector('.music-list-wrapper');
       const mobileSearchHeader = document.querySelector('.mobile-search-header');
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
       
       if (window.innerWidth < 768) {
-        [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+        // First batch: fade out music list, header, and footer
+        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'opacity 0.2s ease';
             el.style.opacity = '0';
           }
         });
+        
+        // Second batch: fade out search bar after a delay
+        setTimeout(() => {
+          if (searchBarWrapper) {
+            searchBarWrapper.style.transition = 'opacity 0.2s ease';
+            searchBarWrapper.style.opacity = '0';
+          }
+        }, 100);
       }
       
       // After fade out, scroll to top and slide in filter
@@ -10029,20 +10039,33 @@ function initMobileFilterToggle(container = document) {
         g.mobileFilterOpen = false;
         disableScrollLimit();
         
-        // Fade background content back in
+       // Fade background content back in
         const musicList = document.querySelector('.music-list-wrapper');
         const mobileSearchHeader = document.querySelector('.mobile-search-header');
         const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+        const footerContainer = document.querySelector('.footer-container');
         
-        [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
-          if (el) {
-            el.style.opacity = '0';
-            el.style.transition = 'opacity 0.2s ease';
-            requestAnimationFrame(() => {
-              el.style.opacity = '1';
-            });
-          }
-        });
+        // First: fade in search bar
+        if (searchBarWrapper) {
+          searchBarWrapper.style.opacity = '0';
+          searchBarWrapper.style.transition = 'opacity 0.2s ease';
+          requestAnimationFrame(() => {
+            searchBarWrapper.style.opacity = '1';
+          });
+        }
+        
+        // Then: fade in the rest after a delay
+        setTimeout(() => {
+          [musicList, mobileSearchHeader, footerContainer].forEach(el => {
+            if (el) {
+              el.style.opacity = '0';
+              el.style.transition = 'opacity 0.2s ease';
+              requestAnimationFrame(() => {
+                el.style.opacity = '1';
+              });
+            }
+          });
+        }, 100);
         
         if (typeof g.savedScrollPosition === 'number') {
           window.scrollTo(0, g.savedScrollPosition);
@@ -10050,10 +10073,10 @@ function initMobileFilterToggle(container = document) {
         
         // Clean up transition after fade in
         setTimeout(() => {
-          [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+          [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
             if (el) el.style.transition = '';
           });
-        }, 200);
+        }, 400);
       }, 350);
     });
   }
@@ -10068,8 +10091,9 @@ function initMobileFilterToggle(container = document) {
       const musicList = document.querySelector('.music-list-wrapper');
       const mobileSearchHeader = document.querySelector('.mobile-search-header');
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
       
-      [musicList, mobileSearchHeader, searchBarWrapper].forEach(el => {
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.opacity = '';
           el.style.transition = '';
