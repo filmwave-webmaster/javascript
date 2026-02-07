@@ -9957,7 +9957,7 @@ function initMobileFilterToggle(container = document) {
     if (musicList) musicList.style.display = '';
   }
   
-  if (filterButton) {
+ if (filterButton) {
     const newFilterButton = filterButton.cloneNode(true);
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
     
@@ -9977,37 +9977,13 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-      // Give search bar a solid background
-        if (searchBarWrapper) {
-          searchBarWrapper.style.backgroundColor = 'var(--color-1)';
-        }
-        
-        // Slide and fade music list and footer
-        [musicList, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
-            el.style.transform = 'translateX(-100%)';
-            el.style.opacity = '0';
-          }
-        });
-        
-        // Slide search bar and header at the same time, but only fade after music list is hidden
-        [mobileSearchHeader, searchBarWrapper].forEach(el => {
+        // Slide all content far left off screen (no fade)
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-            el.style.transform = 'translateX(-100%)';
+            el.style.transform = 'translateX(-150%)';
           }
         });
-        
-        // Fade search bar and header after music list has faded
-        setTimeout(() => {
-          [mobileSearchHeader, searchBarWrapper].forEach(el => {
-            if (el) {
-              el.style.transition = 'opacity 0.15s ease';
-              el.style.opacity = '0';
-            }
-          });
-        }, 200);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10089,16 +10065,15 @@ function initMobileFilterToggle(container = document) {
         window.scrollTo(0, g.savedScrollPosition);
       }
       
-      // Slide filter out to right and content back in from left simultaneously
+      // Slide filter out to right
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // First set content to start position off-screen
+      // Set content to start position off-screen
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
-          el.style.transform = 'translateX(-100%)';
-          el.style.opacity = '0';
+          el.style.transform = 'translateX(-150%)';
         }
       });
       
@@ -10107,9 +10082,8 @@ function initMobileFilterToggle(container = document) {
         requestAnimationFrame(() => {
           [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
             if (el) {
-              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
+              el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
               el.style.transform = 'translateX(0)';
-              el.style.opacity = '1';
             }
           });
         });
@@ -10130,19 +10104,13 @@ function initMobileFilterToggle(container = document) {
         });
         filterWrapper.scrollTop = 0;
         
-       // Clean up content transitions
+        // Clean up content transitions
         [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transform = '';
             el.style.transition = '';
-            el.style.opacity = '';
           }
         });
-        
-        // Remove temporary background
-        if (searchBarWrapper) {
-          searchBarWrapper.style.backgroundColor = '';
-        }
       }, 350);
     });
   }
@@ -10159,19 +10127,12 @@ function initMobileFilterToggle(container = document) {
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
       
-      // Clean up content transitions
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transform = '';
-            el.style.transition = '';
-            el.style.opacity = '';
-          }
-        });
-        
-        // Remove temporary background
-        if (searchBarWrapper) {
-          searchBarWrapper.style.backgroundColor = '';
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transform = '';
+          el.style.transition = '';
         }
+      });
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
       if (g.mobileFilterOpen) {
