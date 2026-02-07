@@ -9979,23 +9979,14 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide content slightly left for parallax effect (except sticky search bar when scrolled)
-        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
+       // Slide all content to the left with fade
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-            el.style.transform = 'translateX(-30%)';
-            el.style.zIndex = '1';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
+            el.style.transform = 'translateX(-100%)';
+            el.style.opacity = '0';
           }
         });
-        
-        // Search bar needs special handling - only animate if at top of page
-        if (searchBarWrapper) {
-          if (window.scrollY === 0) {
-            searchBarWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-            searchBarWrapper.style.transform = 'translateX(-30%)';
-          }
-          searchBarWrapper.style.zIndex = '1';
-        }
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10035,11 +10026,6 @@ function initMobileFilterToggle(container = document) {
           filterWrapper.style.right = '';
           filterWrapper.style.zIndex = '';
           
-          // Reset search bar transform now that it's hidden
-          if (searchBarWrapper) {
-            searchBarWrapper.style.transform = 'translateX(-30%)';
-          }
-          
           // Restore accordion scroll positions
           if (g.filterAccordionStates) {
             filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
@@ -10076,23 +10062,29 @@ function initMobileFilterToggle(container = document) {
         };
       });
       
-      // Slide filter out to right
+      // Restore scroll position while content is hidden
+      disableScrollLimit();
+      if (typeof g.savedScrollPosition === 'number') {
+        window.scrollTo(0, g.savedScrollPosition);
+      }
+      
+      // Slide filter out to right and content back in from left simultaneously
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set content to starting position (off to the left)
+      // Set all content to start position off-screen, fully visible, with no transition
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
-          el.style.transform = 'translateX(-30%)';
-          el.style.zIndex = '1';
+          el.style.transform = 'translateX(-100%)';
+          el.style.opacity = '1';
         }
       });
       
-      // Force reflow
+      // Force reflow to ensure starting positions are applied
       void filterWrapper.offsetWidth;
       
-      // Animate content back to 0
+      // Then animate back in
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -10107,12 +10099,6 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
         
-        // Restore scroll position after animation
-        disableScrollLimit();
-        if (typeof g.savedScrollPosition === 'number') {
-          window.scrollTo(0, g.savedScrollPosition);
-        }
-        
         // Reset accordion visual state
         filterWrapper.querySelectorAll('.filter-list').forEach(list => {
           list.scrollTop = 0;
@@ -10126,7 +10112,7 @@ function initMobileFilterToggle(container = document) {
           if (el) {
             el.style.transform = '';
             el.style.transition = '';
-            el.style.zIndex = '';
+            el.style.opacity = '';
           }
         });
       }, 350);
