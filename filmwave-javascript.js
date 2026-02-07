@@ -3544,17 +3544,17 @@ function toggleClearButton() {
 }
 
 function clearAllFilters() {
-  const searchBar = document.querySelector('[data-filter-search="true"]'); // Add this line
+  const searchBar = document.querySelector('[data-filter-search="true"]');
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
+  const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
   
-  if (!hasSearch && !hasFilters) {
+  if (!hasSearch && !hasFilters && !hasPlaylistFilter) {
     return;
   }
   
   if (searchBar && hasSearch) {
     searchBar.value = '';
-    // Optional: dispatch input to trigger applyFilters early
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
   
@@ -3572,8 +3572,8 @@ function clearAllFilters() {
       }
     });
   }
-
-// Clear playlist filter
+  
+  // Clear playlist filter
   const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
   if (playlistCheckbox) {
     playlistCheckbox.checked = false;
@@ -3590,16 +3590,14 @@ function clearAllFilters() {
   const playlistTag = document.querySelector('[data-playlist-filter-tag]');
   if (playlistTag) playlistTag.remove();
   
-  // Show all songs manually, but respect playlist filter
-document.querySelectorAll('.song-wrapper').forEach(song => {
-  song.removeAttribute('data-hidden-by-other');
-  // Only show if not hidden by playlist filter
-  if (song.getAttribute('data-hidden-by-playlist') !== 'true') {
+  // Show all songs and clear filter attributes
+  document.querySelectorAll('.song-wrapper').forEach(song => {
+    song.removeAttribute('data-hidden-by-other');
+    song.removeAttribute('data-hidden-by-playlist');
     song.style.display = '';
-  }
-});
+  });
   
-  // Save empty state so restoration knows it was intentionally cleared
+  // Save empty state
   localStorage.setItem('musicFilters', JSON.stringify({
     filters: [],
     searchQuery: ''
@@ -3607,14 +3605,12 @@ document.querySelectorAll('.song-wrapper').forEach(song => {
   
   toggleClearButton();
   
-  // Only call applyFilters if it exists
   if (typeof applyFilters === 'function') {
     applyFilters();
   }
   
   updateFilterDots();
 
-// ✅ REINITIALIZE SEARCH after clearing
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   if (isMusicPage && typeof initSearchAndFilters === 'function') {
     console.log('🔄 Reinitializing search after clear');
