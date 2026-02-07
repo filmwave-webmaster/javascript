@@ -10003,6 +10003,21 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
         
+        // Restore accordion states if saved
+        if (g.filterAccordionStates) {
+          filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+            const state = g.filterAccordionStates[index];
+            if (state && state.isOpen) {
+              list.classList.add('open');
+              list.style.maxHeight = state.maxHeight;
+              list.scrollTop = state.scrollTop;
+            }
+          });
+        }
+        
+        // Always start at top of filter wrapper
+        filterWrapper.scrollTop = 0;
+        
         // Trigger animation on next frame
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -10032,7 +10047,17 @@ function initMobileFilterToggle(container = document) {
         g.mobileFilterOpen = false;
         disableScrollLimit();
         
-        // Reset accordions and scroll positions after hidden
+        // Save accordion states before resetting visually
+        g.filterAccordionStates = [];
+        filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+          g.filterAccordionStates[index] = {
+            isOpen: list.classList.contains('open'),
+            scrollTop: list.scrollTop,
+            maxHeight: list.style.maxHeight
+          };
+        });
+        
+        // Reset visual state after hidden
         filterWrapper.querySelectorAll('.filter-list').forEach(list => {
           list.scrollTop = 0;
           list.classList.remove('open');
