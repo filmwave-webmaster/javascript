@@ -10070,8 +10070,8 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // First set content to start position off-screen
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+      // Set content to start position off-screen
+      [musicList, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
           el.style.transform = 'translateX(-100%)';
@@ -10079,9 +10079,11 @@ function initMobileFilterToggle(container = document) {
         }
       });
       
-      // Search bar and header start opaque and slide in immediately
+      // Search bar and header start off-screen but fully opaque
       [mobileSearchHeader, searchBarWrapper].forEach(el => {
         if (el) {
+          el.style.transition = 'none';
+          el.style.transform = 'translateX(-100%)';
           el.style.opacity = '1';
         }
       });
@@ -10089,7 +10091,7 @@ function initMobileFilterToggle(container = document) {
       // Then animate back in on next frame
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // Slide everything back in
+          // Slide everything back in together
           [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
             if (el) {
               el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
