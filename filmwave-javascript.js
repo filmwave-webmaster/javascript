@@ -9972,6 +9972,15 @@ function initMobileFilterToggle(container = document) {
       const footerContainer = document.querySelector('.footer-container');
       
      if (window.innerWidth < 768) {
+        // Get header height to check if partially scrolled through it
+        const headerRect = mobileSearchHeader ? mobileSearchHeader.getBoundingClientRect() : null;
+        const isPartiallyThroughHeader = headerRect && headerRect.top < 0 && headerRect.bottom > 0;
+        
+        // If partially scrolled through header, scroll to top instantly before animation
+        if (isPartiallyThroughHeader) {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+        
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
         filterWrapper.style.top = 'var(--navbar--height, 60px)';
@@ -10020,24 +10029,22 @@ function initMobileFilterToggle(container = document) {
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
         
-        // After animations complete: adjust scroll, hide content, restore accordion scroll
+       // After animations complete: adjust scroll, hide content, restore accordion scroll
         setTimeout(() => {
-          // First scroll to top while filter is covering everything
+          // Scroll to top while filter is covering everything
           window.scrollTo({ top: 0, behavior: 'instant' });
           
-          // Small delay to let scroll settle before changing filter position
-          requestAnimationFrame(() => {
-            enableScrollLimit();
-            
-            // Reset filter to normal positioning now that we're at top
-            filterWrapper.style.position = '';
-            filterWrapper.style.top = '';
-            filterWrapper.style.left = '';
-            filterWrapper.style.right = '';
-            filterWrapper.style.zIndex = '';
-            
-            // Restore accordion scroll positions
-            if (g.filterAccordionStates) {
+          enableScrollLimit();
+          
+          // Reset filter to normal positioning now that we're at top
+          filterWrapper.style.position = '';
+          filterWrapper.style.top = '';
+          filterWrapper.style.left = '';
+          filterWrapper.style.right = '';
+          filterWrapper.style.zIndex = '';
+          
+          // Restore accordion scroll positions
+          if (g.filterAccordionStates) {
               filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
                 const state = g.filterAccordionStates[index];
                 if (state && state.isOpen && state.scrollTop) {
@@ -10103,8 +10110,7 @@ function initMobileFilterToggle(container = document) {
       });
       
       // Clean up after animation completes
-      setTimeout(() => {
-        filterWrapper.style.display = 'none';
+      filterWrapper.style.display = 'none';
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
