@@ -9979,26 +9979,14 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Hide search bar immediately if scrolled down (it's sticky so behaves differently)
-        if (window.scrollY > 0 && searchBarWrapper) {
-          searchBarWrapper.style.opacity = '0';
-        }
-        
-        // Slide content slightly left for parallax effect
-        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
+       // Slide content slightly left for parallax effect
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
             el.style.transform = 'translateX(-30%)';
             el.style.zIndex = '1';
           }
         });
-        
-        // Search bar only slides if at top of page
-        if (window.scrollY === 0 && searchBarWrapper) {
-          searchBarWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-          searchBarWrapper.style.transform = 'translateX(-30%)';
-          searchBarWrapper.style.zIndex = '1';
-        }
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -10074,29 +10062,23 @@ function initMobileFilterToggle(container = document) {
         };
       });
       
-      // Restore scroll position while content is hidden
-      disableScrollLimit();
-      if (typeof g.savedScrollPosition === 'number') {
-        window.scrollTo(0, g.savedScrollPosition);
-      }
-      
-      // Slide filter out to right and content back in from left simultaneously
+      // Slide filter out to right
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set content to starting position first
+      // Set content to starting position (off to the left)
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'none';
           el.style.transform = 'translateX(-30%)';
-          el.style.opacity = '1';
+          el.style.zIndex = '1';
         }
       });
       
       // Force reflow
       void filterWrapper.offsetWidth;
       
-      // Then animate back to 0
+      // Animate content back to 0
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
           el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -10110,6 +10092,12 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
         g.mobileFilterOpen = false;
+        
+        // Restore scroll position after animation
+        disableScrollLimit();
+        if (typeof g.savedScrollPosition === 'number') {
+          window.scrollTo(0, g.savedScrollPosition);
+        }
         
         // Reset accordion visual state
         filterWrapper.querySelectorAll('.filter-list').forEach(list => {
@@ -10125,7 +10113,6 @@ function initMobileFilterToggle(container = document) {
             el.style.transform = '';
             el.style.transition = '';
             el.style.zIndex = '';
-            el.style.opacity = '';
           }
         });
       }, 350);
