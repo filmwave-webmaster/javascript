@@ -9998,25 +9998,10 @@ function initMobileFilterToggle(container = document) {
           enableScrollLimit();
         }
         
-        // Set up for slide-in animation
+       // Set up for slide-in animation
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        
-        // Restore accordion states if saved
-        if (g.filterAccordionStates) {
-          filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-            const state = g.filterAccordionStates[index];
-            if (state && state.isOpen) {
-              list.classList.add('open');
-              list.style.maxHeight = state.maxHeight;
-              list.scrollTop = state.scrollTop;
-            }
-          });
-        }
-        
-        // Always start at top of filter wrapper
-        filterWrapper.scrollTop = 0;
         
         // Trigger animation on next frame
         requestAnimationFrame(() => {
