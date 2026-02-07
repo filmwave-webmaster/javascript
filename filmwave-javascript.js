@@ -9977,25 +9977,37 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide music list and footer first
+      // Give search bar a solid background
+        if (searchBarWrapper) {
+          searchBarWrapper.style.backgroundColor = 'var(--color-1)';
+        }
+        
+        // Slide and fade music list and footer
         [musicList, footerContainer].forEach(el => {
           if (el) {
-            el.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.15s ease';
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
             el.style.transform = 'translateX(-100%)';
             el.style.opacity = '0';
           }
         });
         
-        // Slide search bar and header after a slight delay so they cover the content behind
+        // Slide search bar and header at the same time, but only fade after music list is hidden
+        [mobileSearchHeader, searchBarWrapper].forEach(el => {
+          if (el) {
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+            el.style.transform = 'translateX(-100%)';
+          }
+        });
+        
+        // Fade search bar and header after music list has faded
         setTimeout(() => {
           [mobileSearchHeader, searchBarWrapper].forEach(el => {
             if (el) {
-              el.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease';
-              el.style.transform = 'translateX(-100%)';
+              el.style.transition = 'opacity 0.15s ease';
               el.style.opacity = '0';
             }
           });
-        }, 50);
+        }, 200);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
