@@ -9979,19 +9979,13 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide content to the left (no fade)
-        [musicList, mobileSearchHeader, footerContainer].forEach(el => {
+       // Slide all content further left to fully disappear
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
           if (el) {
             el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-            el.style.transform = 'translateX(-100%)';
+            el.style.transform = 'translateX(-150%)';
           }
         });
-        
-        // Search bar needs to slide further to fully disappear
-        if (searchBarWrapper) {
-          searchBarWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-          searchBarWrapper.style.transform = 'translateX(-150%)';
-        }
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
