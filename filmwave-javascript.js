@@ -3830,13 +3830,18 @@ function initPlaylistFilter() {
   // Load saved playlist from localStorage (only during Barba transitions)
 function loadSavedPlaylistFilter() {
   try {
-    // Only restore if this is a Barba transition, not a fresh page load
-    const isBarbaTransition = window.musicPlayerPersistent?.isBarbaTransition === true;
-    if (!isBarbaTransition) {
+    // Check if this is a fresh page load using sessionStorage flag
+    const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation') === 'true';
+    
+    if (!isBarbaNavigation) {
       // Fresh page load - clear the saved filter
       localStorage.removeItem('playlistFilter');
+      console.log('🎵 Fresh page load - cleared playlist filter');
       return null;
     }
+    
+    // Clear the flag after reading it
+    sessionStorage.removeItem('isBarbaNavigation');
     
     const saved = localStorage.getItem('playlistFilter');
     if (saved) {
@@ -5810,7 +5815,7 @@ if (document.readyState === 'loading') {
 // Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.beforeEnter((data) => {
-    window.musicPlayerPersistent.isBarbaTransition = true;
+    sessionStorage.setItem('isBarbaNavigation', 'true');
     runForPath(data?.next?.url?.path || '');
   });
   barba.hooks.afterEnter((data) => {
