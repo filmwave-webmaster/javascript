@@ -4582,6 +4582,10 @@ function updateFilterDots() {
       // Check if any key filter is checked
       isActive = !!section.querySelector('[data-filter-group="Key"]:checked');
       
+    } else if (section.classList.contains('playlists')) {
+      // Check if any playlist checkbox is checked
+      isActive = !!section.querySelector('input[type="checkbox"]:checked');
+      
     } else {
       // Check if any checkbox/radio in this section is checked
       isActive = !!section.querySelector('[data-filter-group]:checked');
@@ -4591,7 +4595,6 @@ function updateFilterDots() {
     dot.style.display = isActive ? 'block' : 'none';
   });
 }
-
 // START OF INIT BPM FILTER
 
 function initBPMFilter() {
