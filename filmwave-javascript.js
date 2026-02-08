@@ -4151,7 +4151,10 @@ checkbox.addEventListener('change', () => {
     // Apply saved filter and update UI
     if (savedFilter && selectedPlaylistId) {
       updateActivePlaylistDisplay();
-      updatePlaylistFilterTag();
+      // Only create tag if it doesn't already exist (restoreFilterState may have created it)
+      if (!document.querySelector('[data-playlist-filter-tag]')) {
+        updatePlaylistFilterTag();
+      }
       await filterSongsByPlaylist(selectedPlaylistId);
       if (typeof toggleClearButton === 'function') {
         toggleClearButton();
