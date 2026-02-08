@@ -4070,17 +4070,6 @@ function loadSavedPlaylistFilter() {
   }
   
   async function populatePlaylistFilter() {
-  const g = window.musicPlayerPersistent;
-  
-  // Check if the filter list already has items with event listeners
-  const existingCheckbox = filterList.querySelector('input[type="checkbox"]');
-  const hasListeners = existingCheckbox?._playlistFilterInit === true;
-  
-  if (hasListeners) {
-    console.log('🎵 Playlist filter already has listeners, skipping');
-    return;
-  }
-  
   const filterItemTemplate = filterList.querySelector('.filter-item');
   if (!filterItemTemplate) {
     console.warn('Playlist filter: missing filter-item template');
@@ -5861,12 +5850,15 @@ if (document.readyState === 'loading') {
 // Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.before(() => {
-    // Set flag BEFORE any page transition logic runs
     sessionStorage.setItem('isBarbaNavigation', 'true');
     window._isFreshPageLoad = false;
-    // Reset playlist filter populated flag since DOM will be replaced
+    
+    // Reset filter initialization flags since DOM will be replaced
     const g = window.musicPlayerPersistent;
-    if (g) g.playlistFilterPopulated = false;
+    if (g) {
+      g.playlistFilterPopulated = false;
+      g.filtersInitialized = false; // Allow re-initialization on new page
+    }
   });
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
@@ -7490,10 +7482,6 @@ window.addEventListener('load', function() {
 });
 
 if (typeof barba !== 'undefined') {
-  barba.hooks.before((data) => {
-    sessionStorage.setItem('isBarbaNavigation', 'true');
-    console.log('🚀 Barba navigation starting');
-  });
   
   barba.hooks.beforeEnter((data) => {
     console.log('📥 Barba beforeEnter hook');
