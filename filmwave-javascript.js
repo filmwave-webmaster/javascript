@@ -7670,32 +7670,38 @@ if (typeof barba !== 'undefined') {
   barba.hooks.beforeEnter((data) => {
     console.log('📥 Barba beforeEnter hook');
     const savedState = localStorage.getItem('musicFilters');
+    const savedPlaylist = localStorage.getItem('playlistFilter');
     console.log('Saved filters:', savedState);
+    console.log('Saved playlist:', savedPlaylist);
+    
+    let hasActiveFilters = false;
     
     if (savedState) {
       try {
         const filterState = JSON.parse(savedState);
-        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
-        console.log('Has active filters:', hasActiveFilters);
-        
-        if (hasActiveFilters) {
-          const musicList = data.next.container.querySelector('.music-list-wrapper');
-          if (musicList) {
-            musicList.style.opacity = '0';
-            musicList.style.visibility = 'hidden';
-            musicList.style.pointerEvents = 'none';
-            console.log('🔒 Songs hidden via Barba hook');
-          } else {
-            console.log('⚠️ Music list not found in next container');
-          }
-        } else {
-          console.log('✅ No active filters - songs will show normally');
-        }
+        hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
       } catch (e) {
-        console.error('Error in beforeEnter hook:', e);
+        console.error('Error parsing filter state:', e);
+      }
+    }
+    
+    // Also check for playlist filter
+    const hasPlaylistFilter = !!savedPlaylist;
+    
+    console.log('Has active filters:', hasActiveFilters, 'Has playlist filter:', hasPlaylistFilter);
+    
+    if (hasActiveFilters || hasPlaylistFilter) {
+      const musicList = data.next.container.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '0';
+        musicList.style.visibility = 'hidden';
+        musicList.style.pointerEvents = 'none';
+        console.log('🔒 Songs hidden via Barba hook');
+      } else {
+        console.log('⚠️ Music list not found in next container');
       }
     } else {
-      console.log('✅ No saved state - songs will show normally');
+      console.log('✅ No active filters - songs will show normally');
     }
   });
   
