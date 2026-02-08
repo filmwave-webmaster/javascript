@@ -2638,6 +2638,10 @@ function initDynamicTagging() {
   // Skip playlist filter checkboxes - they have their own tag system
   if (checkbox.closest('.filter-category.playlists')) return;
   
+  // Skip if already initialized
+  if (checkbox._dynamicTaggingInit) return;
+  checkbox._dynamicTaggingInit = true;
+  
   checkbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
@@ -2667,7 +2671,11 @@ function initDynamicTagging() {
     });
 
     radioWrappers.forEach(wrapper => {
-      wrapper.addEventListener('mousedown', function() {
+  // Skip if already initialized
+  if (wrapper._dynamicTaggingInit) return;
+  wrapper._dynamicTaggingInit = true;
+  
+  wrapper.addEventListener('mousedown', function() {
         const radio = this.querySelector('input[type="radio"]');
         if (radio) this.dataset.wasChecked = radio.checked;
       });
