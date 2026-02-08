@@ -3847,15 +3847,21 @@ function initPlaylistFilter() {
   // Load saved playlist from localStorage (only during Barba transitions)
 function loadSavedPlaylistFilter() {
   try {
-    // Check if this is a fresh page load (flag set at top of script)
-    if (window._isFreshPageLoad) {
+    // Check if this is a fresh page load
+    // Use sessionStorage flag as backup check for Barba transitions
+    const isBarbaNav = sessionStorage.getItem('isBarbaNavigation') === 'true';
+    const isFresh = window._isFreshPageLoad && !isBarbaNav;
+    
+    if (isFresh) {
       // Already cleared in the initial detection
+      console.log('🎵 Fresh page load - not restoring playlist filter');
       return null;
     }
     
     const saved = localStorage.getItem('playlistFilter');
     if (saved) {
       const data = JSON.parse(saved);
+      console.log('🎵 Restoring playlist filter from localStorage:', data);
       return data;
     }
   } catch (e) {
@@ -5838,8 +5844,12 @@ if (document.readyState === 'loading') {
 
 // Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.beforeEnter((data) => {
+  barba.hooks.before(() => {
+    // Set flag BEFORE any page transition logic runs
     sessionStorage.setItem('isBarbaNavigation', 'true');
+    window._isFreshPageLoad = false;
+  });
+  barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
   });
   barba.hooks.afterEnter((data) => {
