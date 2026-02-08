@@ -7572,20 +7572,29 @@ function attemptRestore() {
   const hasFilters = document.querySelectorAll('[data-filter-group]').length > 0;
   console.log('Filters found on page:', hasFilters);
   
-  if (hasFilters) {
-    const success = restoreFilterState();
-    console.log('restoreFilterState returned:', success);
-    
-    if (success) {
+  if (success) {
       filtersRestored = true;
     } else {
-      console.log('Restoration failed - showing everything');
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList) {
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
+      // Check if there's a playlist filter that still needs to be applied
+      const savedPlaylist = localStorage.getItem('playlistFilter');
+      if (savedPlaylist) {
+        console.log('Restoration failed but playlist filter exists - keeping songs hidden');
+        // Don't show songs yet - let populatePlaylistFilter handle the reveal
+      } else {
+        console.log('Restoration failed - showing everything');
+        const musicList = document.querySelector('.music-list-wrapper');
+        if (musicList) {
+          musicList.style.opacity = '1';
+          musicList.style.visibility = 'visible';
+          musicList.style.pointerEvents = 'auto';
+        }
+        
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        const clearButton = document.querySelector('.circle-x');
+        if (tagsContainer) tagsContainer.style.opacity = '1';
+        if (clearButton) clearButton.style.opacity = '1';
       }
+    }
       
       const tagsContainer = document.querySelector('.filter-tags-container');
       const clearButton = document.querySelector('.circle-x');
