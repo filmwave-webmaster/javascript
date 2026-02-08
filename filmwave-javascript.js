@@ -4052,12 +4052,13 @@ function loadSavedPlaylistFilter() {
   }
   
   async function populatePlaylistFilter() {
-  // Prevent double execution
-  if (playlistSection.dataset.populated === 'true') {
+  // Prevent double execution using global state (survives DOM replacement)
+  const g = window.musicPlayerPersistent;
+  if (g.playlistFilterPopulated === true) {
     console.log('🎵 Playlist filter already populated, skipping');
     return;
   }
-  playlistSection.dataset.populated = 'true';
+  g.playlistFilterPopulated = true;
   
   const filterItemTemplate = filterList.querySelector('.filter-item');
   if (!filterItemTemplate) {
@@ -4181,8 +4182,11 @@ function loadSavedPlaylistFilter() {
   }
   
  async function init() {
-  // Reset populated flag for fresh init
-  playlistSection.dataset.populated = 'false';
+  // Reset populated flag for fresh init (but not during Barba transitions)
+  const g = window.musicPlayerPersistent;
+  if (window._isFreshPageLoad) {
+    g.playlistFilterPopulated = false;
+  }
   
   const isLoggedIn = await initVisibility();
   if (!isLoggedIn) return;
