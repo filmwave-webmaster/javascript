@@ -162,15 +162,24 @@ window.navCache = {
     });
 })();
 
-// Force-clear saved search query on hard refresh so field starts empty
-window.addEventListener('load', () => {
-  // Only run on full refresh (not Barba)
-  if (!sessionStorage.getItem('isBarbaNavigation')) {
-    localStorage.removeItem('musicFilters'); // or set to empty
-    // Alternative: set to empty state
-    // localStorage.setItem('musicFilters', JSON.stringify({ filters: [], searchQuery: '' }));
+// Detect fresh page load vs Barba navigation
+// This runs IMMEDIATELY (not on 'load' event) to catch the flag before other code runs
+(function detectFreshPageLoad() {
+  const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation') === 'true';
+  
+  // Always clear the flag immediately
+  sessionStorage.removeItem('isBarbaNavigation');
+  
+  // Store the result for other functions to use
+  window._isFreshPageLoad = !isBarbaNavigation;
+  
+  if (window._isFreshPageLoad) {
+    // Fresh page load - clear all filter storage
+    localStorage.removeItem('musicFilters');
+    localStorage.removeItem('playlistFilter');
+    console.log('🧹 Fresh page load - cleared all filter storage');
   }
-});
+})();
 
 /* ============================================================
    DASHBOARD WELCOME TEXT - GENERATE FROM MEMBERSTACK
@@ -3830,18 +3839,11 @@ function initPlaylistFilter() {
   // Load saved playlist from localStorage (only during Barba transitions)
 function loadSavedPlaylistFilter() {
   try {
-    // Check if this is a fresh page load using sessionStorage flag
-    const isBarbaNavigation = sessionStorage.getItem('isBarbaNavigation') === 'true';
-    
-    if (!isBarbaNavigation) {
-      // Fresh page load - clear the saved filter
-      localStorage.removeItem('playlistFilter');
-      console.log('🎵 Fresh page load - cleared playlist filter');
+    // Check if this is a fresh page load (flag set at top of script)
+    if (window._isFreshPageLoad) {
+      // Already cleared in the initial detection
       return null;
     }
-    
-    // Clear the flag after reading it
-    sessionStorage.removeItem('isBarbaNavigation');
     
     const saved = localStorage.getItem('playlistFilter');
     if (saved) {
