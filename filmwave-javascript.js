@@ -7049,6 +7049,11 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           if (label) {
             label.style.color = 'var(--color-2)';
           }
+          // Add Webflow checked class to checkbox icon
+          const checkboxIcon = wrapper.querySelector('.w-checkbox-input');
+          if (checkboxIcon) {
+            checkboxIcon.classList.add('w--redirected-checked');
+          }
         }
         
         restoredCount++;
