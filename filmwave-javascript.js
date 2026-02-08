@@ -7256,18 +7256,21 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       console.log('✅ Manual filter application complete');
     }, 50);
       
-      setTimeout(() => {
+     setTimeout(() => {
         if (tagsContainer) {
           const seen = new Set();
           const tagsToRemove = [];
           
           tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
             const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-            if (text) {
-              if (seen.has(text)) {
+            const isPlaylistTag = tag.hasAttribute('data-playlist-filter-tag');
+            // Create unique key combining text and type to allow same name for playlist vs generic
+            const key = `${text}|${isPlaylistTag ? 'playlist' : 'generic'}`;
+            if (key) {
+              if (seen.has(key)) {
                 tagsToRemove.push(tag);
               } else {
-                seen.add(text);
+                seen.add(key);
               }
             }
           });
