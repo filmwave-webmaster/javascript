@@ -4893,7 +4893,7 @@ function updateBPMTag() {
     `;
     
     tag.querySelector('.filter-tag-remove').addEventListener('click', clearBPM);
-    tagsContainer.appendChild(tag);
+    tagsContainer.insertBefore(tag, tagsContainer.firstChild);
   }
   
   // Update clear button visibility
