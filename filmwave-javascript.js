@@ -4070,13 +4070,16 @@ function loadSavedPlaylistFilter() {
   }
   
   async function populatePlaylistFilter() {
-  // Prevent double execution using global state (survives DOM replacement)
   const g = window.musicPlayerPersistent;
-  if (g.playlistFilterPopulated === true) {
-    console.log('🎵 Playlist filter already populated, skipping');
+  
+  // Check if the filter list already has items with event listeners
+  const existingCheckbox = filterList.querySelector('input[type="checkbox"]');
+  const hasListeners = existingCheckbox?._playlistFilterInit === true;
+  
+  if (hasListeners) {
+    console.log('🎵 Playlist filter already has listeners, skipping');
     return;
   }
-  g.playlistFilterPopulated = true;
   
   const filterItemTemplate = filterList.querySelector('.filter-item');
   if (!filterItemTemplate) {
@@ -4139,9 +4142,10 @@ function loadSavedPlaylistFilter() {
           }
         }
         
-        checkbox.addEventListener('change', () => {
-          handleCheckboxChange(checkbox, playlist.id, playlist.name);
-        });
+        checkbox._playlistFilterInit = true;
+checkbox.addEventListener('change', () => {
+  handleCheckboxChange(checkbox, playlist.id, playlist.name);
+});
       }
       
       filterList.appendChild(item);
