@@ -7134,6 +7134,15 @@ if (!filterState.filters.length && !filterState.searchQuery) {
             });
             tagsContainer.insertBefore(tag, tagsContainer.firstChild);
             console.log('✅ Restored playlist filter tag:', playlistData.name);
+            
+            // Also show the playlist filter dot
+            const playlistSection = document.querySelector('.filter-category.playlists');
+            if (playlistSection) {
+              const dot = playlistSection.querySelector('.filter-dot-active');
+              if (dot) {
+                dot.style.setProperty('display', 'block', 'important');
+              }
+            }
           }
         }
       } catch (e) {
