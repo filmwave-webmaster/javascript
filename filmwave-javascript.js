@@ -7080,6 +7080,48 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
     }
     
+    // Also restore playlist filter tag if it exists
+    const savedPlaylist = localStorage.getItem('playlistFilter');
+    if (savedPlaylist && tagsContainer) {
+      try {
+        const playlistData = JSON.parse(savedPlaylist);
+        if (playlistData && playlistData.id && playlistData.name) {
+          // Check if playlist tag already exists
+          if (!document.querySelector('[data-playlist-filter-tag]')) {
+            const tag = document.createElement('div');
+            tag.className = 'filter-tag';
+            tag.setAttribute('data-playlist-filter-tag', 'true');
+            tag.innerHTML = `
+              <span class="filter-tag-text">${playlistData.name}</span>
+              <span class="filter-tag-remove x-button-style">×</span>
+            `;
+            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+              // Clear playlist filter
+              const playlistCheckbox = document.querySelector(`.filter-category.playlists input[data-playlist-id="${playlistData.id}"]`);
+              if (playlistCheckbox) {
+                playlistCheckbox.checked = false;
+                playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+              localStorage.removeItem('playlistFilter');
+              tag.remove();
+              // Show all songs (remove playlist hiding)
+              document.querySelectorAll('.song-wrapper').forEach(song => {
+                song.removeAttribute('data-hidden-by-playlist');
+                if (song.getAttribute('data-hidden-by-other') !== 'true') {
+                  song.style.display = '';
+                }
+              });
+              if (typeof toggleClearButton === 'function') toggleClearButton();
+            });
+            tagsContainer.insertBefore(tag, tagsContainer.firstChild);
+            console.log('✅ Restored playlist filter tag:', playlistData.name);
+          }
+        }
+      } catch (e) {
+        console.warn('Error restoring playlist tag:', e);
+      }
+    }
+    
    // Don't dispatch change events - we already created the tags manually
     // Dispatching would cause Webflow to create duplicate tags
     console.log('⏭️ Skipping change events to prevent duplicate tags');
