@@ -7044,6 +7044,11 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper, .filter-item');
         if (wrapper) {
           wrapper.classList.add('is-active');
+          // Also set label color for visual styling
+          const label = wrapper.querySelector('.filter-text, .w-form-label');
+          if (label) {
+            label.style.color = 'var(--color-2)';
+          }
         }
         
         restoredCount++;
