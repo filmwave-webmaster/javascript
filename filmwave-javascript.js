@@ -3548,15 +3548,22 @@ function toggleClearButton() {
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
   const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
+  const hasBPMFilter = document.querySelector('[data-bpm-tag]') !== null;
 
-  // Check if we have saved filters (includes playlist filter)
+  // Check if we have saved filters (includes playlist filter and BPM)
   let hasSavedFilters = false;
   let hasSavedPlaylistFilter = false;
+  let hasSavedBPMFilter = false;
   try {
     const saved = localStorage.getItem('musicFilters');
     if (saved) {
       const parsed = JSON.parse(saved);
       hasSavedFilters = parsed.filters && parsed.filters.length > 0;
+      // Check for BPM in saved state
+      if (parsed.bpm) {
+        const bpm = parsed.bpm;
+        hasSavedBPMFilter = !!(bpm.exact || bpm.low || bpm.high);
+      }
     }
     const savedPlaylist = localStorage.getItem('playlistFilter');
     if (savedPlaylist) {
@@ -3567,10 +3574,11 @@ function toggleClearButton() {
 
   // On non-music pages, don't touch the button if we have saved filters
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (!isMusicPage && (hasSavedFilters || hasSavedPlaylistFilter)) return;
+  if (!isMusicPage && (hasSavedFilters || hasSavedPlaylistFilter || hasSavedBPMFilter)) return;
 
-  // Show button if active filters OR saved playlist filter (for music page during restore)
-  const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || (isMusicPage && hasSavedPlaylistFilter);
+  // Show button if active filters OR saved playlist/BPM filter (for music page during restore)
+  const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter || 
+                     (isMusicPage && (hasSavedPlaylistFilter || hasSavedBPMFilter));
   clearBtn.style.display = shouldShow ? 'flex' : 'none';
 }
 
@@ -4044,11 +4052,18 @@ function loadSavedPlaylistFilter() {
   }
   
   async function populatePlaylistFilter() {
-    const filterItemTemplate = filterList.querySelector('.filter-item');
-    if (!filterItemTemplate) {
-      console.warn('Playlist filter: missing filter-item template');
-      return;
-    }
+  // Prevent double execution
+  if (playlistSection.dataset.populated === 'true') {
+    console.log('🎵 Playlist filter already populated, skipping');
+    return;
+  }
+  playlistSection.dataset.populated = 'true';
+  
+  const filterItemTemplate = filterList.querySelector('.filter-item');
+  if (!filterItemTemplate) {
+    console.warn('Playlist filter: missing filter-item template');
+    return;
+  }
     
     const template = filterItemTemplate.cloneNode(true);
     
@@ -4165,9 +4180,12 @@ function loadSavedPlaylistFilter() {
     });
   }
   
-  async function init() {
-    const isLoggedIn = await initVisibility();
-    if (!isLoggedIn) return;
+ async function init() {
+  // Reset populated flag for fresh init
+  playlistSection.dataset.populated = 'false';
+  
+  const isLoggedIn = await initVisibility();
+  if (!isLoggedIn) return;
     
     updateActivePlaylistDisplay();
     await populatePlaylistFilter();
