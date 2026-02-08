@@ -7124,7 +7124,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         });
         
         return Object.entries(filterGroups).every(([group, filters]) => {
-          return filters.some(f => {
+  return filters.every(f => {
             if (group === 'Key' && f.keyGroup) {
               const keyField = fields['Key'] || fields['key'] || '';
               const isMinor = keyField.toLowerCase().includes('minor') || keyField.toLowerCase().includes('min');
