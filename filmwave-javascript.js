@@ -11,7 +11,7 @@
  * ============================================================
  * 
  * SECTION                                                           LINE #
- * -------------------------------------------------------------------------
+ * ------------------------------------------------------------
  * 1.  GLOBAL STATE - Persists across Barba page transitions         50
  * 2.  UTILITY FUNCTIONS                                             207
  * 3.  MASTER PLAYER POSITIONING - DO NOT MODIFY                     261
@@ -47,6 +47,9 @@
  * 33. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
  * 34. FAVORITE SONGS PERSISTENCE                                    6919
  * 35. XANO PLAYLIST SYSTEM                                          7006
+ * 36. TOGGLE SEARCH FILTERS MUSIC PAGE                              10635
+ * 37. SIMPLE PROGRESS TRACKER                                       10921
+ * 38. TOUCH DEVICE DOUBLE-TAP FIX                                   10942
  * 
  * ============================================================
  */
@@ -10631,7 +10634,7 @@ async function initPlaylistsPage() {
 }
 
 /* ============================================================
-   34. TOGGLE SEARCH FILTERS MUSIC PAGE
+   TOGGLE SEARCH FILTERS MUSIC PAGE
    ============================================================ */
 
 function initMobileFilterToggle(container = document) {
@@ -10916,7 +10919,7 @@ function initMobileFilterToggle(container = document) {
 }
 
 /* ============================================================
-   35. SIMPLE PROGRESS TRACKER
+   SIMPLE PROGRESS TRACKER
    ============================================================ */
 
 function resetMobileProgress() {
@@ -10936,7 +10939,7 @@ function updateMobileProgress(current, duration) {
 }
 
 /* ============================================================
-   36. TOUCH DEVICE DOUBLE-TAP FIX
+   TOUCH DEVICE DOUBLE-TAP FIX
    ============================================================ */
 (function initTouchFix() {
   if (!('ontouchstart' in window)) return; // Only run on touch devices
