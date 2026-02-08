@@ -1,52 +1,67 @@
-  /**
- * ============================================================
- * FILMWAVE MUSIC PLATFORM - VERSION 31
- * Updated: January 17, 2026
- * ============================================================
- */
-/**
 /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - CODE INDEX (UPDATED)
+ * FILMWAVE MUSIC PLATFORM - VERSION 32
+ * Updated: February 8, 2026
  * ============================================================
  * 
- * SECTION                                                           LINE #
+ * CHANGES IN V32:
+ * - Fixed key filter removing other filter tags
+ * - Fixed playlist filter double tags issue
+ * - Fixed clear button flash on navigation
+ * - Merged duplicate Barba hooks into unified block
+ * - Added BPM filter support to clear button logic
+ * - Removed duplicate code blocks
+ * - Cleaned up code organization
+ * ============================================================
+ */
+
+/**
+ * ============================================================
+ * FILMWAVE MUSIC PLATFORM - CODE INDEX
+ * ============================================================
+ * 
+ * SECTION                                                           
  * -------------------------------------------------------------------------
- * 1.  GLOBAL STATE - Persists across Barba page transitions         50
- * 2.  UTILITY FUNCTIONS                                             207
- * 3.  MASTER PLAYER POSITIONING - DO NOT MODIFY                     261
- * 4.  MASTER PLAYER VISIBILITY CONTROL                              279
- * 5.  MAIN INITIALIZATION                                           359
- * 6.  STANDALONE AUDIO PLAYER (for non-music pages)                 451
- * 7.  MASTER PLAYER FUNCTIONS                                       699
- * 8.  VOLUME CONTROL                                                1028
- * 9.  PLAYER CLOSE BUTTON                                           1197
- * 10. INIT MASTER PLAYER                                            1290
- * 11. SONG CARD FUNCTIONS                                           1303
- * 12. LINK EXISTING STANDALONE AUDIO TO WAVEFORM                    1407
- * 13. CREATE STANDALONE AUDIO FOR SONG                              1440
- * 14. PLAY STANDALONE SONG                                          1578
- * 15. INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)     1617
- * 16. LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER                1693
- * 17. FETCH & DISPLAY SONGS                                         1917
- * 18. DISPLAY FEATURED SONGS ON HOME PAGE                           2010
- * 19. DISPLAY FAVORITE SONGS ON BACKEND PAGE                        2067
- * 20. KEYBOARD CONTROLS                                             2135
- * 21. DARK MODE TOGGLE                                              2207
- * 22. FILTER HELPERS                                                2357
- * 23. REMOVE DUPLICATE IDS                                          3522
- * 24. HANDLE TAB VISIBILITY                                         3539
- * 25. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
- * 26. DRAG AND DROP - SORTABLE PROFILE ITEMS                        4417
- * 27. PLAYLIST EDIT OVERLAY                                         4685
- * 28. SCROLL LOCK                                                   4992
- * 29. BARBA.JS & PAGE TRANSITIONS                                   5056
- * 30. FAVORITE ICON TOGGLE (SVG Icons)                              5947
- * 31. FAVORITE BUTTON SYNCING                                       5997
- * 32. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
- * 33. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
- * 34. FAVORITE SONGS PERSISTENCE                                    6919
- * 35. XANO PLAYLIST SYSTEM                                          7006
+ * 1.  GLOBAL STATE - Persists across Barba page transitions         
+ * 2.  NAV CACHE & PRELOADING                                        
+ * 3.  FRESH PAGE LOAD DETECTION                                     
+ * 4.  DASHBOARD WELCOME TEXT                                        
+ * 5.  UTILITY FUNCTIONS                                             
+ * 6.  MASTER PLAYER POSITIONING                                     
+ * 7.  MASTER PLAYER VISIBILITY CONTROL                              
+ * 8.  MAIN INITIALIZATION (initMusicPage)                           
+ * 9.  STANDALONE AUDIO PLAYER                                       
+ * 10. MASTER PLAYER FUNCTIONS                                       
+ * 11. VOLUME CONTROL                                                
+ * 12. PLAYER CLOSE BUTTON                                           
+ * 13. SONG CARD FUNCTIONS                                           
+ * 14. WAVEFORM INITIALIZATION                                       
+ * 15. FETCH & DISPLAY SONGS                                         
+ * 16. FEATURED/FAVORITE SONGS DISPLAY                               
+ * 17. KEYBOARD CONTROLS                                             
+ * 18. DARK MODE TOGGLE                                              
+ * 19. FILTER SYSTEM:
+ *     - Filter Accordions
+ *     - Checkbox/Radio Styling
+ *     - Dynamic Tagging
+ *     - Key Filter System
+ *     - BPM Filter System
+ *     - Playlist Filter System
+ *     - Toggle Clear Button
+ *     - Clear All Filters
+ *     - Search & Apply Filters
+ * 20. TAB HANDLING                                                  
+ * 21. DRAG AND DROP - SORTABLE                                      
+ * 22. PLAYLIST EDIT OVERLAY                                         
+ * 23. SCROLL LOCK                                                   
+ * 24. BARBA.JS & PAGE TRANSITIONS (UNIFIED HOOKS)                   
+ * 25. MEMBERSTACK HANDLERS                                          
+ * 26. FAVORITE ICONS & SYNCING                                      
+ * 27. FILTER PERSISTENCE                                            
+ * 28. FAVORITE SONGS PERSISTENCE                                    
+ * 29. XANO PLAYLIST SYSTEM (PlaylistManager)                        
+ * 30. MOBILE FILTER TOGGLE                                          
+ * 31. TOUCH DEVICE FIX                                              
  * 
  * ============================================================
  */
@@ -3434,26 +3449,29 @@ function attachKeyRadioListeners(column, section, majMin) {
   if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
   if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
 
-// Attach listeners to all key radio buttons
-if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
-if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
-if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
-if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
-
-// Remove old key tags when new key selected
+// Remove old key tags when new key selected (only remove KEY-related tags)
 document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(radio => {
   radio.addEventListener('change', () => {
     if (radio.checked) {
       const tagsContainer = document.querySelector('.filter-tags-container');
       if (tagsContainer) {
-        const allKeyTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-        allKeyTags.forEach(tag => {
+        // Get all possible key values to identify key-related tags
+        const allKeyValues = [];
+        document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(r => {
+          const label = r.closest('.w-radio, .radio-wrapper')?.querySelector('label');
+          if (label) allKeyValues.push(label.textContent.trim());
+        });
+        
+        const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
+        const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
+        const currentKeyText = matchingLabel?.textContent.trim();
+        
+        // Only remove tags that are KEY values (not other filter tags)
+        const allTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        allTags.forEach(tag => {
           const tagText = tag.querySelector('.filter-tag-text')?.textContent.trim();
-          const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
-          const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
-          const currentKeyText = matchingLabel?.textContent.trim();
-          
-          if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
+          // Only remove if it's a key value AND not the currently selected key
+          if (tagText && allKeyValues.includes(tagText) && tagText !== currentKeyText) {
             tag.remove();
           }
         });
@@ -3462,11 +3480,6 @@ document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEac
   });
 });
 
-/**
- * Initial state: Show Sharp section with major keys visible (but not filtered)
- */
-showSharpFlat('sharp');
-  
 /**
  * Initial state: Show Sharp section with major keys visible (but not filtered)
  */
@@ -3598,8 +3611,9 @@ function clearAllFilters() {
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
   const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
+  const hasBPMFilter = document.querySelector('[data-bpm-tag]') !== null;
   
-  if (!hasSearch && !hasFilters && !hasPlaylistFilter) {
+  if (!hasSearch && !hasFilters && !hasPlaylistFilter && !hasBPMFilter) {
     return;
   }
   
@@ -3624,31 +3638,35 @@ function clearAllFilters() {
   }
   
   // Clear playlist filter
-const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
-if (playlistCheckbox) {
-  playlistCheckbox.checked = false;
-  const wrapper = playlistCheckbox.closest('.filter-item');
-  if (wrapper) {
-    wrapper.classList.remove('is-selected');
-    const textEl = wrapper.querySelector('.filter-text');
-    if (textEl) textEl.style.color = '';
+  const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
+  if (playlistCheckbox) {
+    playlistCheckbox.checked = false;
+    const wrapper = playlistCheckbox.closest('.filter-item');
+    if (wrapper) {
+      wrapper.classList.remove('is-selected');
+      const textEl = wrapper.querySelector('.filter-text');
+      if (textEl) textEl.style.color = '';
+    }
+    // Reset checkbox icon state
+    const checkboxIcon = playlistCheckbox.closest('.w-checkbox')?.querySelector('.w-checkbox-input');
+    if (checkboxIcon) {
+      checkboxIcon.classList.remove('w--redirected-checked');
+    }
+    playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
   }
-  // Reset checkbox icon state
-  const checkboxIcon = playlistCheckbox.closest('.w-checkbox')?.querySelector('.w-checkbox-input');
-  if (checkboxIcon) {
-    checkboxIcon.classList.remove('w--redirected-checked');
-  }
-  playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-}
   
   // Remove playlist filter tag
   const playlistTag = document.querySelector('[data-playlist-filter-tag]');
   if (playlistTag) playlistTag.remove();
+  
+  // Remove BPM filter tags
+  const bpmTags = document.querySelectorAll('[data-bpm-tag]');
+  bpmTags.forEach(tag => tag.remove());
 
   // Clear playlist filter from localStorage
-if (typeof window.clearPlaylistFilterStorage === 'function') {
-  window.clearPlaylistFilterStorage();
-}
+  if (typeof window.clearPlaylistFilterStorage === 'function') {
+    window.clearPlaylistFilterStorage();
+  }
   
   // Show all songs and clear filter attributes
   document.querySelectorAll('.song-wrapper').forEach(song => {
@@ -3767,11 +3785,17 @@ function initSearchAndFilters() {
   // Don't hide if we have saved filters - prevents flash on page transitions
   let hasSavedFilters = false;
   let hasSavedPlaylistFilter = false;
+  let hasSavedBPMFilter = false;
   try {
     const saved = localStorage.getItem('musicFilters');
     if (saved) {
       const parsed = JSON.parse(saved);
       hasSavedFilters = parsed.filters && parsed.filters.length > 0;
+      // Check for BPM in saved state
+      if (parsed.bpm) {
+        const bpm = parsed.bpm;
+        hasSavedBPMFilter = !!(bpm.exact || bpm.low || bpm.high);
+      }
     }
     const savedPlaylist = localStorage.getItem('playlistFilter');
     if (savedPlaylist) {
@@ -3780,7 +3804,7 @@ function initSearchAndFilters() {
     }
   } catch (e) {}
   
-  if (!hasSavedFilters && !hasSavedPlaylistFilter) {
+  if (!hasSavedFilters && !hasSavedPlaylistFilter && !hasSavedBPMFilter) {
     clearBtn.style.display = 'none';
   }
   
@@ -5847,25 +5871,109 @@ if (document.readyState === 'loading') {
   runForPath(window.location.pathname);
 }
 
-// Barba hooks
+// Barba hooks - UNIFIED BLOCK
 if (typeof barba !== 'undefined' && barba.hooks) {
+  // Before navigation starts
   barba.hooks.before(() => {
     sessionStorage.setItem('isBarbaNavigation', 'true');
     window._isFreshPageLoad = false;
+    console.log('🚀 Barba navigation starting');
     
     // Reset filter initialization flags since DOM will be replaced
     const g = window.musicPlayerPersistent;
     if (g) {
       g.playlistFilterPopulated = false;
-      g.filtersInitialized = false; // Allow re-initialization on new page
+      g.filtersInitialized = false;
     }
   });
+  
+  // Before entering new page - hide songs if filters active
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
+    
+    console.log('📥 Barba beforeEnter hook');
+    const savedState = localStorage.getItem('musicFilters');
+    const savedPlaylist = localStorage.getItem('playlistFilter');
+    
+    // Check for active filters (including playlist filter)
+    let hasActiveFilters = false;
+    if (savedState) {
+      try {
+        const filterState = JSON.parse(savedState);
+        hasActiveFilters = filterState.filters?.length > 0 || filterState.searchQuery;
+      } catch (e) {}
+    }
+    if (savedPlaylist) {
+      try {
+        const playlistState = JSON.parse(savedPlaylist);
+        if (playlistState && playlistState.id) hasActiveFilters = true;
+      } catch (e) {}
+    }
+    
+    if (hasActiveFilters) {
+      const musicList = data.next.container.querySelector('.music-list-wrapper');
+      if (musicList) {
+        musicList.style.opacity = '0';
+        musicList.style.visibility = 'hidden';
+        musicList.style.pointerEvents = 'none';
+        console.log('🔒 Songs hidden via Barba hook');
+      }
+    }
   });
+  
+  // After entering new page
   barba.hooks.afterEnter((data) => {
     runForPath(data?.next?.url?.path || '');
     initMobileFilterToggle(data.next.container);
+  });
+  
+  // After transition complete - handle filter restoration
+  barba.hooks.after((data) => {
+    console.log('✅ Barba after hook');
+    filtersRestored = false;
+    
+    // Failsafe: Force songs visible after 500ms if still hidden
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList && (musicList.style.opacity === '0' || musicList.style.opacity === '')) {
+        console.log('⚡ Forcing songs visible after 500ms');
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+      }
+    }, 500);
+    
+    // Final failsafe at 2000ms
+    setTimeout(() => {
+      const musicList = document.querySelector('.music-list-wrapper');
+      if (musicList && (musicList.style.opacity === '0' || musicList.style.visibility === 'hidden')) {
+        console.warn('⚠️ Filter restoration timeout (Barba) - showing everything');
+        musicList.style.opacity = '1';
+        musicList.style.visibility = 'visible';
+        musicList.style.pointerEvents = 'auto';
+        
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        const clearButton = document.querySelector('.circle-x');
+        if (tagsContainer) tagsContainer.style.opacity = '1';
+        if (clearButton) clearButton.style.opacity = '1';
+      }
+    }, 2000);
+    
+    // Attempt filter restoration with retries
+    setTimeout(() => {
+      console.log('Attempting restore at 100ms');
+      if (!attemptRestore()) {
+        setTimeout(() => {
+          console.log('Attempting restore at 200ms');
+          if (!attemptRestore()) {
+            setTimeout(() => {
+              console.log('Attempting restore at 400ms');
+              attemptRestore();
+            }, 200);
+          }
+        }, 100);
+      }
+    }, 100);
   });
 }
 
@@ -7480,90 +7588,6 @@ window.addEventListener('load', function() {
     }
   }, 100);
 });
-
-if (typeof barba !== 'undefined') {
-  
-  barba.hooks.beforeEnter((data) => {
-    console.log('📥 Barba beforeEnter hook');
-    const savedState = localStorage.getItem('musicFilters');
-    console.log('Saved filters:', savedState);
-    
-    if (savedState) {
-      try {
-        const filterState = JSON.parse(savedState);
-        const hasActiveFilters = filterState.filters.length > 0 || filterState.searchQuery;
-        console.log('Has active filters:', hasActiveFilters);
-        
-        if (hasActiveFilters) {
-          const musicList = data.next.container.querySelector('.music-list-wrapper');
-          if (musicList) {
-            musicList.style.opacity = '0';
-            musicList.style.visibility = 'hidden';
-            musicList.style.pointerEvents = 'none';
-            console.log('🔒 Songs hidden via Barba hook');
-          } else {
-            console.log('⚠️ Music list not found in next container');
-          }
-        } else {
-          console.log('✅ No active filters - songs will show normally');
-        }
-      } catch (e) {
-        console.error('Error in beforeEnter hook:', e);
-      }
-    } else {
-      console.log('✅ No saved state - songs will show normally');
-    }
-  });
-  
-  barba.hooks.after((data) => {
-    console.log('✅ Barba after hook');
-    filtersRestored = false;
-    
-    setTimeout(() => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
-      if (musicList) {
-        console.log('Music list opacity:', musicList.style.opacity);
-        if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
-          console.log('⚡ Forcing songs visible after 500ms');
-          musicList.style.opacity = '1';
-          musicList.style.visibility = 'visible';
-          musicList.style.pointerEvents = 'auto';
-        }
-      }
-    }, 500);
-    
-    setTimeout(() => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      if (musicList && (musicList.style.opacity === '0' || musicList.style.visibility === 'hidden')) {
-        console.warn('⚠️ Filter restoration timeout (Barba) - showing everything');
-        musicList.style.opacity = '1';
-        musicList.style.visibility = 'visible';
-        musicList.style.pointerEvents = 'auto';
-        
-        const tagsContainer = document.querySelector('.filter-tags-container');
-        const clearButton = document.querySelector('.circle-x');
-        if (tagsContainer) tagsContainer.style.opacity = '1';
-        if (clearButton) clearButton.style.opacity = '1';
-      }
-    }, 2000);
-    
-    setTimeout(() => {
-      console.log('Attempting restore at 100ms');
-      if (!attemptRestore()) {
-        setTimeout(() => {
-          console.log('Attempting restore at 200ms');
-          if (!attemptRestore()) {
-            setTimeout(() => {
-              console.log('Attempting restore at 400ms');
-              attemptRestore();
-            }, 200);
-          }
-        }, 100);
-      }
-    }, 100);
-  });
-}
 
 /**
  * ============================================================
