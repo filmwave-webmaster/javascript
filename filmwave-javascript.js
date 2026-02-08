@@ -5865,6 +5865,22 @@ if (typeof barba !== 'undefined' && barba.hooks) {
   });
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
+    
+    // Hide tags container immediately to prevent flash
+    const savedState = localStorage.getItem('musicFilters');
+    const savedPlaylist = localStorage.getItem('playlistFilter');
+    if (savedState || savedPlaylist) {
+      const tagsContainer = data.next.container.querySelector('.filter-tags-container');
+      const clearButton = data.next.container.querySelector('.circle-x');
+      if (tagsContainer) {
+        tagsContainer.style.opacity = '0';
+        tagsContainer.style.transition = 'none';
+      }
+      if (clearButton) {
+        clearButton.style.opacity = '0';
+        clearButton.style.transition = 'none';
+      }
+    }
   });
   barba.hooks.afterEnter((data) => {
     runForPath(data?.next?.url?.path || '');
