@@ -4109,6 +4109,9 @@ function loadSavedPlaylistFilter() {
     // Load saved filter
     const savedFilter = loadSavedPlaylistFilter();
     
+    // Sort playlists alphabetically
+    playlists.sort((a, b) => a.name.localeCompare(b.name));
+    
     playlists.forEach(playlist => {
       const item = template.cloneNode(true);
       const textEl = item.querySelector('.filter-text');
