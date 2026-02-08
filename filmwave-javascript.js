@@ -7056,6 +7056,12 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           }
         }
         
+        // Also add is-selected to filter-item for background styling
+        const filterItem = input.closest('.filter-item');
+        if (filterItem) {
+          filterItem.classList.add('is-selected');
+        }
+        
         restoredCount++;
       }
     });
