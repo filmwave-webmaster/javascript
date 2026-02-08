@@ -2635,7 +2635,10 @@ function initDynamicTagging() {
     }
 
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
+  // Skip playlist filter checkboxes - they have their own tag system
+  if (checkbox.closest('.filter-category.playlists')) return;
+  
+  checkbox.addEventListener('change', function() {
         let label;
         const wrapper = this.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
         
