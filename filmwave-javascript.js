@@ -7572,7 +7572,7 @@ function attemptRestore() {
   const hasFilters = document.querySelectorAll('[data-filter-group]').length > 0;
   console.log('Filters found on page:', hasFilters);
   
-  if (success) {
+ if (success) {
       filtersRestored = true;
     } else {
       // Check if there's a playlist filter that still needs to be applied
@@ -7594,12 +7594,6 @@ function attemptRestore() {
         if (tagsContainer) tagsContainer.style.opacity = '1';
         if (clearButton) clearButton.style.opacity = '1';
       }
-    }
-      
-      const tagsContainer = document.querySelector('.filter-tags-container');
-      const clearButton = document.querySelector('.circle-x');
-      if (tagsContainer) tagsContainer.style.opacity = '1';
-      if (clearButton) clearButton.style.opacity = '1';
     }
     return success;
   }
