@@ -3540,6 +3540,20 @@ function toggleClearButton() {
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
   const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
 
+  // Check if we have saved filters
+  let hasSavedFilters = false;
+  try {
+    const saved = localStorage.getItem('musicFilters');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      hasSavedFilters = parsed.filters && parsed.filters.length > 0;
+    }
+  } catch (e) {}
+
+  // On non-music pages, don't touch the button if we have saved filters
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (!isMusicPage && hasSavedFilters) return;
+
   clearBtn.style.display = (hasSearch || hasFilters || hasPlaylistFilter) ? 'flex' : 'none';
 }
 
@@ -3714,8 +3728,20 @@ function initSearchAndFilters() {
 }
   
   if (clearBtn) {
-  // Start hidden — will only show after restoration (if needed)
-  clearBtn.style.display = 'none';
+  // Don't hide if we have saved filters - prevents flash on page transitions
+  let hasSavedFilters = false;
+  try {
+    const saved = localStorage.getItem('musicFilters');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      hasSavedFilters = parsed.filters && parsed.filters.length > 0;
+    }
+  } catch (e) {}
+  
+  if (!hasSavedFilters) {
+    clearBtn.style.display = 'none';
+  }
+  
   clearBtn.addEventListener('click', clearAllFilters);
 
   // Safety: update visibility after a delay in case restoration takes time
