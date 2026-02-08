@@ -7572,7 +7572,11 @@ function attemptRestore() {
   const hasFilters = document.querySelectorAll('[data-filter-group]').length > 0;
   console.log('Filters found on page:', hasFilters);
   
- if (success) {
+  if (hasFilters) {
+    const success = restoreFilterState();
+    console.log('restoreFilterState returned:', success);
+    
+    if (success) {
       filtersRestored = true;
     } else {
       // Check if there's a playlist filter that still needs to be applied
