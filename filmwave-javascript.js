@@ -3844,20 +3844,11 @@ function initPlaylistFilter() {
   let selectedPlaylistId = null;
   let selectedPlaylistName = null;
   
-  // Load saved playlist from localStorage (only during Barba transitions)
+  // Load saved playlist from localStorage
 function loadSavedPlaylistFilter() {
   try {
-    // Check if this is a fresh page load
-    // Use sessionStorage flag as backup check for Barba transitions
-    const isBarbaNav = sessionStorage.getItem('isBarbaNavigation') === 'true';
-    const isFresh = window._isFreshPageLoad && !isBarbaNav;
-    
-    if (isFresh) {
-      // Already cleared in the initial detection
-      console.log('🎵 Fresh page load - not restoring playlist filter');
-      return null;
-    }
-    
+    // On fresh page load, localStorage was already cleared by detectFreshPageLoad
+    // So we just check if there's anything saved
     const saved = localStorage.getItem('playlistFilter');
     if (saved) {
       const data = JSON.parse(saved);
