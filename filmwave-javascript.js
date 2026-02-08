@@ -2660,7 +2660,7 @@ function initDynamicTagging() {
         if (this.checked) {
           if (wrapper) wrapper.classList.add('is-active');
           const tag = createTag(this, labelText);
-          tagsContainer.appendChild(tag);
+          tagsContainer.insertBefore(tag, tagsContainer.firstChild);
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
           const tags = tagsContainer.querySelectorAll('.filter-tag');
