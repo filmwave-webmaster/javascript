@@ -7721,11 +7721,15 @@ if (typeof barba !== 'undefined') {
       console.log('Checking music list after 500ms:', musicList ? 'found' : 'not found');
       if (musicList) {
         console.log('Music list opacity:', musicList.style.opacity);
-        if (musicList.style.opacity === '0' || musicList.style.opacity === '') {
+        // Don't force visible if playlist filter is still pending
+        const savedPlaylist = localStorage.getItem('playlistFilter');
+        if ((musicList.style.opacity === '0' || musicList.style.opacity === '') && !savedPlaylist) {
           console.log('⚡ Forcing songs visible after 500ms');
           musicList.style.opacity = '1';
           musicList.style.visibility = 'visible';
           musicList.style.pointerEvents = 'auto';
+        } else if (savedPlaylist) {
+          console.log('⏳ Playlist filter pending - not forcing visible yet');
         }
       }
     }, 500);
