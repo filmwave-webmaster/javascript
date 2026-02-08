@@ -4056,7 +4056,7 @@ function loadSavedPlaylistFilter() {
       await PlaylistManager.getUserId();
     }
     
-    const playlists = await PlaylistManager.getUserPlaylists(true);
+    const playlists = await PlaylistManager.getUserPlaylists(false);
     
     filterList.innerHTML = '';
     
@@ -5832,7 +5832,12 @@ if (typeof barba !== 'undefined' && barba.hooks) {
  * ============================================================
  */
 
-window.addEventListener('load', () => {  
+window.addEventListener('load', () => {
+  // Pre-fetch playlists early for faster filter loading
+  if (typeof PlaylistManager !== 'undefined') {
+    PlaylistManager.init().catch(() => {});
+  }
+  
   initMusicPage();
   initVolumeControl();
   initPlayerCloseButton();
@@ -8249,6 +8254,8 @@ const PlaylistManager = {
     });
 
     if (!response.ok) throw new Error('Failed to create playlist');
+    // Clear cache so next fetch gets fresh data
+    sessionStorage.removeItem('playlistsCache');
     return response.json();
   },
 
@@ -8270,27 +8277,54 @@ const PlaylistManager = {
   },
 
   async getUserPlaylists(forceRefresh = false) {
-    if (!this.currentUserId) return [];
+  if (!this.currentUserId) return [];
 
-    if (!forceRefresh && Array.isArray(this.playlists) && this.playlists.length) {
-      return this.playlists;
-    }
+  // Check memory cache first
+  if (!forceRefresh && Array.isArray(this.playlists) && this.playlists.length) {
+    return this.playlists;
+  }
 
+  // Check sessionStorage cache (survives Barba transitions)
+  if (!forceRefresh) {
     try {
-      const response = await fetch(
-        `${XANO_PLAYLISTS_API}/Get_User_Playlists?user_id=${this.currentUserId}`
-      );
+      const cached = sessionStorage.getItem('playlistsCache');
+      if (cached) {
+        const { userId, playlists, timestamp } = JSON.parse(cached);
+        // Use cache if same user and less than 5 minutes old
+        if (userId === this.currentUserId && Date.now() - timestamp < 300000) {
+          this.playlists = playlists;
+          console.log('🎵 Using cached playlists');
+          return playlists;
+        }
+      }
+    } catch (e) {}
+  }
 
-      if (!response.ok) throw new Error('Failed to fetch playlists');
+  try {
+    const response = await fetch(
+      `${XANO_PLAYLISTS_API}/Get_User_Playlists?user_id=${this.currentUserId}`
+    );
 
-      const data = await response.json();
-      this.playlists = data;
-      return data;
-    } catch (error) {
-      console.error('Error fetching playlists:', error);
-      return [];
-    }
-  },
+    if (!response.ok) throw new Error('Failed to fetch playlists');
+
+    const data = await response.json();
+    this.playlists = data;
+    
+    // Cache to sessionStorage
+    try {
+      sessionStorage.setItem('playlistsCache', JSON.stringify({
+        userId: this.currentUserId,
+        playlists: data,
+        timestamp: Date.now()
+      }));
+    } catch (e) {}
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching playlists:', error);
+    return [];
+  }
+},
 
   async getPlaylistById(playlistId) {
     const playlists = await this.getUserPlaylists();
