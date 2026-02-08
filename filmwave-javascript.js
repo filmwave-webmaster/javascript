@@ -3755,15 +3755,21 @@ function initSearchAndFilters() {
   if (clearBtn) {
   // Don't hide if we have saved filters - prevents flash on page transitions
   let hasSavedFilters = false;
+  let hasSavedPlaylistFilter = false;
   try {
     const saved = localStorage.getItem('musicFilters');
     if (saved) {
       const parsed = JSON.parse(saved);
       hasSavedFilters = parsed.filters && parsed.filters.length > 0;
     }
+    const savedPlaylist = localStorage.getItem('playlistFilter');
+    if (savedPlaylist) {
+      const parsed = JSON.parse(savedPlaylist);
+      hasSavedPlaylistFilter = !!(parsed && parsed.id);
+    }
   } catch (e) {}
   
-  if (!hasSavedFilters) {
+  if (!hasSavedFilters && !hasSavedPlaylistFilter) {
     clearBtn.style.display = 'none';
   }
   
@@ -3798,6 +3804,10 @@ function initSearchAndFilters() {
  */
 
 function initPlaylistFilter() {
+  // Only run on music page
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (!isMusicPage) return;
+  
   const playlistSection = document.querySelector('.filter-category.playlists');
   if (!playlistSection) return;
   
