@@ -7233,8 +7233,11 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           if (tagsToRemove.length > 0) {
             console.log(`🗑️ Removed ${tagsToRemove.length} duplicate tags`);
           }
-          
-          setTimeout(() => {
+        }
+        
+        // Use requestAnimationFrame for smoother fade-in
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
             if (tagsContainer) {
               tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
               tagsContainer.style.opacity = '1';
@@ -7244,9 +7247,9 @@ if (!filterState.filters.length && !filterState.searchQuery) {
               clearButton.style.opacity = '1';
             }
             console.log('✨ Tags and clear button faded in');
-          }, 10);
-        }
-      }, 100);
+          });
+        });
+      }, 150);
 
     
   if (filterState.searchQuery) {
