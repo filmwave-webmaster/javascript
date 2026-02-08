@@ -3827,19 +3827,27 @@ function initPlaylistFilter() {
   let selectedPlaylistId = null;
   let selectedPlaylistName = null;
   
-  // Load saved playlist from localStorage
-  function loadSavedPlaylistFilter() {
-    try {
-      const saved = localStorage.getItem('playlistFilter');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return data;
-      }
-    } catch (e) {
-      console.warn('Error loading playlist filter:', e);
+  // Load saved playlist from localStorage (only during Barba transitions)
+function loadSavedPlaylistFilter() {
+  try {
+    // Only restore if this is a Barba transition, not a fresh page load
+    const isBarbaTransition = window.musicPlayerPersistent?.isBarbaTransition === true;
+    if (!isBarbaTransition) {
+      // Fresh page load - clear the saved filter
+      localStorage.removeItem('playlistFilter');
+      return null;
     }
-    return null;
+    
+    const saved = localStorage.getItem('playlistFilter');
+    if (saved) {
+      const data = JSON.parse(saved);
+      return data;
+    }
+  } catch (e) {
+    console.warn('Error loading playlist filter:', e);
   }
+  return null;
+}
   
   // Save playlist to localStorage
   function savePlaylistFilter() {
@@ -5802,9 +5810,9 @@ if (document.readyState === 'loading') {
 // Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.beforeEnter((data) => {
+    window.musicPlayerPersistent.isBarbaTransition = true;
     runForPath(data?.next?.url?.path || '');
   });
-
   barba.hooks.afterEnter((data) => {
     runForPath(data?.next?.url?.path || '');
     initMobileFilterToggle(data.next.container);
