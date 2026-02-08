@@ -5848,6 +5848,9 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     // Set flag BEFORE any page transition logic runs
     sessionStorage.setItem('isBarbaNavigation', 'true');
     window._isFreshPageLoad = false;
+    // Reset playlist filter populated flag since DOM will be replaced
+    const g = window.musicPlayerPersistent;
+    if (g) g.playlistFilterPopulated = false;
   });
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
