@@ -1740,15 +1740,15 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
     return;
   }
   
+  // Reset mobile progress when switching to a different song
+  // Only reset if not seeking to a specific time (user clicked on waveform)
+  if (g.currentSongData?.id !== songData.id && seekToTime === null) {
+    resetMobileProgress();
+  }
+
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
     g.standaloneAudio = null;
-    
-    // Reset mobile progress when switching to a different song
-    // Only reset if not seeking to a specific time (user clicked on waveform)
-    if (seekToTime === null) {
-      resetMobileProgress();
-    }
   }
   
   g.allWavesurfers.forEach(ws => {
