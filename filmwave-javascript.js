@@ -9911,6 +9911,15 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     if (playlist) {
       const header = document.querySelector('.playlist-template-title');
       if (header) header.textContent = playlist.name;
+      
+      // Update search placeholder with playlist name
+      const searchInput = document.querySelector('.text-field');
+      if (searchInput) {
+        if (!searchInput.dataset.originalPlaceholder) {
+          searchInput.dataset.originalPlaceholder = searchInput.placeholder;
+        }
+        searchInput.placeholder = `Search "${playlist.name}"`;
+      }
     }
 
     await this.renderPlaylistSongs(playlistId);
