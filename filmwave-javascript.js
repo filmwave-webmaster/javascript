@@ -4266,7 +4266,7 @@ function updateSearchPlaceholder(playlistName) {
     }
     
     if (playlistName) {
-      searchInput.placeholder = `Search Playlist "${playlistName}"`;
+      searchInput.placeholder = `Search "${playlistName}"`;
     } else {
       searchInput.placeholder = searchInput.dataset.originalPlaceholder;
     }
@@ -9918,7 +9918,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
         if (!searchInput.dataset.originalPlaceholder) {
           searchInput.dataset.originalPlaceholder = searchInput.placeholder;
         }
-        searchInput.placeholder = `Search Playlist "${playlist.name}"`;
+        searchInput.placeholder = `Search "${playlist.name}"`;
       }
     }
 
