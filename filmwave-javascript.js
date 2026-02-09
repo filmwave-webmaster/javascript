@@ -34,6 +34,7 @@
  * 20. KEYBOARD CONTROLS                                             2135
  * 21. DARK MODE TOGGLE                                              2207
  * 22. FILTER HELPERS                                                2357
+ 
  * 23. REMOVE DUPLICATE IDS                                          3522
  * 24. HANDLE TAB VISIBILITY                                         3539
  * 25. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
@@ -3652,6 +3653,9 @@ if (playlistCheckbox) {
 if (typeof window.clearPlaylistFilterStorage === 'function') {
   window.clearPlaylistFilterStorage();
 }
+
+  // Reset search placeholder
+  updateSearchPlaceholder(null);
   
   // Show all songs and clear filter attributes
   document.querySelectorAll('.song-wrapper').forEach(song => {
@@ -4015,6 +4019,7 @@ function loadSavedPlaylistFilter() {
     
     updateActivePlaylistDisplay();
     filterSongsByPlaylist(selectedPlaylistId);
+    updateSearchPlaceholder(selectedPlaylistName);
     updatePlaylistFilterTag();
     savePlaylistFilter();
     
@@ -4060,6 +4065,7 @@ function loadSavedPlaylistFilter() {
         selectedPlaylistName = null;
         updateActivePlaylistDisplay();
         filterSongsByPlaylist(null);
+        updateSearchPlaceholder(null);
         savePlaylistFilter();
         tag.remove();
         
@@ -4162,6 +4168,7 @@ checkbox.addEventListener('change', () => {
         updatePlaylistFilterTag();
       }
       await filterSongsByPlaylist(selectedPlaylistId);
+      updateSearchPlaceholder(selectedPlaylistName);
       if (typeof toggleClearButton === 'function') {
         toggleClearButton();
       }
@@ -4242,6 +4249,23 @@ checkbox.addEventListener('change', () => {
   window.clearPlaylistFilterStorage = function() {
     localStorage.removeItem('playlistFilter');
   };
+}
+
+/**
+ * ============================================================
+ * SEARCHBAR PLACEHOLDER TEXT
+ * ============================================================
+ */
+
+function updateSearchPlaceholder(playlistName) {
+  const searchInput = document.querySelector('.music-area-container .text-field');
+  if (searchInput) {
+    if (playlistName) {
+      searchInput.placeholder = `Search "${playlistName}"`;
+    } else {
+      searchInput.placeholder = 'Search';
+    }
+  }
 }
 
 /**
