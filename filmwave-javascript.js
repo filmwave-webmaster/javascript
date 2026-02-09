@@ -680,6 +680,12 @@ function navigateStandaloneTrack(direction) {
       if (newPlayIcon) newPlayIcon.style.display = 'flex';
       if (newPauseIcon) newPauseIcon.style.display = 'none';
     }
+    
+    // Update border to new song (even when paused)
+    document.querySelectorAll('.song-wrapper').forEach(sw => {
+      sw.style.removeProperty('border');
+    });
+    newCard.style.setProperty('border', '1px solid var(--color-8)', 'important');
   }
   
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
