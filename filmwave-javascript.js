@@ -34,23 +34,23 @@
  * 20. KEYBOARD CONTROLS                                             2135
  * 21. DARK MODE TOGGLE                                              2207
  * 22. FILTER HELPERS                                                2357
- 
- * 23. REMOVE DUPLICATE IDS                                          3522
- * 24. HANDLE TAB VISIBILITY                                         3539
- * 25. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
- * 26. DRAG AND DROP - SORTABLE PROFILE ITEMS                        4417
- * 27. PLAYLIST EDIT OVERLAY                                         4685
- * 28. SCROLL LOCK                                                   4992
- * 29. BARBA.JS & PAGE TRANSITIONS                                   5056
- * 30. FAVORITE ICON TOGGLE (SVG Icons)                              5947
- * 31. FAVORITE BUTTON SYNCING                                       5997
- * 32. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
- * 33. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
- * 34. FAVORITE SONGS PERSISTENCE                                    6919
- * 35. XANO PLAYLIST SYSTEM                                          7006
- * 36. TOGGLE SEARCH FILTERS MUSIC PAGE                              10635
- * 37. SIMPLE PROGRESS TRACKER                                       10921
- * 38. TOUCH DEVICE DOUBLE-TAP FIX                                   10942
+ * 23. MUSIC PAGE SEARCHBAR PLACEHOLDER                              2357
+ * 24. REMOVE DUPLICATE IDS                                          3522
+ * 25. HANDLE TAB VISIBILITY                                         3539
+ * 26. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
+ * 27. DRAG AND DROP - SORTABLE PROFILE ITEMS                        4417
+ * 28. PLAYLIST EDIT OVERLAY                                         4685
+ * 29. SCROLL LOCK                                                   4992
+ * 30. BARBA.JS & PAGE TRANSITIONS                                   5056
+ * 31. FAVORITE ICON TOGGLE (SVG Icons)                              5947
+ * 32. FAVORITE BUTTON SYNCING                                       5997
+ * 33. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
+ * 34. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
+ * 35. FAVORITE SONGS PERSISTENCE                                    6919
+ * 36. XANO PLAYLIST SYSTEM                                          7006
+ * 37. TOGGLE SEARCH FILTERS MUSIC PAGE                              10635
+ * 38. SIMPLE PROGRESS TRACKER                                       10921
+ * 39. TOUCH DEVICE DOUBLE-TAP FIX                                   10942
  * 
  * ============================================================
  */
@@ -4253,7 +4253,7 @@ checkbox.addEventListener('change', () => {
 
 /**
  * ============================================================
- * SEARCHBAR PLACEHOLDER TEXT
+ * MUSIC PAGE SEARCHBAR PLACEHOLDER 
  * ============================================================
  */
 
@@ -4266,7 +4266,7 @@ function updateSearchPlaceholder(playlistName) {
     }
     
     if (playlistName) {
-      searchInput.placeholder = `Search "${playlistName}"`;
+      searchInput.placeholder = `Search Playlist "${playlistName}"`;
     } else {
       searchInput.placeholder = searchInput.dataset.originalPlaceholder;
     }
@@ -9918,7 +9918,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
         if (!searchInput.dataset.originalPlaceholder) {
           searchInput.dataset.originalPlaceholder = searchInput.placeholder;
         }
-        searchInput.placeholder = `Search "${playlist.name}"`;
+        searchInput.placeholder = `Search Playlist "${playlist.name}"`;
       }
     }
 
