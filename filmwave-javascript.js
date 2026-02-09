@@ -43,15 +43,16 @@
  * 29. SCROLL LOCK                                                   
  * 30. BARBA.JS & PAGE TRANSITIONS                                   
  * 31. FAVORITE ICON TOGGLE (SVG Icons)                              
- * 32. FAVORITE BUTTON SYNCING                                       
- * 33. DASHBOARD FILTER PILL BUTTONS
- * 34. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              
- * 35. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         
- * 36. FAVORITE SONGS PERSISTENCE                                    
- * 37. XANO PLAYLIST SYSTEM                                          
- * 38. TOGGLE SEARCH FILTERS MUSIC PAGE                              
- * 39. SIMPLE PROGRESS TRACKER                                       
- * 40. TOUCH DEVICE DOUBLE-TAP FIX                                   
+ * 32. FAVORITE BUTTON SYNCING  
+ * 33. DASHBOARD SEARCHBAR
+ * 34. DASHBOARD FILTER PILL BUTTONS
+ * 35. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              
+ * 36. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         
+ * 37. FAVORITE SONGS PERSISTENCE                                    
+ * 38. XANO PLAYLIST SYSTEM                                          
+ * 39. TOGGLE SEARCH FILTERS MUSIC PAGE                              
+ * 40. SIMPLE PROGRESS TRACKER                                       
+ * 41. TOUCH DEVICE DOUBLE-TAP FIX                                   
  * 
  * ============================================================
  */
@@ -6931,8 +6932,15 @@ function initDashboardSearch() {
   // Show/hide clear button based on input
   function updateClearButton() {
     if (clearButton) {
-      clearButton.style.opacity = searchInput.value.trim() ? '1' : '0';
-      clearButton.style.pointerEvents = searchInput.value.trim() ? 'auto' : 'none';
+      if (searchInput.value.trim()) {
+        clearButton.style.display = 'flex';
+        clearButton.style.opacity = '1';
+        clearButton.style.pointerEvents = 'auto';
+      } else {
+        clearButton.style.display = 'none';
+        clearButton.style.opacity = '0';
+        clearButton.style.pointerEvents = 'none';
+      }
     }
   }
   
