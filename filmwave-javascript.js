@@ -44,6 +44,7 @@
  * 30. BARBA.JS & PAGE TRANSITIONS                                   5056
  * 31. FAVORITE ICON TOGGLE (SVG Icons)                              5947
  * 32. FAVORITE BUTTON SYNCING                                       5997
+ 
  * 33. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
  * 34. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
  * 35. FAVORITE SONGS PERSISTENCE                                    6919
@@ -6900,6 +6901,39 @@ document.addEventListener('change', (e) => {
   emptyIcon.style.display = checkbox.checked ? 'none' : 'flex';
   filledIcon.style.display = checkbox.checked ? 'flex' : 'none';
 });
+
+/**
+ * ============================================================
+ * DASHBOARD FILTER PILL BUTTONS
+ * ============================================================
+ */
+
+// Dashboard filter pill click handler
+function initDashboardFilterPills() {
+  document.querySelectorAll('.db-filter-pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const searchTerm = pill.textContent.trim();
+      if (searchTerm) {
+        // Save search term to localStorage
+        localStorage.setItem('musicFilters', JSON.stringify({
+          filters: [],
+          searchQuery: searchTerm
+        }));
+        
+        console.log('🏷️ Filter pill clicked:', searchTerm);
+        
+        // Navigate to music page
+        if (typeof barba !== 'undefined') {
+          barba.go('/music');
+        } else {
+          window.location.href = '/music';
+        }
+      }
+    });
+  });
+}
 
 /**
  * ============================================================
