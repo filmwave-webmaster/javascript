@@ -684,6 +684,9 @@ function navigateStandaloneTrack(direction) {
   
   updateMasterPlayerInfo(nextSong, g.currentWavesurfer);
   
+  // Reset mobile progress when skipping to new song
+  resetMobileProgress();
+  
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
