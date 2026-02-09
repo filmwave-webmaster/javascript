@@ -1,57 +1,57 @@
   /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - VERSION 31
+ * FILMWAVE MUSIC PLATFORM - VERSION 44
  * Updated: January 17, 2026
  * ============================================================
  */
 /**
 /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - CODE INDEX (UPDATED)
+ * FILMWAVE MUSIC PLATFORM - CODE INDEX
  * ============================================================
  * 
- * SECTION                                                           LINE #
+ * SECTION                                                     
  * ------------------------------------------------------------
- * 1.  GLOBAL STATE - Persists across Barba page transitions         50
- * 2.  UTILITY FUNCTIONS                                             207
- * 3.  MASTER PLAYER POSITIONING - DO NOT MODIFY                     261
- * 4.  MASTER PLAYER VISIBILITY CONTROL                              279
- * 5.  MAIN INITIALIZATION                                           359
- * 6.  STANDALONE AUDIO PLAYER (for non-music pages)                 451
- * 7.  MASTER PLAYER FUNCTIONS                                       699
- * 8.  VOLUME CONTROL                                                1028
- * 9.  PLAYER CLOSE BUTTON                                           1197
- * 10. INIT MASTER PLAYER                                            1290
- * 11. SONG CARD FUNCTIONS                                           1303
- * 12. LINK EXISTING STANDALONE AUDIO TO WAVEFORM                    1407
- * 13. CREATE STANDALONE AUDIO FOR SONG                              1440
- * 14. PLAY STANDALONE SONG                                          1578
- * 15. INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)     1617
- * 16. LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER                1693
- * 17. FETCH & DISPLAY SONGS                                         1917
- * 18. DISPLAY FEATURED SONGS ON HOME PAGE                           2010
- * 19. DISPLAY FAVORITE SONGS ON BACKEND PAGE                        2067
- * 20. KEYBOARD CONTROLS                                             2135
- * 21. DARK MODE TOGGLE                                              2207
- * 22. FILTER HELPERS                                                2357
- * 23. MUSIC PAGE SEARCHBAR PLACEHOLDER                              2357
- * 24. REMOVE DUPLICATE IDS                                          3522
- * 25. HANDLE TAB VISIBILITY                                         3539
- * 26. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
- * 27. DRAG AND DROP - SORTABLE PROFILE ITEMS                        4417
- * 28. PLAYLIST EDIT OVERLAY                                         4685
- * 29. SCROLL LOCK                                                   4992
- * 30. BARBA.JS & PAGE TRANSITIONS                                   5056
- * 31. FAVORITE ICON TOGGLE (SVG Icons)                              5947
- * 32. FAVORITE BUTTON SYNCING                                       5997
- 
- * 33. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
- * 34. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
- * 35. FAVORITE SONGS PERSISTENCE                                    6919
- * 36. XANO PLAYLIST SYSTEM                                          7006
- * 37. TOGGLE SEARCH FILTERS MUSIC PAGE                              10635
- * 38. SIMPLE PROGRESS TRACKER                                       10921
- * 39. TOUCH DEVICE DOUBLE-TAP FIX                                   10942
+ * 1.  GLOBAL STATE - Persists across Barba page transitions         
+ * 2.  UTILITY FUNCTIONS                                             
+ * 3.  MASTER PLAYER POSITIONING - DO NOT MODIFY                     
+ * 4.  MASTER PLAYER VISIBILITY CONTROL                              
+ * 5.  MAIN INITIALIZATION                                           
+ * 6.  STANDALONE AUDIO PLAYER (for non-music pages)                 
+ * 7.  MASTER PLAYER FUNCTIONS                                       
+ * 8.  VOLUME CONTROL                                                
+ * 9.  PLAYER CLOSE BUTTON                                           
+ * 10. INIT MASTER PLAYER                                            
+ * 11. SONG CARD FUNCTIONS                                           
+ * 12. LINK EXISTING STANDALONE AUDIO TO WAVEFORM                    
+ * 13. CREATE STANDALONE AUDIO FOR SONG                              
+ * 14. PLAY STANDALONE SONG                                          
+ * 15. INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)     
+ * 16. LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER                
+ * 17. FETCH & DISPLAY SONGS                                         
+ * 18. DISPLAY FEATURED SONGS ON HOME PAGE                           
+ * 19. DISPLAY FAVORITE SONGS ON BACKEND PAGE                        
+ * 20. KEYBOARD CONTROLS                                             
+ * 21. DARK MODE TOGGLE                                              
+ * 22. FILTER HELPERS                                                
+ * 23. MUSIC PAGE SEARCHBAR PLACEHOLDER                              
+ * 24. REMOVE DUPLICATE IDS                                          
+ * 25. HANDLE TAB VISIBILITY                                         
+ * 26. MANUAL TAB REINITIALIZATION FOR BARBA                         
+ * 27. DRAG AND DROP - SORTABLE PROFILE ITEMS                        
+ * 28. PLAYLIST EDIT OVERLAY                                         
+ * 29. SCROLL LOCK                                                   
+ * 30. BARBA.JS & PAGE TRANSITIONS                                   
+ * 31. FAVORITE ICON TOGGLE (SVG Icons)                              
+ * 32. FAVORITE BUTTON SYNCING                                       
+ * 33. DASHBOARD FILTER PILL BUTTONS
+ * 34. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              
+ * 35. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         
+ * 36. FAVORITE SONGS PERSISTENCE                                    
+ * 37. XANO PLAYLIST SYSTEM                                          
+ * 38. TOGGLE SEARCH FILTERS MUSIC PAGE                              
+ * 39. SIMPLE PROGRESS TRACKER                                       
+ * 40. TOUCH DEVICE DOUBLE-TAP FIX                                   
  * 
  * ============================================================
  */
@@ -6925,15 +6925,19 @@ function initDashboardFilterPills() {
     pill.addEventListener('click', (e) => {
       e.preventDefault();
       
-      const searchTerm = pill.textContent.trim();
-      if (searchTerm) {
-        // Save search term to localStorage
+      const filterValue = pill.textContent.trim();
+      if (filterValue) {
+        // Save as a genre filter (not search query)
         localStorage.setItem('musicFilters', JSON.stringify({
-          filters: [],
-          searchQuery: searchTerm
+          filters: [{
+            group: 'Genre',
+            value: filterValue,
+            keyGroup: null
+          }],
+          searchQuery: ''
         }));
         
-        console.log('🏷️ Filter pill clicked:', searchTerm);
+        console.log('🏷️ Filter pill clicked:', filterValue);
         
         // Navigate to music page
         if (typeof barba !== 'undefined') {
@@ -6944,6 +6948,8 @@ function initDashboardFilterPills() {
       }
     });
   });
+  
+  console.log('✅ Dashboard filter pills initialized');
 }
 
 /**
