@@ -4260,10 +4260,15 @@ checkbox.addEventListener('change', () => {
 function updateSearchPlaceholder(playlistName) {
   const searchInput = document.querySelector('.music-area-container .text-field');
   if (searchInput) {
+    // Store the original placeholder on first call
+    if (!searchInput.dataset.originalPlaceholder) {
+      searchInput.dataset.originalPlaceholder = searchInput.placeholder;
+    }
+    
     if (playlistName) {
       searchInput.placeholder = `Search "${playlistName}"`;
     } else {
-      searchInput.placeholder = 'Search';
+      searchInput.placeholder = searchInput.dataset.originalPlaceholder;
     }
   }
 }
@@ -5912,6 +5917,20 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       if (clearButton) {
         clearButton.style.opacity = '0';
         clearButton.style.transition = 'none';
+      }
+      
+      // Set playlist search placeholder before page is visible
+      if (savedPlaylist) {
+        try {
+          const playlistData = JSON.parse(savedPlaylist);
+          const searchInput = data.next.container.querySelector('.music-area-container .text-field');
+          if (searchInput && playlistData.name) {
+            if (!searchInput.dataset.originalPlaceholder) {
+              searchInput.dataset.originalPlaceholder = searchInput.placeholder;
+            }
+            searchInput.placeholder = `Search "${playlistData.name}"`;
+          }
+        } catch (e) {}
       }
     }
   });
