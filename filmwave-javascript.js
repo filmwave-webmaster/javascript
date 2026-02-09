@@ -5959,10 +5959,11 @@ window.addEventListener('load', () => {
   initDarkMode();
   initMobileFilterToggle();
   
-  // Initialize dashboard filter pills on page load
+  // Initialize dashboard filter pills and search on page load
   if (window.location.pathname.startsWith('/dashboard/')) {
     setTimeout(() => {
       if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
+      if (typeof initDashboardSearch === 'function') initDashboardSearch();
     }, 300);
   }
   
@@ -6832,6 +6833,7 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   
   setTimeout(() => {
     if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
+    if (typeof initDashboardSearch === 'function') initDashboardSearch();
   }, 300);
   // initPlaylistsPage is handled by PlaylistManager.setupPageSpecificFeatures()
   // if (typeof initPlaylistsPage === 'function') initPlaylistsPage();
@@ -6912,6 +6914,81 @@ document.addEventListener('change', (e) => {
   emptyIcon.style.display = checkbox.checked ? 'none' : 'flex';
   filledIcon.style.display = checkbox.checked ? 'flex' : 'none';
 });
+
+/**
+ * ============================================================
+ * DASHBOARD SEARCHBAR
+ * ============================================================
+ */
+
+function initDashboardSearch() {
+  const searchInput = document.querySelector('.db-search-area-wrapper .text-field');
+  const searchButton = document.querySelector('.db-search-button');
+  const clearButton = document.querySelector('.db-search-area-wrapper .circle-x');
+  
+  if (!searchInput) return;
+  
+  // Show/hide clear button based on input
+  function updateClearButton() {
+    if (clearButton) {
+      clearButton.style.opacity = searchInput.value.trim() ? '1' : '0';
+      clearButton.style.pointerEvents = searchInput.value.trim() ? 'auto' : 'none';
+    }
+  }
+  
+  // Navigate to music page with search query
+  function submitSearch() {
+    const query = searchInput.value.trim();
+    if (query) {
+      localStorage.setItem('musicFilters', JSON.stringify({
+        filters: [],
+        searchQuery: query
+      }));
+      
+      console.log('🔍 Dashboard search submitted:', query);
+      
+      if (typeof barba !== 'undefined') {
+        barba.go('/music');
+      } else {
+        window.location.href = '/music';
+      }
+    }
+  }
+  
+  // Input event - show/hide clear button
+  searchInput.addEventListener('input', updateClearButton);
+  
+  // Enter key - submit search
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitSearch();
+    }
+  });
+  
+  // Search button click
+  if (searchButton) {
+    searchButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      submitSearch();
+    });
+  }
+  
+  // Clear button click
+  if (clearButton) {
+    clearButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      searchInput.value = '';
+      updateClearButton();
+      searchInput.focus();
+    });
+  }
+  
+  // Initialize clear button state
+  updateClearButton();
+  
+  console.log('✅ Dashboard search initialized');
+}
 
 /**
  * ============================================================
