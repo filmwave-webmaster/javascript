@@ -1743,6 +1743,12 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
     g.standaloneAudio = null;
+    
+    // Reset mobile progress when switching to a different song
+    // Only reset if not seeking to a specific time (user clicked on waveform)
+    if (seekToTime === null) {
+      resetMobileProgress();
+    }
   }
   
   g.allWavesurfers.forEach(ws => {
@@ -11146,9 +11152,11 @@ function initMobileFilterToggle(container = document) {
 function resetMobileProgress() {
   const el = document.querySelector('.simple-progress-tracker');
   if (!el) return;
-
   el.style.transformOrigin = 'left center';
+  el.style.transition = 'none'; // Instant reset, no animation
   el.style.transform = 'scaleX(0)';
+  // Force reflow to ensure immediate update
+  el.offsetHeight;
 }
 
 function updateMobileProgress(current, duration) {
