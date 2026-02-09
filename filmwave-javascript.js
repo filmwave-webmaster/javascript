@@ -1589,6 +1589,11 @@ function linkStandaloneToWaveform() {
 function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
     const g = window.musicPlayerPersistent;
 
+  // Reset mobile progress when switching to a different song (not when seeking)
+  if (g.currentSongData?.id !== songData.id && seekToTime === null) {
+    resetMobileProgress();
+  }
+
   g._standaloneToken = (g._standaloneToken || 0) + 1;
   const token = g._standaloneToken;
 
