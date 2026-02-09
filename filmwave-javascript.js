@@ -6822,6 +6822,7 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   
   if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
   if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists();
+  if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
   // initPlaylistsPage is handled by PlaylistManager.setupPageSpecificFeatures()
   // if (typeof initPlaylistsPage === 'function') initPlaylistsPage();
 }
