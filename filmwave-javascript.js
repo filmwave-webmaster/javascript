@@ -5959,6 +5959,13 @@ window.addEventListener('load', () => {
   initDarkMode();
   initMobileFilterToggle();
   
+  // Initialize dashboard filter pills on page load
+  if (window.location.pathname.startsWith('/dashboard/')) {
+    setTimeout(() => {
+      if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
+    }, 300);
+  }
+  
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
     initializeMemberstackHandlers();
