@@ -2395,6 +2395,17 @@ document.addEventListener('keydown', function (e) {
         }
         scrollToSelected(nextD.cardElement);
         
+        // Update border to new song (even when paused)
+        document.querySelectorAll('.song-wrapper').forEach(sw => {
+          sw.style.removeProperty('border');
+        });
+        const songWrapper = nextD.cardElement.classList.contains('song-wrapper') 
+          ? nextD.cardElement 
+          : nextD.cardElement.closest('.song-wrapper');
+        if (songWrapper) {
+          songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+        }
+        
         playStandaloneSong(nextD.audioUrl, nextD.songData, nextWS, nextD.cardElement, null, wasPlaying);
       }
     } else {
