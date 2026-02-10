@@ -4078,7 +4078,7 @@ function loadSavedPlaylistFilter() {
     
     if (selectedPlaylistId && selectedPlaylistName) {
       const tag = document.createElement('div');
-      tag.className = 'filter-tag';
+      tag.className = 'filter-tag filter-tag-playlist';
       tag.setAttribute('data-playlist-filter-tag', 'true');
       tag.innerHTML = `
         <span class="filter-tag-text">${selectedPlaylistName}</span>
@@ -4607,7 +4607,7 @@ setTimeout(() => {
     // Create tag if we have text
     if (tagText) {
       const tag = document.createElement('div');
-      tag.className = 'filter-tag';
+      tag.className = 'filter-tag filter-tag-playlist';
       tag.setAttribute('data-bpm-tag', 'true');
       tag.innerHTML = `
         <span class="filter-tag-text">${tagText}</span>
@@ -5049,7 +5049,7 @@ function updateBPMTag() {
   // Create tag if we have text
   if (tagText) {
     const tag = document.createElement('div');
-    tag.className = 'filter-tag';
+    tag.className = 'filter-tag filter-tag-playlist';
     tag.setAttribute('data-bpm-tag', 'true');
     tag.innerHTML = `
       <span class="filter-tag-text">${tagText}</span>
