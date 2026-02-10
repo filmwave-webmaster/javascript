@@ -2644,7 +2644,29 @@ function initFilterItemBackground() {
   }, 100);
 }
 
-function initDynamicTagging() {
+// Keep playlist filter as fitst 
+
+function initDynamicTagging(container = document) {
+  const tagsContainer = container.querySelector('.filter-tags-container');
+  if (!tagsContainer) return;
+
+  function ensurePlaylistTagFirst() {
+    const playlistTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
+    if (playlistTag) tagsContainer.prepend(playlistTag);
+  }
+
+  ensurePlaylistTagFirst();
+
+  if (!tagsContainer._playlistObserverAttached) {
+    const observer = new MutationObserver(() => {
+      ensurePlaylistTagFirst();
+    });
+
+    observer.observe(tagsContainer, { childList: true });
+    tagsContainer._playlistObserverAttached = true;
+  }
+}
+
   setTimeout(function() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
