@@ -1138,6 +1138,17 @@ if (playerCoverArt) {
       }
       scrollToSelected(nextData.cardElement);
       
+      // Update border to new song (even when paused)
+      document.querySelectorAll('.song-wrapper').forEach(sw => {
+        sw.style.removeProperty('border');
+      });
+      const songWrapper = nextData.cardElement.classList.contains('song-wrapper') 
+        ? nextData.cardElement 
+        : nextData.cardElement.closest('.song-wrapper');
+      if (songWrapper) {
+        songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+      }
+      
       playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
     }
   } else {
