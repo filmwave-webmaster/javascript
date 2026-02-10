@@ -2699,12 +2699,14 @@ function initDynamicTagging() {
           tagsContainer.insertBefore(tag, tagsContainer.firstChild);
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
-          const tags = tagsContainer.querySelectorAll('.filter-tag');
-          tags.forEach(tag => {
-            if (tag.querySelector('.filter-tag-text').textContent === labelText) {
-              tag.remove();
-            }
-          });
+          const tags = tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])');
+tags.forEach(tag => {
+  const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
+  if (tagText === labelText) {
+    tag.remove();
+  }
+});
+
         }
       });
     });
