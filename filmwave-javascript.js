@@ -3941,21 +3941,27 @@ function loadSavedPlaylistFilter() {
   }
   
   function updateActivePlaylistDisplay() {
-    const currentActiveText = playlistSection.querySelector('.active-playlists');
-    const currentDot = playlistSection.querySelector('.filter-dot-active');
-    
-    if (selectedPlaylistId && selectedPlaylistName) {
-      if (currentActiveText) currentActiveText.textContent = selectedPlaylistName;
-      if (currentDot) {
-        currentDot.style.setProperty('display', 'block', 'important');
-      }
-    } else {
-      if (currentActiveText) currentActiveText.textContent = 'Select Playlist';
-      if (currentDot) {
-        currentDot.style.setProperty('display', 'none', 'important');
-      }
+  const currentActiveText = playlistSection.querySelector('.active-playlists');
+  const currentDot = playlistSection.querySelector('.filter-dot-active');
+
+  if (selectedPlaylistId && selectedPlaylistName) {
+    if (currentActiveText) {
+      currentActiveText.textContent = selectedPlaylistName;
+      currentActiveText.style.color = ''; // reset to Webflow default
+    }
+    if (currentDot) {
+      currentDot.style.setProperty('display', 'block', 'important');
+    }
+  } else {
+    if (currentActiveText) {
+      currentActiveText.textContent = 'Select Playlist';
+      currentActiveText.style.color = 'var(--color-9)'; // placeholder color
+    }
+    if (currentDot) {
+      currentDot.style.setProperty('display', 'none', 'important');
     }
   }
+}
   
   async function filterSongsByPlaylist(playlistId) {
     const songCards = document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
