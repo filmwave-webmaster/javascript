@@ -2440,7 +2440,7 @@ function initDarkMode() {
     '--color-13': '#2c2c2c',
     '--color-14': '#ddff43',
     '--color-15': '#474747',
-    '--color-16': '#474747'
+    '--color-16': '#474747',
     '--color-17': 'rgba(255, 255, 255, 0.2)'
   };
   
