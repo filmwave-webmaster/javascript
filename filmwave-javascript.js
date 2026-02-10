@@ -6015,6 +6015,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     initDynamicTagging(data.next.container);
   }
 });
+}
 
 
 /**
