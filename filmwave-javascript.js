@@ -2648,6 +2648,16 @@ function initDynamicTagging() {
   setTimeout(function() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
+
+    // Run once on init
+ensurePlaylistTagFirst();
+
+// Keep it first whenever other tags are added/removed
+const tagsObserver = new MutationObserver(() => {
+  ensurePlaylistTagFirst();
+});
+
+tagsObserver.observe(tagsContainer, { childList: true });
     
     const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
@@ -5976,10 +5986,14 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     }
   });
   barba.hooks.afterEnter((data) => {
-    runForPath(data?.next?.url?.path || '');
-    initMobileFilterToggle(data.next.container);
-  });
-}
+  runForPath(data?.next?.url?.path || '');
+  initMobileFilterToggle(data.next.container);
+
+  if (typeof initDynamicTagging === 'function') {
+    initDynamicTagging(data.next.container);
+  }
+});
+
 
 /**
  * ============================================================
