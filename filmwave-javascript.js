@@ -7365,7 +7365,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           // Check if playlist tag already exists
           if (!document.querySelector('[data-playlist-filter-tag]')) {
             const tag = document.createElement('div');
-            tag.className = 'filter-tag';
+            tag.className = 'filter-tag filter-tag-playlist';
             tag.setAttribute('data-playlist-filter-tag', 'true');
             tag.innerHTML = `
               <span class="filter-tag-text">${playlistData.name}</span>
