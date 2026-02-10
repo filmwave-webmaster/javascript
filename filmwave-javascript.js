@@ -2644,42 +2644,10 @@ function initFilterItemBackground() {
   }, 100);
 }
 
-// Keep playlist filter as fitst 
-
-function initDynamicTagging(container = document) {
-  const tagsContainer = container.querySelector('.filter-tags-container');
-  if (!tagsContainer) return;
-
-  function ensurePlaylistTagFirst() {
-    const playlistTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
-    if (playlistTag) tagsContainer.prepend(playlistTag);
-  }
-
-  ensurePlaylistTagFirst();
-
-  if (!tagsContainer._playlistObserverAttached) {
-    const observer = new MutationObserver(() => {
-      ensurePlaylistTagFirst();
-    });
-
-    observer.observe(tagsContainer, { childList: true });
-    tagsContainer._playlistObserverAttached = true;
-  }
-}
-
+function initDynamicTagging() {
   setTimeout(function() {
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (!tagsContainer) return;
-
-    // Run once on init
-ensurePlaylistTagFirst();
-
-// Keep it first whenever other tags are added/removed
-const tagsObserver = new MutationObserver(() => {
-  ensurePlaylistTagFirst();
-});
-
-tagsObserver.observe(tagsContainer, { childList: true });
     
     const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
@@ -6007,14 +5975,10 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       }
     }
   });
-  barba.hooks.afterEnter((data) => {
-  runForPath(data?.next?.url?.path || '');
-  initMobileFilterToggle(data.next.container);
-
-  if (typeof initDynamicTagging === 'function') {
-    initDynamicTagging(data.next.container);
-  }
-});
+  barba.hooks.afterEnter((data) => { 
+    runForPath(data?.next?.url?.path || ''); 
+    initMobileFilterToggle(data.next.container); 
+  }); 
 }
 
 
