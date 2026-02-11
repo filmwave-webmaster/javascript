@@ -985,54 +985,6 @@ ctx.clearRect(0, 0, displayWidth, displayHeight);
 
 const internalHeight = displayHeight;     // CSS px
 const centerY = internalHeight / 2;
-
-// Fallback line if no peaks
-if (!peaks || peaks.length === 0) {
-  const fallbackStyles = getComputedStyle(document.body);
-  ctx.fillStyle = fallbackStyles.getPropertyValue('--color-8').trim() || '#e2e2e2';
-  ctx.fillRect(0, centerY - 1, displayWidth, 2);
-  return;
-}
-
-// Normalize peaks
-let maxVal = 0;
-for (let i = 0; i < peaks.length; i++) {
-  const p = Math.abs(peaks[i]);
-  if (p > maxVal) maxVal = p;
-}
-const normalizationScale = maxVal > 0 ? 1 / maxVal : 1;
-
-// IMPORTANT: bar thickness stays constant in CSS pixels
-const barWidth = 2;   // <- fixed thickness
-const barGap = 1;
-const barTotal = barWidth + barGap;
-
-const barsCount = Math.max(1, Math.floor(displayWidth / barTotal));
-const samplesPerBar = Math.max(1, Math.floor(peaks.length / barsCount));
-
-const styles = getComputedStyle(document.body);
-const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
-const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
-
-for (let i = 0; i < barsCount; i++) {
-  const startSample = i * samplesPerBar;
-  const endSample = Math.min(peaks.length, startSample + samplesPerBar);
-
-  let barPeak = 0;
-  for (let j = startSample; j < endSample; j++) {
-    const val = Math.abs(peaks[j] || 0);
-    if (val > barPeak) barPeak = val;
-  }
-
-  const peak = barPeak * normalizationScale;
-  const barHeight = Math.max(peak * internalHeight * 0.85, 2); // CSS px
-
-  const x = i * barTotal;
-  const barProgress = i / barsCount;
-
-  ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
-  ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
-}
 }
 
 function updateMasterControllerIcons(isPlaying) {
