@@ -1917,20 +1917,23 @@ function loadWaveformBatch(cardElements) {
   cardElements.forEach((cardElement) => {
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
-    const songData = JSON.parse(cardElement.dataset.songData || '{}');
+
+    let songData = {};
+    try { songData = JSON.parse(cardElement.dataset.songData || '{}'); } catch (e) {}
     
     if (!audioUrl) return;
     
     const waveformContainer = cardElement.querySelector('.waveform');
-if (!waveformContainer) return;
+    if (!waveformContainer) return;
 
-// If a wavesurfer is already attached, don't re-init
-if (waveformContainer._wavesurfer) return;
+    // If an old instance exists, destroy it (prevents flashing + allows rebuild)
+    if (waveformContainer._wavesurfer) {
+      try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
+      waveformContainer._wavesurfer = null;
+    }
 
-// If leftover DOM exists (common after destroy / barba), clear it so we can rebuild
-if (waveformContainer.hasChildNodes()) {
-  waveformContainer.innerHTML = '';
-}
+    // Clear leftover DOM (wavesurfer leaves canvas + wrappers behind)
+    waveformContainer.innerHTML = '';
     
     const durationElement = cardElement.querySelector('.duration');
     const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
@@ -1938,9 +1941,8 @@ if (waveformContainer.hasChildNodes()) {
     const songName = cardElement.querySelector('.song-name');
     
     waveformContainer.id = `waveform-${songId}`;
-    waveformContainers.push(waveformContainer);
     
-   if (playButton) {
+    if (playButton) {
       const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       
       playButton.style.opacity = '0';
@@ -1957,44 +1959,40 @@ if (waveformContainer.hasChildNodes()) {
       }
     }
     
-   // Get computed CSS variable values
-const styles = getComputedStyle(document.body);
-const waveColor = styles.getPropertyValue('--color-8').trim();
-const progressColor = styles.getPropertyValue('--color-2').trim();
+    // Get computed CSS variable values
+    const styles = getComputedStyle(document.body);
+    const waveColor = styles.getPropertyValue('--color-8').trim();
+    const progressColor = styles.getPropertyValue('--color-2').trim();
 
-if (waveformContainer._wavesurfer) {
-  try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
-  waveformContainer._wavesurfer = null;
-  waveformContainer.innerHTML = '';
-}
+    const wavesurfer = WaveSurfer.create({
+      container: waveformContainer,
+      waveColor: waveColor,
+      progressColor: progressColor,
+      cursorColor: 'transparent',
+      cursorWidth: 0,
+      height: 30,
+      barWidth: 2,
+      barGap: 1,
+      normalize: true,
+      backend: 'WebAudio',
+      fillParent: true,
+      scrollParent: false,
+      interact: true,
+      hideScrollbar: true,
+      minPxPerSec: 1,
+      audioContext: window.sharedAudioContext,
+    });
 
-const wavesurfer = WaveSurfer.create({
-  container: waveformContainer,
-  waveColor: waveColor,
-  progressColor: progressColor,
-  cursorColor: 'transparent',
-  cursorWidth: 0,
-  height: 30,
-  barWidth: 2,
-  barGap: 1,
-  normalize: true,
-  backend: 'WebAudio',
-  fillParent: true,
-  scrollParent: false,
-  interact: true,
-  hideScrollbar: true,
-  minPxPerSec: 1,
-  audioContext: window.sharedAudioContext,
-});
+    waveformContainer._wavesurfer = wavesurfer;
 
-waveformContainer._wavesurfer = wavesurfer;
+    // ✅ keeps the waveform stretched + prevents resize/zoom flashing
+    attachWaveformAutoFit(wavesurfer, waveformContainer);
 
-// ✅ keeps the waveform stretched + prevents resize/zoom flashing
-attachWaveformAutoFit(wavesurfer, waveformContainer);
-
+    // Track containers AFTER wavesurfer exists
+    waveformContainers.push(waveformContainer);
     
-    const peaksData = songData.fields['Waveform Peaks'];
-    const storedDuration = songData.fields['Duration'];
+    const peaksData = songData?.fields?.['Waveform Peaks'];
+    const storedDuration = songData?.fields?.['Duration'];
     
     // Set duration immediately from Airtable data
     if (durationElement && storedDuration) {
@@ -2028,8 +2026,6 @@ attachWaveformAutoFit(wavesurfer, waveformContainer);
         resolved = true;
         
         const duration = wavesurfer.getDuration();
-        const containerWidth = waveformContainer.offsetWidth || 300;
-        wavesurfer.zoom(containerWidth / duration);
         if (durationElement) durationElement.textContent = formatDuration(duration);
         
         resolve();
@@ -2055,64 +2051,64 @@ attachWaveformAutoFit(wavesurfer, waveformContainer);
       songData
     });
     
-const handlePlayPause = (e) => {
-  if (e) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
-  
-  // Mark that we're now using music page songs for navigation
-  g.activeSongSource = 'music';
-  
-  if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-  
-  console.log('═══════════════════════════════════════════');
-  console.log('🎯 CLICK DETECTED');
-  console.log('Clicked song:', songData?.fields?.['Song Title']);
-  console.log('Clicked song ID:', songData?.id);
-  console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
-  console.log('Current song ID:', g.currentSongData?.id);
-  console.log('Is same song?', g.currentSongData?.id === songData.id);
-  console.log('═══════════════════════════════════════════');
-      
-  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-    console.log('🔀 Different song clicked - always play it');
-    
-    if (g.standaloneAudio) {
-      g.standaloneAudio.pause();
-    }
-    
-    g.currentWavesurfer.seekTo(0);
-    
-    // ALWAYS play when clicking a different song
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-  } else {
-    // Same song or no current song - toggle play/pause
-    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-      console.log('⏯️ Toggling current song');
-      if (g.standaloneAudio.paused) {
-        g.standaloneAudio.play();
-      } else {
-        g.standaloneAudio.pause();
+    const handlePlayPause = (e) => {
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
       }
-    } else {
-      console.log('▶️ Playing new song');
-      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+      
+      // Mark that we're now using music page songs for navigation
+      g.activeSongSource = 'music';
+      
+      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
+      
+      console.log('═══════════════════════════════════════════');
+      console.log('🎯 CLICK DETECTED');
+      console.log('Clicked song:', songData?.fields?.['Song Title']);
+      console.log('Clicked song ID:', songData?.id);
+      console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
+      console.log('Current song ID:', g.currentSongData?.id);
+      console.log('Is same song?', g.currentSongData?.id === songData.id);
+      console.log('═══════════════════════════════════════════');
+          
+      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+        console.log('🔀 Different song clicked - always play it');
+        
+        if (g.standaloneAudio) {
+          g.standaloneAudio.pause();
+        }
+        
+        g.currentWavesurfer.seekTo(0);
+        
+        // ALWAYS play when clicking a different song
+        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+      } else {
+        // Same song or no current song - toggle play/pause
+        if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+          console.log('⏯️ Toggling current song');
+          if (g.standaloneAudio.paused) {
+            g.standaloneAudio.play();
+          } else {
+            g.standaloneAudio.pause();
+          }
+        } else {
+          console.log('▶️ Playing new song');
+          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+        }
+      }
+    };
+        
+    if (coverArtWrapper) {
+      coverArtWrapper.style.cursor = 'pointer';
+      coverArtWrapper.addEventListener('click', handlePlayPause);
     }
-  }
-};
-    
-if (coverArtWrapper) {
-  coverArtWrapper.style.cursor = 'pointer';
-  coverArtWrapper.addEventListener('click', handlePlayPause);
-}
 
-if (songName) {
-  songName.style.cursor = 'pointer';
-  songName.addEventListener('click', handlePlayPause);
-}
-    
-  wavesurfer.on('interaction', function (newProgress) {
+    if (songName) {
+      songName.style.cursor = 'pointer';
+      songName.addEventListener('click', handlePlayPause);
+    }
+        
+    wavesurfer.on('interaction', function (newProgress) {
       g.activeSongSource = 'music';
       if (g.currentSongData?.id === songData.id) {
         if (g.standaloneAudio) {
