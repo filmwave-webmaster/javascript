@@ -1810,11 +1810,16 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
+  // attach once per container
+  if (waveformContainer._wfAutoFitAttached) return;
+  waveformContainer._wfAutoFitAttached = true;
+
+  let isReady = false;
   let lastWidth = 0;
-  let rafId = null;
+  let debounceTimer = null;
 
   function fitToWidth() {
-    rafId = null;
+    if (!isReady) return;
 
     const duration = wavesurfer.getDuration();
     if (!duration || !isFinite(duration)) return;
@@ -1822,7 +1827,6 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     const width = waveformContainer.clientWidth;
     if (!width || width < 10) return;
 
-    // Prevent constant zoom spam (major flashing culprit)
     if (Math.abs(width - lastWidth) < 2) return;
     lastWidth = width;
 
@@ -1830,29 +1834,35 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     wavesurfer.zoom(pxPerSec);
   }
 
-  // Fit once right after ready (and after layout settles)
+  function scheduleFit() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      fitToWidth();
+    }, 120);
+  }
+
   wavesurfer.on('ready', () => {
+    isReady = true;
     requestAnimationFrame(() => requestAnimationFrame(fitToWidth));
   });
 
-  // Keep fitting if the card resizes (flex, responsive, sidebar changes, etc.)
-  if (!waveformContainer._wfResizeObserver) {
-    waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(fitToWidth);
-    });
-    waveformContainer._wfResizeObserver.observe(waveformContainer);
-  }
+  const ro = new ResizeObserver(() => {
+    scheduleFit();
+  });
 
-  // Cleanup hook so you don’t leak observers across Barba navigations
+  ro.observe(waveformContainer);
+  waveformContainer._wfResizeObserver = ro;
+
   wavesurfer.on('destroy', () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
 
     if (waveformContainer._wfResizeObserver) {
-      waveformContainer._wfResizeObserver.disconnect();
+      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
+
+    waveformContainer._wfAutoFitAttached = false;
   });
 }
     
