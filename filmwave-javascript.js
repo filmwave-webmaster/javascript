@@ -918,73 +918,116 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 
 function drawMasterWaveform(peaks, progress) {
   const g = window.musicPlayerPersistent;
-  
-  if (g.isTransitioning) {
-    return;
-  }
-  
+  if (!g) return;
+
+  if (g.isTransitioning) return;
+
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
+
   let canvas = container.querySelector('canvas');
+
   if (!canvas) {
     canvas = document.createElement('canvas');
     canvas.style.width = '100%';
     canvas.style.height = '25px';
     canvas.style.display = 'block';
     canvas.style.cursor = 'pointer';
+
     container.style.display = 'flex';
     container.style.alignItems = 'center';
     container.innerHTML = '';
     container.appendChild(canvas);
+  }
+
+  if (!canvas._wfClickInit) {
+    canvas._wfClickInit = true;
     canvas.addEventListener('click', (e) => {
-      const g = window.musicPlayerPersistent;
+      const gg = window.musicPlayerPersistent;
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      const newProgress = clickX / rect.width;
-      
-      if (g.standaloneAudio) {
-        g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
-      } else if (g.currentWavesurfer) {
-        const wasPlaying = g.currentWavesurfer.isPlaying();
-        g.currentWavesurfer.seekTo(newProgress);
+      const newProgress = rect.width ? (clickX / rect.width) : 0;
+
+      if (gg?.standaloneAudio && gg.standaloneAudio.duration) {
+        gg.standaloneAudio.currentTime = newProgress * gg.standaloneAudio.duration;
+      } else if (gg?.currentWavesurfer) {
+        const wasPlaying = gg.currentWavesurfer.isPlaying?.() === true;
+        gg.currentWavesurfer.seekTo(newProgress);
         if (wasPlaying) {
           setTimeout(() => {
-            if (!g.currentWavesurfer.isPlaying()) {
-              g.currentWavesurfer.play().catch(() => {});
-            }
+            try {
+              if (!gg.currentWavesurfer.isPlaying()) gg.currentWavesurfer.play();
+            } catch (e) {}
           }, 50);
         }
       }
     });
   }
-  
-  // --- stable master waveform rendering (constant bar thickness) ---
-const dpr = window.devicePixelRatio || 1;
 
-// Use the container width (more stable than canvas.clientWidth in flex)
-const displayWidth = container.clientWidth;
-const displayHeight = 25;
+  const dpr = window.devicePixelRatio || 1;
 
-if (!displayWidth || displayWidth < 10) return;
+  const rect = container.getBoundingClientRect();
+  const displayWidth = Math.floor(rect.width);
+  const displayHeight = 25;
 
-// Skip redraw spam if width is flipping back/forth by tiny amounts
-g._masterWF_lastW = g._masterWF_lastW || 0;
-if (Math.abs(displayWidth - g._masterWF_lastW) < 1) {
-  // still update colors/progress on the existing size
-} else {
-  g._masterWF_lastW = displayWidth;
-}
+  if (!displayWidth || displayWidth < 10) return;
 
-// Set backing store in device pixels, draw in CSS pixels
-canvas.width = Math.floor(displayWidth * dpr);
-canvas.height = Math.floor(displayHeight * dpr);
+  canvas.width = Math.floor(displayWidth * dpr);
+  canvas.height = Math.floor(displayHeight * dpr);
 
-const ctx = canvas.getContext('2d');
-ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw using CSS pixels
-ctx.clearRect(0, 0, displayWidth, displayHeight);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-const internalHeight = displayHeight;     // CSS px
-const centerY = internalHeight / 2;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+  const styles = getComputedStyle(document.body);
+  const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+  const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+
+  const centerY = displayHeight / 2;
+
+  if (!peaks || !peaks.length) {
+    ctx.fillStyle = waveColor;
+    ctx.fillRect(0, centerY - 1, displayWidth, 2);
+    return;
+  }
+
+  const p = Math.max(0, Math.min(1, Number(progress) || 0));
+
+  let maxVal = 0;
+  for (let i = 0; i < peaks.length; i++) {
+    const v = Math.abs(peaks[i] || 0);
+    if (v > maxVal) maxVal = v;
+  }
+  const scale = maxVal > 0 ? (1 / maxVal) : 1;
+
+  const barWidth = 2; // constant CSS px thickness
+  const barGap = 1;
+  const barTotal = barWidth + barGap;
+
+  const barsCount = Math.max(1, Math.floor(displayWidth / barTotal));
+  const samplesPerBar = Math.max(1, Math.ceil(peaks.length / barsCount));
+
+  for (let i = 0; i < barsCount; i++) {
+    const start = i * samplesPerBar;
+    const end = Math.min(peaks.length, start + samplesPerBar);
+
+    let barPeak = 0;
+    for (let j = start; j < end; j++) {
+      const v = Math.abs(peaks[j] || 0);
+      if (v > barPeak) barPeak = v;
+    }
+
+    const peak = barPeak * scale;
+    const barHeight = Math.max(peak * displayHeight * 0.85, 2);
+
+    const x = i * barTotal;
+    const barProgress = i / barsCount;
+
+    ctx.fillStyle = barProgress < p ? progressColor : waveColor;
+    ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
+  }
 }
 
 function updateMasterControllerIcons(isPlaying) {
