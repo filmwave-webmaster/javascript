@@ -1964,29 +1964,46 @@ function loadWaveformBatch(cardElements) {
     const waveColor = styles.getPropertyValue('--color-8').trim();
     const progressColor = styles.getPropertyValue('--color-2').trim();
 
-    const wavesurfer = WaveSurfer.create({
-      container: waveformContainer,
-      waveColor: waveColor,
-      progressColor: progressColor,
-      cursorColor: 'transparent',
-      cursorWidth: 0,
-      height: 30,
-      barWidth: 2,
-      barGap: 1,
-      normalize: true,
-      backend: 'WebAudio',
-      fillParent: true,
-      scrollParent: false,
-      interact: true,
-      hideScrollbar: true,
-      minPxPerSec: 1,
-      audioContext: window.sharedAudioContext,
-    });
+    let wavesurfer;
 
-    waveformContainer._wavesurfer = wavesurfer;
+try {
+  const wsOptions = {
+    container: waveformContainer,
+    waveColor: waveColor,
+    progressColor: progressColor,
+    cursorColor: 'transparent',
+    cursorWidth: 0,
+    height: 30,
+    barWidth: 2,
+    barGap: 1,
+    normalize: true,
+    backend: 'WebAudio',
+    fillParent: true,
+    scrollParent: false,
+    interact: true,
+    hideScrollbar: true,
+    minPxPerSec: 1
+  };
 
-    // ✅ keeps the waveform stretched + prevents resize/zoom flashing
-    attachWaveformAutoFit(wavesurfer, waveformContainer);
+  // Only pass audioContext if it exists (otherwise WaveSurfer can fail)
+  if (window.sharedAudioContext) {
+    wsOptions.audioContext = window.sharedAudioContext;
+  }
+
+  wavesurfer = WaveSurfer.create(wsOptions);
+} catch (e) {
+  console.error('❌ WaveSurfer.create failed for song:', songId, e);
+  return;
+}
+
+waveformContainer._wavesurfer = wavesurfer;
+
+// Only call if it exists (otherwise your entire waveform init breaks)
+if (typeof attachWaveformAutoFit === 'function') {
+  attachWaveformAutoFit(wavesurfer, waveformContainer);
+} else {
+  console.warn('⚠️ attachWaveformAutoFit is not defined (skipping)');
+}
 
     // Track containers AFTER wavesurfer exists
     waveformContainers.push(waveformContainer);
