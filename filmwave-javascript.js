@@ -958,15 +958,81 @@ function drawMasterWaveform(peaks, progress) {
     });
   }
   
-  const dpr = window.devicePixelRatio || 1;
-  const displayWidth = canvas.clientWidth;
-  const displayHeight = 25;
-  canvas.width = displayWidth * dpr;
-  canvas.height = displayHeight * dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const internalHeight = canvas.height;
-  const centerY = internalHeight / 2;
+  // --- stable master waveform rendering (constant bar thickness) ---
+const dpr = window.devicePixelRatio || 1;
+
+// Use the container width (more stable than canvas.clientWidth in flex)
+const displayWidth = container.clientWidth;
+const displayHeight = 25;
+
+if (!displayWidth || displayWidth < 10) return;
+
+// Skip redraw spam if width is flipping back/forth by tiny amounts
+g._masterWF_lastW = g._masterWF_lastW || 0;
+if (Math.abs(displayWidth - g._masterWF_lastW) < 1) {
+  // still update colors/progress on the existing size
+} else {
+  g._masterWF_lastW = displayWidth;
+}
+
+// Set backing store in device pixels, draw in CSS pixels
+canvas.width = Math.floor(displayWidth * dpr);
+canvas.height = Math.floor(displayHeight * dpr);
+
+const ctx = canvas.getContext('2d');
+ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw using CSS pixels
+ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+const internalHeight = displayHeight;     // CSS px
+const centerY = internalHeight / 2;
+
+// Fallback line if no peaks
+if (!peaks || peaks.length === 0) {
+  const fallbackStyles = getComputedStyle(document.body);
+  ctx.fillStyle = fallbackStyles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+  ctx.fillRect(0, centerY - 1, displayWidth, 2);
+  return;
+}
+
+// Normalize peaks
+let maxVal = 0;
+for (let i = 0; i < peaks.length; i++) {
+  const p = Math.abs(peaks[i]);
+  if (p > maxVal) maxVal = p;
+}
+const normalizationScale = maxVal > 0 ? 1 / maxVal : 1;
+
+// IMPORTANT: bar thickness stays constant in CSS pixels
+const barWidth = 2;   // <- fixed thickness
+const barGap = 1;
+const barTotal = barWidth + barGap;
+
+const barsCount = Math.max(1, Math.floor(displayWidth / barTotal));
+const samplesPerBar = Math.max(1, Math.floor(peaks.length / barsCount));
+
+const styles = getComputedStyle(document.body);
+const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+
+for (let i = 0; i < barsCount; i++) {
+  const startSample = i * samplesPerBar;
+  const endSample = Math.min(peaks.length, startSample + samplesPerBar);
+
+  let barPeak = 0;
+  for (let j = startSample; j < endSample; j++) {
+    const val = Math.abs(peaks[j] || 0);
+    if (val > barPeak) barPeak = val;
+  }
+
+  const peak = barPeak * normalizationScale;
+  const barHeight = Math.max(peak * internalHeight * 0.85, 2); // CSS px
+
+  const x = i * barTotal;
+  const barProgress = i / barsCount;
+
+  ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
+  ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
+}
   
   if (!peaks || peaks.length === 0) {
     const fallbackStyles = getComputedStyle(document.body);
