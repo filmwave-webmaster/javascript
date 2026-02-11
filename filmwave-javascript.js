@@ -1808,6 +1808,53 @@ function initializeWaveforms() {
         observer.unobserve(cardElement);
       }
     });
+
+function attachWaveformAutoFit(wavesurfer, waveformContainer) {
+  let lastWidth = 0;
+  let rafId = null;
+
+  function fitToWidth() {
+    rafId = null;
+
+    const duration = wavesurfer.getDuration();
+    if (!duration || !isFinite(duration)) return;
+
+    const width = waveformContainer.clientWidth;
+    if (!width || width < 10) return;
+
+    // Prevent constant zoom spam (major flashing culprit)
+    if (Math.abs(width - lastWidth) < 2) return;
+    lastWidth = width;
+
+    const pxPerSec = width / duration;
+    wavesurfer.zoom(pxPerSec);
+  }
+
+  // Fit once right after ready (and after layout settles)
+  wavesurfer.on('ready', () => {
+    requestAnimationFrame(() => requestAnimationFrame(fitToWidth));
+  });
+
+  // Keep fitting if the card resizes (flex, responsive, sidebar changes, etc.)
+  if (!waveformContainer._wfResizeObserver) {
+    waveformContainer._wfResizeObserver = new ResizeObserver(() => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(fitToWidth);
+    });
+    waveformContainer._wfResizeObserver.observe(waveformContainer);
+  }
+
+  // Cleanup hook so you don’t leak observers across Barba navigations
+  wavesurfer.on('destroy', () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+
+    if (waveformContainer._wfResizeObserver) {
+      waveformContainer._wfResizeObserver.disconnect();
+      waveformContainer._wfResizeObserver = null;
+    }
+  });
+}
     
     if (cardsToLoad.length > 0) {
       loadWaveformBatch(cardsToLoad);
@@ -1907,6 +1954,11 @@ const styles = getComputedStyle(document.body);
 const waveColor = styles.getPropertyValue('--color-8').trim();
 const progressColor = styles.getPropertyValue('--color-2').trim();
 
+if (waveformContainer._wavesurfer) {
+  try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
+  waveformContainer._wavesurfer = null;
+}
+
 const wavesurfer = WaveSurfer.create({
   container: waveformContainer,
   waveColor: waveColor,
@@ -1920,12 +1972,17 @@ const wavesurfer = WaveSurfer.create({
   backend: 'WebAudio',
   fillParent: true,
   scrollParent: false,
-  responsive: 300,
   interact: true,
   hideScrollbar: true,
   minPxPerSec: 1,
   audioContext: window.sharedAudioContext,
 });
+
+waveformContainer._wavesurfer = wavesurfer;
+
+// ✅ keeps the waveform stretched + prevents resize/zoom flashing
+attachWaveformAutoFit(wavesurfer, waveformContainer);
+
     
     const peaksData = songData.fields['Waveform Peaks'];
     const storedDuration = songData.fields['Duration'];
@@ -10418,7 +10475,6 @@ async function initDashboardTiles() {
         normalize: true,
         backend: 'WebAudio',
         interact: true,
-        responsive: true,
         audioContext: window.sharedAudioContext
       });
       
