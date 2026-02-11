@@ -1810,68 +1810,44 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  // Clear old observer if it exists
-  if (waveformContainer._wfResizeObserver) {
-    try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
-    waveformContainer._wfResizeObserver = null;
-  }
-
-  let isReady = false;
+  let rafId = null;
   let lastWidth = 0;
-  let lastPxPerSec = 0;
 
-  let settleTimer = null;
-  const SETTLE_MS = 300; // only fit after resize stops
+  function fit() {
+    rafId = null;
 
-  function fitNow() {
-    if (!isReady) return;
-
-    const duration = wavesurfer.getDuration();
-    if (!duration || !isFinite(duration)) return;
-
-    const width = waveformContainer.clientWidth;
+    const width = Math.round(waveformContainer.clientWidth);
     if (!width || width < 10) return;
 
-    // ignore tiny width jitter
+    // prevent thrash
     if (Math.abs(width - lastWidth) < 2) return;
     lastWidth = width;
 
-    const pxPerSec = width / duration;
-
-    // ignore tiny zoom jitter (prevents “thrash”)
-    if (Math.abs(pxPerSec - lastPxPerSec) < 0.05) return;
-    lastPxPerSec = pxPerSec;
-
-    wavesurfer.zoom(pxPerSec);
-  }
-
-  function scheduleFitAfterSettle() {
-    clearTimeout(settleTimer);
-    settleTimer = setTimeout(() => {
-      fitNow();
-    }, SETTLE_MS);
+    // IMPORTANT: do NOT zoom (zoom changes bar density)
+    try {
+      wavesurfer.setOptions({ width });
+      if (typeof wavesurfer.drawBuffer === 'function') wavesurfer.drawBuffer();
+    } catch (e) {}
   }
 
   wavesurfer.on('ready', () => {
-    isReady = true;
-    // fit after layout settles
-    requestAnimationFrame(() => requestAnimationFrame(fitNow));
+    requestAnimationFrame(() => requestAnimationFrame(fit));
   });
 
-  const ro = new ResizeObserver(() => {
-    // DO NOT zoom immediately during drag-resize
-    scheduleFitAfterSettle();
-  });
-
-  ro.observe(waveformContainer);
-  waveformContainer._wfResizeObserver = ro;
+  if (!waveformContainer._wfResizeObserver) {
+    waveformContainer._wfResizeObserver = new ResizeObserver(() => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(fit);
+    });
+    waveformContainer._wfResizeObserver.observe(waveformContainer);
+  }
 
   wavesurfer.on('destroy', () => {
-    clearTimeout(settleTimer);
-    settleTimer = null;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
 
     if (waveformContainer._wfResizeObserver) {
-      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
+      waveformContainer._wfResizeObserver.disconnect();
       waveformContainer._wfResizeObserver = null;
     }
   });
