@@ -1033,44 +1033,6 @@ for (let i = 0; i < barsCount; i++) {
   ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
   ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
 }
-  
-  if (!peaks || peaks.length === 0) {
-    const fallbackStyles = getComputedStyle(document.body);
-    ctx.fillStyle = fallbackStyles.getPropertyValue('--color-8').trim() || '#e2e2e2';
-    ctx.fillRect(0, centerY - (1 * dpr), canvas.width, 2 * dpr);
-    return;
-  }
-  
-  let maxVal = 0;
-  for (let i = 0; i < peaks.length; i++) {
-    const p = Math.abs(peaks[i]);
-    if (p > maxVal) maxVal = p;
-  }
-  const normalizationScale = maxVal > 0 ? 1 / maxVal : 1;
-  const barWidth = 2 * dpr;
-  const barGap = 1 * dpr;
-  const barTotal = barWidth + barGap;
-  const barsCount = Math.floor(canvas.width / barTotal);
-  const samplesPerBar = Math.floor(peaks.length / barsCount);
-  
-  for (let i = 0; i < barsCount; i++) {
-    const startSample = i * samplesPerBar;
-    const endSample = startSample + samplesPerBar;
-    let barPeak = 0;
-    for (let j = startSample; j < endSample; j++) {
-      const val = Math.abs(peaks[j] || 0);
-      if (val > barPeak) barPeak = val;
-    }
-    const peak = barPeak * normalizationScale;
-    const barHeight = Math.max(peak * internalHeight * 0.85, 2 * dpr);
-    const x = i * barTotal;
-    const barProgress = i / barsCount;
-    const styles = getComputedStyle(document.body);
-    const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
-    const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
-    ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
-    ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
-  }
 }
 
 function updateMasterControllerIcons(isPlaying) {
