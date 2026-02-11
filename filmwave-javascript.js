@@ -1810,9 +1810,12 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  // attach once per container
-  if (waveformContainer._wfAutoFitAttached) return;
-  waveformContainer._wfAutoFitAttached = true;
+
+  // Always clear old observer if exists (Barba + re-init safe)
+  if (waveformContainer._wfResizeObserver) {
+    try { waveformContainer._wfResizeObserver.disconnect(); } catch(e){}
+    waveformContainer._wfResizeObserver = null;
+  }
 
   let isReady = false;
   let lastWidth = 0;
@@ -1836,9 +1839,7 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
   function scheduleFit() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      fitToWidth();
-    }, 120);
+    debounceTimer = setTimeout(fitToWidth, 120);
   }
 
   wavesurfer.on('ready', () => {
@@ -1858,11 +1859,9 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     debounceTimer = null;
 
     if (waveformContainer._wfResizeObserver) {
-      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
+      try { waveformContainer._wfResizeObserver.disconnect(); } catch(e){}
       waveformContainer._wfResizeObserver = null;
     }
-
-    waveformContainer._wfAutoFitAttached = false;
   });
 }
     
