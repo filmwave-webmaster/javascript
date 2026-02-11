@@ -1922,7 +1922,15 @@ function loadWaveformBatch(cardElements) {
     if (!audioUrl) return;
     
     const waveformContainer = cardElement.querySelector('.waveform');
-    if (!waveformContainer || waveformContainer.hasChildNodes()) return;
+if (!waveformContainer) return;
+
+// If a wavesurfer is already attached, don't re-init
+if (waveformContainer._wavesurfer) return;
+
+// If leftover DOM exists (common after destroy / barba), clear it so we can rebuild
+if (waveformContainer.hasChildNodes()) {
+  waveformContainer.innerHTML = '';
+}
     
     const durationElement = cardElement.querySelector('.duration');
     const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
@@ -1957,6 +1965,7 @@ const progressColor = styles.getPropertyValue('--color-2').trim();
 if (waveformContainer._wavesurfer) {
   try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
   waveformContainer._wavesurfer = null;
+  waveformContainer.innerHTML = '';
 }
 
 const wavesurfer = WaveSurfer.create({
