@@ -10418,6 +10418,7 @@ async function initDashboardTiles() {
         normalize: true,
         backend: 'WebAudio',
         interact: true,
+        responsive: true,
         audioContext: window.sharedAudioContext
       });
       
