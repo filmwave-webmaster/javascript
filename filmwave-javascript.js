@@ -1810,18 +1810,20 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-
-  // Always clear old observer if exists (Barba + re-init safe)
+  // Clear old observer if it exists
   if (waveformContainer._wfResizeObserver) {
-    try { waveformContainer._wfResizeObserver.disconnect(); } catch(e){}
+    try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
   }
 
   let isReady = false;
   let lastWidth = 0;
-  let debounceTimer = null;
+  let lastPxPerSec = 0;
 
-  function fitToWidth() {
+  let settleTimer = null;
+  const SETTLE_MS = 300; // only fit after resize stops
+
+  function fitNow() {
     if (!isReady) return;
 
     const duration = wavesurfer.getDuration();
@@ -1830,36 +1832,46 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     const width = waveformContainer.clientWidth;
     if (!width || width < 10) return;
 
+    // ignore tiny width jitter
     if (Math.abs(width - lastWidth) < 2) return;
     lastWidth = width;
 
     const pxPerSec = width / duration;
+
+    // ignore tiny zoom jitter (prevents “thrash”)
+    if (Math.abs(pxPerSec - lastPxPerSec) < 0.05) return;
+    lastPxPerSec = pxPerSec;
+
     wavesurfer.zoom(pxPerSec);
   }
 
-  function scheduleFit() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(fitToWidth, 120);
+  function scheduleFitAfterSettle() {
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      fitNow();
+    }, SETTLE_MS);
   }
 
   wavesurfer.on('ready', () => {
     isReady = true;
-    requestAnimationFrame(() => requestAnimationFrame(fitToWidth));
+    // fit after layout settles
+    requestAnimationFrame(() => requestAnimationFrame(fitNow));
   });
 
   const ro = new ResizeObserver(() => {
-    scheduleFit();
+    // DO NOT zoom immediately during drag-resize
+    scheduleFitAfterSettle();
   });
 
   ro.observe(waveformContainer);
   waveformContainer._wfResizeObserver = ro;
 
   wavesurfer.on('destroy', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = null;
+    clearTimeout(settleTimer);
+    settleTimer = null;
 
     if (waveformContainer._wfResizeObserver) {
-      try { waveformContainer._wfResizeObserver.disconnect(); } catch(e){}
+      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
   });
