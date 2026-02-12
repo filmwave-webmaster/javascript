@@ -967,17 +967,22 @@ function drawMasterWaveform(peaks, progress) {
   const dpr = window.devicePixelRatio || 1;
 
   const rect = container.getBoundingClientRect();
-  const displayWidth = Math.floor(rect.width);
+  const displayWidth = Math.max(0, Math.floor(rect.width));
   const displayHeight = 25;
 
   if (!displayWidth || displayWidth < 10) return;
 
-  canvas.width = Math.floor(displayWidth * dpr);
-  canvas.height = Math.floor(displayHeight * dpr);
+  // lock the CSS height; only backing store changes with DPR
+  canvas.style.height = displayHeight + 'px';
+  canvas.style.width = '100%';
+
+  canvas.width = Math.round(displayWidth * dpr);
+  canvas.height = Math.round(displayHeight * dpr);
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
+  // draw in CSS pixels
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, displayWidth, displayHeight);
 
@@ -1002,12 +1007,18 @@ function drawMasterWaveform(peaks, progress) {
   }
   const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
-  const barWidth = 2; // constant CSS px thickness
-  const barGap = 1;
-  const barTotal = barWidth + barGap;
+  // FIX: compute bars in *device pixels* so thickness stays constant visually,
+  // but still draw in CSS pixels by converting back.
+  const barWidthPx = 2; // desired visual thickness in CSS px
+  const barGapPx = 1;
 
-  const barsCount = Math.max(1, Math.floor(displayWidth / barTotal));
-  const samplesPerBar = Math.max(1, Math.ceil(peaks.length / barsCount));
+  const barWidthDev = Math.max(1, Math.round(barWidthPx * dpr));
+  const barGapDev = Math.max(0, Math.round(barGapPx * dpr));
+  const barTotalDev = barWidthDev + barGapDev;
+
+  const widthDev = canvas.width;
+  const barsCount = Math.max(1, Math.floor(widthDev / barTotalDev));
+  const samplesPerBar = Math.max(1, Math.floor(peaks.length / barsCount));
 
   for (let i = 0; i < barsCount; i++) {
     const start = i * samplesPerBar;
@@ -1022,11 +1033,12 @@ function drawMasterWaveform(peaks, progress) {
     const peak = barPeak * scale;
     const barHeight = Math.max(peak * displayHeight * 0.85, 2);
 
-    const x = i * barTotal;
+    // convert device-pixel X back to CSS pixels for fillRect
+    const x = (i * barTotalDev) / dpr;
     const barProgress = i / barsCount;
 
     ctx.fillStyle = barProgress < p ? progressColor : waveColor;
-    ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
+    ctx.fillRect(x, centerY - (barHeight / 2), barWidthPx, barHeight);
   }
 }
 
