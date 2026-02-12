@@ -1849,41 +1849,69 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  let rafId = null;
-  let lastWidth = 0;
+  let lastW = 0;
+  let raf = null;
+  let settleTimer = null;
 
-  function fit() {
-    rafId = null;
+  function redrawNow() {
+    raf = null;
 
-    const width = Math.round(waveformContainer.clientWidth);
-    if (!width || width < 10) return;
+    const duration = wavesurfer.getDuration();
+    if (!duration || !isFinite(duration)) return;
 
-    // prevent thrash
-    if (Math.abs(width - lastWidth) < 2) return;
-    lastWidth = width;
+    const w = waveformContainer.clientWidth;
+    if (!w || w < 10) return;
 
-    // IMPORTANT: do NOT zoom (zoom changes bar density)
+    // stop tiny jitter + flip-flop spam
+    if (Math.abs(w - lastW) < 2) return;
+    lastW = w;
+
+    // Force a real redraw so bars re-layout (instead of CSS-stretching)
     try {
-      wavesurfer.setOptions({ width });
-      if (typeof wavesurfer.drawBuffer === 'function') wavesurfer.drawBuffer();
+      const drawer = wavesurfer.drawer || wavesurfer.renderer || null;
+
+      if (drawer && typeof drawer.setWidth === 'function') {
+        drawer.setWidth(w);
+      } else if (drawer && typeof drawer.updateSize === 'function') {
+        drawer.updateSize();
+      }
+
+      if (typeof wavesurfer.drawBuffer === 'function') {
+        wavesurfer.drawBuffer();
+      } else if (typeof wavesurfer.render === 'function') {
+        wavesurfer.render();
+      }
     } catch (e) {}
+
+    // Keep px/sec tied to current width
+    wavesurfer.zoom(w / duration);
+  }
+
+  function scheduleRedraw() {
+    if (settleTimer) clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(redrawNow);
+    }, 60);
   }
 
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(fit));
+    requestAnimationFrame(() => requestAnimationFrame(scheduleRedraw));
   });
 
   if (!waveformContainer._wfResizeObserver) {
     waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(fit);
+      scheduleRedraw();
     });
     waveformContainer._wfResizeObserver.observe(waveformContainer);
   }
 
   wavesurfer.on('destroy', () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+
+    if (settleTimer) clearTimeout(settleTimer);
+    settleTimer = null;
 
     if (waveformContainer._wfResizeObserver) {
       waveformContainer._wfResizeObserver.disconnect();
@@ -2004,22 +2032,23 @@ function loadWaveformBatch(cardElements) {
 
 try {
   const wsOptions = {
-    container: waveformContainer,
-    waveColor: waveColor,
-    progressColor: progressColor,
-    cursorColor: 'transparent',
-    cursorWidth: 0,
-    height: 30,
-    barWidth: 2,
-    barGap: 1,
-    normalize: true,
-    backend: 'WebAudio',
-    fillParent: true,
-    scrollParent: false,
-    interact: true,
-    hideScrollbar: true,
-    minPxPerSec: 1
-  };
+  container: waveformContainer,
+  waveColor: waveColor,
+  progressColor: progressColor,
+  cursorColor: 'transparent',
+  cursorWidth: 0,
+  height: 30,
+  barWidth: 2,
+  barGap: 1,
+  normalize: true,
+  backend: 'WebAudio',
+  fillParent: true,
+  scrollParent: false,
+  interact: true,
+  hideScrollbar: true,
+  minPxPerSec: 1,
+  responsive: true
+};
 
   // Only pass audioContext if it exists (otherwise WaveSurfer can fail)
   if (window.sharedAudioContext) {
