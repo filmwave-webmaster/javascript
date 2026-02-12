@@ -1853,6 +1853,7 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
   waveformContainer._wfAutoFitAttached = true;
 
+  // cleanup previous observer/raf on this container
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
@@ -1862,34 +1863,61 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     waveformContainer._wfFitRaf = null;
   }
 
-  let lastWidth = 0;
+  let lastW = 0;
+
+  function forceWrapperTo100() {
+    const r = wavesurfer.renderer;
+    if (!r) return;
+
+    // This is the key: kill the "113px" inline width lock
+    if (r.wrapper) r.wrapper.style.width = '100%';
+    if (r.canvasWrapper) r.canvasWrapper.style.width = '100%';
+    if (r.progressWrapper) r.progressWrapper.style.width = '100%';
+    if (r.parent) r.parent.style.width = '100%';
+  }
 
   function fit() {
     waveformContainer._wfFitRaf = null;
 
-    const duration = wavesurfer.getDuration?.();
-    if (!duration || !isFinite(duration) || duration <= 0) return;
+    const w = waveformContainer.clientWidth;
+    if (!w || w < 10) return;
 
-    const width = waveformContainer.clientWidth;
-    if (!width || width < 10) return;
+    if (Math.abs(w - lastW) < 2) return;
+    lastW = w;
 
-    if (Math.abs(width - lastWidth) < 2) return;
-    lastWidth = width;
+    forceWrapperTo100();
 
-    const pxPerSec = width / duration;
-    try { wavesurfer.zoom(pxPerSec); } catch (e) {}
+    // Re-render the waveform at the new width (adds/removes bars naturally)
+    try {
+      if (wavesurfer.renderer && typeof wavesurfer.renderer.render === 'function') {
+        wavesurfer.renderer.render();
+      }
+    } catch (e) {}
+
+    // Keep progress in sync after redraw
+    try {
+      const d = wavesurfer.getDuration?.();
+      const t = wavesurfer.getCurrentTime?.();
+      if (d && isFinite(d) && d > 0 && isFinite(t)) {
+        wavesurfer.seekTo(t / d);
+      }
+    } catch (e) {}
   }
 
+  // run once after ready (after layout settles)
   wavesurfer.on('ready', () => {
+    forceWrapperTo100();
     requestAnimationFrame(() => requestAnimationFrame(fit));
   });
 
+  // run on container resize
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
     if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
     waveformContainer._wfFitRaf = requestAnimationFrame(fit);
   });
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
+  // cleanup on destroy
   wavesurfer.on('destroy', () => {
     if (waveformContainer._wfFitRaf) {
       cancelAnimationFrame(waveformContainer._wfFitRaf);
@@ -2055,6 +2083,7 @@ try {
 }
 
 waveformContainer._wavesurfer = wavesurfer;
+if (wavesurfer?.renderer?.wrapper) wavesurfer.renderer.wrapper.style.width = '100%';    
 try {
   attachWaveformAutoFit(wavesurfer, waveformContainer);
 } catch (e) {
