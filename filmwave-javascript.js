@@ -1,4 +1,4 @@
-  /**
+/**
  * ============================================================
  * FILMWAVE MUSIC PLATFORM - VERSION 44
  * Updated: January 17, 2026
@@ -1825,112 +1825,153 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
  * INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)
  * ============================================================
  */
-function initializeWaveforms() {
-  const g = window.musicPlayerPersistent;
-  const songCards = document.querySelectorAll('.song-wrapper');
-  
-  const visibleCards = [];
-  const notVisibleCards = [];
-  
-  const observer = new IntersectionObserver((entries) => {
-    const cardsToLoad = [];
-    
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const cardElement = entry.target;
-        
-        if (cardElement.dataset.waveformInitialized === 'true') {
-          return;
-        }
-        
-        cardsToLoad.push(cardElement);
-        observer.unobserve(cardElement);
-      }
-    });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  if (!wavesurfer || !waveformContainer) return;
+  if (!waveformContainer) return;
 
-  waveformContainer._wfAutoFitAttached = true;
-
-  // cleanup previous observer/raf on this container
+  // kill any previous observer/timers on this container
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
   }
-  if (waveformContainer._wfFitRaf) {
-    try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-    waveformContainer._wfFitRaf = null;
+  if (waveformContainer._wfResizeTimer) {
+    clearTimeout(waveformContainer._wfResizeTimer);
+    waveformContainer._wfResizeTimer = null;
   }
 
-  let lastW = 0;
+  let lastW = waveformContainer.clientWidth || 0;
 
-  function forceWrapperTo100() {
-    const r = wavesurfer.renderer;
-    if (!r) return;
+  function rebuild() {
+    const g = window.musicPlayerPersistent;
+    const audioUrl = waveformContainer._wfAudioUrl;
+    const peaks = waveformContainer._wfPeaks;
+    const dur = waveformContainer._wfDuration;
 
-    // This is the key: kill the "113px" inline width lock
-    if (r.wrapper) r.wrapper.style.width = '100%';
-    if (r.canvasWrapper) r.canvasWrapper.style.width = '100%';
-    if (r.progressWrapper) r.progressWrapper.style.width = '100%';
-    if (r.parent) r.parent.style.width = '100%';
+    if (!audioUrl) return;
+    if (!peaks || !peaks.length || !dur) return; // only rebuild when we can instant-load
+
+    // preserve progress if this is the current song
+    let keepProgress = 0;
+    try {
+      if (g?.currentWavesurfer && g.currentWavesurfer === waveformContainer._wavesurfer) {
+        const d = g.currentWavesurfer.getDuration?.() || 0;
+        const t = g.currentWavesurfer.getCurrentTime?.() || 0;
+        if (d > 0 && isFinite(d) && isFinite(t)) keepProgress = t / d;
+      }
+    } catch (e) {}
+
+    // destroy old
+    if (waveformContainer._wavesurfer) {
+      try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
+      waveformContainer._wavesurfer = null;
+    }
+    waveformContainer.innerHTML = '';
+
+    // recreate using the same styling/options
+    const styles = getComputedStyle(document.body);
+    const waveColor = styles.getPropertyValue('--color-8').trim();
+    const progressColor = styles.getPropertyValue('--color-2').trim();
+
+    const wsOptions = {
+      container: waveformContainer,
+      waveColor: waveColor,
+      progressColor: progressColor,
+      cursorColor: 'transparent',
+      cursorWidth: 0,
+      height: 30,
+      barWidth: 2,
+      barGap: 1,
+      normalize: true,
+      backend: 'WebAudio',
+      fillParent: true,
+      scrollParent: false,
+      interact: true,
+      hideScrollbar: true,
+      minPxPerSec: 1
+    };
+
+    if (window.sharedAudioContext) wsOptions.audioContext = window.sharedAudioContext;
+
+    let ws;
+    try {
+      ws = WaveSurfer.create(wsOptions);
+    } catch (e) {
+      console.error('❌ rebuild WaveSurfer.create failed', e);
+      return;
+    }
+
+    waveformContainer._wavesurfer = ws;
+
+    // re-attach autoFit to the NEW instance
+    attachWaveformAutoFit(ws, waveformContainer);
+
+    // instant load peaks
+    try {
+      ws.load(audioUrl, [peaks], dur);
+    } catch (e) {
+      ws.load(audioUrl);
+    }
+
+    ws.on('ready', () => {
+      if (keepProgress > 0 && keepProgress < 1) {
+        try { ws.seekTo(keepProgress); } catch (e) {}
+      }
+    });
+
+    // keep master linkage working
+    try {
+      if (g?.waveformData?.length) {
+        const entry = g.waveformData.find(d => d.waveformContainer === waveformContainer);
+        if (entry) entry.wavesurfer = ws;
+      }
+      if (g?.allWavesurfers?.length) {
+        const idx = g.allWavesurfers.findIndex(x => x === wavesurfer);
+        if (idx !== -1) g.allWavesurfers[idx] = ws;
+      }
+      if (g?.currentWavesurfer === wavesurfer) g.currentWavesurfer = ws;
+    } catch (e) {}
   }
 
-  function fit() {
-    waveformContainer._wfFitRaf = null;
-
-    const w = waveformContainer.clientWidth;
+  waveformContainer._wfResizeObserver = new ResizeObserver(() => {
+    const w = waveformContainer.clientWidth || 0;
     if (!w || w < 10) return;
 
     if (Math.abs(w - lastW) < 2) return;
     lastW = w;
 
-    forceWrapperTo100();
-
-    // Re-render the waveform at the new width (adds/removes bars naturally)
-    try {
-      if (wavesurfer.renderer && typeof wavesurfer.renderer.render === 'function') {
-        wavesurfer.renderer.render();
-      }
-    } catch (e) {}
-
-    // Keep progress in sync after redraw
-    try {
-      const d = wavesurfer.getDuration?.();
-      const t = wavesurfer.getCurrentTime?.();
-      if (d && isFinite(d) && d > 0 && isFinite(t)) {
-        wavesurfer.seekTo(t / d);
-      }
-    } catch (e) {}
-  }
-
-  // run once after ready (after layout settles)
-  wavesurfer.on('ready', () => {
-    forceWrapperTo100();
-    requestAnimationFrame(() => requestAnimationFrame(fit));
+    // resize-settle debounce (prevents flashing)
+    clearTimeout(waveformContainer._wfResizeTimer);
+    waveformContainer._wfResizeTimer = setTimeout(() => {
+      rebuild();
+    }, 180);
   });
 
-  // run on container resize
-  waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
-    waveformContainer._wfFitRaf = requestAnimationFrame(fit);
-  });
   waveformContainer._wfResizeObserver.observe(waveformContainer);
-
-  // cleanup on destroy
-  wavesurfer.on('destroy', () => {
-    if (waveformContainer._wfFitRaf) {
-      cancelAnimationFrame(waveformContainer._wfFitRaf);
-      waveformContainer._wfFitRaf = null;
-    }
-    if (waveformContainer._wfResizeObserver) {
-      waveformContainer._wfResizeObserver.disconnect();
-      waveformContainer._wfResizeObserver = null;
-    }
-    waveformContainer._wfAutoFitAttached = false;
-  });
 }
-    
+
+function initializeWaveforms() {
+  const g = window.musicPlayerPersistent;
+  const songCards = document.querySelectorAll('.song-wrapper');
+
+  const visibleCards = [];
+  const notVisibleCards = [];
+
+  const observer = new IntersectionObserver((entries) => {
+    const cardsToLoad = [];
+
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cardElement = entry.target;
+
+        if (cardElement.dataset.waveformInitialized === 'true') {
+          return;
+        }
+
+        cardsToLoad.push(cardElement);
+        observer.unobserve(cardElement);
+      }
+    });
+
     if (cardsToLoad.length > 0) {
       loadWaveformBatch(cardsToLoad);
     }
@@ -1939,29 +1980,29 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     rootMargin: '200px',
     threshold: 0
   });
-  
+
   songCards.forEach((cardElement) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
-    
+
     if (isInTemplate || hasNoData) {
       return;
     }
-    
+
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
       waveformContainer.style.opacity = '0';
       waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
     }
-    
+
     const rect = cardElement.getBoundingClientRect();
     const container = document.querySelector('.music-list-wrapper');
     const containerRect = container ? container.getBoundingClientRect() : null;
-    
-    const isVisible = containerRect && 
-                     rect.top < containerRect.bottom + 200 && 
+
+    const isVisible = containerRect &&
+                     rect.top < containerRect.bottom + 200 &&
                      rect.bottom > containerRect.top - 200;
-    
+
     if (isVisible) {
       visibleCards.push(cardElement);
     } else {
@@ -1969,11 +2010,11 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
       observer.observe(cardElement);
     }
   });
-  
+
   if (visibleCards.length > 0) {
     loadWaveformBatch(visibleCards);
   }
-  
+
   setTimeout(() => linkStandaloneToWaveform(), 100);
   setTimeout(() => linkStandaloneToWaveform(), 300);
   setTimeout(() => linkStandaloneToWaveform(), 600);
@@ -2094,7 +2135,19 @@ try {
     waveformContainers.push(waveformContainer);
     
     const peaksData = songData?.fields?.['Waveform Peaks'];
-    const storedDuration = songData?.fields?.['Duration'];
+const storedDuration = songData?.fields?.['Duration'];
+
+// cache for resize rebuilds
+waveformContainer._wfAudioUrl = audioUrl;
+waveformContainer._wfDuration = storedDuration || null;
+waveformContainer._wfPeaks = null;
+try {
+  if (peaksData && peaksData.trim().length > 0) {
+    waveformContainer._wfPeaks = JSON.parse(peaksData);
+  }
+} catch (e) {
+  waveformContainer._wfPeaks = null;
+}
     
     // Set duration immediately from Airtable data
     if (durationElement && storedDuration) {
