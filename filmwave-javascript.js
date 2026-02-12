@@ -1851,7 +1851,10 @@ function initializeWaveforms() {
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
 
-  // prevent duplicate observers
+  // mark for debugging
+  waveformContainer._wfHasAutoFit = true;
+
+  // prevent duplicate observers/raf
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
@@ -1863,7 +1866,7 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
   let lastW = 0;
 
-  function applySize() {
+  function forceRenderToContainerWidth() {
     waveformContainer._wfResizeRaf = null;
 
     const w = Math.floor(waveformContainer.clientWidth || 0);
@@ -1874,24 +1877,29 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
     try {
       const r = wavesurfer.renderer;
-      if (r?.wrapper) r.wrapper.style.width = w + 'px';
-      if (r?.canvasWrapper) r.canvasWrapper.style.width = w + 'px';
-      if (r?.progressWrapper) r.progressWrapper.style.width = w + 'px';
+      if (!r) return;
 
-      // many builds expose render() only on renderer
-      if (typeof r?.render === 'function') r.render();
-      else if (typeof wavesurfer?.render === 'function') wavesurfer.render();
+      // IMPORTANT: do NOT lock wrapper widths to px (this causes the mismatch + glitches)
+      if (r.wrapper) r.wrapper.style.width = '';
+      if (r.canvasWrapper) r.canvasWrapper.style.width = '';
+      if (r.progressWrapper) r.progressWrapper.style.width = '';
+
+      // Force renderer to "forget" old width, then render again
+      if (typeof r.lastContainerWidth !== 'undefined') r.lastContainerWidth = 0;
+
+      if (typeof r.render === 'function') r.render();
+      else if (typeof wavesurfer.render === 'function') wavesurfer.render();
     } catch (e) {}
   }
 
   // run once after ready (layout settled)
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(applySize));
+    requestAnimationFrame(() => requestAnimationFrame(forceRenderToContainerWidth));
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
     if (waveformContainer._wfResizeRaf) cancelAnimationFrame(waveformContainer._wfResizeRaf);
-    waveformContainer._wfResizeRaf = requestAnimationFrame(applySize);
+    waveformContainer._wfResizeRaf = requestAnimationFrame(forceRenderToContainerWidth);
   });
 
   waveformContainer._wfResizeObserver.observe(waveformContainer);
@@ -1905,6 +1913,7 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
       try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
+    waveformContainer._wfHasAutoFit = false;
   });
 }
     
