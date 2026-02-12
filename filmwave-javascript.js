@@ -919,7 +919,6 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 function drawMasterWaveform(peaks, progress) {
   const g = window.musicPlayerPersistent;
   if (!g) return;
-
   if (g.isTransitioning) return;
 
   const container = document.querySelector('.player-waveform-visual');
@@ -967,34 +966,38 @@ function drawMasterWaveform(peaks, progress) {
   const dpr = window.devicePixelRatio || 1;
 
   const rect = container.getBoundingClientRect();
-  const displayWidth = Math.max(0, Math.floor(rect.width));
-  const displayHeight = 25;
+  const cssW = Math.max(0, rect.width);
+  const cssH = 25;
 
-  if (!displayWidth || displayWidth < 10) return;
+  if (!cssW || cssW < 10) return;
 
-  // lock the CSS height; only backing store changes with DPR
-  canvas.style.height = displayHeight + 'px';
+  // CSS size
   canvas.style.width = '100%';
+  canvas.style.height = cssH + 'px';
 
-  canvas.width = Math.round(displayWidth * dpr);
-  canvas.height = Math.round(displayHeight * dpr);
+  // Backing store in device pixels
+  const devW = Math.max(1, Math.round(cssW * dpr));
+  const devH = Math.max(1, Math.round(cssH * dpr));
+
+  if (canvas.width !== devW) canvas.width = devW;
+  if (canvas.height !== devH) canvas.height = devH;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // draw in CSS pixels
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, displayWidth, displayHeight);
+  // IMPORTANT: draw in DEVICE PIXELS (no ctx.setTransform)
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, devW, devH);
 
   const styles = getComputedStyle(document.body);
   const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
   const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
 
-  const centerY = displayHeight / 2;
+  const centerY = devH / 2;
 
   if (!peaks || !peaks.length) {
     ctx.fillStyle = waveColor;
-    ctx.fillRect(0, centerY - 1, displayWidth, 2);
+    ctx.fillRect(0, centerY - Math.max(1, Math.round(1 * dpr)), devW, Math.max(1, Math.round(2 * dpr)));
     return;
   }
 
@@ -1007,17 +1010,12 @@ function drawMasterWaveform(peaks, progress) {
   }
   const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
-  // FIX: compute bars in *device pixels* so thickness stays constant visually,
-  // but still draw in CSS pixels by converting back.
-  const barWidthPx = 2; // desired visual thickness in CSS px
-  const barGapPx = 1;
-
-  const barWidthDev = Math.max(1, Math.round(barWidthPx * dpr));
-  const barGapDev = Math.max(0, Math.round(barGapPx * dpr));
+  // CONSTANT VISUAL WIDTH: 2 CSS px -> device px
+  const barWidthDev = Math.max(1, Math.round(2 * dpr));
+  const barGapDev = Math.max(0, Math.round(1 * dpr));
   const barTotalDev = barWidthDev + barGapDev;
 
-  const widthDev = canvas.width;
-  const barsCount = Math.max(1, Math.floor(widthDev / barTotalDev));
+  const barsCount = Math.max(1, Math.floor(devW / barTotalDev));
   const samplesPerBar = Math.max(1, Math.floor(peaks.length / barsCount));
 
   for (let i = 0; i < barsCount; i++) {
@@ -1031,14 +1029,13 @@ function drawMasterWaveform(peaks, progress) {
     }
 
     const peak = barPeak * scale;
-    const barHeight = Math.max(peak * displayHeight * 0.85, 2);
 
-    // convert device-pixel X back to CSS pixels for fillRect
-    const x = (i * barTotalDev) / dpr;
+    const barHeightDev = Math.max(Math.round(peak * devH * 0.85), Math.max(1, Math.round(2 * dpr)));
+    const xDev = i * barTotalDev;
     const barProgress = i / barsCount;
 
     ctx.fillStyle = barProgress < p ? progressColor : waveColor;
-    ctx.fillRect(x, centerY - (barHeight / 2), barWidthPx, barHeight);
+    ctx.fillRect(xDev, centerY - (barHeightDev / 2), barWidthDev, barHeightDev);
   }
 }
 
