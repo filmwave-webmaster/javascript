@@ -1851,55 +1851,60 @@ function initializeWaveforms() {
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
 
-  waveformContainer._wfAutoFitAttached = true;
-
+  // prevent duplicate observers
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
   }
-  if (waveformContainer._wfFitRaf) {
-    try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-    waveformContainer._wfFitRaf = null;
+  if (waveformContainer._wfResizeRaf) {
+    cancelAnimationFrame(waveformContainer._wfResizeRaf);
+    waveformContainer._wfResizeRaf = null;
   }
 
-  let lastWidth = 0;
+  let lastW = 0;
 
-  function fit() {
-    waveformContainer._wfFitRaf = null;
+  function applySize() {
+    waveformContainer._wfResizeRaf = null;
 
-    const duration = wavesurfer.getDuration?.();
-    if (!duration || !isFinite(duration) || duration <= 0) return;
+    const w = Math.floor(waveformContainer.clientWidth || 0);
+    if (!w || w < 10) return;
 
-    const width = waveformContainer.clientWidth;
-    if (!width || width < 10) return;
+    if (Math.abs(w - lastW) < 2) return;
+    lastW = w;
 
-    if (Math.abs(width - lastWidth) < 2) return;
-    lastWidth = width;
+    try {
+      const r = wavesurfer.renderer;
+      if (r?.wrapper) r.wrapper.style.width = w + 'px';
+      if (r?.canvasWrapper) r.canvasWrapper.style.width = w + 'px';
+      if (r?.progressWrapper) r.progressWrapper.style.width = w + 'px';
 
-    const pxPerSec = width / duration;
-    try { wavesurfer.zoom(pxPerSec); } catch (e) {}
+      // many builds expose render() only on renderer
+      if (typeof r?.render === 'function') r.render();
+      else if (typeof wavesurfer?.render === 'function') wavesurfer.render();
+    } catch (e) {}
   }
 
+  // run once after ready (layout settled)
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(fit));
+    requestAnimationFrame(() => requestAnimationFrame(applySize));
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
-    waveformContainer._wfFitRaf = requestAnimationFrame(fit);
+    if (waveformContainer._wfResizeRaf) cancelAnimationFrame(waveformContainer._wfResizeRaf);
+    waveformContainer._wfResizeRaf = requestAnimationFrame(applySize);
   });
+
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
   wavesurfer.on('destroy', () => {
-    if (waveformContainer._wfFitRaf) {
-      cancelAnimationFrame(waveformContainer._wfFitRaf);
-      waveformContainer._wfFitRaf = null;
+    if (waveformContainer._wfResizeRaf) {
+      cancelAnimationFrame(waveformContainer._wfResizeRaf);
+      waveformContainer._wfResizeRaf = null;
     }
     if (waveformContainer._wfResizeObserver) {
-      waveformContainer._wfResizeObserver.disconnect();
+      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
-    waveformContainer._wfAutoFitAttached = false;
   });
 }
     
@@ -1953,287 +1958,78 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
 /**
  * ============================================================
- * LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER
+ * INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)
  * ============================================================
  */
-function loadWaveformBatch(cardElements) {
+function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
-  const waveformPromises = [];
-  const waveformContainers = [];
-  
-  cardElements.forEach((cardElement) => {
-    const audioUrl = cardElement.dataset.audioUrl;
-    const songId = cardElement.dataset.songId;
+  const songCards = document.querySelectorAll('.song-wrapper');
 
-    let songData = {};
-    try { songData = JSON.parse(cardElement.dataset.songData || '{}'); } catch (e) {}
-    
-    if (!audioUrl) return;
-    
-    const waveformContainer = cardElement.querySelector('.waveform');
-    if (!waveformContainer) return;
+  const visibleCards = [];
+  const notVisibleCards = [];
 
-    // If an old instance exists, destroy it (prevents flashing + allows rebuild)
-    if (waveformContainer._wfResizeObserver) {
-  try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
-  waveformContainer._wfResizeObserver = null;
-}
-if (waveformContainer._wfFitRaf) {
-  try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-  waveformContainer._wfFitRaf = null;
-}
-waveformContainer._wfAutoFitAttached = false;
+  const observer = new IntersectionObserver((entries) => {
+    const cardsToLoad = [];
 
-if (waveformContainer._wavesurfer) {
-  try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
-  waveformContainer._wavesurfer = null;
-}
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
 
-    // Clear leftover DOM (wavesurfer leaves canvas + wrappers behind)
-    waveformContainer.innerHTML = '';
-    
-    const durationElement = cardElement.querySelector('.duration');
-    const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
-    const playButton = cardElement.querySelector('.play-button');
-    const songName = cardElement.querySelector('.song-name');
-    
-    waveformContainer.id = `waveform-${songId}`;
-    
-    if (playButton) {
-      const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-      
-      playButton.style.opacity = '0';
-      
-      if (!isTouchDevice) {
-        cardElement.addEventListener('mouseenter', () => playButton.style.opacity = '1');
-        cardElement.addEventListener('mouseleave', () => {
-          if (g.currentSongData?.id === songId && (g.isPlaying || g.standaloneAudio)) {
-            playButton.style.opacity = '1';
-          } else {
-            playButton.style.opacity = '0';
-          }
-        });
-      }
-    }
-    
-    // Get computed CSS variable values
-    const styles = getComputedStyle(document.body);
-    const waveColor = styles.getPropertyValue('--color-8').trim();
-    const progressColor = styles.getPropertyValue('--color-2').trim();
+      const cardElement = entry.target;
 
-    let wavesurfer;
-
-try {
-  const wsOptions = {
-  container: waveformContainer,
-  waveColor: waveColor,
-  progressColor: progressColor,
-  cursorColor: 'transparent',
-  cursorWidth: 0,
-  height: 30,
-  barWidth: 2,
-  barGap: 1,
-  normalize: true,
-  backend: 'WebAudio',
-  fillParent: true,
-  scrollParent: false,
-  interact: true,
-  hideScrollbar: true,
-  minPxPerSec: 1,
-  responsive: true
-};
-
-  // Only pass audioContext if it exists (otherwise WaveSurfer can fail)
-  if (window.sharedAudioContext) {
-    wsOptions.audioContext = window.sharedAudioContext;
-  }
-
-  wavesurfer = WaveSurfer.create(wsOptions);
-} catch (e) {
-  console.error('❌ WaveSurfer.create failed for song:', songId, e);
-  return;
-}
-
-waveformContainer._wavesurfer = wavesurfer;
-try {
-  attachWaveformAutoFit(wavesurfer, waveformContainer);
-} catch (e) {
-  console.warn('attachWaveformAutoFit failed:', e);
-}
-
-    // Track containers AFTER wavesurfer exists
-    waveformContainers.push(waveformContainer);
-    
-    const peaksData = songData?.fields?.['Waveform Peaks'];
-    const storedDuration = songData?.fields?.['Duration'];
-    
-    // Set duration immediately from Airtable data
-    if (durationElement && storedDuration) {
-      durationElement.textContent = formatDuration(storedDuration);
-    }
-
-    if (peaksData && peaksData.trim().length > 0 && storedDuration) {
-      try {
-        const peaks = JSON.parse(peaksData);
-        wavesurfer.load(audioUrl, [peaks], storedDuration);
-        console.log(`⚡ Instant load with peaks + duration (no audio fetch!)`);
-      } catch (e) {
-        console.error('Error loading peaks:', e);
-        wavesurfer.load(audioUrl);
-      }
-    } else {
-      if (!peaksData || peaksData.trim().length === 0) {
-        console.warn('⚠️ No peaks available - loading audio');
-      }
-      if (!storedDuration) {
-        console.warn('⚠️ No duration stored - loading audio');
-      }
-      wavesurfer.load(audioUrl);
-    }
-    
-    const waveformReadyPromise = new Promise((resolve) => {
-      let resolved = false;
-      
-      wavesurfer.on('ready', function () {
-        if (resolved) return;
-        resolved = true;
-        
-        const duration = wavesurfer.getDuration();
-        if (durationElement) durationElement.textContent = formatDuration(duration);
-        
-        resolve();
-        setTimeout(() => linkStandaloneToWaveform(), 50);
-      });
-      
-      setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve();
-        }
-      }, 5000);
-    });
-    
-    waveformPromises.push(waveformReadyPromise);
-    
-    g.allWavesurfers.push(wavesurfer);
-    g.waveformData.push({
-      wavesurfer,
-      cardElement,
-      waveformContainer,
-      audioUrl,
-      songData
-    });
-    
-    const handlePlayPause = (e) => {
-      if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
-      
-      // Mark that we're now using music page songs for navigation
-      g.activeSongSource = 'music';
-      
-      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-      
-      console.log('═══════════════════════════════════════════');
-      console.log('🎯 CLICK DETECTED');
-      console.log('Clicked song:', songData?.fields?.['Song Title']);
-      console.log('Clicked song ID:', songData?.id);
-      console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
-      console.log('Current song ID:', g.currentSongData?.id);
-      console.log('Is same song?', g.currentSongData?.id === songData.id);
-      console.log('═══════════════════════════════════════════');
-          
-      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-        console.log('🔀 Different song clicked - always play it');
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-        }
-        
-        g.currentWavesurfer.seekTo(0);
-        
-        // ALWAYS play when clicking a different song
-        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-      } else {
-        // Same song or no current song - toggle play/pause
-        if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-          console.log('⏯️ Toggling current song');
-          if (g.standaloneAudio.paused) {
-            g.standaloneAudio.play();
-          } else {
-            g.standaloneAudio.pause();
-          }
-        } else {
-          console.log('▶️ Playing new song');
-          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-        }
-      }
-    };
-        
-    if (coverArtWrapper) {
-      coverArtWrapper.style.cursor = 'pointer';
-      coverArtWrapper.addEventListener('click', handlePlayPause);
-    }
-
-    if (songName) {
-      songName.style.cursor = 'pointer';
-      songName.addEventListener('click', handlePlayPause);
-    }
-        
-    wavesurfer.on('interaction', function (newProgress) {
-      g.activeSongSource = 'music';
-      if (g.currentSongData?.id === songData.id) {
-        if (g.standaloneAudio) {
-          g.standaloneAudio.currentTime = newProgress;
-          updateMobileProgress(newProgress, g.standaloneAudio.duration);
-        }
+      if (cardElement.dataset.waveformInitialized === 'true') {
+        observer.unobserve(cardElement);
         return;
       }
-      
-      const wasPlaying = g.isPlaying;
-      
-      // Set border on clicked song wrapper immediately
-      document.querySelectorAll('.song-wrapper').forEach(sw => {
-        sw.style.removeProperty('border');
-      });
-      const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
-      if (songWrapper) {
-        songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
-      }
-      
-      if (g.standaloneAudio) {
-        g.standaloneAudio.pause();
-        g.standaloneAudio = null;
-      }
-      
-      if (g.currentWavesurfer) {
-        g.currentWavesurfer.seekTo(0);
-      }
-      
-      g.currentWavesurfer = wavesurfer;
-      g.hasActiveSong = true;
-      
-      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newProgress, wasPlaying);
+
+      cardsToLoad.push(cardElement);
+      observer.unobserve(cardElement);
     });
-    
-    cardElement.dataset.waveformInitialized = 'true';
+
+    if (cardsToLoad.length > 0) {
+      loadWaveformBatch(cardsToLoad);
+    }
+  }, {
+    root: document.querySelector('.music-list-wrapper'),
+    rootMargin: '200px',
+    threshold: 0
   });
-  
-  Promise.all(waveformPromises).then(() => {
-    waveformContainers.forEach((container) => {
-      container.style.opacity = '1';
-    });
+
+  songCards.forEach((cardElement) => {
+    const isInTemplate = cardElement.closest('.template-wrapper');
+    const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
+
+    if (isInTemplate || hasNoData) return;
+
+    const waveformContainer = cardElement.querySelector('.waveform');
+    if (waveformContainer) {
+      waveformContainer.style.opacity = '0';
+      waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
+    }
+
+    const rect = cardElement.getBoundingClientRect();
+    const container = document.querySelector('.music-list-wrapper');
+    const containerRect = container ? container.getBoundingClientRect() : null;
+
+    const isVisible =
+      containerRect &&
+      rect.top < containerRect.bottom + 200 &&
+      rect.bottom > containerRect.top - 200;
+
+    if (isVisible) {
+      visibleCards.push(cardElement);
+    } else {
+      notVisibleCards.push(cardElement);
+      observer.observe(cardElement);
+    }
   });
-  
-  setTimeout(() => {
-    waveformContainers.forEach((container) => {
-      if (container.style.opacity === '0') {
-        container.style.opacity = '1';
-      }
-    });
-    linkStandaloneToWaveform();
-  }, 1000);
+
+  if (visibleCards.length > 0) {
+    loadWaveformBatch(visibleCards);
+  }
+
+  setTimeout(() => linkStandaloneToWaveform(), 100);
+  setTimeout(() => linkStandaloneToWaveform(), 300);
+  setTimeout(() => linkStandaloneToWaveform(), 600);
 }
 
 /**
