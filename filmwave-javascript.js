@@ -1849,12 +1849,30 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
+  let rafId = null;
   let lastW = 0;
-  let raf = null;
-  let settleTimer = null;
 
-  function redrawNow() {
-    raf = null;
+  function applyWidth(w) {
+    const r = wavesurfer && wavesurfer.renderer;
+    if (!r) return;
+
+    try { r.lastContainerWidth = w; } catch (e) {}
+
+    // Force the internal wrappers to match the real container width
+    try {
+      if (r.wrapper && r.wrapper.style) r.wrapper.style.width = w + 'px';
+      if (r.canvasWrapper && r.canvasWrapper.style) r.canvasWrapper.style.width = w + 'px';
+      if (r.progressWrapper && r.progressWrapper.style) r.progressWrapper.style.width = w + 'px';
+    } catch (e) {}
+
+    // If render() exists, call it (safe try/catch)
+    try {
+      if (typeof r.render === 'function') r.render();
+    } catch (e) {}
+  }
+
+  function fitToWidth() {
+    rafId = null;
 
     const duration = wavesurfer.getDuration();
     if (!duration || !isFinite(duration)) return;
@@ -1862,56 +1880,31 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     const w = waveformContainer.clientWidth;
     if (!w || w < 10) return;
 
-    // stop tiny jitter + flip-flop spam
-    if (Math.abs(w - lastW) < 2) return;
+    // don’t spam on sub-pixel churn
+    if (Math.abs(w - lastW) < 1) return;
     lastW = w;
 
-    // Force a real redraw so bars re-layout (instead of CSS-stretching)
-    try {
-      const drawer = wavesurfer.drawer || wavesurfer.renderer || null;
+    applyWidth(w);
 
-      if (drawer && typeof drawer.setWidth === 'function') {
-        drawer.setWidth(w);
-      } else if (drawer && typeof drawer.updateSize === 'function') {
-        drawer.updateSize();
-      }
-
-      if (typeof wavesurfer.drawBuffer === 'function') {
-        wavesurfer.drawBuffer();
-      } else if (typeof wavesurfer.render === 'function') {
-        wavesurfer.render();
-      }
-    } catch (e) {}
-
-    // Keep px/sec tied to current width
-    wavesurfer.zoom(w / duration);
-  }
-
-  function scheduleRedraw() {
-    if (settleTimer) clearTimeout(settleTimer);
-    settleTimer = setTimeout(() => {
-      if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(redrawNow);
-    }, 60);
+    const pxPerSec = w / duration;
+    try { wavesurfer.zoom(pxPerSec); } catch (e) {}
   }
 
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(scheduleRedraw));
+    requestAnimationFrame(fitToWidth);
   });
 
   if (!waveformContainer._wfResizeObserver) {
     waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-      scheduleRedraw();
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(fitToWidth);
     });
     waveformContainer._wfResizeObserver.observe(waveformContainer);
   }
 
   wavesurfer.on('destroy', () => {
-    if (raf) cancelAnimationFrame(raf);
-    raf = null;
-
-    if (settleTimer) clearTimeout(settleTimer);
-    settleTimer = null;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
 
     if (waveformContainer._wfResizeObserver) {
       waveformContainer._wfResizeObserver.disconnect();
