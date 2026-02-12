@@ -1849,67 +1849,64 @@ function initializeWaveforms() {
     });
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  let rafId = null;
-  let lastW = 0;
+  if (!wavesurfer || !waveformContainer) return;
 
-  function applyWidth(w) {
-    const r = wavesurfer && wavesurfer.renderer;
-    if (!r) return;
+  // mark
+  waveformContainer._wfAutoFitAttached = true;
 
-    try { r.lastContainerWidth = w; } catch (e) {}
-
-    // Force the internal wrappers to match the real container width
-    try {
-      if (r.wrapper && r.wrapper.style) r.wrapper.style.width = w + 'px';
-      if (r.canvasWrapper && r.canvasWrapper.style) r.canvasWrapper.style.width = w + 'px';
-      if (r.progressWrapper && r.progressWrapper.style) r.progressWrapper.style.width = w + 'px';
-    } catch (e) {}
-
-    // If render() exists, call it (safe try/catch)
-    try {
-      if (typeof r.render === 'function') r.render();
-    } catch (e) {}
+  // kill any old observer/raf tied to this container
+  if (waveformContainer._wfResizeObserver) {
+    try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
+    waveformContainer._wfResizeObserver = null;
+  }
+  if (waveformContainer._wfFitRaf) {
+    try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
+    waveformContainer._wfFitRaf = null;
   }
 
-  function fitToWidth() {
-    rafId = null;
+  let lastWidth = 0;
 
-    const duration = wavesurfer.getDuration();
-    if (!duration || !isFinite(duration)) return;
+  function fit() {
+    waveformContainer._wfFitRaf = null;
 
-    const w = waveformContainer.clientWidth;
-    if (!w || w < 10) return;
+    const duration = wavesurfer.getDuration?.();
+    if (!duration || !isFinite(duration) || duration <= 0) return;
 
-    // don’t spam on sub-pixel churn
-    if (Math.abs(w - lastW) < 1) return;
-    lastW = w;
+    const width = waveformContainer.clientWidth;
+    if (!width || width < 10) return;
 
-    applyWidth(w);
+    // don’t spam
+    if (Math.abs(width - lastWidth) < 2) return;
+    lastWidth = width;
 
-    const pxPerSec = w / duration;
+    // this is what adds/removes bars: changes px-per-sec to match container width
+    const pxPerSec = width / duration;
     try { wavesurfer.zoom(pxPerSec); } catch (e) {}
   }
 
+  // run once when ready
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(fitToWidth);
+    requestAnimationFrame(() => requestAnimationFrame(fit));
   });
 
-  if (!waveformContainer._wfResizeObserver) {
-    waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(fitToWidth);
-    });
-    waveformContainer._wfResizeObserver.observe(waveformContainer);
-  }
+  // observe resizes
+  waveformContainer._wfResizeObserver = new ResizeObserver(() => {
+    if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
+    waveformContainer._wfFitRaf = requestAnimationFrame(fit);
+  });
+  waveformContainer._wfResizeObserver.observe(waveformContainer);
 
+  // cleanup
   wavesurfer.on('destroy', () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
-
+    if (waveformContainer._wfFitRaf) {
+      cancelAnimationFrame(waveformContainer._wfFitRaf);
+      waveformContainer._wfFitRaf = null;
+    }
     if (waveformContainer._wfResizeObserver) {
       waveformContainer._wfResizeObserver.disconnect();
       waveformContainer._wfResizeObserver = null;
     }
+    waveformContainer._wfAutoFitAttached = false;
   });
 }
     
@@ -1984,10 +1981,20 @@ function loadWaveformBatch(cardElements) {
     if (!waveformContainer) return;
 
     // If an old instance exists, destroy it (prevents flashing + allows rebuild)
-    if (waveformContainer._wavesurfer) {
-      try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
-      waveformContainer._wavesurfer = null;
-    }
+    if (waveformContainer._wfResizeObserver) {
+  try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
+  waveformContainer._wfResizeObserver = null;
+}
+if (waveformContainer._wfFitRaf) {
+  try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
+  waveformContainer._wfFitRaf = null;
+}
+waveformContainer._wfAutoFitAttached = false;
+
+if (waveformContainer._wavesurfer) {
+  try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
+  waveformContainer._wavesurfer = null;
+}
 
     // Clear leftover DOM (wavesurfer leaves canvas + wrappers behind)
     waveformContainer.innerHTML = '';
@@ -2055,13 +2062,7 @@ try {
 }
 
 waveformContainer._wavesurfer = wavesurfer;
-
-// Only call if it exists (otherwise your entire waveform init breaks)
-if (typeof attachWaveformAutoFit === 'function') {
-  attachWaveformAutoFit(wavesurfer, waveformContainer);
-} else {
-  console.warn('⚠️ attachWaveformAutoFit is not defined (skipping)');
-}
+attachWaveformAutoFit(wavesurfer, waveformContainer);
 
     // Track containers AFTER wavesurfer exists
     waveformContainers.push(waveformContainer);
