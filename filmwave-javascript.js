@@ -1851,10 +1851,8 @@ function initializeWaveforms() {
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
 
-  // mark
   waveformContainer._wfAutoFitAttached = true;
 
-  // kill any old observer/raf tied to this container
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
@@ -1875,28 +1873,23 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     const width = waveformContainer.clientWidth;
     if (!width || width < 10) return;
 
-    // don’t spam
     if (Math.abs(width - lastWidth) < 2) return;
     lastWidth = width;
 
-    // this is what adds/removes bars: changes px-per-sec to match container width
     const pxPerSec = width / duration;
     try { wavesurfer.zoom(pxPerSec); } catch (e) {}
   }
 
-  // run once when ready
   wavesurfer.on('ready', () => {
     requestAnimationFrame(() => requestAnimationFrame(fit));
   });
 
-  // observe resizes
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
     if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
     waveformContainer._wfFitRaf = requestAnimationFrame(fit);
   });
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
-  // cleanup
   wavesurfer.on('destroy', () => {
     if (waveformContainer._wfFitRaf) {
       cancelAnimationFrame(waveformContainer._wfFitRaf);
@@ -2062,7 +2055,11 @@ try {
 }
 
 waveformContainer._wavesurfer = wavesurfer;
-attachWaveformAutoFit(wavesurfer, waveformContainer);
+try {
+  attachWaveformAutoFit(wavesurfer, waveformContainer);
+} catch (e) {
+  console.warn('attachWaveformAutoFit failed:', e);
+}
 
     // Track containers AFTER wavesurfer exists
     waveformContainers.push(waveformContainer);
