@@ -1,3 +1,4 @@
+
   /**
  * ============================================================
  * FILMWAVE MUSIC PLATFORM - VERSION 44
@@ -1010,18 +1011,14 @@ function drawMasterWaveform(peaks, progress) {
 
   const p = Math.max(0, Math.min(1, Number(progress) || 0));
 
- let maxVal = 0;
-for (let i = 0; i < peaks.length; i++) {
-  const v = Math.abs(peaks[i] || 0);
-  if (v > maxVal) maxVal = v;
-}
+  // Use ONE shared scale so every card has matching normalization
+const globalMax = Number(window.musicPlayerPersistent?._cardWaveGlobalMax) || 0;
 
-// If a global max exists, use it
-// const g = window.musicPlayerPersistent;
-const globalMax = Number(g?._cardWaveGlobalMax) || 0;
-const useMax = globalMax > 0 ? globalMax : maxVal;
+// Fallback to local max if global isn’t available yet
+const localMax = Number(waveformContainer?._wfPeakMax) || 0;
 
-const scale = useMax > 0 ? (1 / useMax) : 1;
+const maxVal = globalMax > 0 ? globalMax : localMax;
+const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
   // Fixed bar thickness in CSS px; more bars as width grows
   const barWidth = 2;
@@ -2025,10 +2022,7 @@ function drawCardWaveform(waveformContainer, peaks, progress) {
   const n = arr.length;
   for (let i = 0; i < barCount; i++) {
     const idx = Math.floor((i / barCount) * n);
-    const g = window.musicPlayerPersistent;
-    const globalMax = Number(g?._cardWaveGlobalMax) || 0;
-    const denom = globalMax > 0 ? globalMax : 1;
-    const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0) / denom));
+    const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0)));
     const barH = Math.max(1, Math.floor(v * (h * 0.9)));
 
     const x = i * stride;
@@ -2143,7 +2137,7 @@ function initializeWaveforms() {
     });
 
     if (cardsToLoad.length > 0) {
-      (cardsToLoad);
+      loadWaveformBatch(cardsToLoad);
     }
   }, {
     root: document.querySelector('.music-list-wrapper'),
@@ -2179,7 +2173,7 @@ function initializeWaveforms() {
   });
 
   if (visibleCards.length > 0) {
-    (visibleCards);
+    loadWaveformBatch(visibleCards);
   }
 
   setTimeout(() => linkStandaloneToWaveform(), 100);
@@ -2283,7 +2277,7 @@ if (peaksData && typeof peaksData === 'string' && peaksData.trim().length > 0) {
 }
 waveformContainer._wfPeaks = parsedPeaks;
 
-// --- GLOBAL NORMALIZATION (store per-card max + update global max) ---
+// ===== NEW: store per-track max + update global max (for consistent normalization) =====
 let localMax = 0;
 if (Array.isArray(parsedPeaks) && parsedPeaks.length) {
   for (let i = 0; i < parsedPeaks.length; i++) {
@@ -2293,8 +2287,8 @@ if (Array.isArray(parsedPeaks) && parsedPeaks.length) {
 }
 waveformContainer._wfPeakMax = localMax;
 
-// use the existing "g" from the top of loadWaveformBatch()
-g._cardWaveGlobalMax = Math.max(Number(g._cardWaveGlobalMax) || 0, localMax);
+// global max across all cards
+g._cardWaveGlobalMax = Math.max(g._cardWaveGlobalMax || 0, localMax);
 
 // Build canvas + resize redraw
 ensureCardWaveformCanvas(waveformContainer);
@@ -2450,13 +2444,6 @@ const waveformReadyPromise = Promise.resolve().then(() => {
     
     cardElement.dataset.waveformInitialized = 'true';
   });
-
-  // --- Final redraw pass using the computed global normalization ---
-waveformContainers.forEach((c) => {
-  try {
-    drawCardWaveform(c, c._wfPeaks, c._wfProgress || 0);
-  } catch (e) {}
-});
   
   Promise.all(waveformPromises).then(() => {
     waveformContainers.forEach((container) => {
