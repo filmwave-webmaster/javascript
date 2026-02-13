@@ -2025,7 +2025,10 @@ function drawCardWaveform(waveformContainer, peaks, progress) {
   const n = arr.length;
   for (let i = 0; i < barCount; i++) {
     const idx = Math.floor((i / barCount) * n);
-    const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0)));
+    const g = window.musicPlayerPersistent;
+    const globalMax = Number(g?._cardWaveGlobalMax) || 0;
+    const denom = globalMax > 0 ? globalMax : 1;
+    const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0) / denom));
     const barH = Math.max(1, Math.floor(v * (h * 0.9)));
 
     const x = i * stride;
@@ -2291,21 +2294,8 @@ if (Array.isArray(parsedPeaks) && parsedPeaks.length) {
 }
 waveformContainer._wfPeakMax = localMax;
 
-const g = window.musicPlayerPersistent;
+// use the existing "g" from the top of loadWaveformBatch()
 g._cardWaveGlobalMax = Math.max(Number(g._cardWaveGlobalMax) || 0, localMax);
-
-// ===== NEW: store per-track max + update global max (for consistent normalization) =====
-let localMax = 0;
-if (Array.isArray(parsedPeaks) && parsedPeaks.length) {
-  for (let i = 0; i < parsedPeaks.length; i++) {
-    const v = Math.abs(parsedPeaks[i] || 0);
-    if (v > localMax) localMax = v;
-  }
-}
-waveformContainer._wfPeakMax = localMax;
-
-// global max across all cards
-g._cardWaveGlobalMax = Math.max(g._cardWaveGlobalMax || 0, localMax);
 
 // Build canvas + resize redraw
 ensureCardWaveformCanvas(waveformContainer);
