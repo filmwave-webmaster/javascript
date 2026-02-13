@@ -2323,6 +2323,8 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   // allow vertical scroll, but remove tap->click delay
   canvas.style.touchAction = 'pan-y';
 
+  canvas._wfIgnoreNextClick = false;
+
   const getClientX = (ev) => {
     if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
     if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
@@ -2330,9 +2332,13 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   };
 
   const handleSeek = (e) => {
-    // prevent the browser from waiting to synthesize a delayed "click"
-    if (e.cancelable) e.preventDefault();
-    e.stopPropagation();
+
+  canvas._wfIgnoreNextClick = true;
+  setTimeout(() => { canvas._wfIgnoreNextClick = false; }, 400);
+
+  // prevent the browser from waiting to synthesize a delayed "click"
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
 
     const g = window.musicPlayerPersistent;
     const rect = canvas.getBoundingClientRect();
@@ -2363,11 +2369,18 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   // pointer events = immediate on touch devices
   canvas.addEventListener('pointerdown', handleSeek, { passive: false });
 
-  // fallback (older iOS)
-  canvas.addEventListener('touchstart', handleSeek, { passive: false });
+// fallback (older iOS)
+canvas.addEventListener('touchstart', handleSeek, { passive: false });
 
-  // optional fallback
-  canvas.addEventListener('mousedown', handleSeek);
+// optional fallback
+canvas.addEventListener('mousedown', handleSeek);
+
+// swallow delayed mobile click after touch/pointer seek
+canvas.addEventListener('click', (e) => {
+  if (!canvas._wfIgnoreNextClick) return;
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
+}, true);
 }
 
 // No WaveSurfer "ready" now — treat as ready immediately
