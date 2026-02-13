@@ -2015,19 +2015,28 @@ function drawCardWaveform(waveformContainer, peaks, progress) {
     return;
   }
 
-  // sample peaks to barCount
-  const n = arr.length;
-  for (let i = 0; i < barCount; i++) {
-    const idx = Math.floor((i / barCount) * n);
-    const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0)));
-    const barH = Math.max(1, Math.floor(v * (h * 0.9)));
+  // normalize peaks (match master player behavior)
+let maxVal = 0;
+for (let i = 0; i < arr.length; i++) {
+  const v = Math.abs(arr[i] || 0);
+  if (v > maxVal) maxVal = v;
+}
+const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
-    const x = i * stride;
-    const y = Math.floor(midY - barH / 2);
+// sample peaks to barCount
+const n = arr.length;
+for (let i = 0; i < barCount; i++) {
+  const idx = Math.floor((i / barCount) * n);
+  const vRaw = Math.abs(arr[idx] || 0) * scale;
+  const v = Math.max(0, Math.min(1, vRaw));
+  const barH = Math.max(1, Math.floor(v * (h * 0.9)));
 
-    ctx.fillStyle = (i <= progressBars) ? progressColor : waveColor;
-    ctx.fillRect(x, y, barWidth, barH);
-  }
+  const x = i * stride;
+  const y = Math.floor(midY - barH / 2);
+
+  ctx.fillStyle = (i <= progressBars) ? progressColor : waveColor;
+  ctx.fillRect(x, y, barWidth, barH);
+}
 }
 
 function attachCardWaveformCanvasAutoRedraw(waveformContainer) {
