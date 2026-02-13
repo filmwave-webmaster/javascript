@@ -2078,18 +2078,18 @@ function attachCardWaveformCanvasAutoRedraw(waveformContainer) {
   };
 
   waveformContainer._wfCanvasRO = new ResizeObserver(() => {
+    // redraw next frame (no debounce) to avoid “stretch then snap”
     if (waveformContainer._wfCanvasRaf) {
       cancelAnimationFrame(waveformContainer._wfCanvasRaf);
       waveformContainer._wfCanvasRaf = null;
     }
-    if (waveformContainer._wfCanvasSettle) clearTimeout(waveformContainer._wfCanvasSettle);
-
-    waveformContainer._wfCanvasSettle = setTimeout(() => {
-      waveformContainer._wfCanvasRaf = requestAnimationFrame(redraw);
-    }, 60);
+    waveformContainer._wfCanvasRaf = requestAnimationFrame(redraw);
   });
 
   waveformContainer._wfCanvasRO.observe(waveformContainer);
+
+  // immediate first draw so there's never a stretched bitmap
+  waveformContainer._wfCanvasRaf = requestAnimationFrame(redraw);
 }
 
 function createCardWaveformStub(waveformContainer) {
