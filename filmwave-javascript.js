@@ -1017,7 +1017,7 @@ for (let i = 0; i < peaks.length; i++) {
 }
 
 // If a global max exists, use it
-const g = window.musicPlayerPersistent;
+// const g = window.musicPlayerPersistent;
 const globalMax = Number(g?._cardWaveGlobalMax) || 0;
 const useMax = globalMax > 0 ? globalMax : maxVal;
 
@@ -2143,7 +2143,7 @@ function initializeWaveforms() {
     });
 
     if (cardsToLoad.length > 0) {
-      loadWaveformBatch(cardsToLoad);
+      (cardsToLoad);
     }
   }, {
     root: document.querySelector('.music-list-wrapper'),
@@ -2179,7 +2179,7 @@ function initializeWaveforms() {
   });
 
   if (visibleCards.length > 0) {
-    loadWaveformBatch(visibleCards);
+    (visibleCards);
   }
 
   setTimeout(() => linkStandaloneToWaveform(), 100);
