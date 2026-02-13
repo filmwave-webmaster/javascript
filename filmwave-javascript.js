@@ -1823,75 +1823,74 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
 
-  waveformContainer._wfHasAutoFit = true;
+  waveformContainer._wfAutoFitAttached = true;
 
-  // prevent duplicate observers
+  // prevent duplicates
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
   }
-  if (waveformContainer._wfResizeRaf) {
-    try { cancelAnimationFrame(waveformContainer._wfResizeRaf); } catch (e) {}
-    waveformContainer._wfResizeRaf = null;
+  if (waveformContainer._wfFitRaf) {
+    try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
+    waveformContainer._wfFitRaf = null;
+  }
+  if (waveformContainer._wfFitTimer) {
+    try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
+    waveformContainer._wfFitTimer = null;
   }
 
   let lastW = 0;
-  let settleTimer = null;
 
-  function doRender() {
+  function fitNow() {
     const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
     if (!w || w < 10) return;
 
     if (Math.abs(w - lastW) < 2) return;
     lastW = w;
 
+    const dur = Number(wavesurfer.getDuration?.() || 0);
+    if (!dur || !isFinite(dur) || dur <= 0) return;
+
+    // This is the key: change pxPerSec so bars get added/removed
+    const pxPerSec = w / dur;
+
     try {
-      const r = wavesurfer.renderer;
-      if (!r) return;
-
-      // IMPORTANT: remove any hard px widths that “lock” the bar layout
-      if (r.wrapper) r.wrapper.style.width = '100%';
-      if (r.canvasWrapper) r.canvasWrapper.style.width = '100%';
-      if (r.progressWrapper) r.progressWrapper.style.width = '100%';
-
-      // Force a full re-render so bars are recalculated for the new width
-      if (typeof r.render === 'function') r.render();
-      else if (typeof wavesurfer.render === 'function') wavesurfer.render();
+      if (typeof wavesurfer.zoom === 'function') {
+        wavesurfer.zoom(pxPerSec);
+      }
     } catch (e) {}
   }
 
-  // run once after ready (layout settled)
+  // wait until ready so duration exists (prevents the wavesurfer.js "duration" undefined errors)
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(doRender));
+    requestAnimationFrame(() => requestAnimationFrame(fitNow));
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    if (waveformContainer._wfResizeRaf) {
-      cancelAnimationFrame(waveformContainer._wfResizeRaf);
-    }
-    waveformContainer._wfResizeRaf = requestAnimationFrame(() => {
-      // debounce a bit to avoid “flash while dragging resize”
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(doRender, 120);
-    });
+    // debounce until resize settles (reduces flashing)
+    if (waveformContainer._wfFitTimer) clearTimeout(waveformContainer._wfFitTimer);
+    waveformContainer._wfFitTimer = setTimeout(() => {
+      if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
+      waveformContainer._wfFitRaf = requestAnimationFrame(fitNow);
+    }, 140);
   });
 
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
   wavesurfer.on('destroy', () => {
-    if (settleTimer) {
-      clearTimeout(settleTimer);
-      settleTimer = null;
+    if (waveformContainer._wfFitRaf) {
+      cancelAnimationFrame(waveformContainer._wfFitRaf);
+      waveformContainer._wfFitRaf = null;
     }
-    if (waveformContainer._wfResizeRaf) {
-      cancelAnimationFrame(waveformContainer._wfResizeRaf);
-      waveformContainer._wfResizeRaf = null;
+    if (waveformContainer._wfFitTimer) {
+      clearTimeout(waveformContainer._wfFitTimer);
+      waveformContainer._wfFitTimer = null;
     }
     if (waveformContainer._wfResizeObserver) {
       try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
-    waveformContainer._wfHasAutoFit = false;
+    waveformContainer._wfAutoFitAttached = false;
   });
 }
 
@@ -2055,7 +2054,7 @@ try {
   interact: true,
   hideScrollbar: true,
   minPxPerSec: 1,
-  responsive: true
+  responsive: false
 };
 
   // Only pass audioContext if it exists (otherwise WaveSurfer can fail)
@@ -2064,21 +2063,14 @@ try {
   }
 
 wavesurfer = WaveSurfer.create(wsOptions);
-
-// attach resize->rerender (bars added/removed)
-attachWaveformAutoFit(wavesurfer, waveformContainer);
-
 } catch (e) {
   console.error('❌ WaveSurfer.create failed for song:', songId, e);
   return;
 }
 
 waveformContainer._wavesurfer = wavesurfer;
-try {
-  attachWaveformAutoFit(wavesurfer, waveformContainer);
-} catch (e) {
-  console.warn('attachWaveformAutoFit failed:', e);
-}
+attachWaveformAutoFit(wavesurfer, waveformContainer);
+
 
     // Track containers AFTER wavesurfer exists
     waveformContainers.push(waveformContainer);
