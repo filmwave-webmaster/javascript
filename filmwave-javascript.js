@@ -1913,6 +1913,169 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
 /**
  * ============================================================
+ * SONG CARD WAVEFORMS (CANVAS RENDERER - OPTION A)
+ * ============================================================
+ */
+
+function ensureCardWaveformCanvas(waveformContainer) {
+  if (!waveformContainer) return null;
+
+  let canvas = waveformContainer.querySelector('canvas.__cardWaveCanvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.className = '__cardWaveCanvas';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    canvas.style.pointerEvents = 'auto';
+    waveformContainer.innerHTML = '';
+    waveformContainer.appendChild(canvas);
+  }
+
+  return canvas;
+}
+
+function drawCardWaveform(waveformContainer, peaks, progress) {
+  const canvas = ensureCardWaveformCanvas(waveformContainer);
+  if (!canvas) return;
+
+  const rect = waveformContainer.getBoundingClientRect();
+  const w = Math.floor(rect.width || 0);
+  const h = Math.floor(rect.height || 0) || 30;
+
+  if (w < 10 || h < 4) return;
+
+  // match device pixel ratio for crisp bars
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const styles = getComputedStyle(document.body);
+  const waveColor = styles.getPropertyValue('--color-8').trim() || '#2c2c2c';
+  const progressColor = styles.getPropertyValue('--color-2').trim() || '#ffffff';
+
+  const barWidth = 2;
+  const barGap = 1;
+  const stride = barWidth + barGap;
+
+  const barCount = Math.max(1, Math.floor(w / stride));
+  const midY = h / 2;
+
+  const p = Math.max(0, Math.min(1, Number(progress) || 0));
+  const progressBars = Math.floor(barCount * p);
+
+  // peaks can be:
+  // - array of floats [-1..1] (preferred)
+  // - array of arrays (stereo) -> use [0]
+  let arr = peaks;
+  if (Array.isArray(peaks) && Array.isArray(peaks[0])) arr = peaks[0];
+  if (!Array.isArray(arr) || arr.length === 0) {
+    // draw a simple baseline if no peaks
+    ctx.fillStyle = waveColor;
+    ctx.fillRect(0, Math.floor(midY), w, 1);
+    return;
+  }
+
+  // sample peaks to barCount
+  const n = arr.length;
+  for (let i = 0; i < barCount; i++) {
+    const idx = Math.floor((i / barCount) * n);
+    const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0)));
+    const barH = Math.max(1, Math.floor(v * (h * 0.9)));
+
+    const x = i * stride;
+    const y = Math.floor(midY - barH / 2);
+
+    ctx.fillStyle = (i <= progressBars) ? progressColor : waveColor;
+    ctx.fillRect(x, y, barWidth, barH);
+  }
+}
+
+function attachCardWaveformCanvasAutoRedraw(waveformContainer) {
+  if (!waveformContainer) return;
+
+  // prevent duplicates
+  if (waveformContainer._wfCanvasRO) {
+    try { waveformContainer._wfCanvasRO.disconnect(); } catch (e) {}
+    waveformContainer._wfCanvasRO = null;
+  }
+  if (waveformContainer._wfCanvasRaf) {
+    try { cancelAnimationFrame(waveformContainer._wfCanvasRaf); } catch (e) {}
+    waveformContainer._wfCanvasRaf = null;
+  }
+  if (waveformContainer._wfCanvasSettle) {
+    clearTimeout(waveformContainer._wfCanvasSettle);
+    waveformContainer._wfCanvasSettle = null;
+  }
+
+  const redraw = () => {
+    waveformContainer._wfCanvasRaf = null;
+    drawCardWaveform(
+      waveformContainer,
+      waveformContainer._wfPeaks,
+      waveformContainer._wfProgress || 0
+    );
+  };
+
+  waveformContainer._wfCanvasRO = new ResizeObserver(() => {
+    if (waveformContainer._wfCanvasRaf) {
+      cancelAnimationFrame(waveformContainer._wfCanvasRaf);
+      waveformContainer._wfCanvasRaf = null;
+    }
+    if (waveformContainer._wfCanvasSettle) clearTimeout(waveformContainer._wfCanvasSettle);
+
+    waveformContainer._wfCanvasSettle = setTimeout(() => {
+      waveformContainer._wfCanvasRaf = requestAnimationFrame(redraw);
+    }, 60);
+  });
+
+  waveformContainer._wfCanvasRO.observe(waveformContainer);
+}
+
+function createCardWaveformStub(waveformContainer) {
+  return {
+    __isCardCanvasStub: true,
+    container: waveformContainer,
+    seekTo(p) {
+      waveformContainer._wfProgress = Math.max(0, Math.min(1, Number(p) || 0));
+      drawCardWaveform(waveformContainer, waveformContainer._wfPeaks, waveformContainer._wfProgress);
+    },
+    getDuration() {
+      return Number(waveformContainer._wfStoredDuration) || 0;
+    },
+    getCurrentTime() {
+      const d = this.getDuration();
+      const p = Math.max(0, Math.min(1, Number(waveformContainer._wfProgress) || 0));
+      return d * p;
+    },
+    on() {},
+    once() {},
+    unAll() {},
+    destroy() {
+      if (waveformContainer._wfCanvasSettle) {
+        clearTimeout(waveformContainer._wfCanvasSettle);
+        waveformContainer._wfCanvasSettle = null;
+      }
+      if (waveformContainer._wfCanvasRaf) {
+        cancelAnimationFrame(waveformContainer._wfCanvasRaf);
+        waveformContainer._wfCanvasRaf = null;
+      }
+      if (waveformContainer._wfCanvasRO) {
+        try { waveformContainer._wfCanvasRO.disconnect(); } catch (e) {}
+        waveformContainer._wfCanvasRO = null;
+      }
+    }
+  };
+}
+
+/**
+ * ============================================================
  * INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)
  * ============================================================
  */
@@ -2054,107 +2217,77 @@ if (waveformContainer._wavesurfer) {
 
     let wavesurfer;
 
-try {
-  const wsOptions = {
-  container: waveformContainer,
-  waveColor: waveColor,
-  progressColor: progressColor,
-  cursorColor: 'transparent',
-  cursorWidth: 0,
-  height: 30,
-  barWidth: 2,
-  barGap: 1,
-  normalize: true,
-  backend: 'WebAudio',
-  fillParent: true,
-  scrollParent: false,
-  interact: true,
-  hideScrollbar: true,
-  minPxPerSec: 1,
-  responsive: false
-};
+// Track containers
+waveformContainers.push(waveformContainer);
 
-  // Only pass audioContext if it exists (otherwise WaveSurfer can fail)
-  if (window.sharedAudioContext) {
-    wsOptions.audioContext = window.sharedAudioContext;
-  }
+// Peaks + duration from Airtable
+const peaksData = songData?.fields?.['Waveform Peaks'];
+const storedDuration = Number(songData?.fields?.['Duration']) || 0;
 
-wavesurfer = WaveSurfer.create(wsOptions);
-} catch (e) {
-  console.error('❌ WaveSurfer.create failed for song:', songId, e);
-  return;
+// Set duration immediately (no audio fetch)
+if (durationElement && storedDuration) {
+  durationElement.textContent = formatDuration(storedDuration);
 }
 
+// Store on container for canvas renderer + seeking math
+waveformContainer._wfStoredDuration = storedDuration || 0;
+waveformContainer._wfAudioUrl = audioUrl;
+waveformContainer._wfProgress = 0;
+
+// Parse peaks once and store
+let parsedPeaks = null;
+if (peaksData && typeof peaksData === 'string' && peaksData.trim().length > 0) {
+  try { parsedPeaks = JSON.parse(peaksData); } catch (e) { parsedPeaks = null; }
+}
+waveformContainer._wfPeaks = parsedPeaks;
+
+// Build canvas + resize redraw
+ensureCardWaveformCanvas(waveformContainer);
+attachCardWaveformCanvasAutoRedraw(waveformContainer);
+
+// Initial draw (progress = 0)
+drawCardWaveform(waveformContainer, waveformContainer._wfPeaks, 0);
+
+// Create stub so the rest of your system can keep using seekTo(), destroy(), etc.
+wavesurfer = createCardWaveformStub(waveformContainer);
 waveformContainer._wavesurfer = wavesurfer;
 
-// always hard-reset progress on first ready (prevents “100% on load”)
-wavesurfer.once('ready', () => {
-  try { wavesurfer.seekTo(0); } catch (e) {}
-});
+// Clicking the waveform seeks (and if it’s not the current song, it plays from that time)
+const canvas = waveformContainer.querySelector('canvas.__cardWaveCanvas');
+if (canvas && !canvas._wfCanvasClickBound) {
+  canvas._wfCanvasClickBound = true;
 
-// attach resize auto-fit (your attachWaveformAutoFit must use zoom, NOT wrapper width hacks)
-attachWaveformAutoFit(wavesurfer, waveformContainer);
+  canvas.addEventListener('click', (e) => {
+    const g = window.musicPlayerPersistent;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
 
-    // Track containers AFTER wavesurfer exists
-    waveformContainers.push(waveformContainer);
-    
-    const peaksData = songData?.fields?.['Waveform Peaks'];
-    const storedDuration = songData?.fields?.['Duration'];
+    const dur =
+      (g?.currentSongData?.id === songData?.id && g?.standaloneAudio?.duration)
+        ? Number(g.standaloneAudio.duration) || storedDuration
+        : storedDuration;
 
-    waveformContainer._wfStoredDuration = storedDuration;
-if (storedDuration && storedDuration > 0) {
-  try {
-    const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
-    const pxPerSec = w > 0 ? Math.max(1, w / storedDuration) : 1;
-    wavesurfer.zoom(pxPerSec);
-  } catch (e) {}
+    const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
+
+    // If this is the current song, just seek
+    if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
+      try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
+      // also update the card progress immediately
+      wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+      return;
+    }
+
+    // Otherwise, start this song at newTime
+    const wasPlaying = !!g?.isPlaying;
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
+  });
 }
-    
-    // Set duration immediately from Airtable data
-    if (durationElement && storedDuration) {
-      durationElement.textContent = formatDuration(storedDuration);
-    }
 
-    if (peaksData && peaksData.trim().length > 0 && storedDuration) {
-      try {
-        const peaks = JSON.parse(peaksData);
-        wavesurfer.load(audioUrl, [peaks], storedDuration);
-        console.log(`⚡ Instant load with peaks + duration (no audio fetch!)`);
-      } catch (e) {
-        console.error('Error loading peaks:', e);
-        wavesurfer.load(audioUrl);
-      }
-    } else {
-      if (!peaksData || peaksData.trim().length === 0) {
-        console.warn('⚠️ No peaks available - loading audio');
-      }
-      if (!storedDuration) {
-        console.warn('⚠️ No duration stored - loading audio');
-      }
-      wavesurfer.load(audioUrl);
-    }
-    
-    const waveformReadyPromise = new Promise((resolve) => {
-      let resolved = false;
-      
-      wavesurfer.on('ready', function () {
-        if (resolved) return;
-        resolved = true;
-        
-        const duration = wavesurfer.getDuration();
-        if (durationElement) durationElement.textContent = formatDuration(duration);
-        
-        resolve();
-        setTimeout(() => linkStandaloneToWaveform(), 50);
-      });
-      
-      setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve();
-        }
-      }, 5000);
-    });
+// No WaveSurfer "ready" now — treat as ready immediately
+const waveformReadyPromise = Promise.resolve().then(() => {
+  setTimeout(() => linkStandaloneToWaveform(), 50);
+});
     
     waveformPromises.push(waveformReadyPromise);
     
