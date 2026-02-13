@@ -1995,9 +1995,9 @@ function drawCardWaveform(waveformContainer, peaks, progress) {
 
   const barWidth = 2;
   const barGap = 1;
-  const stride = barWidth + barGap;
+  const barTotal = barWidth + barGap;
 
-  const barCount = Math.max(1, Math.floor(w / stride));
+  const barCount = Math.max(1, Math.floor(w / barTotal));
   const midY = h / 2;
 
   const p = Math.max(0, Math.min(1, Number(progress) || 0));
@@ -2005,37 +2005,50 @@ function drawCardWaveform(waveformContainer, peaks, progress) {
 
   // peaks can be:
   // - array of floats [-1..1] (preferred)
+  // - typed array (Float32Array)
   // - array of arrays (stereo) -> use [0]
   let arr = peaks;
   if (Array.isArray(peaks) && Array.isArray(peaks[0])) arr = peaks[0];
-  if (!Array.isArray(arr) || arr.length === 0) {
+
+  if (!arr || typeof arr.length !== 'number' || arr.length === 0) {
     // draw a simple baseline if no peaks
     ctx.fillStyle = waveColor;
     ctx.fillRect(0, Math.floor(midY), w, 1);
     return;
   }
 
-  // normalize peaks (match master player behavior)
-let maxVal = 0;
-for (let i = 0; i < arr.length; i++) {
-  const v = Math.abs(arr[i] || 0);
-  if (v > maxVal) maxVal = v;
-}
-const scale = maxVal > 0 ? (1 / maxVal) : 1;
+  // normalize (match master waveform)
+  let maxVal = 0;
+  for (let i = 0; i < arr.length; i++) {
+    const v = Math.abs(arr[i] || 0);
+    if (v > maxVal) maxVal = v;
+  }
+  const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
-// sample peaks to barCount
-const n = arr.length;
-for (let i = 0; i < barCount; i++) {
-  const idx = Math.floor((i / barCount) * n);
-  const v = Math.max(0, Math.min(1, Math.abs(arr[idx] || 0)));
-  const barH = Math.max(1, Math.floor(v * (h * 0.9)));
+  // peak-per-bar buckets (match master waveform)
+  const samplesPerBar = Math.max(1, Math.ceil(arr.length / barCount));
 
-  const x = i * stride;
-  const y = Math.floor(midY - barH / 2);
+  for (let i = 0; i < barCount; i++) {
+    const start = i * samplesPerBar;
+    const end = Math.min(arr.length, start + samplesPerBar);
 
-  ctx.fillStyle = (i <= progressBars) ? progressColor : waveColor;
-  ctx.fillRect(x, y, barWidth, barH);
-}
+    let barPeak = 0;
+    for (let j = start; j < end; j++) {
+      const v = Math.abs(arr[j] || 0);
+      if (v > barPeak) barPeak = v;
+    }
+
+    const peak = barPeak * scale;
+
+    const maxBarHeight = h * 0.85;
+    const barH = Math.max(2, Math.min(maxBarHeight, peak * maxBarHeight));
+
+    const x = i * barTotal;
+
+    // FIX: no 1-bar “sliver” when p = 0
+    ctx.fillStyle = (i < progressBars) ? progressColor : waveColor;
+    ctx.fillRect(x, midY - (barH / 2), barWidth, barH);
+  }
 }
 
 function attachCardWaveformCanvasAutoRedraw(waveformContainer) {
