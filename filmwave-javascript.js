@@ -1825,7 +1825,7 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
   waveformContainer._wfAutoFitAttached = true;
 
-  // prevent duplicates
+  // prevent duplicate observers
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
@@ -1834,57 +1834,55 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
     waveformContainer._wfFitRaf = null;
   }
-  if (waveformContainer._wfFitTimer) {
-    try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
-    waveformContainer._wfFitTimer = null;
+
+  let lastWidth = 0;
+  let settleTimer = null;
+
+  function fit() {
+    waveformContainer._wfFitRaf = null;
+
+    const duration = wavesurfer.getDuration?.();
+    if (!duration || !isFinite(duration) || duration <= 0) return;
+
+    const width = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
+    if (!width || width < 10) return;
+
+    if (Math.abs(width - lastWidth) < 2) return;
+    lastWidth = width;
+
+    const pxPerSec = width / duration;
+
+    // ✅ this is the key: forces a re-layout so bar count changes instead of stretching
+    try { wavesurfer.zoom(pxPerSec); } catch (e) {}
   }
 
-  let lastW = 0;
-
-  function fitNow() {
-    const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
-    if (!w || w < 10) return;
-
-    if (Math.abs(w - lastW) < 2) return;
-    lastW = w;
-
-    const dur = Number(wavesurfer.getDuration?.() || 0);
-    if (!dur || !isFinite(dur) || dur <= 0) return;
-
-    // This is the key: change pxPerSec so bars get added/removed
-    const pxPerSec = w / dur;
-
-    try {
-      if (typeof wavesurfer.zoom === 'function') {
-        wavesurfer.zoom(pxPerSec);
-      }
-    } catch (e) {}
-  }
-
-  // wait until ready so duration exists (prevents the wavesurfer.js "duration" undefined errors)
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(fitNow));
+    // let layout settle
+    requestAnimationFrame(() => requestAnimationFrame(fit));
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    // debounce until resize settles (reduces flashing)
-    if (waveformContainer._wfFitTimer) clearTimeout(waveformContainer._wfFitTimer);
-    waveformContainer._wfFitTimer = setTimeout(() => {
-      if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
-      waveformContainer._wfFitRaf = requestAnimationFrame(fitNow);
-    }, 140);
+    if (waveformContainer._wfFitRaf) {
+      try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
+    }
+
+    // small settle debounce to reduce flashing while dragging resize
+    if (settleTimer) clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      waveformContainer._wfFitRaf = requestAnimationFrame(fit);
+    }, 120);
   });
 
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
   wavesurfer.on('destroy', () => {
-    if (waveformContainer._wfFitRaf) {
-      cancelAnimationFrame(waveformContainer._wfFitRaf);
-      waveformContainer._wfFitRaf = null;
+    if (settleTimer) {
+      clearTimeout(settleTimer);
+      settleTimer = null;
     }
-    if (waveformContainer._wfFitTimer) {
-      clearTimeout(waveformContainer._wfFitTimer);
-      waveformContainer._wfFitTimer = null;
+    if (waveformContainer._wfFitRaf) {
+      try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
+      waveformContainer._wfFitRaf = null;
     }
     if (waveformContainer._wfResizeObserver) {
       try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
@@ -2069,8 +2067,14 @@ wavesurfer = WaveSurfer.create(wsOptions);
 }
 
 waveformContainer._wavesurfer = wavesurfer;
-attachWaveformAutoFit(wavesurfer, waveformContainer);
 
+// always hard-reset progress on first ready (prevents “100% on load”)
+wavesurfer.once('ready', () => {
+  try { wavesurfer.seekTo(0); } catch (e) {}
+});
+
+// attach resize auto-fit (your attachWaveformAutoFit must use zoom, NOT wrapper width hacks)
+attachWaveformAutoFit(wavesurfer, waveformContainer);
 
     // Track containers AFTER wavesurfer exists
     waveformContainers.push(waveformContainer);
