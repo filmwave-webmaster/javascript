@@ -2023,19 +2023,37 @@ for (let i = 0; i < arr.length; i++) {
 }
 const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
-// sample peaks to barCount
-const n = arr.length;
+// normalize (match master waveform)
+let maxVal = 0;
+for (let i = 0; i < arr.length; i++) {
+  const v = Math.abs(arr[i] || 0);
+  if (v > maxVal) maxVal = v;
+}
+const scale = maxVal > 0 ? (1 / maxVal) : 1;
+
+// peak-per-bar buckets (match master waveform)
+const samplesPerBar = Math.max(1, Math.ceil(arr.length / barCount));
+
 for (let i = 0; i < barCount; i++) {
-  const idx = Math.floor((i / barCount) * n);
-  const vRaw = Math.abs(arr[idx] || 0) * scale;
-  const v = Math.max(0, Math.min(1, vRaw));
-  const barH = Math.max(1, Math.floor(v * (h * 0.9)));
+  const start = i * samplesPerBar;
+  const end = Math.min(arr.length, start + samplesPerBar);
+
+  let barPeak = 0;
+  for (let j = start; j < end; j++) {
+    const v = Math.abs(arr[j] || 0);
+    if (v > barPeak) barPeak = v;
+  }
+
+  const peak = barPeak * scale;
+
+  const maxBarHeight = h * 0.85;
+  const barH = Math.max(2, Math.min(maxBarHeight, peak * maxBarHeight));
 
   const x = i * stride;
-  const y = Math.floor(midY - barH / 2);
+  const barProgress = i / barCount;
 
-  ctx.fillStyle = (i <= progressBars) ? progressColor : waveColor;
-  ctx.fillRect(x, y, barWidth, barH);
+  ctx.fillStyle = (i < progressBars) ? progressColor : waveColor;
+  ctx.fillRect(x, midY - (barH / 2), barWidth, barH);
 }
 }
 
