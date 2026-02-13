@@ -1665,7 +1665,14 @@ function linkStandaloneToWaveform() {
     
     if (g.standaloneAudio.duration > 0) {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-      wavesurfer.seekTo(progress);
+      // If user just manually tapped a card waveform while paused, don't overwrite it yet
+if (!window.musicPlayerPersistent?.isPlaying) {
+  const holdUntil = waveformContainer._wfManualSeekHoldUntil || 0;
+  if (Date.now() < holdUntil) return;
+}
+
+wavesurfer.seekTo(progress);
+
     }
   }
 }
@@ -2352,8 +2359,11 @@ if (canvas && !canvas._wfCanvasSeekBound) {
 
     const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
 
-    // Update card progress immediately (no lag)
-    wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+// Hold this manual seek for a moment so paused/loading logic can’t overwrite it
+waveformContainer._wfManualSeekHoldUntil = Date.now() + 1200;
+
+// Update card progress immediately (no lag)
+wavesurfer.seekTo(dur ? (newTime / dur) : 0);
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
