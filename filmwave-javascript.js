@@ -1990,8 +1990,17 @@ function drawCardWaveform(waveformContainer, peaks, progress) {
   ctx.clearRect(0, 0, w, h);
 
   const styles = getComputedStyle(document.body);
-  const waveColor = styles.getPropertyValue('--color-8').trim() || '#2c2c2c';
-  const progressColor = styles.getPropertyValue('--color-2').trim() || '#ffffff';
+
+const waveColor =
+  styles.getPropertyValue('--waveform-base-color').trim() ||
+  styles.getPropertyValue('--color-8').trim() ||
+  '#2c2c2c';
+
+const progressColor =
+  styles.getPropertyValue('--waveform-progress-color').trim() ||
+  styles.getPropertyValue('--color-2').trim() ||
+  '#ffffff';
+
 
   const barWidth = 2;
   const barGap = 1;
@@ -2851,6 +2860,12 @@ function initDarkMode() {
           : (g.currentWavesurfer ? g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration() : 0);
         drawMasterWaveform(g.currentPeaksData, progress || 0);
       }
+
+      // Redraw ALL song card canvas waveforms (so theme color changes apply)
+document.querySelectorAll('.waveform').forEach((wf) => {
+  if (!wf || !wf._wfPeaks) return;
+  drawCardWaveform(wf, wf._wfPeaks, wf._wfProgress || 0);
+});
       
       console.log('🎨 Waveform colors updated');
     }, 50);
