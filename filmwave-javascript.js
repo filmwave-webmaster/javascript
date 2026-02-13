@@ -2461,6 +2461,13 @@ const waveformReadyPromise = Promise.resolve().then(() => {
     
     cardElement.dataset.waveformInitialized = 'true';
   });
+
+  // --- Final redraw pass using the computed global normalization ---
+waveformContainers.forEach((c) => {
+  try {
+    drawCardWaveform(c, c._wfPeaks, c._wfProgress || 0);
+  } catch (e) {}
+});
   
   Promise.all(waveformPromises).then(() => {
     waveformContainers.forEach((container) => {
