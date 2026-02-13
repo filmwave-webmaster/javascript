@@ -1970,6 +1970,16 @@ function ensureCardWaveformCanvas(waveformContainer) {
     canvas.style.pointerEvents = 'auto';
     waveformContainer.innerHTML = '';
     waveformContainer.appendChild(canvas);
+
+    // ✅ IMPORTANT: prevent mobile "ghost click" / bubbling that triggers other card handlers
+    const stop = (e) => {
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+    };
+
+    canvas.addEventListener('click', stop, true);
+    canvas.addEventListener('touchend', stop, true);
+    canvas.addEventListener('pointerup', stop, true);
   }
 
   return canvas;
