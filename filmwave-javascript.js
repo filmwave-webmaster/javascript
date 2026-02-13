@@ -2323,51 +2323,52 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   // allow vertical scroll, but remove tap->click delay
   canvas.style.touchAction = 'pan-y';
 
-  canvas._wfIgnoreNextClick = false;
+  // Use a timestamp instead of a short boolean window.
+// iOS can fire the delayed click well after 400ms.
+canvas._wfLastSeekTs = 0;
 
-  const getClientX = (ev) => {
-    if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
-    if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
-    return ev.clientX;
-  };
+const getClientX = (ev) => {
+  if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
+  if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
+  return ev.clientX;
+};
 
-  const handleSeek = (e) => {
-
-  canvas._wfIgnoreNextClick = true;
-  setTimeout(() => { canvas._wfIgnoreNextClick = false; }, 400);
+const handleSeek = (e) => {
+  // mark seek time so we can swallow the delayed click reliably
+  canvas._wfLastSeekTs = Date.now();
 
   // prevent the browser from waiting to synthesize a delayed "click"
   if (e.cancelable) e.preventDefault();
-  e.stopPropagation();
+  e.stopImmediatePropagation();
 
-    const g = window.musicPlayerPersistent;
-    const rect = canvas.getBoundingClientRect();
-    const x = getClientX(e) - rect.left;
-    const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
+  const g = window.musicPlayerPersistent;
+  const rect = canvas.getBoundingClientRect();
+  const x = getClientX(e) - rect.left;
+  const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
 
-    const dur =
-      (g?.currentSongData?.id === songData?.id && g?.standaloneAudio?.duration)
-        ? Number(g.standaloneAudio.duration) || storedDuration
-        : storedDuration;
+  const dur =
+    (g?.currentSongData?.id === songData?.id && g?.standaloneAudio?.duration)
+      ? Number(g.standaloneAudio.duration) || storedDuration
+      : storedDuration;
 
-    const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
+  const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
 
-    // Update card progress immediately (no lag)
-    wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+  // Update card progress immediately (no lag)
+  wavesurfer.seekTo(dur ? (newTime / dur) : 0);
 
-    // If this is the current song, just seek
-    if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
-      try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
-      return;
-    }
+  // If this is the current song, just seek
+  if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
+    try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
+    return;
+  }
 
-    // Otherwise, start this song at newTime
-    const wasPlaying = !!g?.isPlaying;
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
-  };
+  // Otherwise, start this song at newTime
+  const wasPlaying = !!g?.isPlaying;
+  playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
+};
 
-  // pointer events = immediate on touch devices
-  canvas.addEventListener('pointerdown', handleSeek, { passive: false });
+// pointer events = immediate on touch devices
+canvas.addEventListener('pointerdown', handleSeek, { passive: false });
 
 // fallback (older iOS)
 canvas.addEventListener('touchstart', handleSeek, { passive: false });
@@ -2377,9 +2378,13 @@ canvas.addEventListener('mousedown', handleSeek);
 
 // swallow delayed mobile click after touch/pointer seek
 canvas.addEventListener('click', (e) => {
-  if (!canvas._wfIgnoreNextClick) return;
-  if (e.cancelable) e.preventDefault();
-  e.stopPropagation();
+  const msSinceSeek = Date.now() - (canvas._wfLastSeekTs || 0);
+
+  // iOS delayed click can be late — give it a bigger window
+  if (msSinceSeek > 0 && msSinceSeek < 1500) {
+    if (e.cancelable) e.preventDefault();
+    e.stopImmediatePropagation();
+  }
 }, true);
 }
 
