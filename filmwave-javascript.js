@@ -1960,54 +1960,6 @@ function initializeWaveforms() {
   setTimeout(() => linkStandaloneToWaveform(), 300);
   setTimeout(() => linkStandaloneToWaveform(), 600);
 }
-    
-    if (cardsToLoad.length > 0) {
-      loadWaveformBatch(cardsToLoad);
-    }
-  }, {
-    root: document.querySelector('.music-list-wrapper'),
-    rootMargin: '200px',
-    threshold: 0
-  });
-  
-  songCards.forEach((cardElement) => {
-    const isInTemplate = cardElement.closest('.template-wrapper');
-    const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
-    
-    if (isInTemplate || hasNoData) {
-      return;
-    }
-    
-    const waveformContainer = cardElement.querySelector('.waveform');
-    if (waveformContainer) {
-      waveformContainer.style.opacity = '0';
-      waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
-    }
-    
-    const rect = cardElement.getBoundingClientRect();
-    const container = document.querySelector('.music-list-wrapper');
-    const containerRect = container ? container.getBoundingClientRect() : null;
-    
-    const isVisible = containerRect && 
-                     rect.top < containerRect.bottom + 200 && 
-                     rect.bottom > containerRect.top - 200;
-    
-    if (isVisible) {
-      visibleCards.push(cardElement);
-    } else {
-      notVisibleCards.push(cardElement);
-      observer.observe(cardElement);
-    }
-  });
-  
-  if (visibleCards.length > 0) {
-    loadWaveformBatch(visibleCards);
-  }
-  
-  setTimeout(() => linkStandaloneToWaveform(), 100);
-  setTimeout(() => linkStandaloneToWaveform(), 300);
-  setTimeout(() => linkStandaloneToWaveform(), 600);
-}
 
 /**
  * ============================================================
