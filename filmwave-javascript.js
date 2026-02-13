@@ -1823,6 +1823,8 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
 
+  waveformContainer._wfHasAutoFit = true;
+
   // prevent duplicate observers
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
@@ -1832,79 +1834,64 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     try { cancelAnimationFrame(waveformContainer._wfResizeRaf); } catch (e) {}
     waveformContainer._wfResizeRaf = null;
   }
-  if (waveformContainer._wfResizeTimer) {
-    try { clearTimeout(waveformContainer._wfResizeTimer); } catch (e) {}
-    waveformContainer._wfResizeTimer = null;
-  }
 
   let lastW = 0;
+  let settleTimer = null;
 
-  function applySize() {
-    waveformContainer._wfResizeRaf = null;
-
+  function doRender() {
     const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
     if (!w || w < 10) return;
 
     if (Math.abs(w - lastW) < 2) return;
     lastW = w;
 
-    // capture current progress so render doesn't visually jump
-    let p = 0;
-    try {
-      const d = wavesurfer.getDuration?.() || 0;
-      const t = wavesurfer.getCurrentTime?.() || 0;
-      if (d > 0 && isFinite(d) && isFinite(t)) p = Math.max(0, Math.min(1, t / d));
-    } catch (e) {}
-
     try {
       const r = wavesurfer.renderer;
+      if (!r) return;
 
-      // IMPORTANT:
-      // do NOT force px widths (fights flex), do NOT touch progressWrapper width (causes 100%)
-      if (r?.wrapper) r.wrapper.style.width = '100%';
-      if (r?.canvasWrapper) r.canvasWrapper.style.width = '100%';
+      // IMPORTANT: remove any hard px widths that “lock” the bar layout
+      if (r.wrapper) r.wrapper.style.width = '100%';
+      if (r.canvasWrapper) r.canvasWrapper.style.width = '100%';
+      if (r.progressWrapper) r.progressWrapper.style.width = '100%';
 
-      // force renderer to treat this as a real resize
-      if (r && 'lastContainerWidth' in r) r.lastContainerWidth = 0;
-
-      // redraw (this is what updates bar count based on new canvas width)
-      if (typeof r?.render === 'function') r.render();
-      else if (typeof wavesurfer?.render === 'function') wavesurfer.render();
-
-      // restore progress (prevents “stuck at 100%” or jumping)
-      try { wavesurfer.seekTo(p); } catch (e) {}
+      // Force a full re-render so bars are recalculated for the new width
+      if (typeof r.render === 'function') r.render();
+      else if (typeof wavesurfer.render === 'function') wavesurfer.render();
     } catch (e) {}
   }
 
   // run once after ready (layout settled)
   wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(applySize));
+    requestAnimationFrame(() => requestAnimationFrame(doRender));
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    // debounce resize to reduce flashing
-    if (waveformContainer._wfResizeTimer) clearTimeout(waveformContainer._wfResizeTimer);
-    waveformContainer._wfResizeTimer = setTimeout(() => {
-      if (waveformContainer._wfResizeRaf) cancelAnimationFrame(waveformContainer._wfResizeRaf);
-      waveformContainer._wfResizeRaf = requestAnimationFrame(applySize);
-    }, 120);
+    if (waveformContainer._wfResizeRaf) {
+      cancelAnimationFrame(waveformContainer._wfResizeRaf);
+    }
+    waveformContainer._wfResizeRaf = requestAnimationFrame(() => {
+      // debounce a bit to avoid “flash while dragging resize”
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(doRender, 120);
+    });
   });
 
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
   wavesurfer.on('destroy', () => {
+    if (settleTimer) {
+      clearTimeout(settleTimer);
+      settleTimer = null;
+    }
     if (waveformContainer._wfResizeRaf) {
       cancelAnimationFrame(waveformContainer._wfResizeRaf);
       waveformContainer._wfResizeRaf = null;
-    }
-    if (waveformContainer._wfResizeTimer) {
-      clearTimeout(waveformContainer._wfResizeTimer);
-      waveformContainer._wfResizeTimer = null;
     }
     if (waveformContainer._wfResizeObserver) {
       try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
+    waveformContainer._wfHasAutoFit = false;
   });
 }
 
@@ -1924,16 +1911,14 @@ function initializeWaveforms() {
     const cardsToLoad = [];
 
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const cardElement = entry.target;
+      if (!entry.isIntersecting) return;
 
-        if (cardElement.dataset.waveformInitialized === 'true') {
-          return;
-        }
+      const cardElement = entry.target;
 
-        cardsToLoad.push(cardElement);
-        observer.unobserve(cardElement);
-      }
+      if (cardElement.dataset.waveformInitialized === 'true') return;
+
+      cardsToLoad.push(cardElement);
+      observer.unobserve(cardElement);
     });
 
     if (cardsToLoad.length > 0) {
@@ -1948,10 +1933,7 @@ function initializeWaveforms() {
   songCards.forEach((cardElement) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
-
-    if (isInTemplate || hasNoData) {
-      return;
-    }
+    if (isInTemplate || hasNoData) return;
 
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
@@ -1964,8 +1946,8 @@ function initializeWaveforms() {
     const containerRect = container ? container.getBoundingClientRect() : null;
 
     const isVisible = containerRect &&
-                     rect.top < containerRect.bottom + 200 &&
-                     rect.bottom > containerRect.top - 200;
+      rect.top < containerRect.bottom + 200 &&
+      rect.bottom > containerRect.top - 200;
 
     if (isVisible) {
       visibleCards.push(cardElement);
@@ -2081,7 +2063,11 @@ try {
     wsOptions.audioContext = window.sharedAudioContext;
   }
 
-  wavesurfer = WaveSurfer.create(wsOptions);
+wavesurfer = WaveSurfer.create(wsOptions);
+
+// attach resize->rerender (bars added/removed)
+attachWaveformAutoFit(wavesurfer, waveformContainer);
+
 } catch (e) {
   console.error('❌ WaveSurfer.create failed for song:', songId, e);
   return;
