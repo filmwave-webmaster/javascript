@@ -1036,7 +1036,8 @@ function drawMasterWaveform(peaks, progress) {
     }
 
     const peak = barPeak * scale;
-    const barHeight = Math.max(peak * displayHeight * 0.85, 2);
+    const maxBarHeight = displayHeight * 0.85;
+    const barHeight = Math.max(2, Math.min(maxBarHeight, peak * maxBarHeight));
 
     const x = i * barTotal;
     const barProgress = i / barsCount;
