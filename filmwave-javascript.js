@@ -2194,7 +2194,6 @@ function initializeWaveforms() {
  */
 function loadWaveformBatch(cardElements) {
   const g = window.musicPlayerPersistent;
-  g._cardWaveGlobalMax = 0;
   const waveformPromises = [];
   const waveformContainers = [];
   
