@@ -1825,7 +1825,7 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
 
   waveformContainer._wfAutoFitAttached = true;
 
-  // prevent duplicate observers
+  // prevent duplicates
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
     waveformContainer._wfResizeObserver = null;
@@ -1834,9 +1834,13 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
     waveformContainer._wfFitRaf = null;
   }
+  if (waveformContainer._wfFitTimer) {
+    try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
+    waveformContainer._wfFitTimer = null;
+  }
 
-  let lastWidth = 0;
-  let settleTimer = null;
+  let lastW = 0;
+  let lastPxPerSec = 0;
 
   function fit() {
     waveformContainer._wfFitRaf = null;
@@ -1847,38 +1851,53 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
     if (!w || w < 10) return;
 
+    // ignore 0-width / collapsing states during layout/filters
+    if (w <= 2) return;
+
+    // avoid thrash
+    if (Math.abs(w - lastW) < 2) return;
+    lastW = w;
+
     const pxPerSec = Math.max(1, w / duration);
-    wavesurfer.zoom(pxPerSec);
 
-    const pxPerSec = width / duration;
+    // avoid re-zooming when change is tiny (reduces flashing)
+    if (Math.abs(pxPerSec - lastPxPerSec) < 0.5) return;
+    lastPxPerSec = pxPerSec;
 
-    // ✅ this is the key: forces a re-layout so bar count changes instead of stretching
-    try { wavesurfer.zoom(pxPerSec); } catch (e) {}
+    try {
+      if (typeof wavesurfer.zoom === 'function') wavesurfer.zoom(pxPerSec);
+    } catch (e) {}
   }
 
-  wavesurfer.on('ready', () => {
-    // let layout settle
+  // run once after ready (layout settled)
+  wavesurfer.once('ready', () => {
+    // IMPORTANT: do NOT seek here (seeking here is what can show 100% on load if something else seeks later)
     requestAnimationFrame(() => requestAnimationFrame(fit));
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
     if (waveformContainer._wfFitRaf) {
       try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
+      waveformContainer._wfFitRaf = null;
     }
 
-    // small settle debounce to reduce flashing while dragging resize
-    if (settleTimer) clearTimeout(settleTimer);
-    settleTimer = setTimeout(() => {
+    if (waveformContainer._wfFitTimer) {
+      try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
+      waveformContainer._wfFitTimer = null;
+    }
+
+    // debounce while actively resizing
+    waveformContainer._wfFitTimer = setTimeout(() => {
       waveformContainer._wfFitRaf = requestAnimationFrame(fit);
-    }, 120);
+    }, 150);
   });
 
   waveformContainer._wfResizeObserver.observe(waveformContainer);
 
-  wavesurfer.on('destroy', () => {
-    if (settleTimer) {
-      clearTimeout(settleTimer);
-      settleTimer = null;
+  wavesurfer.once('destroy', () => {
+    if (waveformContainer._wfFitTimer) {
+      try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
+      waveformContainer._wfFitTimer = null;
     }
     if (waveformContainer._wfFitRaf) {
       try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
