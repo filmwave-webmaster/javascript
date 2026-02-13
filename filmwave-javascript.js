@@ -1841,14 +1841,14 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   function fit() {
     waveformContainer._wfFitRaf = null;
 
-    const duration = wavesurfer.getDuration?.();
+    const duration = wavesurfer.getDuration?.() || waveformContainer._wfStoredDuration;
     if (!duration || !isFinite(duration) || duration <= 0) return;
 
-    const width = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
-    if (!width || width < 10) return;
+    const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
+    if (!w || w < 10) return;
 
-    if (Math.abs(width - lastWidth) < 2) return;
-    lastWidth = width;
+    const pxPerSec = Math.max(1, w / duration);
+    wavesurfer.zoom(pxPerSec);
 
     const pxPerSec = width / duration;
 
@@ -2081,6 +2081,15 @@ attachWaveformAutoFit(wavesurfer, waveformContainer);
     
     const peaksData = songData?.fields?.['Waveform Peaks'];
     const storedDuration = songData?.fields?.['Duration'];
+
+    waveformContainer._wfStoredDuration = storedDuration;
+if (storedDuration && storedDuration > 0) {
+  try {
+    const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
+    const pxPerSec = w > 0 ? Math.max(1, w / storedDuration) : 1;
+    wavesurfer.zoom(pxPerSec);
+  } catch (e) {}
+}
     
     // Set duration immediately from Airtable data
     if (durationElement && storedDuration) {
