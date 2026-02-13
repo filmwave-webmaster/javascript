@@ -1010,16 +1010,12 @@ function drawMasterWaveform(peaks, progress) {
 
   const p = Math.max(0, Math.min(1, Number(progress) || 0));
 
-  const g = window.musicPlayerPersistent;
-
-// Use ONE shared scale so every card has matching normalization
-const globalMax = Number(g?._cardWaveGlobalMax) || 0;
-
-// Fallback to local max if global isn’t available yet
-const localMax = Number(waveformContainer?._wfPeakMax) || 0;
-
-const maxVal = globalMax > 0 ? globalMax : localMax;
-const scale = maxVal > 0 ? (1 / maxVal) : 1;
+  let maxVal = 0;
+  for (let i = 0; i < peaks.length; i++) {
+    const v = Math.abs(peaks[i] || 0);
+    if (v > maxVal) maxVal = v;
+  }
+  const scale = maxVal > 0 ? (1 / maxVal) : 1;
 
   // Fixed bar thickness in CSS px; more bars as width grows
   const barWidth = 2;
@@ -2277,19 +2273,6 @@ if (peaksData && typeof peaksData === 'string' && peaksData.trim().length > 0) {
   try { parsedPeaks = JSON.parse(peaksData); } catch (e) { parsedPeaks = null; }
 }
 waveformContainer._wfPeaks = parsedPeaks;
-
-// ===== NEW: store per-track max + update global max (for consistent normalization) =====
-let localMax = 0;
-if (Array.isArray(parsedPeaks) && parsedPeaks.length) {
-  for (let i = 0; i < parsedPeaks.length; i++) {
-    const v = Math.abs(parsedPeaks[i] || 0);
-    if (v > localMax) localMax = v;
-  }
-}
-waveformContainer._wfPeakMax = localMax;
-
-// global max across all cards
-g._cardWaveGlobalMax = Math.max(g._cardWaveGlobalMax || 0, localMax);
 
 // Build canvas + resize redraw
 ensureCardWaveformCanvas(waveformContainer);
