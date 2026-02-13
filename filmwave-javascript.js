@@ -2315,15 +2315,28 @@ drawCardWaveform(waveformContainer, waveformContainer._wfPeaks, 0);
 wavesurfer = createCardWaveformStub(waveformContainer);
 waveformContainer._wavesurfer = wavesurfer;
 
-// Clicking the waveform seeks (and if it’s not the current song, it plays from that time)
+// Clicking/touching the waveform seeks (instant on mobile)
 const canvas = waveformContainer.querySelector('canvas.__cardWaveCanvas');
-if (canvas && !canvas._wfCanvasClickBound) {
-  canvas._wfCanvasClickBound = true;
+if (canvas && !canvas._wfCanvasSeekBound) {
+  canvas._wfCanvasSeekBound = true;
 
-  canvas.addEventListener('click', (e) => {
+  // allow vertical scroll, but remove tap->click delay
+  canvas.style.touchAction = 'pan-y';
+
+  const getClientX = (ev) => {
+    if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
+    if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
+    return ev.clientX;
+  };
+
+  const handleSeek = (e) => {
+    // prevent the browser from waiting to synthesize a delayed "click"
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+
     const g = window.musicPlayerPersistent;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const x = getClientX(e) - rect.left;
     const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
 
     const dur =
@@ -2333,18 +2346,28 @@ if (canvas && !canvas._wfCanvasClickBound) {
 
     const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
 
+    // Update card progress immediately (no lag)
+    wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
       try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
-      // also update the card progress immediately
-      wavesurfer.seekTo(dur ? (newTime / dur) : 0);
       return;
     }
 
     // Otherwise, start this song at newTime
     const wasPlaying = !!g?.isPlaying;
     playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
-  });
+  };
+
+  // pointer events = immediate on touch devices
+  canvas.addEventListener('pointerdown', handleSeek, { passive: false });
+
+  // fallback (older iOS)
+  canvas.addEventListener('touchstart', handleSeek, { passive: false });
+
+  // optional fallback
+  canvas.addEventListener('mousedown', handleSeek);
 }
 
 // No WaveSurfer "ready" now — treat as ready immediately
