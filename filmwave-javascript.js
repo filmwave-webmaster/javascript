@@ -1820,6 +1820,71 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime, shouldAutoPlay);
 }
 
+function attachWaveformAutoFit(wavesurfer, waveformContainer) {
+  if (!wavesurfer || !waveformContainer) return;
+
+  waveformContainer._wfAutoFitAttached = true;
+
+  // prevent duplicate observers
+  if (waveformContainer._wfResizeObserver) {
+    try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
+    waveformContainer._wfResizeObserver = null;
+  }
+  if (waveformContainer._wfResizeRaf) {
+    try { cancelAnimationFrame(waveformContainer._wfResizeRaf); } catch (e) {}
+    waveformContainer._wfResizeRaf = null;
+  }
+
+  let lastW = 0;
+
+  function applySize() {
+    waveformContainer._wfResizeRaf = null;
+
+    const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
+    if (!w || w < 10) return;
+
+    if (Math.abs(w - lastW) < 2) return;
+    lastW = w;
+
+    try {
+      const r = wavesurfer.renderer;
+      if (r?.wrapper) r.wrapper.style.width = w + 'px';
+      if (r?.canvasWrapper) r.canvasWrapper.style.width = w + 'px';
+      if (r?.progressWrapper) r.progressWrapper.style.width = w + 'px';
+
+      // redraw (this is what causes bars to be added/removed instead of stretched)
+      if (typeof r?.render === 'function') r.render();
+      else if (typeof wavesurfer?.render === 'function') wavesurfer.render();
+    } catch (e) {}
+  }
+
+  // run once after ready (layout settled)
+  wavesurfer.on('ready', () => {
+    requestAnimationFrame(() => requestAnimationFrame(applySize));
+  });
+
+  waveformContainer._wfResizeObserver = new ResizeObserver(() => {
+    if (waveformContainer._wfResizeRaf) {
+      cancelAnimationFrame(waveformContainer._wfResizeRaf);
+    }
+    waveformContainer._wfResizeRaf = requestAnimationFrame(applySize);
+  });
+
+  waveformContainer._wfResizeObserver.observe(waveformContainer);
+
+  wavesurfer.on('destroy', () => {
+    if (waveformContainer._wfResizeRaf) {
+      cancelAnimationFrame(waveformContainer._wfResizeRaf);
+      waveformContainer._wfResizeRaf = null;
+    }
+    if (waveformContainer._wfResizeObserver) {
+      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
+      waveformContainer._wfResizeObserver = null;
+    }
+    waveformContainer._wfAutoFitAttached = false;
+  });
+}
+
 /**
  * ============================================================
  * INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)
@@ -1828,25 +1893,73 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
-  
+
   const visibleCards = [];
   const notVisibleCards = [];
-  
+
   const observer = new IntersectionObserver((entries) => {
     const cardsToLoad = [];
-    
+
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const cardElement = entry.target;
-        
+
         if (cardElement.dataset.waveformInitialized === 'true') {
           return;
         }
-        
+
         cardsToLoad.push(cardElement);
         observer.unobserve(cardElement);
       }
     });
+
+    if (cardsToLoad.length > 0) {
+      loadWaveformBatch(cardsToLoad);
+    }
+  }, {
+    root: document.querySelector('.music-list-wrapper'),
+    rootMargin: '200px',
+    threshold: 0
+  });
+
+  songCards.forEach((cardElement) => {
+    const isInTemplate = cardElement.closest('.template-wrapper');
+    const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
+
+    if (isInTemplate || hasNoData) {
+      return;
+    }
+
+    const waveformContainer = cardElement.querySelector('.waveform');
+    if (waveformContainer) {
+      waveformContainer.style.opacity = '0';
+      waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
+    }
+
+    const rect = cardElement.getBoundingClientRect();
+    const container = document.querySelector('.music-list-wrapper');
+    const containerRect = container ? container.getBoundingClientRect() : null;
+
+    const isVisible = containerRect &&
+                     rect.top < containerRect.bottom + 200 &&
+                     rect.bottom > containerRect.top - 200;
+
+    if (isVisible) {
+      visibleCards.push(cardElement);
+    } else {
+      notVisibleCards.push(cardElement);
+      observer.observe(cardElement);
+    }
+  });
+
+  if (visibleCards.length > 0) {
+    loadWaveformBatch(visibleCards);
+  }
+
+  setTimeout(() => linkStandaloneToWaveform(), 100);
+  setTimeout(() => linkStandaloneToWaveform(), 300);
+  setTimeout(() => linkStandaloneToWaveform(), 600);
+}
 
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
