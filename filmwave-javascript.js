@@ -1066,38 +1066,70 @@ function updatePlayerCoverArtIcons(isPlaying) {
 
 function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   const g = window.musicPlayerPersistent;
-  
+
   g.currentWavesurfer = wavesurfer;
   g.currentSongData = songData;
   g.hasActiveSong = true;
-  
+
   updateMasterPlayerVisibility();
-  
+
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
     playerWrapper.style.alignItems = 'center';
   }
-  
-    updateMasterPlayerInfo(songData, wavesurfer);
-  
+
+  updateMasterPlayerInfo(songData, wavesurfer);
+
+  const computeProgress = () => {
+    if (forcedProgress !== null) return forcedProgress;
+
+    if (g.standaloneAudio && g.standaloneAudio.duration && isFinite(g.standaloneAudio.duration) && g.standaloneAudio.duration > 0) {
+      const p = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
+      return isFinite(p) ? p : 0;
+    }
+
+    try {
+      const d = wavesurfer.getDuration?.() || 0;
+      const t = wavesurfer.getCurrentTime?.() || 0;
+      if (d > 0 && isFinite(d) && isFinite(t)) return t / d;
+    } catch (e) {}
+
+    return 0;
+  };
+
+  // Prefer Airtable peaks (works even when WaveSurfer never decodes)
+  try {
+    const peaksData = songData?.fields?.['Waveform Peaks'];
+    if (peaksData && typeof peaksData === 'string' && peaksData.trim().length > 0) {
+      const peaksArr = JSON.parse(peaksData);
+      if (Array.isArray(peaksArr) && peaksArr.length > 0) {
+        g.currentPeaksData = new Float32Array(peaksArr);
+        drawMasterWaveform(g.currentPeaksData, computeProgress());
+        return;
+      }
+    }
+  } catch (e) {}
+
+  // Fallback: decoded peaks (only available after decode)
   const getAndDrawPeaks = () => {
     if (g.currentWavesurfer !== wavesurfer) return;
     try {
-      const decodedData = wavesurfer.getDecodedData();
+      const decodedData = wavesurfer.getDecodedData?.();
       if (decodedData) {
         g.currentPeaksData = decodedData.getChannelData(0);
-        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
-        drawMasterWaveform(g.currentPeaksData, progress);
+        drawMasterWaveform(g.currentPeaksData, computeProgress());
       }
     } catch (e) {}
   };
-  
-  if (wavesurfer.getDecodedData()) {
-    getAndDrawPeaks();
-  } else {
-    wavesurfer.once('decode', getAndDrawPeaks);
-  }
+
+  try {
+    if (wavesurfer.getDecodedData?.()) {
+      getAndDrawPeaks();
+    } else if (typeof wavesurfer.once === 'function') {
+      wavesurfer.once('decode', getAndDrawPeaks);
+    }
+  } catch (e) {}
 }
 
 function setupMasterPlayerControls() {
