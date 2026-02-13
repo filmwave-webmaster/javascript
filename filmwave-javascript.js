@@ -1665,14 +1665,7 @@ function linkStandaloneToWaveform() {
     
     if (g.standaloneAudio.duration > 0) {
       const progress = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-      // If user just manually tapped a card waveform while paused, don't overwrite it yet
-if (!window.musicPlayerPersistent?.isPlaying) {
-  const holdUntil = waveformContainer._wfManualSeekHoldUntil || 0;
-  if (Date.now() < holdUntil) return;
-}
-
-wavesurfer.seekTo(progress);
-
+      wavesurfer.seekTo(progress);
     }
   }
 }
@@ -1970,16 +1963,6 @@ function ensureCardWaveformCanvas(waveformContainer) {
     canvas.style.pointerEvents = 'auto';
     waveformContainer.innerHTML = '';
     waveformContainer.appendChild(canvas);
-
-    // ✅ IMPORTANT: prevent mobile "ghost click" / bubbling that triggers other card handlers
-    const stop = (e) => {
-      if (e.cancelable) e.preventDefault();
-      e.stopPropagation();
-    };
-
-    canvas.addEventListener('click', stop, true);
-    canvas.addEventListener('touchend', stop, true);
-    canvas.addEventListener('pointerup', stop, true);
   }
 
   return canvas;
@@ -2369,11 +2352,8 @@ if (canvas && !canvas._wfCanvasSeekBound) {
 
     const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
 
-// Hold this manual seek for a moment so paused/loading logic can’t overwrite it
-waveformContainer._wfManualSeekHoldUntil = Date.now() + 1200;
-
-// Update card progress immediately (no lag)
-wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+    // Update card progress immediately (no lag)
+    wavesurfer.seekTo(dur ? (newTime / dur) : 0);
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
