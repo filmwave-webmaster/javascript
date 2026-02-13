@@ -1960,61 +1960,6 @@ function initializeWaveforms() {
   setTimeout(() => linkStandaloneToWaveform(), 300);
   setTimeout(() => linkStandaloneToWaveform(), 600);
 }
-
-function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  if (!wavesurfer || !waveformContainer) return;
-
-  waveformContainer._wfAutoFitAttached = true;
-
-  if (waveformContainer._wfResizeObserver) {
-    try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
-    waveformContainer._wfResizeObserver = null;
-  }
-  if (waveformContainer._wfFitRaf) {
-    try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-    waveformContainer._wfFitRaf = null;
-  }
-
-  let lastWidth = 0;
-
-  function fit() {
-    waveformContainer._wfFitRaf = null;
-
-    const duration = wavesurfer.getDuration?.();
-    if (!duration || !isFinite(duration) || duration <= 0) return;
-
-    const width = waveformContainer.clientWidth;
-    if (!width || width < 10) return;
-
-    if (Math.abs(width - lastWidth) < 2) return;
-    lastWidth = width;
-
-    const pxPerSec = width / duration;
-    try { wavesurfer.zoom(pxPerSec); } catch (e) {}
-  }
-
-  wavesurfer.on('ready', () => {
-    requestAnimationFrame(() => requestAnimationFrame(fit));
-  });
-
-  waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    if (waveformContainer._wfFitRaf) cancelAnimationFrame(waveformContainer._wfFitRaf);
-    waveformContainer._wfFitRaf = requestAnimationFrame(fit);
-  });
-  waveformContainer._wfResizeObserver.observe(waveformContainer);
-
-  wavesurfer.on('destroy', () => {
-    if (waveformContainer._wfFitRaf) {
-      cancelAnimationFrame(waveformContainer._wfFitRaf);
-      waveformContainer._wfFitRaf = null;
-    }
-    if (waveformContainer._wfResizeObserver) {
-      waveformContainer._wfResizeObserver.disconnect();
-      waveformContainer._wfResizeObserver = null;
-    }
-    waveformContainer._wfAutoFitAttached = false;
-  });
-}
     
     if (cardsToLoad.length > 0) {
       loadWaveformBatch(cardsToLoad);
