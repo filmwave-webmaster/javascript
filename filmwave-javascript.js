@@ -1823,8 +1823,6 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
 function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (!wavesurfer || !waveformContainer) return;
 
-  waveformContainer._wfAutoFitAttached = true;
-
   // prevent duplicate observers
   if (waveformContainer._wfResizeObserver) {
     try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
@@ -1833,6 +1831,10 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   if (waveformContainer._wfResizeRaf) {
     try { cancelAnimationFrame(waveformContainer._wfResizeRaf); } catch (e) {}
     waveformContainer._wfResizeRaf = null;
+  }
+  if (waveformContainer._wfResizeTimer) {
+    try { clearTimeout(waveformContainer._wfResizeTimer); } catch (e) {}
+    waveformContainer._wfResizeTimer = null;
   }
 
   let lastW = 0;
@@ -1846,15 +1848,31 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
     if (Math.abs(w - lastW) < 2) return;
     lastW = w;
 
+    // capture current progress so render doesn't visually jump
+    let p = 0;
+    try {
+      const d = wavesurfer.getDuration?.() || 0;
+      const t = wavesurfer.getCurrentTime?.() || 0;
+      if (d > 0 && isFinite(d) && isFinite(t)) p = Math.max(0, Math.min(1, t / d));
+    } catch (e) {}
+
     try {
       const r = wavesurfer.renderer;
-      if (r?.wrapper) r.wrapper.style.width = w + 'px';
-      if (r?.canvasWrapper) r.canvasWrapper.style.width = w + 'px';
-      if (r?.progressWrapper) r.progressWrapper.style.width = w + 'px';
 
-      // redraw (this is what causes bars to be added/removed instead of stretched)
+      // IMPORTANT:
+      // do NOT force px widths (fights flex), do NOT touch progressWrapper width (causes 100%)
+      if (r?.wrapper) r.wrapper.style.width = '100%';
+      if (r?.canvasWrapper) r.canvasWrapper.style.width = '100%';
+
+      // force renderer to treat this as a real resize
+      if (r && 'lastContainerWidth' in r) r.lastContainerWidth = 0;
+
+      // redraw (this is what updates bar count based on new canvas width)
       if (typeof r?.render === 'function') r.render();
       else if (typeof wavesurfer?.render === 'function') wavesurfer.render();
+
+      // restore progress (prevents “stuck at 100%” or jumping)
+      try { wavesurfer.seekTo(p); } catch (e) {}
     } catch (e) {}
   }
 
@@ -1864,10 +1882,12 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
   });
 
   waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    if (waveformContainer._wfResizeRaf) {
-      cancelAnimationFrame(waveformContainer._wfResizeRaf);
-    }
-    waveformContainer._wfResizeRaf = requestAnimationFrame(applySize);
+    // debounce resize to reduce flashing
+    if (waveformContainer._wfResizeTimer) clearTimeout(waveformContainer._wfResizeTimer);
+    waveformContainer._wfResizeTimer = setTimeout(() => {
+      if (waveformContainer._wfResizeRaf) cancelAnimationFrame(waveformContainer._wfResizeRaf);
+      waveformContainer._wfResizeRaf = requestAnimationFrame(applySize);
+    }, 120);
   });
 
   waveformContainer._wfResizeObserver.observe(waveformContainer);
@@ -1877,11 +1897,14 @@ function attachWaveformAutoFit(wavesurfer, waveformContainer) {
       cancelAnimationFrame(waveformContainer._wfResizeRaf);
       waveformContainer._wfResizeRaf = null;
     }
+    if (waveformContainer._wfResizeTimer) {
+      clearTimeout(waveformContainer._wfResizeTimer);
+      waveformContainer._wfResizeTimer = null;
+    }
     if (waveformContainer._wfResizeObserver) {
       try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
       waveformContainer._wfResizeObserver = null;
     }
-    waveformContainer._wfAutoFitAttached = false;
   });
 }
 
