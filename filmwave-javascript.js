@@ -2052,7 +2052,7 @@ for (let i = 0; i < barCount; i++) {
   const x = i * stride;
   const barProgress = i / barCount;
 
-  ctx.fillStyle = (i < progressBars) ? progressColor : waveColor;
+  ctx.fillStyle = (i <= progressBars) ? progressColor : waveColor;
   ctx.fillRect(x, midY - (barH / 2), barWidth, barH);
 }
 }
