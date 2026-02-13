@@ -1010,10 +1010,8 @@ function drawMasterWaveform(peaks, progress) {
 
   const p = Math.max(0, Math.min(1, Number(progress) || 0));
 
-  const g = window.musicPlayerPersistent;
-
-// Use ONE shared scale so every card has matching normalization
-const globalMax = Number(g?._cardWaveGlobalMax) || 0;
+  // Use ONE shared scale so every card has matching normalization
+const globalMax = Number(window.musicPlayerPersistent?._cardWaveGlobalMax) || 0;
 
 // Fallback to local max if global isn’t available yet
 const localMax = Number(waveformContainer?._wfPeakMax) || 0;
