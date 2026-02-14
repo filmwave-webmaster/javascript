@@ -1852,22 +1852,25 @@ if (seekToTime !== null && seekToTime < audio.duration) {
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
   
-    if (shouldAutoPlay) {
+// Start playback first, then do UI updates asynchronously
+  if (shouldAutoPlay) {
     audio.play().catch(err => {
       if (err && err.name === 'AbortError') return;
       console.error('Playback error:', err);
     });
   }
   
-  // Pass seekToTime as forcedProgress so master waveform shows correct position immediately
-  if (seekToTime !== null) {
-    const dur = songData?.fields?.['Duration'] || 0;
-    const forcedProgress = (dur > 0) ? (seekToTime / dur) : null;
-    syncMasterTrack(wavesurfer, songData, forcedProgress);
-  } else {
-    syncMasterTrack(wavesurfer, songData);
-  }
-  updateMasterPlayerVisibility();
+  // Defer heavy UI work to not block audio playback
+  requestAnimationFrame(() => {
+    if (seekToTime !== null) {
+      const dur = songData?.fields?.['Duration'] || 0;
+      const forcedProgress = (dur > 0) ? (seekToTime / dur) : null;
+      syncMasterTrack(wavesurfer, songData, forcedProgress);
+    } else {
+      syncMasterTrack(wavesurfer, songData);
+    }
+    updateMasterPlayerVisibility();
+  });
   
   return audio;
 }
