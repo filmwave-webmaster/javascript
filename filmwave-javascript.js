@@ -1716,6 +1716,9 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     audio.addEventListener('timeupdate', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
+    
+    // Skip early timeupdate events before seek is applied
+    if (seekToTime !== null && audio.currentTime < 0.1 && audio.currentTime < seekToTime - 0.5) return;
       
     g.currentTime = audio.currentTime;
       
