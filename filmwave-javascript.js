@@ -2372,7 +2372,7 @@ if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
   return;
 }
 
-  // Otherwise: load this song into the master player.
+      // Otherwise: load this song into the master player.
   // Only auto-play if something was already playing.
   const wasPlaying = !!g?.isPlaying;
 
@@ -2381,7 +2381,7 @@ if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
 
   // show/load player on click; seek to tapped time
   playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
-
+};
 
 // pointer events = immediate on touch devices
 canvas.addEventListener('pointerdown', handleSeek, { passive: false });
