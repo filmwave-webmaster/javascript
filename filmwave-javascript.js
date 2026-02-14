@@ -2372,6 +2372,11 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   };
 
   const handleSeek = (e) => {
+    // Prevent double-firing from multiple event types
+    if (canvas._lastSeekTime && Date.now() - canvas._lastSeekTime < 300) {
+      return;
+    }
+    canvas._lastSeekTime = Date.now();
 
   canvas._wfIgnoreNextClick = true;
   setTimeout(() => { canvas._wfIgnoreNextClick = false; }, 400);
