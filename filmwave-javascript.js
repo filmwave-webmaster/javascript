@@ -1743,6 +1743,11 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   if (songId && g._preloadedAudio?.has(songId)) {
     audio = g._preloadedAudio.get(songId);
     g._preloadedAudio.delete(songId);
+    // Ensure preloaded audio is stopped and reset
+    try { 
+      audio.pause(); 
+      audio.currentTime = 0;
+    } catch (e) {}
     alreadyLoaded = audio.readyState >= 1; // HAVE_METADATA or higher
   } else {
     audio = new Audio(audioUrl);
