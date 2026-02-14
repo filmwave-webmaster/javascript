@@ -1716,6 +1716,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g._seekingUntil = Date.now() + 1500;
   
   const audio = new Audio(audioUrl);
+  audio.preload = 'auto';
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
   g.currentSongData = songData;
