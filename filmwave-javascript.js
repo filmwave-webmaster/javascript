@@ -2362,9 +2362,18 @@ const handleSeek = (e) => {
     return;
   }
 
-  // Otherwise, start this song at newTime
-  const wasPlaying = !!g?.isPlaying;
-  playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
+      // Otherwise:
+    // If nothing is currently playing, do NOT load/switch audio.
+    // Just keep the card UI progress where the user tapped.
+    const wasPlaying = !!g?.isPlaying;
+
+    if (!wasPlaying) {
+      waveformContainer._wfPendingSeekTime = newTime;
+      return;
+    }
+
+    // If something IS playing, switch and play from the tapped time
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, true);
 };
 
 // pointer events = immediate on touch devices
