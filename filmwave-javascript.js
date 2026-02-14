@@ -1823,13 +1823,36 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   const g = window.musicPlayerPersistent;
   
     if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-    syncMasterTrack(wavesurfer, songData);
-    updateMasterPlayerVisibility();
-    if (shouldAutoPlay) {
-      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+  // Same song — but ensure THIS clicked instance is the active tracker
+  g.currentWavesurfer = wavesurfer;
+
+  // Reset other waveforms so only one tracker stays active
+  g.allWavesurfers.forEach(ws => {
+    if (ws !== wavesurfer) {
+      try { ws.seekTo(0); } catch (e) {}
     }
-    return;
+  });
+
+  g.waveformData.forEach(data => {
+    if (data.wavesurfer !== wavesurfer) {
+      updatePlayPauseIcons(data.cardElement, false, false);
+      const pb = data.cardElement.querySelector('.play-button');
+      if (pb) pb.style.opacity = '0';
+    }
+  });
+
+  updatePlayPauseIcons(cardElement, !g.standaloneAudio.paused, true);
+  const pb = cardElement.querySelector('.play-button');
+  if (pb) pb.style.opacity = '1';
+
+  syncMasterTrack(wavesurfer, songData);
+  updateMasterPlayerVisibility();
+
+  if (shouldAutoPlay) {
+    g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
   }
+  return;
+}
   
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
@@ -2356,38 +2379,8 @@ const handleSeek = (e) => {
   // Update card progress immediately (no lag)
   wavesurfer.seekTo(dur ? (newTime / dur) : 0);
 
-  // If this is the current song, just seek (BUT make THIS waveform the active tracker)
+  // If this is the current song, just seek
 if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
-  // Make this card the active waveform instance
-  g.currentWavesurfer = wavesurfer;
-
-  // Reset all other waveforms so only ONE progress tracker stays active
-  if (Array.isArray(g.allWavesurfers)) {
-    g.allWavesurfers.forEach(ws => {
-      if (ws && ws !== wavesurfer) {
-        try { ws.seekTo(0); } catch (e) {}
-      }
-    });
-  }
-
-  if (Array.isArray(g.waveformData)) {
-    g.waveformData.forEach(data => {
-      if (!data || !data.wavesurfer || !data.cardElement) return;
-
-      if (data.wavesurfer !== wavesurfer) {
-        updatePlayPauseIcons(data.cardElement, false, false);
-        const pb = data.cardElement.querySelector('.play-button');
-        if (pb) pb.style.opacity = '0';
-      }
-    });
-  }
-
-  // Mark this card as active (playing/paused state)
-  updatePlayPauseIcons(cardElement, !g.standaloneAudio.paused, true);
-  const thisPb = cardElement.querySelector('.play-button');
-  if (thisPb) thisPb.style.opacity = '1';
-
-  // Now seek the actual audio
   try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
   return;
 }
