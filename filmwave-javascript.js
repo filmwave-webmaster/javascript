@@ -2359,25 +2359,29 @@ const handleSeek = (e) => {
   // Update card progress immediately (no lag)
   wavesurfer.seekTo(dur ? (newTime / dur) : 0);
 
+  // ✅ Ensure only ONE card shows a progress tracker at a time
+(g?.waveformData || []).forEach(d => {
+  if (!d || !d.wavesurfer) return;
+  if (d.wavesurfer === wavesurfer) return;
+  try { d.wavesurfer.seekTo(0); } catch (err) {}
+});
+
   // If this is the current song, just seek
 if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
   try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
   return;
 }
 
-      // Otherwise:
-    // If nothing is currently playing, do NOT load/switch audio.
-    // Just keep the card UI progress where the user tapped.
-    const wasPlaying = !!g?.isPlaying;
+  // Otherwise: load this song into the master player.
+  // Only auto-play if something was already playing.
+  const wasPlaying = !!g?.isPlaying;
 
-    if (!wasPlaying) {
-      waveformContainer._wfPendingSeekTime = newTime;
-      return;
-    }
+  // clear any old pending seek (we’re acting on it immediately now)
+  waveformContainer._wfPendingSeekTime = null;
 
-    // If something IS playing, switch and play from the tapped time
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, true);
-};
+  // show/load player on click; seek to tapped time
+  playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
+
 
 // pointer events = immediate on touch devices
 canvas.addEventListener('pointerdown', handleSeek, { passive: false });
