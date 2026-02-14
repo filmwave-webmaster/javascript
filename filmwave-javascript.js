@@ -1715,19 +1715,31 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   // Extend seek protection for the new audio element
   g._seekingUntil = Date.now() + 1500;
   
-  // Use preloaded audio if available
+// Use preloaded audio if available
   const songId = songData?.id;
   let audio;
+  let alreadyLoaded = false;
+  
   if (songId && g._preloadedAudio?.has(songId)) {
     audio = g._preloadedAudio.get(songId);
     g._preloadedAudio.delete(songId);
+    alreadyLoaded = audio.readyState >= 1; // HAVE_METADATA or higher
   } else {
     audio = new Audio(audioUrl);
   }
+  
   audio.preload = 'auto';
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
   g.currentSongData = songData;
+  
+  // If preloaded audio already has metadata, seek immediately
+  if (alreadyLoaded && seekToTime !== null && audio.duration > 0) {
+    audio.currentTime = seekToTime;
+    updateMobileProgress(seekToTime, audio.duration);
+    wavesurfer.seekTo(seekToTime / audio.duration);
+    g.currentDuration = audio.duration;
+  }
   
     // Track if we've completed initial seek
   let initialSeekComplete = (seekToTime === null);
