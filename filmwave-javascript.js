@@ -1754,10 +1754,10 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 
     g.currentDuration = audio.duration;
 
-if (seekToTime !== null && seekToTime < audio.duration) {
-      // Only apply initial seek if user hasn't already seeked elsewhere
+    // Only apply initial seek if not already completed and audio is still at start
+    if (!initialSeekComplete && seekToTime !== null && seekToTime < audio.duration) {
       const currentPos = audio.currentTime;
-      if (currentPos < 0.1) {  // Audio still at start, apply our seek
+      if (currentPos < 0.1) {
         audio.currentTime = seekToTime;
         updateMobileProgress(seekToTime, audio.duration);
         wavesurfer.seekTo(seekToTime / audio.duration);
