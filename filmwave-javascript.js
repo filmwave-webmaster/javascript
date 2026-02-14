@@ -1715,7 +1715,15 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   // Extend seek protection for the new audio element
   g._seekingUntil = Date.now() + 1500;
   
-  const audio = new Audio(audioUrl);
+  // Use preloaded audio if available
+  const songId = songData?.id;
+  let audio;
+  if (songId && g._preloadedAudio?.has(songId)) {
+    audio = g._preloadedAudio.get(songId);
+    g._preloadedAudio.delete(songId);
+  } else {
+    audio = new Audio(audioUrl);
+  }
   audio.preload = 'auto';
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
@@ -2281,6 +2289,64 @@ function initializeWaveforms() {
 
 /**
  * ============================================================
+ * PRELOAD AUDIO FOR VISIBLE SONGS
+ * ============================================================
+ */
+function initializeAudioPreloader() {
+  const g = window.musicPlayerPersistent;
+  
+  // Store preloaded audio elements
+  if (!g._preloadedAudio) {
+    g._preloadedAudio = new Map();
+  }
+  
+  const MAX_PRELOADED = 5; // Limit memory usage
+  
+  const preloadObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      
+      const card = entry.target;
+      const audioUrl = card.dataset.audioUrl || card.querySelector('[data-audio-url]')?.dataset.audioUrl;
+      const songId = card.dataset.songId;
+      
+      if (!audioUrl || !songId) return;
+      if (g._preloadedAudio.has(songId)) return;
+      
+      // Limit number of preloaded songs
+      if (g._preloadedAudio.size >= MAX_PRELOADED) {
+        // Remove oldest preloaded audio
+        const firstKey = g._preloadedAudio.keys().next().value;
+        const oldAudio = g._preloadedAudio.get(firstKey);
+        if (oldAudio) {
+          oldAudio.src = '';
+          oldAudio.load();
+        }
+        g._preloadedAudio.delete(firstKey);
+      }
+      
+      // Preload this song
+      const audio = new Audio();
+      audio.preload = 'auto';
+      audio.src = audioUrl;
+      g._preloadedAudio.set(songId, audio);
+    });
+  }, {
+    rootMargin: '100px', // Start preloading slightly before visible
+    threshold: 0
+  });
+  
+  // Observe all song cards
+  document.querySelectorAll('.song-wrapper').forEach(card => {
+    preloadObserver.observe(card);
+  });
+  
+  // Store observer for cleanup
+  g._preloadObserver = preloadObserver;
+}
+
+/**
+ * ============================================================
  * LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER
  * ============================================================
  */
@@ -2687,6 +2753,7 @@ function displaySongs(songs) {
     window.Webflow.require('ix2').init();
   }
   setTimeout(() => initializeWaveforms(), 100);
+  setTimeout(() => initializeAudioPreloader(), 200);
 }
 
 /**
@@ -6444,6 +6511,19 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     if (g) {
       g.playlistFilterPopulated = false;
       g.filtersInitialized = false; // Allow re-initialization on new page
+      
+      // Cleanup audio preloader
+      if (g._preloadObserver) {
+        g._preloadObserver.disconnect();
+        g._preloadObserver = null;
+      }
+      if (g._preloadedAudio) {
+        g._preloadedAudio.forEach(audio => {
+          audio.src = '';
+          audio.load();
+        });
+        g._preloadedAudio.clear();
+      }
     }
   });
   barba.hooks.beforeEnter((data) => {
@@ -6479,10 +6559,16 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       }
     }
   });
-  barba.hooks.afterEnter((data) => { 
+barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
-    initMobileFilterToggle(data.next.container); 
-  }); 
+    initMobileFilterToggle(data.next.container);
+    
+    // Re-initialize audio preloader if on music page
+    const path = data?.next?.url?.path || '';
+    if (path === '/music' || path === '/music/') {
+      setTimeout(() => initializeAudioPreloader(), 300);
+    }
+  });
 }
 
 
