@@ -1705,7 +1705,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   }
   
   // Extend seek protection for the new audio element
-  g._seekingUntil = Date.now() + 1000;
+  g._seekingUntil = Date.now() + 1500;
   
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
@@ -2388,7 +2388,7 @@ if (canvas && !canvas._wfCanvasSeekBound) {
     updateMobileProgress(newTime, dur);
     
     // Block timeupdate from overwriting our seek
-    g._seekingUntil = Date.now() + 300;
+    g._seekingUntil = Date.now() + 1500;
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
