@@ -1679,9 +1679,32 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const g = window.musicPlayerPersistent;
 
   // Reset mobile progress when switching to a different song (not when seeking)
-  if (g.currentSongData?.id !== songData.id && seekToTime === null) {
-    resetMobileProgress();
+if (g.currentSongData?.id !== songData.id && seekToTime === null) {
+  resetMobileProgress();
+
+  // ✅ IMPORTANT: reset all OTHER visible music-page card waveforms so only one tracker is active
+  if (Array.isArray(g.waveformData)) {
+    g.waveformData.forEach((d) => {
+      if (!d) return;
+
+      const isOtherSong = String(d.songId) !== String(songData.id);
+      const isVisible =
+        d.cardElement &&
+        document.body.contains(d.cardElement) &&
+        d.cardElement.offsetParent !== null;
+
+      // Only reset actual music page cards
+      const isMusicCard =
+        d.cardElement &&
+        (d.cardElement.classList.contains('song-wrapper') ||
+          d.cardElement.closest?.('.song-wrapper'));
+
+      if (isOtherSong && isVisible && isMusicCard && d.wavesurfer && typeof d.wavesurfer.seekTo === 'function') {
+        d.wavesurfer.seekTo(0);
+      }
+    });
   }
+}
 
   g._standaloneToken = (g._standaloneToken || 0) + 1;
   const token = g._standaloneToken;
