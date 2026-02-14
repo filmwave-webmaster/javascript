@@ -2365,6 +2365,11 @@ if (waveformContainer._wavesurfer) {
             playButton.style.opacity = '0';
           }
         });
+      } else {
+        // On touch devices, show play button when this is the active song
+        if (g.currentSongData?.id === songId) {
+          playButton.style.opacity = '1';
+        }
       }
     }
     
@@ -2469,6 +2474,11 @@ if (canvas && !canvas._wfCanvasSeekBound) {
     
     // Block timeupdate from overwriting our seek
     g._seekingUntil = Date.now() + 1500;
+
+// Show play button on touch
+    if (playButton) {
+      playButton.style.opacity = '1';
+    }
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
