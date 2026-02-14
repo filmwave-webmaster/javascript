@@ -1679,9 +1679,9 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const g = window.musicPlayerPersistent;
 
   // Reset mobile progress when switching to a different song (not when seeking)
-if (g.currentSongData?.id !== songData.id && seekToTime === null) {
-  resetMobileProgress();
-}
+  if (g.currentSongData?.id !== songData.id && seekToTime === null) {
+    resetMobileProgress();
+  }
 
   g._standaloneToken = (g._standaloneToken || 0) + 1;
   const token = g._standaloneToken;
@@ -1823,13 +1823,13 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   const g = window.musicPlayerPersistent;
   
     if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-  syncMasterTrack(wavesurfer, songData);
-  updateMasterPlayerVisibility();
-  if (shouldAutoPlay) {
-    g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    syncMasterTrack(wavesurfer, songData);
+    updateMasterPlayerVisibility();
+    if (shouldAutoPlay) {
+      g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
+    }
+    return;
   }
-  return;
-}
   
   if (g.standaloneAudio && g.currentSongData?.id !== songData.id) {
     g.standaloneAudio.pause();
@@ -2203,12 +2203,9 @@ function initializeWaveforms() {
     loadWaveformBatch(visibleCards);
   }
 
-    // Debounced: prevent multiple bindings / intervals
-  if (g._linkStandaloneTimer) clearTimeout(g._linkStandaloneTimer);
-  g._linkStandaloneTimer = setTimeout(() => {
-    g._linkStandaloneTimer = null;
-    linkStandaloneToWaveform();
-  }, 200);
+  setTimeout(() => linkStandaloneToWaveform(), 100);
+  setTimeout(() => linkStandaloneToWaveform(), 300);
+  setTimeout(() => linkStandaloneToWaveform(), 600);
 }
 
 /**
@@ -2326,65 +2323,51 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   // allow vertical scroll, but remove tap->click delay
   canvas.style.touchAction = 'pan-y';
 
-  // Use a timestamp instead of a short boolean window.
-// iOS can fire the delayed click well after 400ms.
-canvas._wfLastSeekTs = 0;
+  canvas._wfIgnoreNextClick = false;
 
-const getClientX = (ev) => {
-  if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
-  if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
-  return ev.clientX;
-};
+  const getClientX = (ev) => {
+    if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
+    if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
+    return ev.clientX;
+  };
 
-const handleSeek = (e) => {
-  // mark seek time so we can swallow the delayed click reliably
-  canvas._wfLastSeekTs = Date.now();
+  const handleSeek = (e) => {
+
+  canvas._wfIgnoreNextClick = true;
+  setTimeout(() => { canvas._wfIgnoreNextClick = false; }, 400);
 
   // prevent the browser from waiting to synthesize a delayed "click"
   if (e.cancelable) e.preventDefault();
-  e.stopImmediatePropagation();
+  e.stopPropagation();
 
-  const g = window.musicPlayerPersistent;
-  const rect = canvas.getBoundingClientRect();
-  const x = getClientX(e) - rect.left;
-  const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
+    const g = window.musicPlayerPersistent;
+    const rect = canvas.getBoundingClientRect();
+    const x = getClientX(e) - rect.left;
+    const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
 
-  const dur =
-    (g?.currentSongData?.id === songData?.id && g?.standaloneAudio?.duration)
-      ? Number(g.standaloneAudio.duration) || storedDuration
-      : storedDuration;
+    const dur =
+      (g?.currentSongData?.id === songData?.id && g?.standaloneAudio?.duration)
+        ? Number(g.standaloneAudio.duration) || storedDuration
+        : storedDuration;
 
-  const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
+    const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
 
-  // Update card progress immediately (no lag)
-  wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+    // Update card progress immediately (no lag)
+    wavesurfer.seekTo(dur ? (newTime / dur) : 0);
 
-  // ✅ Ensure only ONE card shows a progress tracker at a time
-(g?.waveformData || []).forEach(d => {
-  if (!d || !d.wavesurfer) return;
-  if (d.wavesurfer === wavesurfer) return;
-  try { d.wavesurfer.seekTo(0); } catch (err) {}
-});
+    // If this is the current song, just seek
+    if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
+      try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
+      return;
+    }
 
-  // If this is the current song, just seek
-if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
-  try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
-  return;
-}
+    // Otherwise, start this song at newTime
+    const wasPlaying = !!g?.isPlaying;
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
+  };
 
-      // Otherwise: load this song into the master player.
-  // Only auto-play if something was already playing.
-  const wasPlaying = !!g?.isPlaying;
-
-  // clear any old pending seek (we’re acting on it immediately now)
-  waveformContainer._wfPendingSeekTime = null;
-
-  // show/load player on click; seek to tapped time
-  playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
-};
-
-// pointer events = immediate on touch devices
-canvas.addEventListener('pointerdown', handleSeek, { passive: false });
+  // pointer events = immediate on touch devices
+  canvas.addEventListener('pointerdown', handleSeek, { passive: false });
 
 // fallback (older iOS)
 canvas.addEventListener('touchstart', handleSeek, { passive: false });
@@ -2394,13 +2377,9 @@ canvas.addEventListener('mousedown', handleSeek);
 
 // swallow delayed mobile click after touch/pointer seek
 canvas.addEventListener('click', (e) => {
-  const msSinceSeek = Date.now() - (canvas._wfLastSeekTs || 0);
-
-  // iOS delayed click can be late — give it a bigger window
-  if (msSinceSeek > 0 && msSinceSeek < 1500) {
-    if (e.cancelable) e.preventDefault();
-    e.stopImmediatePropagation();
-  }
+  if (!canvas._wfIgnoreNextClick) return;
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
 }, true);
 }
 
@@ -3908,6 +3887,12 @@ function attachKeyRadioListeners(column, section, majMin) {
 }
   
   // Attach listeners to all key radio buttons
+  if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
+  if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
+  if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
+  if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
+
+// Attach listeners to all key radio buttons
 if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
 if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
 if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
@@ -3925,7 +3910,7 @@ document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEac
           const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
           const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
           const currentKeyText = matchingLabel?.textContent.trim();
-
+          
           if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
             tag.remove();
           }
@@ -3935,6 +3920,11 @@ document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEac
   });
 });
 
+/**
+ * Initial state: Show Sharp section with major keys visible (but not filtered)
+ */
+showSharpFlat('sharp');
+  
 /**
  * Initial state: Show Sharp section with major keys visible (but not filtered)
  */
