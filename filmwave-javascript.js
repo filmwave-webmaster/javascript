@@ -1700,8 +1700,13 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     try { g.standaloneAudio.src = ''; g.standaloneAudio.load(); } catch (e) {}
   }
 
-  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
-    g.currentWavesurfer.seekTo(0);
+  const oldWavesurfer = g.currentWavesurfer;
+  
+  // Set new wavesurfer FIRST so it won't be reset
+  g.currentWavesurfer = wavesurfer;
+  
+  if (oldWavesurfer && oldWavesurfer !== wavesurfer) {
+    oldWavesurfer.seekTo(0);
   }
   
   // Extend seek protection for the new audio element
@@ -1711,8 +1716,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
   g.currentSongData = songData;
-  g.currentWavesurfer = wavesurfer;
-  g.hasActiveSong = true;
   
     // Track if we've completed initial seek
   let initialSeekComplete = (seekToTime === null);
