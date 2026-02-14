@@ -2369,8 +2369,8 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   // pointer events = immediate on touch devices
   canvas.addEventListener('pointerdown', handleSeek, { passive: false });
 
-// fallback (older iOS)
-canvas.addEventListener('touchstart', handleSeek, { passive: false });
+// fallback (older iOS) - use touchend so seek completes after finger lifts
+canvas.addEventListener('touchend', handleSeek, { passive: false });
 
 // optional fallback
 canvas.addEventListener('mousedown', handleSeek);
@@ -2456,6 +2456,24 @@ const waveformReadyPromise = Promise.resolve().then(() => {
       songName.addEventListener('click', handlePlayPause);
     }
         
+    // Mobile touch handling for waveform seeking
+    const waveformEl = waveformContainer;
+    if (waveformEl) {
+      waveformEl.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        const rect = waveformEl.getBoundingClientRect();
+        const touchX = e.changedTouches[0].clientX - rect.left;
+        const progress = Math.max(0, Math.min(1, touchX / rect.width));
+        
+        wavesurfer.seekTo(progress);
+        
+        if (g.currentSongData?.id === songData.id && g.standaloneAudio) {
+          g.standaloneAudio.currentTime = progress * g.standaloneAudio.duration;
+          updateMobileProgress(g.standaloneAudio.currentTime, g.standaloneAudio.duration);
+        }
+      }, { passive: false });
+    }
+
     wavesurfer.on('interaction', function (newProgress) {
       g.activeSongSource = 'music';
       if (g.currentSongData?.id === songData.id) {
