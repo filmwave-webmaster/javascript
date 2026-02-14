@@ -1714,7 +1714,10 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g.currentWavesurfer = wavesurfer;
   g.hasActiveSong = true;
   
-    audio.addEventListener('loadedmetadata', () => {
+    // Track if we've completed initial seek
+  let initialSeekComplete = (seekToTime === null);
+  
+  audio.addEventListener('loadedmetadata', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
 
@@ -1724,15 +1727,23 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       audio.currentTime = seekToTime;
       updateMobileProgress(seekToTime, audio.duration);
       wavesurfer.seekTo(seekToTime / audio.duration);
+    } else {
+      initialSeekComplete = true;
     }
   });
   
-    audio.addEventListener('timeupdate', () => {
+  audio.addEventListener('seeked', () => {
+    if (g._standaloneToken !== token) return;
+    if (g.standaloneAudio !== audio) return;
+    initialSeekComplete = true;
+  });
+  
+  audio.addEventListener('timeupdate', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
     
-    // Skip timeupdate events while seeking
-    if (g._seekingUntil && Date.now() < g._seekingUntil) return;
+    // Don't update UI until initial seek is complete
+    if (!initialSeekComplete) return;
       
     g.currentTime = audio.currentTime;
       
