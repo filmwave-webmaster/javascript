@@ -2312,74 +2312,39 @@ function initializeAudioPreloader() {
     g._preloadedAudio = new Map();
   }
   
-  const MAX_PRELOADED = 8; // Increased for better coverage
-  
-  const preloadAudio = (card) => {
-    const audioUrl = card.dataset.audioUrl || card.querySelector('[data-audio-url]')?.dataset.audioUrl;
-    const songId = card.dataset.songId;
-    
-    if (!audioUrl || !songId) return;
-    if (g._preloadedAudio.has(songId)) return;
-    
-    // Limit number of preloaded songs
-    if (g._preloadedAudio.size >= MAX_PRELOADED) {
-      // Remove oldest preloaded audio
-      const firstKey = g._preloadedAudio.keys().next().value;
-      const oldAudio = g._preloadedAudio.get(firstKey);
-      if (oldAudio) {
-        oldAudio.src = '';
-        oldAudio.load();
-      }
-      g._preloadedAudio.delete(firstKey);
-    }
-    
-    // Preload this song
-    const audio = new Audio();
-    audio.preload = 'auto';
-    audio.src = audioUrl;
-    
-    // Force iOS to start loading by playing then immediately pausing
-    const forceLoad = () => {
-      audio.play().then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-      }).catch(() => {});
-    };
-    
-    // Try to force load, but only after user has interacted with page
-    if (g._userHasInteracted) {
-      forceLoad();
-    }
-    
-    g._preloadedAudio.set(songId, audio);
-  };
-  
-  // Track user interaction for iOS audio unlock
-  if (!g._userInteractionTracked) {
-    g._userInteractionTracked = true;
-    const unlockAudio = () => {
-      g._userHasInteracted = true;
-      // Preload visible songs after first interaction
-      document.querySelectorAll('.song-wrapper').forEach(card => {
-        const rect = card.getBoundingClientRect();
-        if (rect.top < window.innerHeight && rect.bottom > 0) {
-          preloadAudio(card);
-        }
-      });
-      document.removeEventListener('touchstart', unlockAudio);
-      document.removeEventListener('click', unlockAudio);
-    };
-    document.addEventListener('touchstart', unlockAudio, { once: true });
-    document.addEventListener('click', unlockAudio, { once: true });
-  }
+  const MAX_PRELOADED = 8;
   
   const preloadObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
-      preloadAudio(entry.target);
+      
+      const card = entry.target;
+      const audioUrl = card.dataset.audioUrl || card.querySelector('[data-audio-url]')?.dataset.audioUrl;
+      const songId = card.dataset.songId;
+      
+      if (!audioUrl || !songId) return;
+      if (g._preloadedAudio.has(songId)) return;
+      
+      // Limit number of preloaded songs
+      if (g._preloadedAudio.size >= MAX_PRELOADED) {
+        // Remove oldest preloaded audio
+        const firstKey = g._preloadedAudio.keys().next().value;
+        const oldAudio = g._preloadedAudio.get(firstKey);
+        if (oldAudio) {
+          oldAudio.src = '';
+          oldAudio.load();
+        }
+        g._preloadedAudio.delete(firstKey);
+      }
+      
+      // Preload this song
+      const audio = new Audio();
+      audio.preload = 'auto';
+      audio.src = audioUrl;
+      g._preloadedAudio.set(songId, audio);
     });
   }, {
-    rootMargin: '200px', // Start preloading earlier
+    rootMargin: '200px',
     threshold: 0
   });
   
