@@ -2508,11 +2508,18 @@ const waveformReadyPromise = Promise.resolve().then(() => {
       songData
     });
     
-    const handlePlayPause = (e) => {
+const handlePlayPause = (e) => {
       if (e) {
         e.stopPropagation();
         e.preventDefault();
       }
+      
+      // Debounce to prevent double-firing on mobile
+      const now = Date.now();
+      if (g._lastPlayPauseTime && (now - g._lastPlayPauseTime) < 300) {
+        return;
+      }
+      g._lastPlayPauseTime = now;
       
       // Mark that we're now using music page songs for navigation
       g.activeSongSource = 'music';
