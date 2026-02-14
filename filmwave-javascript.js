@@ -980,9 +980,12 @@ function drawMasterWaveform(peaks, progress) {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const gg = window.musicPlayerPersistent;
-        const prog = (gg?.standaloneAudio && gg.standaloneAudio.duration)
-          ? (gg.standaloneAudio.currentTime / gg.standaloneAudio.duration)
-          : 0;
+        let prog = 0;
+        if (gg?.standaloneAudio && gg.standaloneAudio.duration > 0) {
+          prog = gg.standaloneAudio.currentTime / gg.standaloneAudio.duration;
+        } else if (gg?._intendedMasterProgress != null) {
+          prog = gg._intendedMasterProgress;
+        }
         drawMasterWaveform(gg?.currentPeaksData || null, prog);
       });
     });
@@ -1730,6 +1733,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       audio.currentTime = seekToTime;
       updateMobileProgress(seekToTime, audio.duration);
       wavesurfer.seekTo(seekToTime / audio.duration);
+      g._intendedMasterProgress = seekToTime / audio.duration;
     } else {
       initialSeekComplete = true;
     }
@@ -2417,6 +2421,7 @@ if (canvas && !canvas._wfCanvasSeekBound) {
     
     // Update simple progress tracker immediately on touch
     updateMobileProgress(newTime, dur);
+    g._intendedMasterProgress = dur ? (newTime / dur) : 0;
     
     // Block timeupdate from overwriting our seek
     g._seekingUntil = Date.now() + 1500;
