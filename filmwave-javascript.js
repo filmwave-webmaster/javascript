@@ -1729,14 +1729,16 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 
     g.currentDuration = audio.duration;
 
-    if (seekToTime !== null && seekToTime < audio.duration) {
-      audio.currentTime = seekToTime;
-      updateMobileProgress(seekToTime, audio.duration);
-      wavesurfer.seekTo(seekToTime / audio.duration);
-      g._intendedMasterProgress = seekToTime / audio.duration;
-    } else {
-      initialSeekComplete = true;
+if (seekToTime !== null && seekToTime < audio.duration) {
+      // Only apply initial seek if user hasn't already seeked elsewhere
+      const currentPos = audio.currentTime;
+      if (currentPos < 0.1) {  // Audio still at start, apply our seek
+        audio.currentTime = seekToTime;
+        updateMobileProgress(seekToTime, audio.duration);
+        wavesurfer.seekTo(seekToTime / audio.duration);
+      }
     }
+    initialSeekComplete = true;
   });
   
   audio.addEventListener('seeked', () => {
