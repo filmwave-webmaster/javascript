@@ -87,6 +87,26 @@ if (!window.musicPlayerPersistent) {
   };
 }
 
+// iOS audio unlock - must happen on first user interaction
+(function() {
+  const unlockAudio = () => {
+    const silentAudio = new Audio();
+    silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQAAAAAAAAAAQGwOjLOQgAAAAAAAAAAAAAAAAD/4xjEAAQsAB1kAAACAABpAAAATYkC7gAgDA4J4Pg+D5//ygPlAoBAMQ8H4OAgGP4Pg+8HwfE7/qAg7/B8HwfB9/5QKBQLg+D/BwEAQcuD4nB8HwfB//KBQ5cHwfB8Hwff+UCh/ygIO/wfB8HwfB8=';
+    silentAudio.play().then(() => {
+      silentAudio.pause();
+      window.musicPlayerPersistent._audioUnlocked = true;
+    }).catch(() => {});
+    
+    document.removeEventListener('touchstart', unlockAudio, true);
+    document.removeEventListener('touchend', unlockAudio, true);
+    document.removeEventListener('click', unlockAudio, true);
+  };
+  
+  document.addEventListener('touchstart', unlockAudio, true);
+  document.addEventListener('touchend', unlockAudio, true);
+  document.addEventListener('click', unlockAudio, true);
+})();
+
 // Local variables that reset per page load
 let lastPlayState = false;
 let searchTimeout;
