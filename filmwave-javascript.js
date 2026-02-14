@@ -1750,6 +1750,17 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: true } }));
+    
+    // Start smooth progress animation loop
+    if (g._progressRaf) cancelAnimationFrame(g._progressRaf);
+    const updateProgressSmooth = () => {
+      if (g.standaloneAudio !== audio || audio.paused) return;
+      if (audio.duration > 0) {
+        updateMobileProgress(audio.currentTime, audio.duration);
+      }
+      g._progressRaf = requestAnimationFrame(updateProgressSmooth);
+    };
+    g._progressRaf = requestAnimationFrame(updateProgressSmooth);
   });
   
     audio.addEventListener('pause', () => {
@@ -1757,6 +1768,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (g.standaloneAudio !== audio) return;
 
     g.isPlaying = false;
+    if (g._progressRaf) cancelAnimationFrame(g._progressRaf);
     updatePlayPauseIcons(cardElement, false);
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
