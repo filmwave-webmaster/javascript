@@ -1704,6 +1704,9 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     g.currentWavesurfer.seekTo(0);
   }
   
+  // Extend seek protection for the new audio element
+  g._seekingUntil = Date.now() + 1000;
+  
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
