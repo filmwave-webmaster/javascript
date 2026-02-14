@@ -1681,6 +1681,12 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   // Reset mobile progress when switching to a different song (not when seeking)
   if (g.currentSongData?.id !== songData.id && seekToTime === null) {
     resetMobileProgress();
+  } else if (g.currentSongData?.id !== songData.id && seekToTime !== null) {
+    // Set progress immediately when seeking into a new song
+    const dur = songData?.fields?.['Duration'] || 0;
+    if (dur > 0) {
+      updateMobileProgress(seekToTime, dur);
+    }
   }
 
   g._standaloneToken = (g._standaloneToken || 0) + 1;
@@ -1710,6 +1716,8 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 
     if (seekToTime !== null && seekToTime < audio.duration) {
       audio.currentTime = seekToTime;
+      updateMobileProgress(seekToTime, audio.duration);
+      wavesurfer.seekTo(seekToTime / audio.duration);
     }
   });
   
