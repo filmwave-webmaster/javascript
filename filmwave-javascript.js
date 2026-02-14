@@ -2423,6 +2423,10 @@ if (canvas && !canvas._wfCanvasSeekBound) {
     // Update simple progress tracker immediately on touch
     updateMobileProgress(newTime, dur);
     g._intendedMasterProgress = dur ? (newTime / dur) : 0;
+
+    if (g.currentPeaksData) {
+      drawMasterWaveform(g.currentPeaksData, g._intendedMasterProgress);
+    }
     
     // Block timeupdate from overwriting our seek
     g._seekingUntil = Date.now() + 1500;
