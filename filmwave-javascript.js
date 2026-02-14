@@ -1823,31 +1823,8 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   const g = window.musicPlayerPersistent;
   
     if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-  // Same song — but ensure THIS clicked instance is the active tracker
-  g.currentWavesurfer = wavesurfer;
-
-  // Reset other waveforms so only one tracker stays active
-  g.allWavesurfers.forEach(ws => {
-    if (ws !== wavesurfer) {
-      try { ws.seekTo(0); } catch (e) {}
-    }
-  });
-
-  g.waveformData.forEach(data => {
-    if (data.wavesurfer !== wavesurfer) {
-      updatePlayPauseIcons(data.cardElement, false, false);
-      const pb = data.cardElement.querySelector('.play-button');
-      if (pb) pb.style.opacity = '0';
-    }
-  });
-
-  updatePlayPauseIcons(cardElement, !g.standaloneAudio.paused, true);
-  const pb = cardElement.querySelector('.play-button');
-  if (pb) pb.style.opacity = '1';
-
   syncMasterTrack(wavesurfer, songData);
   updateMasterPlayerVisibility();
-
   if (shouldAutoPlay) {
     g.standaloneAudio.play().catch(err => console.error('Playback error:', err));
   }
