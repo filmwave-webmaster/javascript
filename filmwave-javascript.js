@@ -1851,7 +1851,14 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     });
   }
   
-  syncMasterTrack(wavesurfer, songData);
+  // Pass seekToTime as forcedProgress so master waveform shows correct position immediately
+  if (seekToTime !== null) {
+    const dur = songData?.fields?.['Duration'] || 0;
+    const forcedProgress = (dur > 0) ? (seekToTime / dur) : null;
+    syncMasterTrack(wavesurfer, songData, forcedProgress);
+  } else {
+    syncMasterTrack(wavesurfer, songData);
+  }
   updateMasterPlayerVisibility();
   
   return audio;
