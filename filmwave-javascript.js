@@ -704,12 +704,9 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-audio.addEventListener('timeupdate', () => {
+    audio.addEventListener('timeupdate', () => {
   if (g.standaloneAudio !== audio) return;
   if (!audio.duration || !isFinite(audio.duration)) return;
-  
-  // Skip timeupdate events while seeking
-  if (g._seekingUntil && Date.now() < g._seekingUntil) return;
 
   g.currentTime = audio.currentTime;
 
@@ -1684,12 +1681,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   // Reset mobile progress when switching to a different song (not when seeking)
   if (g.currentSongData?.id !== songData.id && seekToTime === null) {
     resetMobileProgress();
-  } else if (g.currentSongData?.id !== songData.id && seekToTime !== null) {
-    // Set progress immediately when seeking into a new song
-    const dur = songData?.fields?.['Duration'] || 0;
-    if (dur > 0) {
-      updateMobileProgress(seekToTime, dur);
-    }
   }
 
   g._standaloneToken = (g._standaloneToken || 0) + 1;
@@ -1703,9 +1694,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
     g.currentWavesurfer.seekTo(0);
   }
-  
-  // Extend seek protection for the new audio element
-  g._seekingUntil = Date.now() + 1000;
   
   const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
@@ -1722,17 +1710,12 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 
     if (seekToTime !== null && seekToTime < audio.duration) {
       audio.currentTime = seekToTime;
-      updateMobileProgress(seekToTime, audio.duration);
-      wavesurfer.seekTo(seekToTime / audio.duration);
     }
   });
   
     audio.addEventListener('timeupdate', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
-    
-    // Skip timeupdate events while seeking
-    if (g._seekingUntil && Date.now() < g._seekingUntil) return;
       
     g.currentTime = audio.currentTime;
       
@@ -1741,7 +1724,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       const progress = audio.currentTime / audio.duration;
       g.currentWavesurfer.seekTo(progress);
     }
-      
+
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
@@ -1764,17 +1747,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: true } }));
-    
-    // Start smooth progress animation loop
-    if (g._progressRaf) cancelAnimationFrame(g._progressRaf);
-    const updateProgressSmooth = () => {
-      if (g.standaloneAudio !== audio || audio.paused) return;
-      if (audio.duration > 0) {
-        updateMobileProgress(audio.currentTime, audio.duration);
-      }
-      g._progressRaf = requestAnimationFrame(updateProgressSmooth);
-    };
-    g._progressRaf = requestAnimationFrame(updateProgressSmooth);
   });
   
     audio.addEventListener('pause', () => {
@@ -1782,7 +1754,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (g.standaloneAudio !== audio) return;
 
     g.isPlaying = false;
-    if (g._progressRaf) cancelAnimationFrame(g._progressRaf);
     updatePlayPauseIcons(cardElement, false);
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
@@ -2383,12 +2354,6 @@ if (canvas && !canvas._wfCanvasSeekBound) {
 
     // Update card progress immediately (no lag)
     wavesurfer.seekTo(dur ? (newTime / dur) : 0);
-    
-    // Update simple progress tracker immediately on touch
-    updateMobileProgress(newTime, dur);
-    
-    // Block timeupdate from overwriting our seek
-    g._seekingUntil = Date.now() + 300;
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
@@ -2404,8 +2369,8 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   // pointer events = immediate on touch devices
   canvas.addEventListener('pointerdown', handleSeek, { passive: false });
 
-// fallback (older iOS) - use touchend so seek completes after finger lifts
-canvas.addEventListener('touchend', handleSeek, { passive: false });
+// fallback (older iOS)
+canvas.addEventListener('touchstart', handleSeek, { passive: false });
 
 // optional fallback
 canvas.addEventListener('mousedown', handleSeek);
@@ -2491,24 +2456,6 @@ const waveformReadyPromise = Promise.resolve().then(() => {
       songName.addEventListener('click', handlePlayPause);
     }
         
-    // Mobile touch handling for waveform seeking
-    const waveformEl = waveformContainer;
-    if (waveformEl) {
-      waveformEl.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        const rect = waveformEl.getBoundingClientRect();
-        const touchX = e.changedTouches[0].clientX - rect.left;
-        const progress = Math.max(0, Math.min(1, touchX / rect.width));
-        
-        wavesurfer.seekTo(progress);
-        
-        if (g.currentSongData?.id === songData.id && g.standaloneAudio) {
-          g.standaloneAudio.currentTime = progress * g.standaloneAudio.duration;
-          updateMobileProgress(g.standaloneAudio.currentTime, g.standaloneAudio.duration);
-        }
-      }, { passive: false });
-    }
-
     wavesurfer.on('interaction', function (newProgress) {
       g.activeSongSource = 'music';
       if (g.currentSongData?.id === songData.id) {
