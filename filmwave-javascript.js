@@ -2528,14 +2528,16 @@ const waveformReadyPromise = Promise.resolve().then(() => {
       console.log('Is same song?', g.currentSongData?.id === songData.id);
       console.log('═══════════════════════════════════════════');
           
-      if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+      if (g.currentSongData && g.currentSongData.id !== songData.id) {
         console.log('🔀 Different song clicked - always play it');
         
         if (g.standaloneAudio) {
           g.standaloneAudio.pause();
         }
         
-        g.currentWavesurfer.seekTo(0);
+        if (g.currentWavesurfer) {
+          g.currentWavesurfer.seekTo(0);
+        }
         
         // ALWAYS play when clicking a different song
         playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
