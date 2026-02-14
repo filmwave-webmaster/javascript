@@ -2409,6 +2409,15 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   e.stopPropagation();
 
     const g = window.musicPlayerPersistent;
+    
+    // Update border on clicked song wrapper
+    document.querySelectorAll('.song-wrapper').forEach(sw => {
+      sw.style.removeProperty('border');
+    });
+    const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
+    if (songWrapper) {
+      songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
+    }
     const rect = canvas.getBoundingClientRect();
     const x = getClientX(e) - rect.left;
     const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
