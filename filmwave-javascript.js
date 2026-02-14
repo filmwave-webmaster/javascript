@@ -1725,8 +1725,8 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
     
-    // Skip early timeupdate events before seek is applied
-    if (seekToTime !== null && audio.currentTime < 0.1 && audio.currentTime < seekToTime - 0.5) return;
+    // Skip timeupdate events while seeking
+    if (g._seekingUntil && Date.now() < g._seekingUntil) return;
       
     g.currentTime = audio.currentTime;
       
@@ -1735,7 +1735,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       const progress = audio.currentTime / audio.duration;
       g.currentWavesurfer.seekTo(progress);
     }
-
+      
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
@@ -2380,6 +2380,9 @@ if (canvas && !canvas._wfCanvasSeekBound) {
     
     // Update simple progress tracker immediately on touch
     updateMobileProgress(newTime, dur);
+    
+    // Block timeupdate from overwriting our seek
+    g._seekingUntil = Date.now() + 300;
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
