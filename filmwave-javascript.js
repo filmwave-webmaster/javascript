@@ -1743,6 +1743,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
     initialSeekComplete = true;
+    g._intendedMasterProgress = null;
   });
   
   audio.addEventListener('timeupdate', () => {
