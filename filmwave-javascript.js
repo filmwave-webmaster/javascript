@@ -2369,6 +2369,9 @@ if (canvas && !canvas._wfCanvasSeekBound) {
 
     // Update card progress immediately (no lag)
     wavesurfer.seekTo(dur ? (newTime / dur) : 0);
+    
+    // Update simple progress tracker immediately on touch
+    updateMobileProgress(newTime, dur);
 
     // If this is the current song, just seek
     if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
