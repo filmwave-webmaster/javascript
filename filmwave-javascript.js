@@ -1865,7 +1865,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
-    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+  if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
     syncMasterTrack(wavesurfer, songData);
     updateMasterPlayerVisibility();
     if (shouldAutoPlay) {
@@ -1879,8 +1879,18 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
     g.standaloneAudio = null;
   }
   
+  // Set new wavesurfer FIRST so the old one can be properly reset
+  const oldWavesurfer = g.currentWavesurfer;
+  g.currentWavesurfer = wavesurfer;
+  
+  // Reset old waveform
+  if (oldWavesurfer && oldWavesurfer !== wavesurfer) {
+    oldWavesurfer.seekTo(0);
+  }
+  
+  // Reset all OTHER waveforms (not the clicked one, not the old one which is already reset)
   g.allWavesurfers.forEach(ws => {
-    if (ws !== wavesurfer) {
+    if (ws !== wavesurfer && ws !== oldWavesurfer) {
       ws.seekTo(0);
     }
   });
