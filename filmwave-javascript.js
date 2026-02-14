@@ -704,9 +704,12 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-    audio.addEventListener('timeupdate', () => {
+audio.addEventListener('timeupdate', () => {
   if (g.standaloneAudio !== audio) return;
   if (!audio.duration || !isFinite(audio.duration)) return;
+  
+  // Skip timeupdate events while seeking
+  if (g._seekingUntil && Date.now() < g._seekingUntil) return;
 
   g.currentTime = audio.currentTime;
 
