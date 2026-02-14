@@ -1754,15 +1754,16 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   g.currentSongData = songData;
   
   // If preloaded audio already has metadata, seek immediately
+  let initialSeekComplete = false;
   if (alreadyLoaded && seekToTime !== null && audio.duration > 0) {
     audio.currentTime = seekToTime;
     updateMobileProgress(seekToTime, audio.duration);
     wavesurfer.seekTo(seekToTime / audio.duration);
     g.currentDuration = audio.duration;
+    initialSeekComplete = true;  // Already seeked, don't wait
+  } else if (seekToTime === null) {
+    initialSeekComplete = true;  // No seek needed
   }
-  
-    // Track if we've completed initial seek
-  let initialSeekComplete = (seekToTime === null);
   
   audio.addEventListener('loadedmetadata', () => {
     if (g._standaloneToken !== token) return;
