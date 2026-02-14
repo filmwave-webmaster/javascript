@@ -2372,11 +2372,6 @@ if (canvas && !canvas._wfCanvasSeekBound) {
   };
 
   const handleSeek = (e) => {
-    // Prevent double-firing from multiple event types
-    if (canvas._lastSeekTime && Date.now() - canvas._lastSeekTime < 300) {
-      return;
-    }
-    canvas._lastSeekTime = Date.now();
 
   canvas._wfIgnoreNextClick = true;
   setTimeout(() => { canvas._wfIgnoreNextClick = false; }, 400);
@@ -2417,14 +2412,8 @@ if (canvas && !canvas._wfCanvasSeekBound) {
     playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
   };
 
-  // pointer events = immediate on touch devices
+  // pointer events work on both touch and mouse
   canvas.addEventListener('pointerdown', handleSeek, { passive: false });
-
-// fallback (older iOS) - use touchend so seek completes after finger lifts
-canvas.addEventListener('touchend', handleSeek, { passive: false });
-
-// optional fallback
-canvas.addEventListener('mousedown', handleSeek);
 
 // swallow delayed mobile click after touch/pointer seek
 canvas.addEventListener('click', (e) => {
