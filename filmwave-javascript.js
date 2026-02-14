@@ -1681,29 +1681,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   // Reset mobile progress when switching to a different song (not when seeking)
 if (g.currentSongData?.id !== songData.id && seekToTime === null) {
   resetMobileProgress();
-
-  // ✅ IMPORTANT: reset all OTHER visible music-page card waveforms so only one tracker is active
-  if (Array.isArray(g.waveformData)) {
-    g.waveformData.forEach((d) => {
-      if (!d) return;
-
-      const isOtherSong = String(d.songId) !== String(songData.id);
-      const isVisible =
-        d.cardElement &&
-        document.body.contains(d.cardElement) &&
-        d.cardElement.offsetParent !== null;
-
-      // Only reset actual music page cards
-      const isMusicCard =
-        d.cardElement &&
-        (d.cardElement.classList.contains('song-wrapper') ||
-          d.cardElement.closest?.('.song-wrapper'));
-
-      if (isOtherSong && isVisible && isMusicCard && d.wavesurfer && typeof d.wavesurfer.seekTo === 'function') {
-        d.wavesurfer.seekTo(0);
-      }
-    });
-  }
 }
 
   g._standaloneToken = (g._standaloneToken || 0) + 1;
@@ -2226,9 +2203,12 @@ function initializeWaveforms() {
     loadWaveformBatch(visibleCards);
   }
 
-  setTimeout(() => linkStandaloneToWaveform(), 100);
-  setTimeout(() => linkStandaloneToWaveform(), 300);
-  setTimeout(() => linkStandaloneToWaveform(), 600);
+    // Debounced: prevent multiple bindings / intervals
+  if (g._linkStandaloneTimer) clearTimeout(g._linkStandaloneTimer);
+  g._linkStandaloneTimer = setTimeout(() => {
+    g._linkStandaloneTimer = null;
+    linkStandaloneToWaveform();
+  }, 200);
 }
 
 /**
@@ -3924,12 +3904,6 @@ function attachKeyRadioListeners(column, section, majMin) {
 }
   
   // Attach listeners to all key radio buttons
-  if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
-  if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
-  if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
-  if (flatMinorColumn) attachKeyRadioListeners(flatMinorColumn, 'flat', 'minor');
-
-// Attach listeners to all key radio buttons
 if (sharpMajorColumn) attachKeyRadioListeners(sharpMajorColumn, 'sharp', 'major');
 if (sharpMinorColumn) attachKeyRadioListeners(sharpMinorColumn, 'sharp', 'minor');
 if (flatMajorColumn) attachKeyRadioListeners(flatMajorColumn, 'flat', 'major');
@@ -3947,7 +3921,7 @@ document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEac
           const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
           const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
           const currentKeyText = matchingLabel?.textContent.trim();
-          
+
           if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
             tag.remove();
           }
@@ -3957,11 +3931,6 @@ document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEac
   });
 });
 
-/**
- * Initial state: Show Sharp section with major keys visible (but not filtered)
- */
-showSharpFlat('sharp');
-  
 /**
  * Initial state: Show Sharp section with major keys visible (but not filtered)
  */
