@@ -323,6 +323,7 @@ function adjustDropdownPosition(toggle, list) {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
+
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
@@ -337,6 +338,8 @@ function positionMasterPlayer() {
   playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
   playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
   playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
+  playerWrapper.style.setProperty('transform', 'translateZ(0)', 'important');
+  playerWrapper.style.setProperty('will-change', 'backdrop-filter', 'important');
 }
 
 /**
