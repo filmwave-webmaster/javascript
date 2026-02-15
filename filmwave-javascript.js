@@ -6414,7 +6414,7 @@ function initUniversalSearch() {
 
   function applyModuleShadow(moduleEl) {
     if (!moduleEl) return;
-    moduleEl.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.6)';
+    moduleEl.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.3)';
   }
 
   function removeModuleShadow(moduleEl) {
