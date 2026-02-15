@@ -6408,6 +6408,13 @@ function initUniversalSearch() {
     body.style.left = '0';
     body.style.right = '0';
     
+    // Push music player behind overlay
+    const musicPlayer = document.querySelector('.music-player-wrapper');
+    if (musicPlayer) {
+      musicPlayer.dataset.originalZIndex = musicPlayer.style.zIndex || '';
+      musicPlayer.style.zIndex = '9997';
+    }
+    
     createOverlay();
   }
 
@@ -6420,6 +6427,12 @@ function initUniversalSearch() {
     body.style.left = '';
     body.style.right = '';
     window.scrollTo(0, scrollY);
+    
+    // Restore music player z-index
+    const musicPlayer = document.querySelector('.music-player-wrapper');
+    if (musicPlayer) {
+      musicPlayer.style.zIndex = musicPlayer.dataset.originalZIndex || '';
+    }
     
     removeOverlay();
   }
