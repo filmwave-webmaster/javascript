@@ -6384,11 +6384,9 @@ function initUniversalSearch() {
       right: 0;
       bottom: 0;
       background-color: rgba(0, 0, 0, 0);
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
       z-index: 9998;
       pointer-events: none;
-      transition: background-color 0.25s ease, backdrop-filter 0.25s ease, -webkit-backdrop-filter 0.25s ease;
+      transition: background-color 0.25s ease;
     `;
     document.body.appendChild(overlay);
     
@@ -6396,8 +6394,6 @@ function initUniversalSearch() {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.35)';
-        overlay.style.backdropFilter = 'blur(7px)';
-        overlay.style.webkitBackdropFilter = 'blur(7px)';
       });
     });
     
@@ -6407,8 +6403,6 @@ function initUniversalSearch() {
   function removeOverlay() {
     if (overlay) {
       overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-      overlay.style.backdropFilter = 'blur(0px)';
-      overlay.style.webkitBackdropFilter = 'blur(0px)';
       const overlayToRemove = overlay;
       setTimeout(() => {
         overlayToRemove.remove();
