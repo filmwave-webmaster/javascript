@@ -10361,6 +10361,18 @@ _setAddToPlaylistSelectedSongFromCard(songWrapper) {
   this._selectedSongForAddToPlaylistUI = { title, artist, coverSrc };
 },
 
+_setAddToPlaylistSelectedSongFromPlayer() {
+  const g = window.musicPlayerPersistent;
+  if (!g?.currentSongData) return;
+
+  const songData = g.currentSongData;
+  const title = songData.fields?.['Song Title'] || '';
+  const artist = songData.fields?.['Artist'] || '';
+  const coverSrc = songData.fields?.['Cover Art']?.[0]?.url || '';
+
+  this._selectedSongForAddToPlaylistUI = { title, artist, coverSrc };
+},
+
 _renderAddToPlaylistSelectedSongUI() {
   const modal = document.querySelector('.add-to-playlist-module-wrapper');
   if (!modal) return;
