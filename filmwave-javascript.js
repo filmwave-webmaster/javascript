@@ -335,7 +335,7 @@ function positionMasterPlayer() {
   playerWrapper.style.setProperty('top', 'auto', 'important');
   playerWrapper.style.setProperty('width', '100%', 'important');
   playerWrapper.style.setProperty('z-index', '9999', 'important');
-  playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
+  playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 95%, transparent)', 'important');
   playerWrapper.style.setProperty('backdrop-filter', 'blur(10px)', 'important');
   playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(10px)', 'important');
 }
