@@ -9416,11 +9416,9 @@ const PlaylistManager = {
     this.preloadPlaylists();
   },
 
-  async preloadPlaylists() {
-    const path = window.location.pathname;
-    const relevantPages = ['/music', '/dashboard/favorites', '/dashboard/playlist-template'];
-    
-    if (this.currentUserId && (relevantPages.some(p => path.includes(p)) || path === '/music/')) {
+async preloadPlaylists() {
+    // Preload on any page if user is logged in
+    if (this.currentUserId) {
       console.log('🎵 Preloading playlists for add-to-playlist modal');
       await this.getUserPlaylists();
     }
