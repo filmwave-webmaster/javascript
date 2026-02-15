@@ -1264,6 +1264,7 @@ if (playerCoverArt) {
  * VOLUME CONTROL
  * ============================================================
  */
+
 function initVolumeControl() {
   const g = window.musicPlayerPersistent;
   
@@ -1279,6 +1280,17 @@ function initVolumeControl() {
   
   if (!iconWrapper || !trackWrapper || !sliderHandle || !track) {
     console.log('ℹ️ Volume control elements not found');
+    return;
+  }
+  
+  // iPhone doesn't allow programmatic volume control - hide the slider
+  const isIPhone = /iPhone/.test(navigator.userAgent) && !window.MSStream;
+  if (isIPhone) {
+    const volumeWrapper = document.querySelector('.volume-wrapper');
+    if (volumeWrapper) {
+      volumeWrapper.style.display = 'none';
+    }
+    console.log('ℹ️ Volume control hidden on iPhone (not supported by iOS Safari)');
     return;
   }
   
