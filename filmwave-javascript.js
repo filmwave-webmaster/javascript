@@ -10346,10 +10346,13 @@ if (uploadIcon) uploadIcon.style.display = '';
 _setAddToPlaylistSelectedSongFromCard(songWrapper) {
   if (!songWrapper) return;
 
-  const title = (songWrapper.querySelector('.song-name')?.textContent || '').trim();
-  const artist = (songWrapper.querySelector('.artist-name')?.textContent || '').trim();
+  const title = (songWrapper.querySelector('.song-name')?.textContent || 
+                 songWrapper.querySelector('.db-player-song-name')?.textContent || '').trim();
+  const artist = (songWrapper.querySelector('.artist-name')?.textContent || 
+                  songWrapper.querySelector('.db-artist-name')?.textContent || '').trim();
 
-  const coverEl = songWrapper.querySelector('.cover-art');
+  const coverEl = songWrapper.querySelector('.cover-art') || 
+                  songWrapper.querySelector('.db-player-song-cover');
   let coverSrc = '';
 
   if (coverEl && coverEl.tagName === 'IMG') {
@@ -10362,7 +10365,7 @@ _setAddToPlaylistSelectedSongFromCard(songWrapper) {
 
   this._selectedSongForAddToPlaylistUI = { title, artist, coverSrc };
 },
-
+  
 _setAddToPlaylistSelectedSongFromPlayer() {
   const g = window.musicPlayerPersistent;
   if (!g?.currentSongData) return;
