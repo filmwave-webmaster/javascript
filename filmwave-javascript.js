@@ -6370,6 +6370,33 @@ function initUniversalSearch() {
   const body = document.body;
   let scrollY = 0;
   let isLocked = false;
+  let overlay = null;
+
+  function createOverlay() {
+    if (overlay) return overlay;
+    
+    overlay = document.createElement('div');
+    overlay.className = 'modal-backdrop-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.35);
+      z-index: 9998;
+      pointer-events: none;
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function removeOverlay() {
+    if (overlay) {
+      overlay.remove();
+      overlay = null;
+    }
+  }
 
   function lockScroll() {
     if (isLocked) return;
@@ -6380,6 +6407,8 @@ function initUniversalSearch() {
     body.style.top = `-${scrollY}px`;
     body.style.left = '0';
     body.style.right = '0';
+    
+    createOverlay();
   }
 
   function unlockScroll() {
@@ -6391,6 +6420,8 @@ function initUniversalSearch() {
     body.style.left = '';
     body.style.right = '';
     window.scrollTo(0, scrollY);
+    
+    removeOverlay();
   }
 
   const selectors = [
