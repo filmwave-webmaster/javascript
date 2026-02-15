@@ -947,8 +947,8 @@ function updateMasterPlayerInfo(song, wavesurfer) {
         bottom: 0;
         background-size: cover;
         background-position: center center;
-        filter: blur(100px);
-        opacity: 0.1;
+        filter: blur(50px);
+        opacity: 0.5;
         pointer-events: none;
         z-index: 0;
       `;
