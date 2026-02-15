@@ -324,9 +324,15 @@ function adjustDropdownPosition(toggle, list) {
  * ============================================================
  */
 
-function positionMasterPlayer() {
+function positionMasterPlayer(theme) {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
+  
+  // Get theme from parameter, global state, or localStorage
+  const currentTheme = theme || window.musicPlayerPersistent?.darkMode === true ? 'dark' : 
+                       window.musicPlayerPersistent?.darkMode === false ? 'light' :
+                       localStorage.getItem('filmwaveTheme') || 'light';
+  const isDark = currentTheme === 'dark';
   
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
@@ -335,10 +341,30 @@ function positionMasterPlayer() {
   playerWrapper.style.setProperty('top', 'auto', 'important');
   playerWrapper.style.setProperty('width', '100%', 'important');
   playerWrapper.style.setProperty('z-index', '9999', 'important');
-  playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
-  playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
-  playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
-  playerWrapper.style.setProperty('will-change', 'transform', 'important');
+  
+  if (isDark) {
+    // Dark mode - use blur effect (Webflow settings)
+    playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
+    playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
+    playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
+  } else {
+    // Light mode - solid opaque background, no blur
+    playerWrapper.style.setProperty('background-color', 'var(--color-1)', 'important');
+    playerWrapper.style.removeProperty('backdrop-filter');
+    playerWrapper.style.removeProperty('-webkit-backdrop-filter');
+  }
+  
+  // Handle searchbar blur elements
+  const searchbarBlur = document.querySelector('.searchbar-blur');
+  const searchbarBackground = document.querySelector('.searchbar-background');
+  
+  if (searchbarBlur) {
+    searchbarBlur.style.setProperty('display', isDark ? '' : 'none', 'important');
+  }
+  
+  if (searchbarBackground) {
+    searchbarBackground.style.setProperty('opacity', isDark ? '' : '1', 'important');
+  }
 }
 
 /**
@@ -3113,8 +3139,7 @@ document.querySelectorAll('.waveform').forEach((wf) => {
 }
   
   // Full theme application
-  function applyTheme(theme) {
-
+function applyTheme(theme) {
       // Remove preload style so JS can take over
     const preloadStyle = document.getElementById('dark-mode-preload');
     if (preloadStyle) {
@@ -3129,6 +3154,9 @@ document.querySelectorAll('.waveform').forEach((wf) => {
     
     applyThemeColors(theme);
     updateIconVisibility(theme);
+    
+    // Update music player and searchbar for theme
+    positionMasterPlayer(theme);
   }
   
   // Get current theme
