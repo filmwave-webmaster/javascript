@@ -11381,6 +11381,9 @@ async function initDashboardTiles() {
           e.preventDefault();
           e.stopPropagation();
           
+          // Mark that we're using dashboard tiles for navigation
+          g.activeSongSource = 'dashboard';
+          
           const wsData = g.waveformData.find(w =>
   w.songId === song.id &&
   w.cardElement &&
@@ -11414,6 +11417,9 @@ async function initDashboardTiles() {
       songName.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        
+        // Mark that we're using dashboard tiles for navigation
+        g.activeSongSource = 'dashboard';
         
         const wsData = g.waveformData.find(w =>
   w.songId === song.id &&
