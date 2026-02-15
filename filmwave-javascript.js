@@ -10367,63 +10367,45 @@ _renderAddToPlaylistSelectedSongUI() {
   }
 },
 
-  async populateAddToPlaylistModal() {
+async populateAddToPlaylistModal() {
     const container = document.querySelector('.module-bod-container');
     const template = container?.querySelector('.add-to-playlist-row');
     if (!container || !template) return;
-
-    // Hide immediately to prevent icon flash
-    container.style.opacity = '0';
 
     // Clear existing rows except template
     container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
       if (i > 0) row.remove();
     });
 
-    // Hide template row immediately
+    // Hide template row
     template.style.display = 'none';
 
     const playlists = await this.getUserPlaylists();
 
-    // ✅ Sort order priority:
-// 1) last created playlist (if any)
-// 2) last clicked playlist (if any)
-// 3) otherwise keep original order
-const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
-const lastClickedId = this._getLastClickedPlaylistForAddModal?.();
+    // Sort order priority
+    const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
+    const lastClickedId = this._getLastClickedPlaylistForAddModal?.();
 
-if (lastCreatedId || lastClickedId) {
-  playlists.sort((a, b) => {
-    const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
-    const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
-    if (aCreated && !bCreated) return -1;
-    if (!aCreated && bCreated) return 1;
+    if (lastCreatedId || lastClickedId) {
+      playlists.sort((a, b) => {
+        const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
+        const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
+        if (aCreated && !bCreated) return -1;
+        if (!aCreated && bCreated) return 1;
 
-    const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
-    const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
-    if (aClicked && !bClicked) return -1;
-    if (!aClicked && bClicked) return 1;
+        const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
+        const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
+        if (aClicked && !bClicked) return -1;
+        if (!aClicked && bClicked) return 1;
 
-    return 0;
-  });
-}
-
-    const songInPlaylists = [];
-    this.originalPlaylistIds = [];
-
-    const songsByPlaylist = await Promise.all(
-      playlists.map(async (playlist) => {
-        const songs = await this.getPlaylistSongs(playlist.id);
-        return { playlistId: playlist.id, songs };
-      })
-    );
-
-    for (const { playlistId, songs } of songsByPlaylist) {
-      if (songs.some((s) => String(s.song_id) === String(this.currentSongForPlaylist))) {
-        songInPlaylists.push(playlistId);
-      }
+        return 0;
+      });
     }
 
+    this.originalPlaylistIds = [];
+
+    // Build rows immediately (without waiting for song checks)
+    const rows = [];
     playlists.forEach((playlist) => {
       const row = template.cloneNode(true);
       const title = row.querySelector('.add-to-playlist-title');
@@ -10435,14 +10417,14 @@ if (lastCreatedId || lastClickedId) {
       row.dataset.playlistId = playlist.id;
       row.style.display = '';
 
-      // ✅ AUTO-SELECT newly created playlist (one-time via separate key)
-const autoSelectId = this._getLastCreatedPlaylistAutoSelectId?.();
-if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
-  if (!this.selectedPlaylistIds.includes(playlist.id)) {
-    this.selectedPlaylistIds.push(playlist.id);
-  }
-  if (icon) icon.style.opacity = '1';
-}
+      // Auto-select newly created playlist
+      const autoSelectId = this._getLastCreatedPlaylistAutoSelectId?.();
+      if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
+        if (!this.selectedPlaylistIds.includes(playlist.id)) {
+          this.selectedPlaylistIds.push(playlist.id);
+        }
+        if (icon) icon.style.opacity = '1';
+      }
 
       row.onmouseenter = () => {
         if (!this.selectedPlaylistIds.includes(playlist.id)) {
@@ -10458,22 +10440,37 @@ if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
         }
       };
 
-     if (songInPlaylists.includes(playlist.id)) {
-  if (!this.selectedPlaylistIds.includes(playlist.id)) {
-    this.selectedPlaylistIds.push(playlist.id);
-  }
-  if (!this.originalPlaylistIds.includes(playlist.id)) {
-    this.originalPlaylistIds.push(playlist.id);
-  }
-  if (icon) icon.style.opacity = '1';
-}
-
       container.appendChild(row);
+      rows.push({ row, playlist, icon });
     });
 
+    // Show container immediately
     container.style.opacity = '1';
-  },
 
+    // Check which playlists already contain this song (in background)
+    Promise.all(
+      playlists.map(async (playlist) => {
+        const songs = await this.getPlaylistSongs(playlist.id);
+        return { playlistId: playlist.id, songs };
+      })
+    ).then((songsByPlaylist) => {
+      for (const { playlistId, songs } of songsByPlaylist) {
+        if (songs.some((s) => String(s.song_id) === String(this.currentSongForPlaylist))) {
+          const rowData = rows.find(r => r.playlist.id === playlistId);
+          if (rowData) {
+            if (!this.selectedPlaylistIds.includes(playlistId)) {
+              this.selectedPlaylistIds.push(playlistId);
+            }
+            if (!this.originalPlaylistIds.includes(playlistId)) {
+              this.originalPlaylistIds.push(playlistId);
+            }
+            if (rowData.icon) rowData.icon.style.opacity = '1';
+          }
+        }
+      }
+    });
+  },
+  
   togglePlaylistSelection(row) {
     const playlistId = parseInt(row.dataset.playlistId);
     const icon = row.querySelector('.add-to-playlist-icon');
