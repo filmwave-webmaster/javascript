@@ -6551,6 +6551,16 @@ function initUniversalSearch() {
   });
 
   updateLock();
+
+  // Reset state after Barba transitions
+  document.addEventListener('barba:after', () => {
+    previousActiveModules = new Set();
+    if (overlay) {
+      overlay.remove();
+      overlay = null;
+    }
+    isLocked = false;
+  });
 })();
 
 /**
