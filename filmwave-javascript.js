@@ -1368,8 +1368,8 @@ function initVolumeControl() {
     }
   });
   
-  // Click on track to set volume
-  track.addEventListener('click', (e) => {
+// Click on track to set volume - use trackWrapper for larger hit area
+  trackWrapper.addEventListener('click', (e) => {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const volume = Math.max(0, Math.min(1, x / rect.width));
