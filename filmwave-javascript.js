@@ -9411,6 +9411,19 @@ const PlaylistManager = {
     await this.getUserId();
     this.setupEventListeners();
     this.setupPageSpecificFeatures();
+    
+    // Preload playlists for add-to-playlist modal on relevant pages
+    this.preloadPlaylists();
+  },
+
+  async preloadPlaylists() {
+    const path = window.location.pathname;
+    const relevantPages = ['/music', '/dashboard/favorites', '/dashboard/playlist-template'];
+    
+    if (this.currentUserId && (relevantPages.some(p => path.includes(p)) || path === '/music/')) {
+      console.log('🎵 Preloading playlists for add-to-playlist modal');
+      await this.getUserPlaylists();
+    }
   },
 
   async getUserId() {
