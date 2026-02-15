@@ -271,27 +271,48 @@ function scrollToSelected(cardElement) {
 }
 
 function adjustDropdownPosition(toggle, list) {
+  if (!list || !toggle) return;
+  
+  const g = window.musicPlayerPersistent;
+  
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
                     document.querySelector('.favorite-songs-wrapper') ||
                     document.body;
   
-  if (!list || !toggle) return;
+  // Get viewport height, accounting for music player if visible
+  let viewportBottom = window.innerHeight;
+  if (g && (g.hasActiveSong || g.standaloneAudio)) {
+    const musicPlayer = document.querySelector('.music-player-wrapper');
+    if (musicPlayer) {
+      viewportBottom -= musicPlayer.offsetHeight;
+    }
+  }
   
   const containerRect = container.getBoundingClientRect();
   const toggleRect = toggle.getBoundingClientRect();
-  const original = list.style.display;
+  
+  // Temporarily show list to measure height
+  const originalDisplay = list.style.display;
+  const originalVisibility = list.style.visibility;
   list.style.display = 'block';
   list.style.visibility = 'hidden';
   const listHeight = list.offsetHeight;
-  list.style.display = original;
-  list.style.visibility = '';
-  const spaceBelow = containerRect.bottom - toggleRect.bottom;
+  list.style.display = originalDisplay;
+  list.style.visibility = originalVisibility;
+  
+  // Use the more restrictive bottom boundary (container or viewport)
+  const effectiveBottom = Math.min(containerRect.bottom, viewportBottom);
+  
+  const spaceBelow = effectiveBottom - toggleRect.bottom;
   const spaceAbove = toggleRect.top - containerRect.top;
+  
   if (spaceBelow < listHeight && spaceAbove > spaceBelow) {
+    // Not enough space below, show above
     list.style.top = 'auto';
     list.style.bottom = '100%';
   } else {
+    // Show below (default)
     list.style.top = '100%';
     list.style.bottom = 'auto';
   }
