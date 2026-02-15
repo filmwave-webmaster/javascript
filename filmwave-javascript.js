@@ -329,9 +329,10 @@ function positionMasterPlayer(theme) {
   if (!playerWrapper) return;
   
   // Get theme from parameter, global state, or localStorage
-  const currentTheme = theme || window.musicPlayerPersistent?.darkMode === true ? 'dark' : 
+  const currentTheme = theme || 
+                       (window.musicPlayerPersistent?.darkMode === true ? 'dark' : 
                        window.musicPlayerPersistent?.darkMode === false ? 'light' :
-                       localStorage.getItem('filmwaveTheme') || 'light';
+                       localStorage.getItem('filmwaveTheme') || 'light');
   const isDark = currentTheme === 'dark';
   
   playerWrapper.style.setProperty('position', 'fixed', 'important');
@@ -343,7 +344,7 @@ function positionMasterPlayer(theme) {
   playerWrapper.style.setProperty('z-index', '9999', 'important');
   
   if (isDark) {
-    // Dark mode - use blur effect (Webflow settings)
+    // Dark mode - use blur effect
     playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
     playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
     playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
