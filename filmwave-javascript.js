@@ -682,6 +682,8 @@ function navigateStandaloneTrack(direction) {
   
   const wasPlaying = g.isPlaying;
   
+ const wasPlaying = g.isPlaying;
+  
   if (g.standaloneAudio) {
     try {
       g.standaloneAudio.pause();
@@ -691,7 +693,10 @@ function navigateStandaloneTrack(direction) {
       g.standaloneAudio = null;
     }
   }
-
+  
+  // Reset progress tracker for new song
+  resetMobileProgress();
+  
   // Reset old dashboard tile waveform if exists
   if (isOnDashboard && g.currentSongData) {
     const waveformContainers = document.querySelectorAll('.db-waveform');
