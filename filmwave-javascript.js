@@ -9685,19 +9685,36 @@ async removeSongFromPlaylist(playlistId, songId) {
       }
 
 
-      // Add to Playlist Module
+// Add to Playlist Module
       if (e.target.closest('.dd-add-to-playlist')) {
   e.preventDefault();
   e.stopPropagation();
 
+  const button = e.target.closest('.dd-add-to-playlist');
+  
+  // Check for song ID: button itself, any parent with data-song-id, song-wrapper, or current player
+  const songIdParent = button.closest('[data-song-id]') || button.closest('[data-airtable-id]');
   const songWrapper = e.target.closest('.song-wrapper');
-  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
+  
+  const songId = button?.dataset.songId || 
+                 songIdParent?.dataset.songId || 
+                 songIdParent?.dataset.airtableId ||
+                 songWrapper?.dataset.songId || 
+                 songWrapper?.dataset.airtableId ||
+                 window.musicPlayerPersistent?.currentSongData?.id;
 
   console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
 
   if (songId) {
-    // ✅ Capture selected song UI data from the clicked card
-    this._setAddToPlaylistSelectedSongFromCard(songWrapper);
+    // ✅ Capture selected song UI data from the clicked card (if available)
+    if (songWrapper) {
+      this._setAddToPlaylistSelectedSongFromCard(songWrapper);
+    } else if (songIdParent) {
+      this._setAddToPlaylistSelectedSongFromCard(songIdParent);
+    } else {
+      // Use current playing song data for modal display
+      this._setAddToPlaylistSelectedSongFromPlayer();
+    }
 
     // ✅ Open modal
     this.openAddToPlaylistModal(songId);
@@ -9707,6 +9724,7 @@ async removeSongFromPlaylist(playlistId, songId) {
 
   return;
 }
+      
 //End
 
       if (e.target.closest('.add-to-playlist-x-button')) {
