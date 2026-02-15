@@ -6366,6 +6366,58 @@ function initUniversalSearch() {
 * =============================================================
 */
 
+(function () {
+  const body = document.body;
+  let scrollY = 0;
+  let isLocked = false;
+
+  function lockScroll() {
+    if (isLocked) return;
+    isLocked = true;
+
+    scrollY = window.scrollY || window.pageYOffset;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+  }
+
+  function unlockScroll() {
+    if (!isLocked) return;
+    isLocked = false;
+
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    window.scrollTo(0, scrollY);
+  }
+
+  const selectors = [
+    ".create-playlist-module-wrapper",
+    ".add-to-playlist-module-wrapper"
+  ];
+
+  function isActive(el) {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    return cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0";
+  }
+
+  function updateLock() {
+    const anyActive = selectors.some(sel => isActive(document.querySelector(sel)));
+    anyActive ? lockScroll() : unlockScroll();
+  }
+
+  const observer = new MutationObserver(updateLock);
+  observer.observe(document.documentElement, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["style", "class"]
+  });
+
+  updateLock();
+})();
 
 /**
 * ============================================================
