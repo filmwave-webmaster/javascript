@@ -9405,7 +9405,17 @@ const PlaylistManager = {
   /* ----------------------------
      INIT
      ---------------------------- */
-
+  
+ async init() {
+    console.log('🎵 Initializing Playlist Manager');
+    await this.getUserId();
+    this.setupEventListeners();
+    this.setupPageSpecificFeatures();
+    
+    // Preload playlists for add-to-playlist modal
+    this.preloadPlaylists();
+  },
+  
 preloadPlaylists() {
     // Preload on any page if user is logged in (non-blocking)
     if (this.currentUserId) {
