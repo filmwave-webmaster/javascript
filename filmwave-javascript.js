@@ -9692,40 +9692,34 @@ async removeSongFromPlaylist(playlistId, songId) {
 
   const button = e.target.closest('.dd-add-to-playlist');
   
-  // Check for song ID from various sources
-  const songIdParent = button.closest('[data-song-id]') || button.closest('[data-airtable-id]');
+  // Check specific parent elements for song ID
   const songWrapper = button.closest('.song-wrapper');
   const masonryTile = button.closest('.masonry-song-tile-wrapper');
-  const inMusicPlayer = button.closest('.music-player-wrapper');
+  const musicPlayer = button.closest('.music-player-wrapper');
   
-  let songId = button?.dataset.songId || 
-               songIdParent?.dataset.songId || 
-               songIdParent?.dataset.airtableId ||
-               songWrapper?.dataset.songId || 
-               songWrapper?.dataset.airtableId ||
-               masonryTile?.dataset.songId;
+  let songId = null;
+  let uiSource = null;
   
-  // If in music player or no songId found, use currently playing song
-  if (!songId && (inMusicPlayer || !songIdParent)) {
+  if (songWrapper) {
+    songId = songWrapper.dataset.songId || songWrapper.dataset.airtableId;
+    uiSource = songWrapper;
+  } else if (masonryTile) {
+    songId = masonryTile.dataset.songId;
+    uiSource = masonryTile;
+  } else if (musicPlayer) {
     songId = window.musicPlayerPersistent?.currentSongData?.id;
+    uiSource = null; // Use player data
   }
 
   console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
 
   if (songId) {
-    // Capture selected song UI data
-    if (songWrapper) {
-      this._setAddToPlaylistSelectedSongFromCard(songWrapper);
-    } else if (masonryTile) {
-      this._setAddToPlaylistSelectedSongFromCard(masonryTile);
-    } else if (songIdParent) {
-      this._setAddToPlaylistSelectedSongFromCard(songIdParent);
+    if (uiSource) {
+      this._setAddToPlaylistSelectedSongFromCard(uiSource);
     } else {
-      // Use current playing song data for modal display
       this._setAddToPlaylistSelectedSongFromPlayer();
     }
 
-    // Open modal
     this.openAddToPlaylistModal(songId);
   } else {
     console.warn('❌ Could not find songId for add-to-playlist');
