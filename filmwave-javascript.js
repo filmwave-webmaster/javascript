@@ -345,9 +345,9 @@ function positionMasterPlayer(theme) {
   
   if (isDark) {
     // Dark mode - use blur effect
-    playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
-    playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
-    playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
+    //playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
+    //playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
+    //playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
   } else {
     // Light mode - solid opaque background, no blur
     playerWrapper.style.setProperty('background-color', 'var(--color-1)', 'important');
