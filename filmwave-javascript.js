@@ -323,6 +323,7 @@ function adjustDropdownPosition(toggle, list) {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
+
 function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
@@ -334,6 +335,13 @@ function positionMasterPlayer() {
   playerWrapper.style.setProperty('top', 'auto', 'important');
   playerWrapper.style.setProperty('width', '100%', 'important');
   playerWrapper.style.setProperty('z-index', '9999', 'important');
+  playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
+  playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
+  playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
+  playerWrapper.style.setProperty('transform', 'translate3d(0, 0, 0)', 'important');
+  playerWrapper.style.setProperty('isolation', 'isolate', 'important');
+  playerWrapper.style.setProperty('backface-visibility', 'hidden', 'important');
+  playerWrapper.style.setProperty('-webkit-backface-visibility', 'hidden', 'important');
 }
 
 /**
