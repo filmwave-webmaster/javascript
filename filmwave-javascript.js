@@ -359,12 +359,22 @@ function positionMasterPlayer(theme) {
   const searchbarBlur = document.querySelector('.searchbar-blur');
   const searchbarBackground = document.querySelector('.searchbar-background');
   
-  if (searchbarBlur) {
-    searchbarBlur.style.setProperty('display', isDark ? '' : 'none', 'important');
-  }
-  
-  if (searchbarBackground) {
-    searchbarBackground.style.setProperty('opacity', isDark ? '' : '1', 'important');
+  if (isDark) {
+    // Dark mode - use Webflow settings or add custom styles here
+    if (searchbarBlur) {
+      searchbarBlur.style.setProperty('display', 'none', 'important');
+    }
+    if (searchbarBackground) {
+      searchbarBackground.style.setProperty('opacity', '1', 'important');
+    }
+  } else {
+    // Light mode - hide blur, solid background
+    if (searchbarBlur) {
+      searchbarBlur.style.setProperty('display', 'none', 'important');
+    }
+    if (searchbarBackground) {
+      searchbarBackground.style.setProperty('opacity', '1', 'important');
+    }
   }
 }
 
