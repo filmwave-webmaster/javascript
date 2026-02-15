@@ -6371,7 +6371,6 @@ function initUniversalSearch() {
   let scrollY = 0;
   let isLocked = false;
   let overlay = null;
-  let activeModuleCount = 0;
 
   function createOverlay() {
     if (overlay) return overlay;
@@ -6410,16 +6409,6 @@ function initUniversalSearch() {
       }, 250);
       overlay = null;
     }
-  }
-
-  function applyModuleShadow(moduleEl) {
-    if (!moduleEl) return;
-    moduleEl.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.3)';
-  }
-
-  function removeModuleShadow(moduleEl) {
-    if (!moduleEl) return;
-    moduleEl.style.boxShadow = '';
   }
 
   function animateModuleIn(moduleEl) {
@@ -6488,7 +6477,6 @@ function initUniversalSearch() {
     // Reset all module styles
     document.querySelectorAll('.add-to-playlist-module, .create-playlist-module').forEach(m => {
       resetModuleStyles(m);
-      removeModuleShadow(m);
     });
   }
 
@@ -6532,32 +6520,19 @@ function initUniversalSearch() {
           if (!wasActive) {
             animateModuleIn(moduleEl);
           }
-          // Only apply shadow if no other module has it
-          if (previousActiveModules.size === 0) {
-            applyModuleShadow(moduleEl);
-          }
         }
       }
     });
     
-    // Find closed modules and remove shadow
+    // Find closed modules and reset styles
     previousActiveModules.forEach(sel => {
       if (!currentActiveModules.has(sel)) {
         const moduleEl = document.querySelector(sel);
         if (moduleEl) {
-          removeModuleShadow(moduleEl);
           resetModuleStyles(moduleEl);
         }
       }
     });
-    
-    // If a module closed but another is still open, move shadow to remaining module
-    if (currentActiveModules.size === 1 && previousActiveModules.size > 1) {
-      currentActiveModules.forEach(sel => {
-        const moduleEl = document.querySelector(sel);
-        applyModuleShadow(moduleEl);
-      });
-    }
     
     previousActiveModules = currentActiveModules;
     
