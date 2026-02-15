@@ -9406,16 +9406,22 @@ const PlaylistManager = {
      INIT
      ---------------------------- */
 
-  async init() {
-    console.log('🎵 Initializing Playlist Manager');
-    await this.getUserId();
-    this.setupEventListeners();
-    this.setupPageSpecificFeatures();
-    
-    // Preload playlists for add-to-playlist modal on relevant pages
-    this.preloadPlaylists();
+preloadPlaylists() {
+    // Preload on any page if user is logged in (non-blocking)
+    if (this.currentUserId) {
+      console.log('🎵 Preloading playlists for add-to-playlist modal');
+      this.getUserPlaylists().then(playlists => {
+        // Also preload songs for each playlist (for instant checkmarks)
+        if (playlists && playlists.length) {
+          console.log('🎵 Preloading playlist songs');
+          playlists.forEach(playlist => {
+            this.getPlaylistSongs(playlist.id).catch(() => {});
+          });
+        }
+      }).catch(() => {});
+    }
   },
-
+  
 async preloadPlaylists() {
     // Preload on any page if user is logged in
     if (this.currentUserId) {
@@ -9536,14 +9542,32 @@ async preloadPlaylists() {
     return playlists.find((p) => p.id === parseInt(playlistId));
   },
 
-  async getPlaylistSongs(playlistId) {
+async getPlaylistSongs(playlistId, forceRefresh = false) {
+    // Check cache first
+    if (!forceRefresh) {
+      if (!this._playlistSongsCache) this._playlistSongsCache = {};
+      const cached = this._playlistSongsCache[playlistId];
+      if (cached && Date.now() - cached.timestamp < 60000) { // 1 minute cache
+        return cached.songs;
+      }
+    }
+    
     try {
       const response = await fetch(
         `${XANO_PLAYLISTS_API}/Get_Playlist_Songs?playlist_id=${playlistId}`
       );
 
       if (!response.ok) throw new Error('Failed to fetch playlist songs');
-      return response.json();
+      const songs = await response.json();
+      
+      // Cache the result
+      if (!this._playlistSongsCache) this._playlistSongsCache = {};
+      this._playlistSongsCache[playlistId] = {
+        songs,
+        timestamp: Date.now()
+      };
+      
+      return songs;
     } catch (error) {
       console.error('Error fetching playlist songs:', error);
       return [];
