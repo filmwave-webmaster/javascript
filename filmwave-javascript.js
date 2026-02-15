@@ -9692,9 +9692,9 @@ async removeSongFromPlaylist(playlistId, songId) {
 
   const button = e.target.closest('.dd-add-to-playlist');
   
-  // Check specific parent elements for song ID
+  // Check specific parent elements
   const songWrapper = button.closest('.song-wrapper');
-  const masonryTile = button.closest('.masonry-song-tile-wrapper');
+  const masonryTile = button.closest('.masonry-song-tile');
   const musicPlayer = button.closest('.music-player-wrapper');
   
   let songId = null;
@@ -9704,11 +9704,13 @@ async removeSongFromPlaylist(playlistId, songId) {
     songId = songWrapper.dataset.songId || songWrapper.dataset.airtableId;
     uiSource = songWrapper;
   } else if (masonryTile) {
-    songId = masonryTile.dataset.songId;
+    // Masonry tile - find the wrapper inside that has the song ID
+    const tileWrapper = masonryTile.querySelector('.masonry-song-tile-wrapper');
+    songId = masonryTile.dataset.songId || tileWrapper?.dataset.songId;
     uiSource = masonryTile;
   } else if (musicPlayer) {
     songId = window.musicPlayerPersistent?.currentSongData?.id;
-    uiSource = null; // Use player data
+    uiSource = null;
   }
 
   console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
