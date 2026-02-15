@@ -6703,9 +6703,13 @@ barba.hooks.afterEnter((data) => {
     setTimeout(() => linkStandaloneToWaveform(), 200);
     setTimeout(() => linkStandaloneToWaveform(), 500);
     setTimeout(() => linkStandaloneToWaveform(), 1000);
+    
+    // Preload playlists after page transition
+    if (typeof PlaylistManager !== 'undefined' && PlaylistManager.preloadPlaylists) {
+      PlaylistManager.preloadPlaylists();
+    }
   });
 }
-
 
 /**
  * ============================================================
@@ -9584,7 +9588,7 @@ async getPlaylistSongs(playlistId, forceRefresh = false) {
     }
   },
 
-  async addSongToPlaylist(playlistId, songId, position = 0) {
+async addSongToPlaylist(playlistId, songId, position = 0) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Add_Song_to_Playlist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9596,10 +9600,16 @@ async getPlaylistSongs(playlistId, forceRefresh = false) {
     });
 
     if (!response.ok) throw new Error('Failed to add song to playlist');
+    
+    // Invalidate cache for this playlist
+    if (this._playlistSongsCache && this._playlistSongsCache[playlistId]) {
+      delete this._playlistSongsCache[playlistId];
+    }
+    
     return response.json();
   },
 
-  async removeSongFromPlaylist(playlistId, songId) {
+async removeSongFromPlaylist(playlistId, songId) {
     const url =
       `${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist` +
       `?playlist_id=${encodeURIComponent(parseInt(playlistId))}` +
@@ -9608,6 +9618,12 @@ async getPlaylistSongs(playlistId, forceRefresh = false) {
     const response = await fetch(url, { method: 'DELETE' });
 
     if (!response.ok) throw new Error('Failed to remove song');
+    
+    // Invalidate cache for this playlist
+    if (this._playlistSongsCache && this._playlistSongsCache[playlistId]) {
+      delete this._playlistSongsCache[playlistId];
+    }
+    
     return response.json();
   },
 
