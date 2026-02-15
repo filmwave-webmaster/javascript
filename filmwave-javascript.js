@@ -6379,7 +6379,11 @@ function initUniversalSearch() {
     html.classList.add("modal-open");
     body.classList.add("modal-open");
 
+    body.style.position = 'fixed';
     body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.overflow = 'hidden';
   }
 
   function unlockScroll() {
@@ -6390,10 +6394,14 @@ function initUniversalSearch() {
     html.classList.remove("modal-open");
     body.classList.remove("modal-open");
 
-    body.style.top = "";
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    body.style.overflow = '';
     window.scrollTo(0, scrollY);
   }
-
+  
   // Watch your two modules for “active” state
   const selectors = [
     ".create-playlist-module-wrapper",
