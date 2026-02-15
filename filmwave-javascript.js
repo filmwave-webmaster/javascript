@@ -6526,10 +6526,10 @@ barba.hooks.afterEnter((data) => {
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
     
-    // Re-initialize audio preloader if on music page
-    const path = data?.next?.url?.path || '';
-    if (path === '/music' || path === '/music/') {
-    }
+    // Sync play/pause icons after page transition
+    setTimeout(() => linkStandaloneToWaveform(), 200);
+    setTimeout(() => linkStandaloneToWaveform(), 500);
+    setTimeout(() => linkStandaloneToWaveform(), 1000);
   });
 }
 
