@@ -6371,6 +6371,7 @@ function initUniversalSearch() {
   let scrollY = 0;
   let isLocked = false;
   let overlay = null;
+  let activeModuleCount = 0;
 
   function createOverlay() {
     if (overlay) return overlay;
@@ -6383,19 +6384,67 @@ function initUniversalSearch() {
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(0, 0, 0, 0.4);
+      background-color: rgba(0, 0, 0, 0);
       z-index: 9998;
       pointer-events: none;
+      transition: background-color 0.25s ease;
     `;
     document.body.appendChild(overlay);
+    
+    // Trigger fade in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.35)';
+      });
+    });
+    
     return overlay;
   }
 
   function removeOverlay() {
     if (overlay) {
-      overlay.remove();
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+      const overlayToRemove = overlay;
+      setTimeout(() => {
+        overlayToRemove.remove();
+      }, 250);
       overlay = null;
     }
+  }
+
+  function applyModuleShadow(moduleEl) {
+    if (!moduleEl) return;
+    moduleEl.style.boxShadow = '0 25px 80px rgba(0, 0, 0, 0.6)';
+  }
+
+  function removeModuleShadow(moduleEl) {
+    if (!moduleEl) return;
+    moduleEl.style.boxShadow = '';
+  }
+
+  function animateModuleIn(moduleEl) {
+    if (!moduleEl) return;
+    
+    // Set initial state
+    moduleEl.style.transition = 'none';
+    moduleEl.style.opacity = '0';
+    moduleEl.style.transform = 'translateY(20px)';
+    
+    // Trigger animation
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        moduleEl.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        moduleEl.style.opacity = '1';
+        moduleEl.style.transform = 'translateY(0)';
+      });
+    });
+  }
+
+  function resetModuleStyles(moduleEl) {
+    if (!moduleEl) return;
+    moduleEl.style.transition = '';
+    moduleEl.style.opacity = '';
+    moduleEl.style.transform = '';
   }
 
   function lockScroll() {
@@ -6435,11 +6484,22 @@ function initUniversalSearch() {
     }
     
     removeOverlay();
+    
+    // Reset all module styles
+    document.querySelectorAll('.add-to-playlist-module, .create-playlist-module').forEach(m => {
+      resetModuleStyles(m);
+      removeModuleShadow(m);
+    });
   }
 
-  const selectors = [
+  const wrapperSelectors = [
     ".create-playlist-module-wrapper",
     ".add-to-playlist-module-wrapper"
+  ];
+
+  const moduleSelectors = [
+    ".create-playlist-module",
+    ".add-to-playlist-module"
   ];
 
   function isActive(el) {
@@ -6448,9 +6508,64 @@ function initUniversalSearch() {
     return cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0";
   }
 
+  let previousActiveModules = new Set();
+
   function updateLock() {
-    const anyActive = selectors.some(sel => isActive(document.querySelector(sel)));
-    anyActive ? lockScroll() : unlockScroll();
+    const currentActiveModules = new Set();
+    
+    wrapperSelectors.forEach((sel, index) => {
+      const wrapper = document.querySelector(sel);
+      if (isActive(wrapper)) {
+        currentActiveModules.add(moduleSelectors[index]);
+      }
+    });
+    
+    const anyActive = currentActiveModules.size > 0;
+    const wasActive = previousActiveModules.size > 0;
+    
+    // Find newly opened modules
+    currentActiveModules.forEach(sel => {
+      if (!previousActiveModules.has(sel)) {
+        const moduleEl = document.querySelector(sel);
+        if (moduleEl) {
+          // Only animate if this is the first module opening
+          if (!wasActive) {
+            animateModuleIn(moduleEl);
+          }
+          // Only apply shadow if no other module has it
+          if (previousActiveModules.size === 0) {
+            applyModuleShadow(moduleEl);
+          }
+        }
+      }
+    });
+    
+    // Find closed modules and remove shadow
+    previousActiveModules.forEach(sel => {
+      if (!currentActiveModules.has(sel)) {
+        const moduleEl = document.querySelector(sel);
+        if (moduleEl) {
+          removeModuleShadow(moduleEl);
+          resetModuleStyles(moduleEl);
+        }
+      }
+    });
+    
+    // If a module closed but another is still open, move shadow to remaining module
+    if (currentActiveModules.size === 1 && previousActiveModules.size > 1) {
+      currentActiveModules.forEach(sel => {
+        const moduleEl = document.querySelector(sel);
+        applyModuleShadow(moduleEl);
+      });
+    }
+    
+    previousActiveModules = currentActiveModules;
+    
+    if (anyActive && !wasActive) {
+      lockScroll();
+    } else if (!anyActive && wasActive) {
+      unlockScroll();
+    }
   }
 
   const observer = new MutationObserver(updateLock);
