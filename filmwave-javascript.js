@@ -930,6 +930,34 @@ function updateMasterPlayerInfo(song, wavesurfer) {
   if (masterCoverArt && fields['Cover Art']) {
     masterCoverArt.src = fields['Cover Art'][0].url;
   }
+  
+  // Update blurred background image
+  if (fields['Cover Art']) {
+    const coverUrl = fields['Cover Art'][0].url;
+    let bgImage = playerScope.querySelector('.player-bg-image');
+    
+    if (!bgImage) {
+      bgImage = document.createElement('div');
+      bgImage.className = 'player-bg-image';
+      bgImage.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-size: cover;
+        background-position: center center;
+        filter: blur(100px);
+        opacity: 0.1;
+        pointer-events: none;
+        z-index: 0;
+      `;
+      playerScope.style.position = 'relative';
+      playerScope.insertBefore(bgImage, playerScope.firstChild);
+    }
+    
+    bgImage.style.backgroundImage = `url("${coverUrl}")`;
+  }
   if (masterKey) masterKey.textContent = fields['Key'] || '-';
   if (masterBpm) masterBpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
   
