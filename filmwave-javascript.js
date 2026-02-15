@@ -4568,7 +4568,7 @@ function loadSavedPlaylistFilter() {
       currentActiveText.style.color = ''; // reset to Webflow default
     }
     if (currentDot) {
-      currentDot.style.setProperty('display', 'block', 'important');
+      showFilterDot(currentDot);
     }
   } else {
     if (currentActiveText) {
@@ -4576,7 +4576,7 @@ function loadSavedPlaylistFilter() {
       currentActiveText.style.color = 'var(--color-9)'; // placeholder color
     }
     if (currentDot) {
-      currentDot.style.setProperty('display', 'none', 'important');
+      hideFilterDot(currentDot);
     }
   }
 }
@@ -4887,7 +4887,7 @@ checkbox.addEventListener('change', () => {
         setTimeout(() => {
           const currentDot = playlistSection.querySelector('.filter-dot-active');
           if (selectedPlaylistId && currentDot) {
-            currentDot.style.setProperty('display', 'block', 'important');
+            showFilterDot(currentDot);
           }
         }, 50);
       }
@@ -5256,6 +5256,28 @@ setTimeout(() => {
 
 // START OF FILTER DOTS
 
+// Fade in/out helper for filter dots
+function showFilterDot(dot) {
+  if (!dot) return;
+  dot.style.transition = 'opacity 0.2s ease';
+  dot.style.display = 'block';
+  dot.style.opacity = '0';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      dot.style.opacity = '1';
+    });
+  });
+}
+
+function hideFilterDot(dot) {
+  if (!dot) return;
+  dot.style.transition = 'opacity 0.2s ease';
+  dot.style.opacity = '0';
+  setTimeout(() => {
+    dot.style.display = 'none';
+  }, 200);
+}
+
 function updateFilterDots() {
   document.querySelectorAll('[data-filter-type]').forEach(section => {
     const filterType = section.getAttribute('data-filter-type');
@@ -5286,7 +5308,11 @@ function updateFilterDots() {
     }
     
     // Show/hide dot
-    dot.style.display = isActive ? 'block' : 'none';
+    if (isActive) {
+      showFilterDot(dot);
+    } else {
+      hideFilterDot(dot);
+    }
   });
 }
 // START OF INIT BPM FILTER
@@ -8160,7 +8186,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
             if (playlistSection) {
               const dot = playlistSection.querySelector('.filter-dot-active');
               if (dot) {
-                dot.style.setProperty('display', 'block', 'important');
+                showFilterDot(dot);
               }
             }
           }
@@ -8612,6 +8638,7 @@ window.addEventListener('load', function() {
   // Hide all filter dots immediately
   document.querySelectorAll('.filter-dot-active').forEach(dot => {
     dot.style.display = 'none';
+    dot.style.opacity = '0';
   });
 
    // Show sidebar on dashboard pages (hard refresh)
