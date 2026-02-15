@@ -1314,10 +1314,11 @@ function initVolumeControl() {
     }
   }
   
-  // Update slider handle position
+// Update slider handle position
   function updateSliderPosition(volume) {
-    // Use calc to account for handle width at edges
-    sliderHandle.style.left = `calc(${volume * 100}% - ${volume * sliderHandle.offsetWidth}px)`;
+    // Use transform to center handle at correct position
+    sliderHandle.style.left = `${volume * 100}%`;
+    sliderHandle.style.transform = `translateX(-${volume * 100}%)`;
   }
   
   // Set volume
