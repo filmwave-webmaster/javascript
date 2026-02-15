@@ -682,8 +682,6 @@ function navigateStandaloneTrack(direction) {
   
   const wasPlaying = g.isPlaying;
   
- const wasPlaying = g.isPlaying;
-  
   if (g.standaloneAudio) {
     try {
       g.standaloneAudio.pause();
