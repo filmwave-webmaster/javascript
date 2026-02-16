@@ -6735,8 +6735,22 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       g.filtersInitialized = false; // Allow re-initialization on new page
     }
   });
-  barba.hooks.beforeEnter((data) => {
+barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
+    
+    // Show music player immediately when navigating to music page
+    const nextPath = data?.next?.url?.path || '';
+    if (nextPath === '/music' || nextPath === '/music/') {
+      const playerWrapper = document.querySelector('.music-player-wrapper');
+      if (playerWrapper) {
+        playerWrapper.style.display = 'flex';
+        playerWrapper.style.visibility = 'visible';
+        playerWrapper.style.opacity = '1';
+        playerWrapper.style.alignItems = 'center';
+        playerWrapper.style.pointerEvents = 'auto';
+        positionMasterPlayer();
+      }
+    }
     
     // Hide tags container immediately to prevent flash
     const savedState = localStorage.getItem('musicFilters');
@@ -6768,7 +6782,8 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       }
     }
   });
-barba.hooks.afterEnter((data) => { 
+  
+  barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
     
