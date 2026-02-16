@@ -6772,10 +6772,24 @@ barba.hooks.afterEnter((data) => {
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
     
-    // Sync play/pause icons after page transition
-    setTimeout(() => linkStandaloneToWaveform(), 200);
-    setTimeout(() => linkStandaloneToWaveform(), 500);
-    setTimeout(() => linkStandaloneToWaveform(), 1000);
+    // Re-initialize audio preloader if on music page
+    const path = data?.next?.url?.path || '';
+    if (path === '/music' || path === '/music/') {
+      setTimeout(() => initializeAudioPreloader(), 300);
+      
+      // Prevent form submission on music page search
+      const searchInput = document.querySelector('.music-area-container .text-field');
+      if (searchInput) {
+        const searchForm = searchInput.closest('form');
+        if (searchForm) {
+          searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          });
+        }
+      }
+    }
     
     // Preload playlists after page transition
     if (typeof PlaylistManager !== 'undefined' && PlaylistManager.preloadPlaylists) {
