@@ -1023,8 +1023,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
       
       // Ensure all other children are above the background
       Array.from(playerScope.children).forEach(child => {
-        if (child !== bgContainer && !child.style.zIndex) {
-          child.style.position = 'relative';
+        if (child !== bgContainer) {
           child.style.zIndex = '1';
         }
       });
