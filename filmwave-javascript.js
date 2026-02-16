@@ -7941,7 +7941,7 @@ function initDashboardFilterPills() {
     pill.addEventListener('click', (e) => {
       e.preventDefault();
       
-      const filterValue = pill.textContent.trim();
+      const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
       if (filterValue) {
         // Save as a genre filter (not search query)
         localStorage.setItem('musicFilters', JSON.stringify({
