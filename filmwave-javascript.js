@@ -6735,57 +6735,8 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       g.filtersInitialized = false; // Allow re-initialization on new page
     }
   });
-  
- barba.hooks.beforeEnter(async (data) => {
+  barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
-    
-    // Show music player immediately when navigating to music page
-    const nextPath = data?.next?.url?.path || '';
-    if (nextPath === '/music' || nextPath === '/music/') {
-      const g = window.musicPlayerPersistent;
-      const playerWrapper = document.querySelector('.music-player-wrapper');
-      
-      if (playerWrapper && !g.hasActiveSong && !g.currentSongData) {
-        // Ensure songs are loaded
-        if (!g.MASTER_DATA || g.MASTER_DATA.length === 0) {
-          await fetchSongs();
-        }
-        
-        // Set first song as current (without playing)
-        if (g.MASTER_DATA && g.MASTER_DATA.length > 0) {
-          const firstSong = g.MASTER_DATA[0];
-          g.currentSongData = firstSong;
-          g.hasActiveSong = true;
-          
-          // Update player UI with first song info
-          const fields = firstSong.fields;
-          const playerScope = document.querySelector('.music-player-wrapper');
-          if (playerScope) {
-            const masterSongTitle = playerScope.querySelector('.player-song-name');
-            const masterArtist = playerScope.querySelector('.player-artist-name');
-            const masterCoverArt = playerScope.querySelector('.player-song-cover');
-            const masterKey = playerScope.querySelector('.player-key');
-            const masterBpm = playerScope.querySelector('.player-bpm');
-            
-            if (masterSongTitle) masterSongTitle.textContent = fields['Song Title'] || 'Untitled';
-            if (masterArtist) masterArtist.textContent = fields['Artist'] || 'Unknown Artist';
-            if (masterCoverArt && fields['Cover Art']) {
-              masterCoverArt.src = fields['Cover Art'][0].url;
-            }
-            if (masterKey) masterKey.textContent = fields['Key'] || '-';
-            if (masterBpm) masterBpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
-          }
-        }
-        
-        // Show player
-        playerWrapper.style.display = 'flex';
-        playerWrapper.style.visibility = 'visible';
-        playerWrapper.style.opacity = '1';
-        playerWrapper.style.alignItems = 'center';
-        playerWrapper.style.pointerEvents = 'auto';
-        positionMasterPlayer();
-      }
-    }
     
     // Hide tags container immediately to prevent flash
     const savedState = localStorage.getItem('musicFilters');
