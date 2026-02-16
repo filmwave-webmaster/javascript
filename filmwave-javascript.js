@@ -420,15 +420,14 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD PADDING TO SIDEBAR NAV WHEN PLAYER IS VISIBLE
+    // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
    const sidebarNav = document.querySelector('.sidebar-nav');
 if (sidebarNav) {
-    // Check if we've already added the adjustment to prevent compounding
-    if (!sidebarNav.dataset.paddingAdjusted) {
-        const currentPadding = parseFloat(window.getComputedStyle(sidebarNav).paddingBottom) || 0;
-        sidebarNav.style.setProperty('padding-bottom', `${currentPadding + 77}px`, 'important');
-        sidebarNav.setAttribute('data-padding-adjusted', 'true');
-        console.log('✅ Added padding to sidebar-nav');
+    if (!sidebarNav.dataset.heightAdjusted) {
+        const playerHeight = playerWrapper.offsetHeight || 77;
+        sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
+        sidebarNav.setAttribute('data-height-adjusted', 'true');
+        console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
     }
 }
 
@@ -462,12 +461,12 @@ if (sidebarNav) {
       }
     }
     
-   // RESET SIDEBAR NAV PADDING WHEN PLAYER IS HIDDEN
+   // RESET SIDEBAR NAV HEIGHT WHEN PLAYER IS HIDDEN
   const sidebarNav = document.querySelector('.sidebar-nav');
   if (sidebarNav) {
-    sidebarNav.style.removeProperty('padding-bottom');
-    sidebarNav.removeAttribute('data-padding-adjusted');
-    console.log('🗑️ Reset padding on sidebar-nav to Webflow defaults');
+    sidebarNav.style.removeProperty('height');
+    sidebarNav.removeAttribute('data-height-adjusted');
+    console.log('🗑️ Reset sidebar-nav height to Webflow default');
     }
     
     // RESET FILTER WRAPPER PADDING WHEN PLAYER IS HIDDEN
@@ -7426,6 +7425,12 @@ if (shouldHaveSidebar && !sidebar) {
   newSidebar.style.visibility = 'visible';
   newSidebar.style.opacity = '0';
   newSidebar.style.transition = 'none';
+  
+  const newSidebarContainer = newSidebar.querySelector('.sidebar-container');
+  if (newSidebarContainer) {
+    newSidebarContainer.style.height = 'auto';
+    newSidebarContainer.style.flexShrink = '0';
+  }
         
         const mainContent = document.querySelector('[data-barba="container"]');
         if (mainContent) {
@@ -7450,6 +7455,13 @@ if (shouldHaveSidebar && !sidebar) {
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
+  
+  const sidebarContainer = sidebar.querySelector('.sidebar-container');
+  if (sidebarContainer) {
+    sidebarContainer.style.height = 'auto';
+    sidebarContainer.style.flexShrink = '0';
+  }
+  
   initDashboardWelcome();
   
   console.log('🔍 Sidebar fade check:', { cameFromDashboard, currentPath: data.current?.url?.path });
@@ -8740,12 +8752,18 @@ window.addEventListener('load', function() {
     dot.style.opacity = '0';
   });
 
-   // Show sidebar on dashboard pages (hard refresh)
+// Show sidebar on dashboard pages (hard refresh)
   if (window.location.pathname.startsWith('/dashboard/')) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       sidebar.style.visibility = 'visible';
       sidebar.style.opacity = '1';
+    }
+    
+    const sidebarContainer = document.querySelector('.sidebar-container');
+    if (sidebarContainer) {
+      sidebarContainer.style.height = 'auto';
+      sidebarContainer.style.flexShrink = '0';
     }
   }
   
