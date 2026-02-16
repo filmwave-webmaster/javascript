@@ -383,6 +383,7 @@ function positionMasterPlayer(theme) {
  * MASTER PLAYER VISIBILITY CONTROL
  * ============================================================
  */
+
 function updateMasterPlayerVisibility() {
   const g = window.musicPlayerPersistent;
   const playerWrapper = document.querySelector('.music-player-wrapper');
@@ -391,6 +392,9 @@ function updateMasterPlayerVisibility() {
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   const hasFooter = !!document.querySelector('.footer-wrapper');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
+  
+  // Get player height dynamically
+  const playerHeight = playerWrapper.offsetHeight || 77;
   
   console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'hasFooter:', hasFooter);
   
@@ -407,7 +411,7 @@ function updateMasterPlayerVisibility() {
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
-        musicAreaContainer.style.setProperty('padding-bottom', '77px', 'important');
+        musicAreaContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
       }
     }
     
@@ -415,7 +419,7 @@ function updateMasterPlayerVisibility() {
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
-        footerWrapper.style.setProperty('padding-bottom', '77px', 'important');
+        footerWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
         console.log('✅ Added padding to footer-wrapper');
       }
     }
@@ -424,7 +428,6 @@ function updateMasterPlayerVisibility() {
    const sidebarNav = document.querySelector('.sidebar-nav');
 if (sidebarNav) {
     if (!sidebarNav.dataset.heightAdjusted) {
-        const playerHeight = playerWrapper.offsetHeight || 77;
         sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
         sidebarNav.setAttribute('data-height-adjusted', 'true');
         console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
@@ -435,7 +438,7 @@ if (sidebarNav) {
     const filterWrapper = document.querySelector('.filter-wrapper');
     if (filterWrapper && !filterWrapper.dataset.paddingAdjusted) {
       const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
-      filterWrapper.style.setProperty('padding-bottom', `${currentPadding + 77}px`, 'important');
+      filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
       filterWrapper.setAttribute('data-padding-adjusted', 'true');
     }
     
@@ -7597,8 +7600,10 @@ loadingPlaceholders.forEach(placeholder => {
 
     if (mainContent && isLoginPage) {
       if (isPlayerVisible) {
-        mainContent.style.height = 'calc(100vh - 77px)';
-        console.log('📐 Main content: calc(100vh - 77px) - player visible');
+        const playerWrapper = document.querySelector('.music-player-wrapper');
+        const playerHeight = playerWrapper?.offsetHeight || 77;
+        mainContent.style.height = `calc(100vh - ${playerHeight}px)`;
+        console.log(`📐 Main content: calc(100vh - ${playerHeight}px) - player visible`);
       } else {
         mainContent.style.height = '100vh';
         console.log('📐 Main content: 100vh - player hidden');
