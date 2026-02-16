@@ -362,10 +362,10 @@ function positionMasterPlayer(theme) {
   if (isDark) {
     // Dark mode - use Webflow settings or add custom styles here
     if (searchbarBlur) {
-      searchbarBlur.style.setProperty('display', '', 'important');
+      searchbarBlur.style.setProperty('display', 'none', 'important');
     }
     if (searchbarBackground) {
-      searchbarBackground.style.setProperty('opacity', '', 'important');
+      searchbarBackground.style.setProperty('opacity', '1', 'important');
     }
   } else {
     // Light mode - hide blur, solid background
