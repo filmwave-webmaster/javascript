@@ -1020,6 +1020,14 @@ function updateMasterPlayerInfo(song, wavesurfer) {
       playerScope.style.position = 'relative';
       playerScope.insertBefore(bgContainer, playerScope.firstChild);
       playerScope._bgActiveLayer = 0;
+      
+      // Ensure all other children are above the background
+      Array.from(playerScope.children).forEach(child => {
+        if (child !== bgContainer && !child.style.zIndex) {
+          child.style.position = 'relative';
+          child.style.zIndex = '1';
+        }
+      });
     }
     
     // Crossfade to new image
