@@ -7426,6 +7426,14 @@ if (shouldHaveSidebar && !sidebar) {
   newSidebar.style.visibility = 'visible';
   newSidebar.style.opacity = '0';
   newSidebar.style.transition = 'none';
+  newSidebar.style.height = '100vh';
+  newSidebar.style.minHeight = '100vh';
+  
+  const newSidebarContainer = newSidebar.querySelector('.sidebar-container');
+  if (newSidebarContainer) {
+    newSidebarContainer.style.height = 'auto';
+    newSidebarContainer.style.flexShrink = '0';
+  }
         
         const mainContent = document.querySelector('[data-barba="container"]');
         if (mainContent) {
@@ -7450,6 +7458,15 @@ if (shouldHaveSidebar && !sidebar) {
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
+  sidebar.style.height = '100vh';
+  sidebar.style.minHeight = '100vh';
+  
+  const sidebarContainer = sidebar.querySelector('.sidebar-container');
+  if (sidebarContainer) {
+    sidebarContainer.style.height = 'auto';
+    sidebarContainer.style.flexShrink = '0';
+  }
+  
   initDashboardWelcome();
   
   console.log('🔍 Sidebar fade check:', { cameFromDashboard, currentPath: data.current?.url?.path });
@@ -8740,12 +8757,20 @@ window.addEventListener('load', function() {
     dot.style.opacity = '0';
   });
 
-   // Show sidebar on dashboard pages (hard refresh)
+// Show sidebar on dashboard pages (hard refresh)
   if (window.location.pathname.startsWith('/dashboard/')) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       sidebar.style.visibility = 'visible';
       sidebar.style.opacity = '1';
+      sidebar.style.height = '100vh';
+      sidebar.style.minHeight = '100vh';
+    }
+    
+    const sidebarContainer = document.querySelector('.sidebar-container');
+    if (sidebarContainer) {
+      sidebarContainer.style.height = 'auto';
+      sidebarContainer.style.flexShrink = '0';
     }
   }
   
