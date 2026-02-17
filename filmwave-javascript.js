@@ -7996,39 +7996,39 @@ function initDashboardStickyPills() {
   
   if (!searchbarContainer || !pillWrapper) return;
   
-  // Create a sentinel element to detect when searchbar becomes sticky
-  const sentinel = document.createElement('div');
-  sentinel.style.cssText = 'position: absolute; top: 0; left: 0; height: 1px; width: 100%; pointer-events: none;';
-  searchbarContainer.parentNode.insertBefore(sentinel, searchbarContainer);
-  
   // Set up pill wrapper for transitions
   pillWrapper.style.transition = 'opacity 0.2s ease';
   
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      // When sentinel is not visible, searchbar is sticky
-      if (!entry.isIntersecting) {
-        pillWrapper.style.opacity = '0';
-        pillWrapper.style.pointerEvents = 'none';
-        setTimeout(() => {
-          if (pillWrapper.style.opacity === '0') {
-            pillWrapper.style.display = 'none';
-          }
-        }, 200);
-      } else {
-        pillWrapper.style.display = '';
-        requestAnimationFrame(() => {
-          pillWrapper.style.opacity = '1';
-          pillWrapper.style.pointerEvents = '';
-        });
-      }
-    });
-  }, {
-    threshold: 0,
-    rootMargin: '0px'
-  });
+  // Get the original top position of the searchbar
+  const originalTop = searchbarContainer.getBoundingClientRect().top + window.scrollY;
+  const stickyTop = parseInt(getComputedStyle(searchbarContainer).top) || 0;
   
-  observer.observe(sentinel);
+  let isSticky = false;
+  
+  const checkSticky = () => {
+    const shouldBeSticky = window.scrollY >= (originalTop - stickyTop);
+    
+    if (shouldBeSticky && !isSticky) {
+      isSticky = true;
+      pillWrapper.style.opacity = '0';
+      pillWrapper.style.pointerEvents = 'none';
+      setTimeout(() => {
+        if (pillWrapper.style.opacity === '0') {
+          pillWrapper.style.display = 'none';
+        }
+      }, 200);
+    } else if (!shouldBeSticky && isSticky) {
+      isSticky = false;
+      pillWrapper.style.display = '';
+      requestAnimationFrame(() => {
+        pillWrapper.style.opacity = '1';
+        pillWrapper.style.pointerEvents = '';
+      });
+    }
+  };
+  
+  window.addEventListener('scroll', checkSticky, { passive: true });
+  checkSticky(); // Initial check
   
   // Handle resize
   window.addEventListener('resize', () => {
