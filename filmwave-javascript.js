@@ -11238,6 +11238,17 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     if (songCountEl) {
       songCountEl.textContent = songCount === 1 ? '1 Song' : `${songCount} Songs`;
     }
+    
+    // Update playlist description
+    const descriptionEl = document.querySelector('.playlist-info-song-description');
+    if (descriptionEl) {
+      if (playlist && playlist.description && playlist.description.trim()) {
+        descriptionEl.textContent = playlist.description;
+        descriptionEl.style.display = '';
+      } else {
+        descriptionEl.style.display = 'none';
+      }
+    }
   },
 
   async renderPlaylistSongs(playlistId) {
