@@ -6897,7 +6897,6 @@ window.addEventListener('load', () => {
   if (window.location.pathname.startsWith('/dashboard/')) {
     setTimeout(() => {
       if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
-      if (typeof initDashboardStickyPills === 'function') initDashboardStickyPills();
       if (typeof initDashboardSearch === 'function') initDashboardSearch();
     }, 300);
   }
@@ -7783,7 +7782,6 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   
   setTimeout(() => {
     if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
-    if (typeof initDashboardStickyPills === 'function') initDashboardStickyPills();
     if (typeof initDashboardSearch === 'function') initDashboardSearch();
   }, 300);
   // initPlaylistsPage is handled by PlaylistManager.setupPageSpecificFeatures()
@@ -7984,62 +7982,7 @@ function initDashboardFilterPills() {
     });
   });
   
-console.log('✅ Dashboard filter pills initialized');
-}
-
-// Dashboard filter pills hide on sticky
-function initDashboardStickyPills() {
-  if (window.innerWidth > 991) return;
-  
-  const searchbarContainer = document.querySelector('.dashboard-searchbar-container');
-  const pillWrapper = document.querySelector('.db-filter-pill-wrapper');
-  
-  if (!searchbarContainer || !pillWrapper) return;
-  
-  // Set up pill wrapper for transitions
-  pillWrapper.style.transition = 'opacity 0.2s ease';
-  
-  // Get the original top position of the searchbar
-  const originalTop = searchbarContainer.getBoundingClientRect().top + window.scrollY;
-  const stickyTop = parseInt(getComputedStyle(searchbarContainer).top) || 0;
-  
-  let isSticky = false;
-  
-  const checkSticky = () => {
-    const shouldBeSticky = window.scrollY >= (originalTop - stickyTop);
-    
-    if (shouldBeSticky && !isSticky) {
-      isSticky = true;
-      pillWrapper.style.opacity = '0';
-      pillWrapper.style.pointerEvents = 'none';
-      setTimeout(() => {
-        if (pillWrapper.style.opacity === '0') {
-          pillWrapper.style.display = 'none';
-        }
-      }, 200);
-    } else if (!shouldBeSticky && isSticky) {
-      isSticky = false;
-      pillWrapper.style.display = '';
-      requestAnimationFrame(() => {
-        pillWrapper.style.opacity = '1';
-        pillWrapper.style.pointerEvents = '';
-      });
-    }
-  };
-  
-  window.addEventListener('scroll', checkSticky, { passive: true });
-  checkSticky(); // Initial check
-  
-  // Handle resize
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > 991) {
-      pillWrapper.style.display = '';
-      pillWrapper.style.opacity = '1';
-      pillWrapper.style.pointerEvents = '';
-    }
-  });
-  
-  console.log('✅ Dashboard sticky pills initialized');
+  console.log('✅ Dashboard filter pills initialized');
 }
 
 /**
@@ -8047,7 +7990,6 @@ function initDashboardStickyPills() {
  * LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES
  * ============================================================
  */
-
 let filtersRestored = false;
 let favoritesRestored = false;
 let isClearing = false;
