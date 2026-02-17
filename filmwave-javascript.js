@@ -1,6 +1,6 @@
   /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - VERSION 44
+ * FILMWAVE MUSIC PLATFORM - VERSION 49
  * Updated: January 17, 2026
  * ============================================================
  */
@@ -6899,6 +6899,11 @@ barba.hooks.afterEnter((data) => {
         setTimeout(updateMusicTileSectionVisibility, 100);
         setTimeout(updateMusicTileSectionVisibility, 500);
       }
+      
+      // Initialize music page filter pills after Barba transition
+      if (typeof initMusicPageFilterPills === 'function') {
+        setTimeout(initMusicPageFilterPills, 300);
+      }
     }
     
     // Preload playlists after page transition
@@ -6931,6 +6936,13 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
       if (typeof initDashboardSearch === 'function') initDashboardSearch();
+    }, 300);
+  }
+  
+  // Initialize music page filter pills
+  if (window.location.pathname === '/music' || window.location.pathname === '/music/') {
+    setTimeout(() => {
+      if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
     }, 300);
   }
   
@@ -8018,11 +8030,84 @@ function initDashboardFilterPills() {
   console.log('✅ Dashboard filter pills initialized');
 }
 
+// Music page filter pills - toggle genre filters directly
+function initMusicPageFilterPills() {
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (!isMusicPage) return;
+  
+  const tagsContainer = document.querySelector('.filter-tags-container');
+  if (!tagsContainer) return;
+  
+  document.querySelectorAll('.db-filter-pill').forEach(pill => {
+    // Skip if already initialized for music page
+    if (pill._musicPagePillInit) return;
+    pill._musicPagePillInit = true;
+    
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
+      if (!filterValue) return;
+      
+      // Check if this filter is already active (tag exists)
+      const existingTag = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
+        const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
+        return tagText === filterValue;
+      });
+      
+      if (existingTag) {
+        // Filter is active - remove it
+        existingTag.querySelector('.filter-tag-remove')?.click();
+        pill.classList.remove('is-active');
+        console.log('🏷️ Music pill deactivated:', filterValue);
+      } else {
+        // Filter is not active - find and check the corresponding Genre checkbox
+        const genreCheckbox = document.querySelector(`[data-filter-group="Genre"][data-filter-value="${filterValue}" i]`);
+        
+        if (genreCheckbox && !genreCheckbox.checked) {
+          genreCheckbox.checked = true;
+          const wrapper = genreCheckbox.closest('.checkbox-single-select-wrapper, .w-checkbox');
+          if (wrapper) wrapper.classList.add('is-active');
+          genreCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+          pill.classList.add('is-active');
+          console.log('🏷️ Music pill activated:', filterValue);
+        } else if (!genreCheckbox) {
+          // No matching checkbox found - create tag manually
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          tag.dataset.pillFilter = filterValue;
+          tag.innerHTML = `
+            <span class="filter-tag-text">${filterValue}</span>
+            <span class="filter-tag-remove x-button-style">×</span>
+          `;
+          
+          tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+            tag.remove();
+            pill.classList.remove('is-active');
+            if (typeof applyFilters === 'function') applyFilters();
+            if (typeof toggleClearButton === 'function') toggleClearButton();
+          });
+          
+          tagsContainer.insertBefore(tag, tagsContainer.firstChild);
+          pill.classList.add('is-active');
+          if (typeof applyFilters === 'function') applyFilters();
+          if (typeof toggleClearButton === 'function') toggleClearButton();
+          console.log('🏷️ Music pill activated (manual):', filterValue);
+        }
+      }
+    });
+  });
+  
+  console.log('✅ Music page filter pills initialized');
+}
+
 /**
  * ============================================================
  * LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES
  * ============================================================
  */
+
 let filtersRestored = false;
 let favoritesRestored = false;
 let isClearing = false;
