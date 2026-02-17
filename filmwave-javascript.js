@@ -6836,9 +6836,36 @@ if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
     
-    // Hide tags container immediately to prevent flash
+    const nextPath = data?.next?.url?.path || '';
     const savedState = localStorage.getItem('musicFilters');
     const savedPlaylist = localStorage.getItem('playlistFilter');
+    
+    // Hide music-tile-section immediately if any filters are saved
+    if ((nextPath === '/music' || nextPath === '/music/') && (savedState || savedPlaylist)) {
+      let hasActiveFilters = false;
+      
+      if (savedPlaylist) {
+        hasActiveFilters = true;
+      }
+      
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          if ((parsed.filters && parsed.filters.length > 0) || (parsed.searchQuery && parsed.searchQuery.trim().length > 0)) {
+            hasActiveFilters = true;
+          }
+        } catch (e) {}
+      }
+      
+      if (hasActiveFilters) {
+        const musicTileSection = data.next.container.querySelector('.music-tile-section');
+        if (musicTileSection) {
+          musicTileSection.style.display = 'none';
+        }
+      }
+    }
+    
+    // Hide tags container immediately to prevent flash
     if (savedState || savedPlaylist) {
       const tagsContainer = data.next.container.querySelector('.filter-tags-container');
       const clearButton = data.next.container.querySelector('.circle-x');
@@ -6866,6 +6893,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       }
     }
   });
+  
 barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
