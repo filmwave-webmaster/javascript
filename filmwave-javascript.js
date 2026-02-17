@@ -87,34 +87,6 @@ if (!window.musicPlayerPersistent) {
   };
 }
 
-// Hide music-tile-section immediately if filters are saved (prevents flash)
-(function() {
-  const savedState = localStorage.getItem('musicFilters');
-  const savedPlaylist = localStorage.getItem('playlistFilter');
-  
-  let hasActiveFilters = false;
-  
-  if (savedPlaylist) {
-    hasActiveFilters = true;
-  }
-  
-  if (savedState) {
-    try {
-      const parsed = JSON.parse(savedState);
-      if ((parsed.filters && parsed.filters.length > 0) || (parsed.searchQuery && parsed.searchQuery.trim().length > 0)) {
-        hasActiveFilters = true;
-      }
-    } catch (e) {}
-  }
-  
-  if (hasActiveFilters) {
-    const style = document.createElement('style');
-    style.id = 'hide-music-tile-style';
-    style.textContent = '.music-tile-section { display: none !important; }';
-    document.head.appendChild(style);
-  }
-})();
-
 // iOS audio unlock - must happen on first user interaction
 (function() {
   const unlockAudio = () => {
@@ -5407,10 +5379,6 @@ function updateMusicTileSectionVisibility() {
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked')).length > 0;
   const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
   
-  // Remove injected style if present
-  const hideStyle = document.getElementById('hide-music-tile-style');
-  if (hideStyle) hideStyle.remove();
-  
   if (hasSearch || hasFilters || hasPlaylistFilter) {
     musicTileSection.style.display = 'none';
   } else {
@@ -6854,7 +6822,7 @@ if (document.readyState === 'loading') {
 
 // Barba hooks
 if (typeof barba !== 'undefined' && barba.hooks) {
-  barba.hooks.before((data) => {
+  barba.hooks.before(() => {
     sessionStorage.setItem('isBarbaNavigation', 'true');
     window._isFreshPageLoad = false;
     
@@ -6864,76 +6832,13 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       g.playlistFilterPopulated = false;
       g.filtersInitialized = false; // Allow re-initialization on new page
     }
-    
-    // Hide music-tile-section via injected style if navigating to music page with filters
-    const nextPath = data?.next?.url?.path || '';
-    if (nextPath === '/music' || nextPath === '/music/') {
-      const savedState = localStorage.getItem('musicFilters');
-      const savedPlaylist = localStorage.getItem('playlistFilter');
-      
-      let hasActiveFilters = false;
-      
-      if (savedPlaylist) {
-        hasActiveFilters = true;
-      }
-      
-      if (savedState) {
-        try {
-          const parsed = JSON.parse(savedState);
-          if ((parsed.filters && parsed.filters.length > 0) || (parsed.searchQuery && parsed.searchQuery.trim().length > 0)) {
-            hasActiveFilters = true;
-          }
-        } catch (e) {}
-      }
-      
-      // Inject style to hide music-tile-section
-      let hideStyle = document.getElementById('hide-music-tile-style');
-      if (hasActiveFilters) {
-        if (!hideStyle) {
-          hideStyle = document.createElement('style');
-          hideStyle.id = 'hide-music-tile-style';
-          hideStyle.textContent = '.music-tile-section { display: none !important; }';
-          document.head.appendChild(hideStyle);
-        }
-      } else if (hideStyle) {
-        hideStyle.remove();
-      }
-    }
   });
-  
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
     
-    const nextPath = data?.next?.url?.path || '';
+    // Hide tags container immediately to prevent flash
     const savedState = localStorage.getItem('musicFilters');
     const savedPlaylist = localStorage.getItem('playlistFilter');
-    
-    // Hide music-tile-section immediately if any filters are saved
-    if ((nextPath === '/music' || nextPath === '/music/') && (savedState || savedPlaylist)) {
-      let hasActiveFilters = false;
-      
-      if (savedPlaylist) {
-        hasActiveFilters = true;
-      }
-      
-      if (savedState) {
-        try {
-          const parsed = JSON.parse(savedState);
-          if ((parsed.filters && parsed.filters.length > 0) || (parsed.searchQuery && parsed.searchQuery.trim().length > 0)) {
-            hasActiveFilters = true;
-          }
-        } catch (e) {}
-      }
-      
-      if (hasActiveFilters) {
-        const musicTileSection = data.next.container.querySelector('.music-tile-section');
-        if (musicTileSection) {
-          musicTileSection.style.display = 'none';
-        }
-      }
-    }
-    
-    // Hide tags container immediately to prevent flash
     if (savedState || savedPlaylist) {
       const tagsContainer = data.next.container.querySelector('.filter-tags-container');
       const clearButton = data.next.container.querySelector('.circle-x');
@@ -6961,7 +6866,6 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       }
     }
   });
-  
 barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
