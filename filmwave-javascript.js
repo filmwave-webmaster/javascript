@@ -11216,6 +11216,8 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       // Update playlist cover image
       const playlistImage = document.querySelector('.playlist-info-image');
       const playlistImagePlaceholder = document.querySelector('.playlist-info-image-placeholder');
+      const textWrapper = document.querySelector('.playlist-info-text-wrapper');
+      const textWrapperPlaceholder = document.querySelector('.playlist-info-text-wrapper-placeholder');
       
       if (playlistImage && playlist.cover_image_url) {
         // Preload image with a new Image object
@@ -11225,6 +11227,11 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
           playlistImage.style.display = 'block';
           playlistImage.style.visibility = 'visible';
           if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = 'none';
+          
+          // Swap text wrapper
+          if (textWrapper) textWrapper.style.display = 'flex';
+          if (textWrapperPlaceholder) textWrapperPlaceholder.style.display = 'none';
+          
           console.log('✅ Playlist image loaded and swapped');
         };
         img.onerror = () => {
@@ -11236,6 +11243,10 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
         // No image - show placeholder, hide image
         if (playlistImage) playlistImage.style.display = 'none';
         if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = '';
+        
+        // Still show text wrapper even without image
+        if (textWrapper) textWrapper.style.display = 'flex';
+        if (textWrapperPlaceholder) textWrapperPlaceholder.style.display = 'none';
       }
       
       // Update search placeholder with playlist name
