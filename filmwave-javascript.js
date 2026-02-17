@@ -11218,13 +11218,20 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       const playlistImagePlaceholder = document.querySelector('.playlist-info-image-placeholder');
       
       if (playlistImage && playlist.cover_image_url) {
-        playlistImage.onload = () => {
+        // Preload image with a new Image object
+        const img = new Image();
+        img.onload = () => {
+          playlistImage.src = playlist.cover_image_url;
           playlistImage.style.display = 'block';
           playlistImage.style.visibility = 'visible';
           if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = 'none';
+          console.log('✅ Playlist image loaded and swapped');
         };
-        
-        playlistImage.src = playlist.cover_image_url;
+        img.onerror = () => {
+          console.log('❌ Playlist image failed to load');
+          if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = '';
+        };
+        img.src = playlist.cover_image_url;
       } else if (!playlist.cover_image_url) {
         // No image - show placeholder, hide image
         if (playlistImage) playlistImage.style.display = 'none';
