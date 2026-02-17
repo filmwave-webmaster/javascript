@@ -4777,7 +4777,9 @@ function loadSavedPlaylistFilter() {
     if (typeof toggleClearButton === 'function') {
       toggleClearButton();
     }
-  }
+    
+    // Call after savePlaylistFilter so localStorage is updated
+    updateMusicTileSectionVisibility();
   
   function updatePlaylistFilterTag() {
     const tagsContainer = document.querySelector('.filter-tags-container');
@@ -4823,6 +4825,8 @@ function loadSavedPlaylistFilter() {
         if (typeof toggleClearButton === 'function') {
           toggleClearButton();
         }
+        
+        updateMusicTileSectionVisibility();
       });
       
       tagsContainer.insertBefore(tag, tagsContainer.firstChild);
