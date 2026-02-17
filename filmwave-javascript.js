@@ -6888,9 +6888,11 @@ barba.hooks.afterEnter((data) => {
         }
       }
       
-      // Update music tile section visibility based on filters
+      // Update music tile section visibility based on filters (with delay for filter restoration)
       if (typeof updateMusicTileSectionVisibility === 'function') {
         updateMusicTileSectionVisibility();
+        setTimeout(updateMusicTileSectionVisibility, 100);
+        setTimeout(updateMusicTileSectionVisibility, 500);
       }
     }
     
