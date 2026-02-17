@@ -11219,6 +11219,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       
       if (playlistImage && playlist.cover_image_url) {
         playlistImage.onload = () => {
+          playlistImage.style.display = 'block';
           playlistImage.style.visibility = 'visible';
           if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = 'none';
         };
@@ -11226,7 +11227,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
         playlistImage.src = playlist.cover_image_url;
       } else if (!playlist.cover_image_url) {
         // No image - show placeholder, hide image
-        if (playlistImage) playlistImage.style.visibility = 'hidden';
+        if (playlistImage) playlistImage.style.display = 'none';
         if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = '';
       }
       
