@@ -6569,7 +6569,7 @@ function initUniversalSearch() {
     // Trigger fade in
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.35)';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
       });
     });
     
