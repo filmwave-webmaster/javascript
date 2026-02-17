@@ -87,6 +87,34 @@ if (!window.musicPlayerPersistent) {
   };
 }
 
+// Hide music-tile-section immediately if filters are saved (prevents flash)
+(function() {
+  const savedState = localStorage.getItem('musicFilters');
+  const savedPlaylist = localStorage.getItem('playlistFilter');
+  
+  let hasActiveFilters = false;
+  
+  if (savedPlaylist) {
+    hasActiveFilters = true;
+  }
+  
+  if (savedState) {
+    try {
+      const parsed = JSON.parse(savedState);
+      if ((parsed.filters && parsed.filters.length > 0) || (parsed.searchQuery && parsed.searchQuery.trim().length > 0)) {
+        hasActiveFilters = true;
+      }
+    } catch (e) {}
+  }
+  
+  if (hasActiveFilters) {
+    const style = document.createElement('style');
+    style.id = 'hide-music-tile-style';
+    style.textContent = '.music-tile-section { display: none !important; }';
+    document.head.appendChild(style);
+  }
+})();
+
 // iOS audio unlock - must happen on first user interaction
 (function() {
   const unlockAudio = () => {
