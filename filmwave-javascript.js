@@ -11213,6 +11213,12 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       const header = document.querySelector('.playlist-template-title');
       if (header) header.textContent = playlist.name;
       
+      // Update playlist cover image
+      const playlistImage = document.querySelector('.playlist-info-image');
+      if (playlistImage && playlist.cover_image) {
+        playlistImage.src = playlist.cover_image;
+      }
+      
       // Update search placeholder with playlist name
       const searchInput = document.querySelector('.text-field');
       if (searchInput) {
