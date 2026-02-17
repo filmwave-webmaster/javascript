@@ -6833,6 +6833,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       g.filtersInitialized = false; // Allow re-initialization on new page
     }
   });
+  
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
     
