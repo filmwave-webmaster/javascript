@@ -4780,6 +4780,7 @@ function loadSavedPlaylistFilter() {
     
     // Call after savePlaylistFilter so localStorage is updated
     updateMusicTileSectionVisibility();
+  }
   
   function updatePlaylistFilterTag() {
     const tagsContainer = document.querySelector('.filter-tags-container');
