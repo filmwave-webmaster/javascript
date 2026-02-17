@@ -11230,6 +11230,14 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     }
 
     await this.renderPlaylistSongs(playlistId);
+    
+    // Update song count after rendering
+    const playlistSongs = await this.getPlaylistSongs(playlistId);
+    const songCount = playlistSongs ? playlistSongs.length : 0;
+    const songCountEl = document.querySelector('.playlist-info-song-count');
+    if (songCountEl) {
+      songCountEl.textContent = songCount === 1 ? '1 Song' : `${songCount} Songs`;
+    }
   },
 
   async renderPlaylistSongs(playlistId) {
