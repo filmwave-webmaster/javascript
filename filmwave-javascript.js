@@ -11236,7 +11236,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     const songCount = playlistSongs ? playlistSongs.length : 0;
     const songCountEl = document.querySelector('.playlist-info-song-count');
     if (songCountEl) {
-      songCountEl.textContent = songCount === 1 ? '1 Song' : `${songCount} Songs`;
+      songCountEl.textContent = songCount === 1 ? '1 song' : `${songCount} songs`;
     }
     
     // Update playlist description
