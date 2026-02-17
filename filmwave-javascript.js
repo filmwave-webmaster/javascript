@@ -4411,6 +4411,7 @@ if (typeof window.clearPlaylistFilterStorage === 'function') {
   }));
   
   toggleClearButton();
+  updateMusicTileSectionVisibility();
   
   if (typeof applyFilters === 'function') {
     applyFilters();
@@ -4508,6 +4509,7 @@ function initSearchAndFilters() {
 });
   
   toggleClearButton();
+  updateMusicTileSectionVisibility();
 }
   
   if (clearBtn) {
@@ -4680,6 +4682,7 @@ function loadSavedPlaylistFilter() {
       });
       
       console.log('🎵 Playlist filter cleared');
+      updateMusicTileSectionVisibility();
       return;
     }
     
@@ -4714,6 +4717,8 @@ function loadSavedPlaylistFilter() {
     } catch (error) {
       console.error('Error filtering by playlist:', error);
     }
+    
+    updateMusicTileSectionVisibility();
   }
   
   function handleCheckboxChange(checkbox, playlistId, playlistName) {
@@ -5363,6 +5368,22 @@ function hideFilterDot(dot) {
   setTimeout(() => {
     dot.style.display = 'none';
   }, 200);
+}
+
+function updateMusicTileSectionVisibility() {
+  const musicTileSection = document.querySelector('.music-tile-section');
+  if (!musicTileSection) return;
+  
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const hasSearch = searchBar && searchBar.value.trim().length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked')).length > 0;
+  const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
+  
+  if (hasSearch || hasFilters || hasPlaylistFilter) {
+    musicTileSection.style.display = 'none';
+  } else {
+    musicTileSection.style.display = '';
+  }
 }
 
 function updateFilterDots() {
@@ -6865,6 +6886,11 @@ barba.hooks.afterEnter((data) => {
             return false;
           });
         }
+      }
+      
+      // Update music tile section visibility based on filters
+      if (typeof updateMusicTileSectionVisibility === 'function') {
+        updateMusicTileSectionVisibility();
       }
     }
     
