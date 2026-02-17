@@ -11215,8 +11215,8 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       
       // Update playlist cover image
       const playlistImage = document.querySelector('.playlist-info-image');
-      if (playlistImage && playlist.cover_image) {
-        playlistImage.src = playlist.cover_image;
+      if (playlistImage && playlist.cover_image_url) {
+        playlistImage.src = playlist.cover_image_url;
       }
       
       // Update search placeholder with playlist name
