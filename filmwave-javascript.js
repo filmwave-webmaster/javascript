@@ -11265,21 +11265,26 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     // Update song count after rendering
     const playlistSongs = await this.getPlaylistSongs(playlistId);
     const songCount = playlistSongs ? playlistSongs.length : 0;
-    const songCountEl = document.querySelector('.playlist-info-song-count');
-    if (songCountEl) {
-      songCountEl.textContent = songCount === 1 ? '1 song' : `${songCount} songs`;
-    }
     
-    // Update playlist description
-    const descriptionEl = document.querySelector('.playlist-info-song-description');
-    if (descriptionEl) {
+    // Update all song count elements (with "X Songs" format)
+    document.querySelectorAll('.playlist-info-song-count').forEach(el => {
+      el.textContent = songCount === 1 ? '1 Song' : `${songCount} Songs`;
+    });
+    
+    // Update all stat count elements (just the number)
+    document.querySelectorAll('.playlist-stat-count').forEach(el => {
+      el.textContent = songCount;
+    });
+    
+    // Update all playlist description elements
+    document.querySelectorAll('.playlist-info-song-description').forEach(el => {
       if (playlist && playlist.description && playlist.description.trim()) {
-        descriptionEl.textContent = playlist.description;
-        descriptionEl.style.display = '';
+        el.textContent = playlist.description;
+        el.style.display = '';
       } else {
-        descriptionEl.style.display = 'none';
+        el.style.display = 'none';
       }
-    }
+    });
   },
 
   async renderPlaylistSongs(playlistId) {
