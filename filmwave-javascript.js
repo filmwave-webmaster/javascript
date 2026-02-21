@@ -432,16 +432,8 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-   // ADD PADDING TO BOTTOM ELEMENT WHEN PLAYER IS VISIBLE
-   // Only add to ONE container to avoid double padding
-  
-    if (favoriteSongsWrapper) {
-      favoriteSongsWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
-      console.log('✅ Added padding to favorite-songs-wrapper');
-    } else if (playlistsTemplateContainer) {
-      playlistsTemplateContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
-      console.log('✅ Added padding to playlists-template-container');
-    } else if (hasFooter) {
+   // ADD PADDING TO FOOTER WHEN PLAYER IS VISIBLE
+    if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
