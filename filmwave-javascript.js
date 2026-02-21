@@ -4566,7 +4566,7 @@ function initSearchAndFilters() {
     console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
   }
   
-  document.querySelectorAll('.song-wrapper').forEach(card => {
+  document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)').forEach(card => {
   const matchesOtherFilters = visibleIds.includes(card.dataset.songId);
   const hiddenByPlaylist = card.getAttribute('data-hidden-by-playlist') === 'true';
   
