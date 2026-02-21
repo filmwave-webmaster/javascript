@@ -434,15 +434,15 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
-   const sidebarNav = document.querySelector('.sidebar-nav');
-if (sidebarNav) {
-    if (!sidebarNav.dataset.heightAdjusted) {
-        sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
-        sidebarNav.setAttribute('data-height-adjusted', 'true');
-        console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
-    }
-}
+  // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
+   // const sidebarNav = document.querySelector('.sidebar-nav');
+// if (sidebarNav) {
+//     if (!sidebarNav.dataset.heightAdjusted) {
+//         sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
+//         sidebarNav.setAttribute('data-height-adjusted', 'true');
+//         console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
+//     }
+// }
 
     // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
     const filterWrapper = document.querySelector('.filter-wrapper');
