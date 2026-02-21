@@ -401,7 +401,13 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
-    // ADD PADDING FIRST (before showing player to prevent scroll jump)
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
+    
+    // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
@@ -409,16 +415,8 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
-    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
-    
-    if (favoriteSongsWrapper) {
-      favoriteSongsWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
-      console.log('✅ Added padding to favorite-songs-wrapper');
-    } else if (playlistsTemplateContainer) {
-      playlistsTemplateContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
-      console.log('✅ Added padding to playlists-template-container');
-    } else if (hasFooter) {
+   // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
+    if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
@@ -426,28 +424,23 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    if (sidebarNav) {
-      if (!sidebarNav.dataset.heightAdjusted) {
+    // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
+   const sidebarNav = document.querySelector('.sidebar-nav');
+if (sidebarNav) {
+    if (!sidebarNav.dataset.heightAdjusted) {
         sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
         sidebarNav.setAttribute('data-height-adjusted', 'true');
         console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
-      }
     }
-    
+}
+
+    // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
     const filterWrapper = document.querySelector('.filter-wrapper');
     if (filterWrapper && !filterWrapper.dataset.paddingAdjusted) {
       const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
       filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
       filterWrapper.setAttribute('data-padding-adjusted', 'true');
     }
-    
-    // NOW show the player (after padding is added)
-    playerWrapper.style.display = 'flex';
-    playerWrapper.style.visibility = 'visible';
-    playerWrapper.style.opacity = '1';
-    playerWrapper.style.alignItems = 'center';
-    playerWrapper.style.pointerEvents = 'auto';
     
   } else {
     playerWrapper.style.display = 'none';
@@ -462,28 +455,21 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // REMOVE PADDING FROM BOTTOM ELEMENT WHEN PLAYER IS HIDDEN
-    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
-    const playlistSongsWrapper = document.querySelector('.playlist-songs-wrapper');
-    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
-    const footerWrapper = document.querySelector('.footer-wrapper');
-    
-    if (favoriteSongsWrapper) {
-      favoriteSongsWrapper.style.setProperty('padding-bottom', '0px', 'important');
-    }
-    if (playlistsTemplateContainer) {
-      playlistsTemplateContainer.style.setProperty('padding-bottom', '0px', 'important');
-    }
-    if (footerWrapper) {
-      footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
+   // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+    if (hasFooter) {
+      const footerWrapper = document.querySelector('.footer-wrapper');
+      if (footerWrapper) {
+        footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
+        console.log('🗑️ Removed padding from footer-wrapper');
+      }
     }
     
-    // RESET SIDEBAR NAV HEIGHT WHEN PLAYER IS HIDDEN
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    if (sidebarNav) {
-      sidebarNav.style.removeProperty('height');
-      sidebarNav.removeAttribute('data-height-adjusted');
-      console.log('🗑️ Reset sidebar-nav height to Webflow default');
+   // RESET SIDEBAR NAV HEIGHT WHEN PLAYER IS HIDDEN
+  const sidebarNav = document.querySelector('.sidebar-nav');
+  if (sidebarNav) {
+    sidebarNav.style.removeProperty('height');
+    sidebarNav.removeAttribute('data-height-adjusted');
+    console.log('🗑️ Reset sidebar-nav height to Webflow default');
     }
     
     // RESET FILTER WRAPPER PADDING WHEN PLAYER IS HIDDEN
