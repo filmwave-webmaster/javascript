@@ -401,11 +401,24 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
+    // Save scroll position and prevent auto-scroll behavior
+    const scrollBefore = window.scrollY;
+    const wasHidden = playerWrapper.style.display === 'none' || playerWrapper.style.display === '';
+    
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
+    
+    // Restore scroll position if player was just shown
+    if (wasHidden) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollBefore);
+        });
+      });
+    }
     
     // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
@@ -435,14 +448,14 @@ function updateMasterPlayerVisibility() {
     }
     
   // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
-   // const sidebarNav = document.querySelector('.sidebar-nav');
-// if (sidebarNav) {
-//     if (!sidebarNav.dataset.heightAdjusted) {
-//         sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
-//         sidebarNav.setAttribute('data-height-adjusted', 'true');
-//         console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
-//     }
-// }
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    if (sidebarNav) {
+      if (!sidebarNav.dataset.heightAdjusted) {
+        sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
+        sidebarNav.setAttribute('data-height-adjusted', 'true');
+        console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
+      }
+    }
 
     // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
     const filterWrapper = document.querySelector('.filter-wrapper');
