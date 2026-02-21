@@ -434,9 +434,7 @@ function updateMasterPlayerVisibility() {
     
    // ADD PADDING TO BOTTOM ELEMENT WHEN PLAYER IS VISIBLE
    // Only add to ONE container to avoid double padding
-    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
-    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
-    
+  
     if (favoriteSongsWrapper) {
       favoriteSongsWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
       console.log('✅ Added padding to favorite-songs-wrapper');
