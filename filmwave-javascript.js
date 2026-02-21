@@ -665,23 +665,6 @@ function navigateStandaloneTrack(direction) {
     // Fallback to all songs
     songsToNavigate = g.MASTER_DATA;
   }
-  } else if (
-    g.activeSongSource === 'dashboard' &&
-    isOnDashboard &&
-    g.dashboardTileSongs &&
-    g.dashboardTileSongs.length > 0
-  ) {
-    // Only use dashboard tiles if we're still on dashboard
-    songsToNavigate = g.dashboardTileSongs;
-  } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
-    // Use filtered songs if available - preserve order from filteredSongIds
-    songsToNavigate = g.filteredSongIds
-      .map(id => g.MASTER_DATA.find(song => String(song.id) === String(id)))
-      .filter(Boolean);
-  } else {
-    // Fallback to all songs
-    songsToNavigate = g.MASTER_DATA;
-  }
   
   console.log(`🎵 Navigation Debug:`);
   console.log(`   - Total songs in library: ${g.MASTER_DATA.length}`);
