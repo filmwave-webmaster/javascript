@@ -401,10 +401,6 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
-    // Save scroll position before showing player (only on first show)
-    const isFirstShow = playerWrapper.style.display !== 'flex';
-    const scrollYBefore = isFirstShow ? window.scrollY : null;
-    
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
@@ -455,13 +451,6 @@ function updateMasterPlayerVisibility() {
       const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
       filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
       filterWrapper.setAttribute('data-padding-adjusted', 'true');
-    }
-    
-    // Restore scroll position after all DOM changes (only on first show)
-    if (isFirstShow && scrollYBefore !== null) {
-      setTimeout(() => {
-        window.scrollTo(0, scrollYBefore);
-      }, 10);
     }
     
   } else {
