@@ -556,6 +556,7 @@ async function initMusicPage() {
     
     const songs = await fetchSongs();
     displaySongs(songs);
+    initShuffleSongs();
     initMasterPlayer();
     
     setTimeout(() => {
@@ -2920,9 +2921,52 @@ function displaySongs(songs) {
 
 /**
  * ============================================================
+ * SHUFFLE SONGS ON MUSIC PAGE
+ * ============================================================
+ */
+function initShuffleSongs() {
+  const shuffleBtn = document.querySelector('.shuffle-songs');
+  if (!shuffleBtn) return;
+  
+  // Prevent multiple initializations
+  if (shuffleBtn._shuffleInit) return;
+  shuffleBtn._shuffleInit = true;
+  
+  shuffleBtn.addEventListener('click', () => {
+    const container = document.querySelector('.music-list-wrapper');
+    if (!container) return;
+    
+    // Get all visible song cards (respecting current filters)
+    const songCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'))
+      .filter(card => card.style.display !== 'none');
+    
+    if (songCards.length < 2) return;
+    
+    // Fisher-Yates shuffle
+    for (let i = songCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [songCards[i], songCards[j]] = [songCards[j], songCards[i]];
+    }
+    
+    // Reorder in DOM
+    songCards.forEach(card => container.appendChild(card));
+    
+    // Update filtered song IDs for next/previous navigation
+    const g = window.musicPlayerPersistent;
+    g.filteredSongIds = songCards.map(card => card.dataset.songId);
+    
+    console.log('🔀 Songs shuffled');
+  });
+  
+  console.log('✅ Shuffle button initialized');
+}
+
+/**
+ * ============================================================
  * DISPLAY FEATURED SONGS ON HOME PAGE
  * ============================================================
  */
+
 async function displayFeaturedSongs(limit = 6) {
   const container = document.querySelector('.featured-songs-wrapper');
   if (!container) {
