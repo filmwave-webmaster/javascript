@@ -402,18 +402,13 @@ function updateMasterPlayerVisibility() {
   
   if (shouldShow) {
     // Save scroll position before showing player
-    const scrollY = window.scrollY;
+    const scrollYBefore = window.scrollY;
     
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
-    
-    // Restore scroll position after DOM changes
-    requestAnimationFrame(() => {
-      window.scrollTo(0, scrollY);
-    });
     
     // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
@@ -460,6 +455,11 @@ function updateMasterPlayerVisibility() {
       filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
       filterWrapper.setAttribute('data-padding-adjusted', 'true');
     }
+    
+    // Restore scroll position after all DOM changes
+    setTimeout(() => {
+      window.scrollTo(0, scrollYBefore);
+    }, 0);
     
   } else {
     playerWrapper.style.display = 'none';
