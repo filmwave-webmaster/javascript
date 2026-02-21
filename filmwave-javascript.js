@@ -424,6 +424,18 @@ function updateMasterPlayerVisibility() {
       }
     }
     
+    // ADD PADDING TO FAVORITE SONGS WRAPPER
+    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
+    if (favoriteSongsWrapper) {
+      favoriteSongsWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
+    }
+    
+    // ADD PADDING TO PLAYLIST SONGS WRAPPER
+    const playlistSongsWrapper = document.querySelector('.playlist-songs-wrapper');
+    if (playlistSongsWrapper) {
+      playlistSongsWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
+    }
+    
     // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
    const sidebarNav = document.querySelector('.sidebar-nav');
 if (sidebarNav) {
@@ -455,13 +467,25 @@ if (sidebarNav) {
       }
     }
     
-   // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+// REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
         console.log('🗑️ Removed padding from footer-wrapper');
       }
+    }
+    
+    // REMOVE PADDING FROM FAVORITE SONGS WRAPPER
+    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
+    if (favoriteSongsWrapper) {
+      favoriteSongsWrapper.style.setProperty('padding-bottom', '0px', 'important');
+    }
+    
+    // REMOVE PADDING FROM PLAYLIST SONGS WRAPPER
+    const playlistSongsWrapper = document.querySelector('.playlist-songs-wrapper');
+    if (playlistSongsWrapper) {
+      playlistSongsWrapper.style.setProperty('padding-bottom', '0px', 'important');
     }
     
    // RESET SIDEBAR NAV HEIGHT WHEN PLAYER IS HIDDEN
