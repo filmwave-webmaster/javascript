@@ -608,6 +608,14 @@ function navigateStandaloneTrack(direction) {
   
   const g = window.musicPlayerPersistent;
   
+  // Debounce to prevent multiple rapid calls
+  const now = Date.now();
+  if (g._lastNavigateTime && (now - g._lastNavigateTime) < 300) {
+    console.log('⏭️ Navigation debounced');
+    return;
+  }
+  g._lastNavigateTime = now;
+  
   console.log('🚨 CHECKING CONDITIONS:');
   console.log('   - g.currentSongData exists:', !!g.currentSongData);
   console.log('   - g.MASTER_DATA.length:', g.MASTER_DATA.length);
