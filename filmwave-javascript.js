@@ -401,9 +401,13 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
-    // Save scroll position and prevent auto-scroll behavior
-    const scrollBefore = window.scrollY;
-    const wasHidden = playerWrapper.style.display === 'none' || playerWrapper.style.display === '';
+    // Prevent browser scroll anchoring from causing jumps
+    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
+    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
+    
+    if (favoriteSongsWrapper) favoriteSongsWrapper.style.overflowAnchor = 'none';
+    if (playlistsTemplateContainer) playlistsTemplateContainer.style.overflowAnchor = 'none';
+    document.documentElement.style.overflowAnchor = 'none';
     
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
@@ -411,14 +415,14 @@ function updateMasterPlayerVisibility() {
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
     
-    // Restore scroll position if player was just shown
-    if (wasHidden) {
+    // Re-enable scroll anchoring after layout settles
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          window.scrollTo(0, scrollBefore);
-        });
+        if (favoriteSongsWrapper) favoriteSongsWrapper.style.overflowAnchor = '';
+        if (playlistsTemplateContainer) playlistsTemplateContainer.style.overflowAnchor = '';
+        document.documentElement.style.overflowAnchor = '';
       });
-    }
+    });
     
     // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
