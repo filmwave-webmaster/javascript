@@ -401,13 +401,7 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
-    playerWrapper.style.display = 'flex';
-    playerWrapper.style.visibility = 'visible';
-    playerWrapper.style.opacity = '1';
-    playerWrapper.style.alignItems = 'center';
-    playerWrapper.style.pointerEvents = 'auto';
-    
-    // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
+    // ADD PADDING FIRST (before showing player to prevent scroll jump)
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
@@ -415,10 +409,7 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD PADDING TO BOTTOM ELEMENT WHEN PLAYER IS VISIBLE
-    // Only add to ONE container to avoid double padding
     const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
-    const playlistSongsWrapper = document.querySelector('.playlist-songs-wrapper');
     const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
     
     if (favoriteSongsWrapper) {
@@ -435,7 +426,6 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
     const sidebarNav = document.querySelector('.sidebar-nav');
     if (sidebarNav) {
       if (!sidebarNav.dataset.heightAdjusted) {
@@ -445,13 +435,19 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
     const filterWrapper = document.querySelector('.filter-wrapper');
     if (filterWrapper && !filterWrapper.dataset.paddingAdjusted) {
       const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
       filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
       filterWrapper.setAttribute('data-padding-adjusted', 'true');
     }
+    
+    // NOW show the player (after padding is added)
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
     
   } else {
     playerWrapper.style.display = 'none';
