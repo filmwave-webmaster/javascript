@@ -741,8 +741,6 @@ function navigateStandaloneTrack(direction) {
     });
   }
   
-  }
-  
   // Reset old song card waveform progress
   if (g.currentSongData && g.currentWavesurfer) {
     try {
