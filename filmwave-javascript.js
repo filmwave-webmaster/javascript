@@ -728,7 +728,7 @@ function navigateStandaloneTrack(direction) {
     }
   }
   
-  // Reset progress tracker for new song
+  /// Reset progress tracker for new song
   resetMobileProgress();
   
   // Reset old dashboard tile waveform if exists
@@ -741,6 +741,11 @@ function navigateStandaloneTrack(direction) {
     });
   }
   
+  // Reset old song card waveform on favorites/playlist pages
+  if (!isOnDashboard && !isOnMusicPage && g.currentSongData && g.currentWavesurfer) {
+    g.currentWavesurfer.seekTo(0);
+  }
+  
   // Find wavesurfer directly from DOM
   let newWavesurfer = null;
   
@@ -751,6 +756,15 @@ function navigateStandaloneTrack(direction) {
         newWavesurfer = container._wavesurfer;
       }
     });
+  } else if (!isOnMusicPage) {
+    // Find wavesurfer for favorites/playlist pages
+    const newCardWaveform = g.waveformData?.find(data => 
+      data.cardElement?.dataset?.songId === nextSong.id || 
+      data.cardElement?.closest('.song-wrapper')?.dataset?.songId === nextSong.id
+    );
+    if (newCardWaveform) {
+      newWavesurfer = newCardWaveform.wavesurfer;
+    }
   }
   
   // Hide play button and reset icons on previous song card
