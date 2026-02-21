@@ -415,8 +415,18 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-   // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
-    if (hasFooter) {
+   // ADD PADDING TO BOTTOM ELEMENT WHEN PLAYER IS VISIBLE
+   // Only add to ONE container to avoid double padding
+    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
+    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
+    
+    if (favoriteSongsWrapper) {
+      favoriteSongsWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
+      console.log('✅ Added padding to favorite-songs-wrapper');
+    } else if (playlistsTemplateContainer) {
+      playlistsTemplateContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
+      console.log('✅ Added padding to playlists-template-container');
+    } else if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
@@ -455,13 +465,19 @@ if (sidebarNav) {
       }
     }
     
-   // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
-    if (hasFooter) {
-      const footerWrapper = document.querySelector('.footer-wrapper');
-      if (footerWrapper) {
-        footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
-        console.log('🗑️ Removed padding from footer-wrapper');
-      }
+   // REMOVE PADDING FROM BOTTOM ELEMENT WHEN PLAYER IS HIDDEN
+    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
+    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
+    const footerWrapper = document.querySelector('.footer-wrapper');
+    
+    if (favoriteSongsWrapper) {
+      favoriteSongsWrapper.style.setProperty('padding-bottom', '0px', 'important');
+    }
+    if (playlistsTemplateContainer) {
+      playlistsTemplateContainer.style.setProperty('padding-bottom', '0px', 'important');
+    }
+    if (footerWrapper) {
+      footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
     }
     
    // RESET SIDEBAR NAV HEIGHT WHEN PLAYER IS HIDDEN
