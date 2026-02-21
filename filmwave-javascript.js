@@ -658,9 +658,7 @@ function navigateStandaloneTrack(direction) {
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
     // Use filtered songs if available
-    songsToNavigate = g.filteredSongIds
-      .map(id => g.MASTER_DATA.find(song => song.id === id))
-      .filter(Boolean);
+    songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
   } else {
     // Fallback to all songs
     songsToNavigate = g.MASTER_DATA;
