@@ -401,17 +401,14 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
+    playerWrapper.style.display = 'flex';
+    playerWrapper.style.visibility = 'visible';
+    playerWrapper.style.opacity = '1';
+    playerWrapper.style.alignItems = 'center';
+    playerWrapper.style.pointerEvents = 'auto';
     
     // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
-      const musicAreaContainer = document.querySelector('.music-area-container');
-      if (musicAreaContainer) {
-        musicAreaContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
-      }
-    }
-    
-    // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
-    const sidebarNav = document.querySelector('.sidebar-nav');
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
