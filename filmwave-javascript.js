@@ -401,11 +401,19 @@ function updateMasterPlayerVisibility() {
   positionMasterPlayer();
   
   if (shouldShow) {
+    // Save scroll position before showing player
+    const scrollY = window.scrollY;
+    
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
+    
+    // Restore scroll position after DOM changes
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
+    });
     
     // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
