@@ -7968,11 +7968,16 @@ document.addEventListener('click', (e) => {
   const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
   if (!icon) return;
 
-  const checkbox = icon
-    .closest('.w-checkbox')
-    ?.querySelector('input[type="checkbox"]');
-
+  // Find checkbox within the same container (not bubbling up too far)
+  const container = icon.closest('.favorite-button, .w-checkbox');
+  if (!container) return;
+  
+  const checkbox = container.querySelector('input[type="checkbox"]');
   if (!checkbox) return;
+
+  // Prevent double-firing by checking if this event already processed
+  if (e._favoriteHandled) return;
+  e._favoriteHandled = true;
 
   checkbox.checked = !checkbox.checked;
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
@@ -9311,16 +9316,7 @@ document.addEventListener('change', (e) => {
     if (songInput.checked !== input.checked) {
       favSyncLock = true;
       songInput.checked = input.checked;
-      // Update the icon visually without dispatching another change event
-      const button = songInput.closest('.favorite-button');
-      if (button) {
-        const emptyIcon = button.querySelector('.favorite-icon-empty');
-        const filledIcon = button.querySelector('.favorite-icon-filled');
-        if (emptyIcon && filledIcon) {
-          emptyIcon.style.display = input.checked ? 'none' : 'flex';
-          filledIcon.style.display = input.checked ? 'flex' : 'none';
-        }
-      }
+      songInput.dispatchEvent(new Event('change', { bubbles: true }));
       favSyncLock = false;
     }
   }
