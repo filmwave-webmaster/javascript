@@ -7974,6 +7974,11 @@ document.addEventListener('click', (e) => {
 
   if (!checkbox) return;
 
+  // Stop propagation if clicking player favorite to prevent hitting song card beneath
+  if (icon.closest('.music-player-wrapper')) {
+    e.stopPropagation();
+  }
+
   checkbox.checked = !checkbox.checked;
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
 });
