@@ -275,16 +275,6 @@ function adjustDropdownPosition(toggle, list) {
   
   const g = window.musicPlayerPersistent;
 
-  // Disable hover interactions on touch devices
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-  ['mouseenter', 'mouseleave', 'mouseover', 'mouseout'].forEach(eventType => {
-    document.addEventListener(eventType, (e) => {
-      e.stopPropagation();
-    }, true);
-  });
-}
-// End  
-  
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
                     document.querySelector('.favorite-songs-wrapper') ||
@@ -12306,14 +12296,13 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content to the left with fade
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
-            el.style.transform = 'translateX(-100%)';
-            el.style.opacity = '0';
-          }
-        });
+       // Slide music area container to the left with fade
+        const musicAreaContainer = document.querySelector('.music-area-container');
+        if (musicAreaContainer) {
+          musicAreaContainer.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
+          musicAreaContainer.style.transform = 'translateX(-100%)';
+          musicAreaContainer.style.opacity = '0';
+        }
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -12399,25 +12388,22 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set all content to start position off-screen, fully visible, with no transition
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-        if (el) {
-          el.style.transition = 'none';
-          el.style.transform = 'translateX(-100%)';
-          el.style.opacity = '1';
-        }
-      });
+      // Set music area container to start position off-screen, fully visible, with no transition
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      if (musicAreaContainer) {
+        musicAreaContainer.style.transition = 'none';
+        musicAreaContainer.style.transform = 'translateX(-100%)';
+        musicAreaContainer.style.opacity = '1';
+      }
       
       // Force reflow to ensure starting positions are applied
       void filterWrapper.offsetWidth;
       
       // Then animate back in
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-        if (el) {
-          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-          el.style.transform = 'translateX(0)';
-        }
-      });
+      if (musicAreaContainer) {
+        musicAreaContainer.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        musicAreaContainer.style.transform = 'translateX(0)';
+      }
       
       // Clean up after animation completes
       setTimeout(() => {
