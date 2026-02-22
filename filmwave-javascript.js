@@ -7963,10 +7963,17 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 * ============================================================
 */
 
-// Click SVG → toggle the real checkbox
+// Click SVG → toggle the real checkbox (use capture phase for player)
 document.addEventListener('click', (e) => {
   const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
   if (!icon) return;
+
+  // If clicking player favorite, stop event from reaching song cards beneath
+  if (icon.closest('.music-player-wrapper')) {
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+    e.preventDefault();
+  }
 
   const checkbox = icon
     .closest('.w-checkbox')
@@ -7976,7 +7983,7 @@ document.addEventListener('click', (e) => {
 
   checkbox.checked = !checkbox.checked;
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-});
+}, true);  // <-- capture phase
 
 // Checkbox change → update SVG visibility
 document.addEventListener('change', (e) => {
