@@ -751,23 +751,24 @@ function navigateStandaloneTrack(direction) {
  // Find wavesurfer directly from DOM
   let newWavesurfer = null;
   
-  if (isOnDashboard) {
+  // First try to find wavesurfer from song card (.waveform container)
+  const nextCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
+  if (nextCard) {
+    const waveformContainer = nextCard.querySelector('.waveform');
+    if (waveformContainer && waveformContainer._wavesurfer) {
+      newWavesurfer = waveformContainer._wavesurfer;
+    }
+  }
+  
+  // If not found, try dashboard tile waveforms (.db-waveform container)
+  if (!newWavesurfer && isOnDashboard) {
     const waveformContainers = document.querySelectorAll('.db-waveform');
     waveformContainers.forEach(container => {
       if (container._songId === nextSong.id && container._wavesurfer) {
         newWavesurfer = container._wavesurfer;
       }
     });
-  } else {
-    // Find wavesurfer from song card on favorites/playlist/music pages
-    const nextCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
-    if (nextCard) {
-      const waveformContainer = nextCard.querySelector('.waveform');
-      if (waveformContainer && waveformContainer._wavesurfer) {
-        newWavesurfer = waveformContainer._wavesurfer;
-      }
-    }
-  } 
+  }
   
   // Hide play button and reset icons on previous song card
   if (g.currentSongData) {
