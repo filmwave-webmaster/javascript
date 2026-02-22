@@ -608,14 +608,6 @@ function navigateStandaloneTrack(direction) {
   
   const g = window.musicPlayerPersistent;
   
-  // Debounce to prevent multiple rapid calls
-  const now = Date.now();
-  if (g._lastNavigateTime && (now - g._lastNavigateTime) < 300) {
-    console.log('⏭️ Navigation debounced');
-    return;
-  }
-  g._lastNavigateTime = now;
-  
   console.log('🚨 CHECKING CONDITIONS:');
   console.log('   - g.currentSongData exists:', !!g.currentSongData);
   console.log('   - g.MASTER_DATA.length:', g.MASTER_DATA.length);
@@ -756,7 +748,7 @@ function navigateStandaloneTrack(direction) {
     } catch (e) {}
   }
   
-  // Find wavesurfer directly from DOM
+ // Find wavesurfer directly from DOM
   let newWavesurfer = null;
   
   if (isOnDashboard) {
@@ -766,6 +758,15 @@ function navigateStandaloneTrack(direction) {
         newWavesurfer = container._wavesurfer;
       }
     });
+  } else {
+    // Find wavesurfer from song card on favorites/playlist/music pages
+    const nextCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
+    if (nextCard) {
+      const waveformContainer = nextCard.querySelector('.waveform');
+      if (waveformContainer && waveformContainer._wavesurfer) {
+        newWavesurfer = waveformContainer._wavesurfer;
+      }
+    }
   } else {
     // Find wavesurfer from song card on favorites/playlist pages
     const nextCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
