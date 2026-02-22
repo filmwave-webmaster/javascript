@@ -5,44 +5,48 @@
  * ============================================================
  */
 /**
+/**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - CODE INDEX
+ * FILMWAVE MUSIC PLATFORM - CODE INDEX (UPDATED)
  * ============================================================
  * 
- * SECTION                                    LINE #
- * ------------------------------------------------
- * 1.  GLOBAL STATE                           ~20
- * 2.  UTILITY FUNCTIONS                      ~65
- * 3.  MASTER PLAYER POSITIONING              ~100
- * 4.  MASTER PLAYER VISIBILITY CONTROL       ~115
- * 5.  MAIN INITIALIZATION                    ~175
- * 6.  STANDALONE AUDIO PLAYER                ~280
- * 7.  MASTER PLAYER FUNCTIONS                ~450
- * 8.  SONG CARD FUNCTIONS                    ~650
- * 9.  LINK STANDALONE AUDIO TO WAVEFORM      ~750
- * 10. CREATE STANDALONE AUDIO                ~820
- * 11. PLAY STANDALONE SONG                   ~950
- * 12. INITIALIZE WAVEFORMS (LAZY LOADING)    ~1000
- * 13. LOAD WAVEFORM BATCH                    ~1090
- * 14. FETCH & DISPLAY SONGS                  ~1350
- * 15. DISPLAY FEATURED SONGS                 ~1400
- * 16. DISPLAY FAVORITE SONGS                 ~1470
- * 17. KEYBOARD CONTROLS                      ~1540
- * 18. FILTER HELPERS                         ~1620
- * 19. KEY FILTER SYSTEM                      ~1750
- * 20. BPM FILTER SYSTEM                      ~2350
- * 21. DRAG AND DROP - SORTABLE ITEMS         ~2950
- * 22. PLAYLIST EDIT OVERLAY                  ~3150
- * 23. UNIVERSAL SEARCH FOR NON-MUSIC PAGES   ~3500
- * 24. SCROLL LOCK                            ~4218
- * 25. BARBA.JS & PAGE TRANSITIONS            ~3600
- * 26. FAVORITE BUTTON SYNCING                ~4100
- * 27. LOCALSTORAGE PERSISTENCE               ~4250
- * 28. FILTER STATE SAVE/RESTORE              ~4280
- * 29. FAVORITE SONGS PERSISTENCE             ~4750
- * 30. XANO PLAYLIST SYSTEM                   ~5870
- * 31.                         ~7900
- * 32. DASHBOARD PLAYLISTS                    ~8100
+ * SECTION                                                           LINE #
+ * -------------------------------------------------------------------------
+ * 1.  GLOBAL STATE - Persists across Barba page transitions         50
+ * 2.  UTILITY FUNCTIONS                                             207
+ * 3.  MASTER PLAYER POSITIONING - DO NOT MODIFY                     261
+ * 4.  MASTER PLAYER VISIBILITY CONTROL                              279
+ * 5.  MAIN INITIALIZATION                                           359
+ * 6.  STANDALONE AUDIO PLAYER (for non-music pages)                 451
+ * 7.  MASTER PLAYER FUNCTIONS                                       699
+ * 8.  VOLUME CONTROL                                                1028
+ * 9.  PLAYER CLOSE BUTTON                                           1197
+ * 10. INIT MASTER PLAYER                                            1290
+ * 11. SONG CARD FUNCTIONS                                           1303
+ * 12. LINK EXISTING STANDALONE AUDIO TO WAVEFORM                    1407
+ * 13. CREATE STANDALONE AUDIO FOR SONG                              1440
+ * 14. PLAY STANDALONE SONG                                          1578
+ * 15. INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)     1617
+ * 16. LOAD A BATCH OF WAVEFORMS AND FADE IN TOGETHER                1693
+ * 17. FETCH & DISPLAY SONGS                                         1917
+ * 18. DISPLAY FEATURED SONGS ON HOME PAGE                           2010
+ * 19. DISPLAY FAVORITE SONGS ON BACKEND PAGE                        2067
+ * 20. KEYBOARD CONTROLS                                             2135
+ * 21. DARK MODE TOGGLE                                              2207
+ * 22. FILTER HELPERS                                                2357
+ * 23. REMOVE DUPLICATE IDS                                          3522
+ * 24. HANDLE TAB VISIBILITY                                         3539
+ * 25. MANUAL TAB REINITIALIZATION FOR BARBA                         3571
+ * 26. DRAG AND DROP - SORTABLE PROFILE ITEMS                        4417
+ * 27. PLAYLIST EDIT OVERLAY                                         4685
+ * 28. SCROLL LOCK                                                   4992
+ * 29. BARBA.JS & PAGE TRANSITIONS                                   5056
+ * 30. FAVORITE ICON TOGGLE (SVG Icons)                              5947
+ * 31. FAVORITE BUTTON SYNCING                                       5997
+ * 32. LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES              6180
+ * 33. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         6191
+ * 34. FAVORITE SONGS PERSISTENCE                                    6919
+ * 35. XANO PLAYLIST SYSTEM                                          7006
  * 
  * ============================================================
  */
@@ -309,7 +313,7 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
+   // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
@@ -317,6 +321,14 @@ function updateMasterPlayerVisibility() {
         console.log('✅ Added padding to footer-wrapper');
       }
     }
+    
+    // ADD PADDING TO SIDEBAR NAV WHEN PLAYER IS VISIBLE
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    if (sidebarNav) {
+      sidebarNav.style.setProperty('padding-bottom', '197px', 'important');
+      console.log('✅ Added padding to sidebar-nav');
+    }
+    
   } else {
     playerWrapper.style.display = 'none';
     playerWrapper.style.visibility = 'hidden';
@@ -330,13 +342,20 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-    // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+   // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
         footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
         console.log('🗑️ Removed padding from footer-wrapper');
       }
+    }
+    
+    // RESET SIDEBAR NAV PADDING WHEN PLAYER IS HIDDEN
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    if (sidebarNav) {
+      sidebarNav.style.setProperty('padding-bottom', '120px', 'important');
+      console.log('🗑️ Reset padding on sidebar-nav');
     }
   }
 }
@@ -452,17 +471,35 @@ function navigateStandaloneTrack(direction) {
     return;
   }
   
-  // Use the active song source for navigation
+    // Use the active song source for navigation
   let songsToNavigate;
-  const isOnDashboard = window.location.pathname.startsWith('/dashboard/');
-  const isOnMusicPage = window.location.pathname === '/music' || window.location.pathname === '/music/';
-  
+  const path = window.location.pathname;
+  const isOnDashboard = path.startsWith('/dashboard/');
+  const isOnMusicPage = path === '/music' || path === '/music/';
+  const isOnPlaylistTemplate = path.includes('playlist-template');
+
   // If on music page, always use music page songs
   if (isOnMusicPage) {
     g.activeSongSource = 'music';
   }
-  
-  if (g.activeSongSource === 'dashboard' && isOnDashboard && g.dashboardTileSongs && g.dashboardTileSongs.length > 0) {
+
+  // PLAYLIST TEMPLATE: navigate only the songs rendered on this page (DOM order)
+  if (isOnPlaylistTemplate) {
+    g.activeSongSource = 'playlist';
+
+    const domIds = Array.from(document.querySelectorAll('.song-wrapper[data-song-id]'))
+      .map(el => String(el.dataset.songId))
+      .filter(Boolean);
+
+    songsToNavigate = domIds
+      .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
+      .filter(Boolean);
+  } else if (
+    g.activeSongSource === 'dashboard' &&
+    isOnDashboard &&
+    g.dashboardTileSongs &&
+    g.dashboardTileSongs.length > 0
+  ) {
     // Only use dashboard tiles if we're still on dashboard
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
@@ -638,14 +675,19 @@ function navigateStandaloneTrack(direction) {
     updatePlayerCoverArtIcons(false);
   }
 
-  const tempContainer = document.createElement('div');
+ const tempContainer = document.createElement('div');
   tempContainer.style.display = 'none';
   document.body.appendChild(tempContainer);
   
+  // Get computed CSS variable values
+  const styles = getComputedStyle(document.body);
+  const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+  const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+  
   const tempWavesurfer = WaveSurfer.create({
     container: tempContainer,
-    waveColor: '#e2e2e2',
-    progressColor: '#191919',
+    waveColor: waveColor,
+    progressColor: progressColor,
     height: 40,
     barWidth: 2,
     barGap: 1,
@@ -824,7 +866,8 @@ function drawMasterWaveform(peaks, progress) {
   const centerY = internalHeight / 2;
   
   if (!peaks || peaks.length === 0) {
-    ctx.fillStyle = '#e2e2e2';
+    const fallbackStyles = getComputedStyle(document.body);
+    ctx.fillStyle = fallbackStyles.getPropertyValue('--color-8').trim() || '#e2e2e2';
     ctx.fillRect(0, centerY - (1 * dpr), canvas.width, 2 * dpr);
     return;
   }
@@ -853,7 +896,10 @@ function drawMasterWaveform(peaks, progress) {
     const barHeight = Math.max(peak * internalHeight * 0.85, 2 * dpr);
     const x = i * barTotal;
     const barProgress = i / barsCount;
-    ctx.fillStyle = barProgress < progress ? '#191919' : '#e2e2e2';
+    const styles = getComputedStyle(document.body);
+    const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+    const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+    ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
     ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
   }
 }
@@ -1169,6 +1215,105 @@ function initVolumeControl() {
 }
 
 // End Volume controls
+
+/**
+ * ============================================================
+ * PLAYER CLOSE BUTTON
+ * ============================================================
+ */
+function initPlayerCloseButton() {
+  const g = window.musicPlayerPersistent;
+  const closeButton = document.querySelector('.player-x-button');
+  
+  if (!closeButton) {
+    console.log('ℹ️ Player close button not found');
+    return;
+  }
+  
+  closeButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('❌ Closing player');
+    
+    // Stop and clear audio
+    if (g.standaloneAudio) {
+      g.standaloneAudio.pause();
+      g.standaloneAudio.currentTime = 0;
+      g.standaloneAudio = null;
+    }
+    
+    // Reset dashboard tile waveform and play/pause icons
+    const dashboardTiles = document.querySelectorAll('.masonry-song-tile-wrapper');
+    dashboardTiles.forEach(tile => {
+      const waveformContainer = tile.querySelector('.db-waveform');
+      if (waveformContainer && waveformContainer._wavesurfer) {
+        waveformContainer._wavesurfer.seekTo(0);
+      }
+      
+      // Reset play/pause icons
+      const playIcon = tile.querySelector('.db-play-icon');
+      const pauseIcon = tile.querySelector('.db-pause-icon');
+      if (playIcon) playIcon.style.display = 'flex';
+      if (pauseIcon) pauseIcon.style.display = 'none';
+    });
+    
+    // Reset music page song card waveforms and play buttons
+    const songCards = document.querySelectorAll('.song-wrapper');
+    songCards.forEach(card => {
+      // Reset waveform
+      const waveformData = g.waveformData?.find(d => d.cardElement === card);
+      if (waveformData && waveformData.wavesurfer) {
+        waveformData.wavesurfer.seekTo(0);
+      }
+      
+      // Reset play/pause icons
+      const playIcon = card.querySelector('.play-icon');
+      const pauseIcon = card.querySelector('.pause-icon');
+      if (playIcon) playIcon.style.display = 'flex';
+      if (pauseIcon) pauseIcon.style.display = 'none';
+      
+      // Hide play button
+      const playButton = card.querySelector('.play-button');
+      if (playButton) playButton.style.opacity = '0';
+    });
+    
+    // Reset all wavesurfers in global array
+    if (g.allWavesurfers) {
+      g.allWavesurfers.forEach(ws => {
+        if (ws && ws.container && document.body.contains(ws.container)) {
+          ws.seekTo(0);
+        }
+      });
+    }
+    
+    // Clear current song state
+    g.currentSongData = null;
+    g.currentWavesurfer = null;
+    g.currentPeaksData = null;
+    g.currentDuration = 0;
+    g.currentTime = 0;
+    g.isPlaying = false;
+    g.hasActiveSong = false;
+    
+    // Update icons
+    updateMasterControllerIcons(false);
+    updatePlayerCoverArtIcons(false);
+    
+    // Hide the player
+    updateMasterPlayerVisibility();
+    
+    console.log('✅ Player closed');
+  });
+  
+  console.log('✅ Player close button initialized');
+}
+
+/**
+ * ============================================================
+ * INIT MASTER PLAYER
+ * ============================================================
+ */
 
 function initMasterPlayer() {
   const container = document.querySelector('.player-waveform-visual');
@@ -1607,25 +1752,30 @@ function loadWaveformBatch(cardElements) {
       });
     }
     
-    const wavesurfer = WaveSurfer.create({
-      container: waveformContainer,
-      waveColor: '#e2e2e2',
-      progressColor: '#191919',
-      cursorColor: 'transparent',
-      cursorWidth: 0,
-      height: 30,
-      barWidth: 2,
-      barGap: 1,
-      normalize: true,
-      backend: 'WebAudio',
-      fillParent: true,
-      scrollParent: false,
-      responsive: 300,
-      interact: true,
-      hideScrollbar: true,
-      minPxPerSec: 1,
-      audioContext: window.sharedAudioContext,
-    });
+   // Get computed CSS variable values
+const styles = getComputedStyle(document.body);
+const waveColor = styles.getPropertyValue('--color-8').trim();
+const progressColor = styles.getPropertyValue('--color-2').trim();
+
+const wavesurfer = WaveSurfer.create({
+  container: waveformContainer,
+  waveColor: waveColor,
+  progressColor: progressColor,
+  cursorColor: 'transparent',
+  cursorWidth: 0,
+  height: 30,
+  barWidth: 2,
+  barGap: 1,
+  normalize: true,
+  backend: 'WebAudio',
+  fillParent: true,
+  scrollParent: false,
+  responsive: 300,
+  interact: true,
+  hideScrollbar: true,
+  minPxPerSec: 1,
+  audioContext: window.sharedAudioContext,
+});
     
     const peaksData = songData.fields['Waveform Peaks'];
     const storedDuration = songData.fields['Duration'];
@@ -1794,7 +1944,24 @@ if (songName) {
 async function fetchSongs() {
   const g = window.musicPlayerPersistent;
   
+  // Initialize if undefined
+  if (!g.MASTER_DATA) {
+    g.MASTER_DATA = [];
+  }
+  
   if (g.MASTER_DATA.length > 0) {
+    return g.MASTER_DATA;
+  }
+  
+  // Check localStorage cache first
+  const cached = localStorage.getItem('filmwaveSongs');
+  const cacheTime = localStorage.getItem('filmwaveSongsTime');
+  const cacheAge = Date.now() - (parseInt(cacheTime) || 0);
+  
+  // Use cache if less than 5 minutes old
+  if (cached && cacheAge < 5 * 60 * 1000) {
+    console.log('📦 Using cached songs data');
+    g.MASTER_DATA = JSON.parse(cached);
     return g.MASTER_DATA;
   }
   
@@ -1804,11 +1971,36 @@ async function fetchSongs() {
         'Authorization': `Bearer ${AIRTABLE_API_KEY}`
       }
     });
+    
+    // Check for rate limit
+    if (response.status === 429) {
+      console.warn('⚠️ Airtable rate limited - using stale cache if available');
+      if (cached) {
+        g.MASTER_DATA = JSON.parse(cached);
+        return g.MASTER_DATA;
+      }
+      return [];
+    }
+    
     const data = await response.json();
     g.MASTER_DATA = data.records;
+    
+    // Cache the results
+    localStorage.setItem('filmwaveSongs', JSON.stringify(data.records));
+    localStorage.setItem('filmwaveSongsTime', Date.now().toString());
+    console.log('💾 Cached songs data');
+    
     return data.records;
   } catch (error) {
     console.error('Error fetching songs:', error);
+    
+    // Fall back to stale cache on error
+    if (cached) {
+      console.log('📦 Using stale cache due to error');
+      g.MASTER_DATA = JSON.parse(cached);
+      return g.MASTER_DATA;
+    }
+    
     return [];
   }
 }
@@ -2036,6 +2228,156 @@ document.addEventListener('keydown', function (e) {
 
 /**
  * ============================================================
+ * DARK MODE TOGGLE
+ * ============================================================
+ */
+function initDarkMode() {
+  const g = window.musicPlayerPersistent;
+  
+  // Dark mode color overrides
+  const darkColors = {
+    '--color-0': 'transparent',
+    '--color-1': '#191919',
+    '--color-2': '#ffffff',
+    '--color-3': '#ddff43',
+    '--color-4': '#7900b6',
+    '--color-5': '#a88419',
+    '--color-6': '#242424',
+    '--color-7': '#eeeee7',
+    '--color-8': '#2c2c2c',
+    '--color-9': '#474747',
+    '--color-10': '#fb8f61',
+    '--color-11': '#3d3d3d',
+    '--color-12': '#2c2c2c',
+    '--color-13': '#2c2c2c',
+    '--color-14': '#ddff43',
+    '--color-15': '#474747',
+    '--color-16': '#474747'
+  };
+  
+  // Update waveform colors function
+  function updateWaveformColors() {
+    setTimeout(() => {
+      const styles = getComputedStyle(document.body);
+      const waveColor = styles.getPropertyValue('--color-8').trim();
+      const progressColor = styles.getPropertyValue('--color-2').trim();
+      
+      console.log('🎨 Updating waveforms - wave:', waveColor, 'progress:', progressColor);
+      
+      if (g.currentWavesurfer && typeof g.currentWavesurfer.setOptions === 'function') {
+        try {
+          g.currentWavesurfer.setOptions({ waveColor, progressColor });
+        } catch (e) {}
+      }
+      
+      if (g.allWavesurfers) {
+        g.allWavesurfers.forEach(ws => {
+          if (ws && typeof ws.setOptions === 'function') {
+            try {
+              ws.setOptions({ waveColor, progressColor });
+            } catch (e) {}
+          }
+        });
+      }
+      
+      if (g.dashboardTileWavesurfers) {
+        g.dashboardTileWavesurfers.forEach(ws => {
+          if (ws && typeof ws.setOptions === 'function') {
+            try {
+              ws.setOptions({ waveColor, progressColor });
+            } catch (e) {}
+          }
+        });
+      }
+      
+      // Redraw master player waveform
+      if (g.currentPeaksData) {
+        const progress = g.standaloneAudio 
+          ? g.standaloneAudio.currentTime / g.standaloneAudio.duration 
+          : (g.currentWavesurfer ? g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration() : 0);
+        drawMasterWaveform(g.currentPeaksData, progress || 0);
+      }
+      
+      console.log('🎨 Waveform colors updated');
+    }, 50);
+  }
+  
+  // Apply theme to CSS variables
+  function applyThemeColors(theme) {
+    if (theme === 'dark') {
+      Object.entries(darkColors).forEach(([variable, value]) => {
+        document.body.style.setProperty(variable, value);
+      });
+    } else {
+      Object.keys(darkColors).forEach(variable => {
+        document.body.style.removeProperty(variable);
+      });
+    }
+    g.darkMode = theme === 'dark';
+    updateWaveformColors();
+    console.log('🌓 Theme applied:', theme);
+  }
+  
+  // Update all icon visibility across the page
+  function updateIconVisibility(theme) {
+  // Remove the head-injected style so JS can take over
+  if (window._themeStyleElement) {
+    window._themeStyleElement.remove();
+    window._themeStyleElement = null;
+  }
+  
+  const darkIcons = document.querySelectorAll('.dark-mode-icon');
+  const lightIcons = document.querySelectorAll('.light-mode-icon');
+  
+  darkIcons.forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+  });
+  
+  lightIcons.forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  });
+}
+  
+  // Full theme application
+  function applyTheme(theme) {
+    applyThemeColors(theme);
+    updateIconVisibility(theme);
+  }
+  
+  // Get current theme
+  const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+  
+  // Apply current theme (icons + colors)
+  applyTheme(currentTheme);
+  
+  // Attach click handlers to ALL color-modes elements on the page
+  const colorModesElements = document.querySelectorAll('.color-modes');
+  
+  colorModesElements.forEach(colorModes => {
+    // Remove existing listener by cloning
+    const newColorModes = colorModes.cloneNode(true);
+    colorModes.parentNode.replaceChild(newColorModes, colorModes);
+    
+    newColorModes.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      localStorage.setItem('filmwaveTheme', newTheme);
+      applyTheme(newTheme);
+    });
+  });
+  
+  // Re-apply icon visibility after cloning
+  updateIconVisibility(currentTheme);
+  
+  console.log('✅ Dark mode initialized');
+}
+
+/**
+ * ============================================================
  * FILTER HELPERS
  * ============================================================
  */
@@ -2070,7 +2412,7 @@ function initCheckboxTextColor() {
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
-        label.style.color = this.checked ? '#191919' : '';
+        label.style.color = this.checked ? 'var(--color-14)' : '';
       }
     });
   });
@@ -4742,6 +5084,8 @@ function initUniversalSearch() {
 window.addEventListener('load', () => {
   initMusicPage();
   initVolumeControl();
+  initPlayerCloseButton();
+  initDarkMode();
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
@@ -5047,6 +5391,15 @@ if (typeof barba !== 'undefined') {
 },
 
      beforeEnter(data) {
+
+  // Apply theme icon visibility immediately to prevent flash
+  const theme = localStorage.getItem('filmwaveTheme') || 'light';
+  data.next.container.querySelectorAll('.dark-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+  });
+  data.next.container.querySelectorAll('.light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  });
 
        // Reset opacity on main content
   const incomingMainContent = data.next.container.querySelector('.main-content, .dashboard-content-wrapper, .page-wrapper');
@@ -5547,7 +5900,9 @@ loadingPlaceholders.forEach(placeholder => {
 initializeMemberstackHandlers();
 initializeProfileSortable(); 
 initializePlaylistOverlay();  
-initVolumeControl();      
+initVolumeControl();   
+initPlayerCloseButton();
+initDarkMode();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
@@ -5606,187 +5961,41 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 }
 
 /**
- * ============================================================
- * FAVORITE BUTTON SYNCING
- * ============================================================
- */
-function initFavoriteSync() {
-  const g = window.musicPlayerPersistent;
-  if (!g) {
-    console.warn('⚠️ musicPlayerPersistent not found');
-    return;
-  }
+* ============================================================
+* FAVORITE ICON TOGGLE (SONG CARDS + PLAYER)
+* ============================================================
+*/
 
-  const playerCheckbox = document.querySelector('.music-player-wrapper input[type="checkbox"]');
-  if (playerCheckbox) {
-    playerCheckbox.classList.add('player-favorite-checkbox');
-    console.log('✅ Added player-favorite-checkbox class to player');
-  }
-  
-  let currentSongfavorite = null;
-  let playerfavorite = null;
-  let lastChangeSource = null;
-  let playerListenerAttached = false;
-  
-  const observer = new MutationObserver(function() {
-    const player = document.querySelector('.music-player-wrapper input.player-favorite-checkbox');
-    if (player && !playerListenerAttached) {
-      console.log('✅ Player favorite appeared in DOM');
-      playerfavorite = player;
-      playerfavorite.addEventListener('change', handlePlayerfavoriteChange);
-      playerListenerAttached = true;
-      
-      if (currentSongfavorite) {
-        console.log('Current song exists, syncing on player appear');
-        setTimeout(() => {
-          if (playerfavorite.checked !== currentSongfavorite.checked) {
-            console.log(`🔄 Syncing: Song is ${currentSongfavorite.checked}, Player is ${playerfavorite.checked}`);
-            lastChangeSource = 'sync';
-            playerfavorite.click();
-            setTimeout(() => { lastChangeSource = null; }, 100);
-          }
-        }, 500);
-      } else {
-        console.log('No current song yet');
-      }
-    }
-  });
-  
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-  
-  function getPlayerfavorite() {
-    if (!playerfavorite || !document.body.contains(playerfavorite)) {
-      playerfavorite = document.querySelector('.music-player-wrapper input.player-favorite-checkbox');
-      if (playerfavorite && !playerListenerAttached) {
-        console.log('✅ Player favorite found via getter');
-        playerfavorite.addEventListener('change', handlePlayerfavoriteChange);
-        playerListenerAttached = true;
-      }
-    }
-    return playerfavorite;
-  }
-  
-  function syncFavorites(songCard) {
-    if (currentSongfavorite) {
-      currentSongfavorite.removeEventListener('change', handleSongfavoriteChange);
-    }
-    
-    currentSongfavorite = songCard.querySelector('input.favorite-checkbox');
-    console.log('Set current song favorite:', currentSongfavorite ? 'found' : 'not found');
-    
-    if (currentSongfavorite) {
-      console.log('Song checkbox element:', currentSongfavorite.tagName, currentSongfavorite.type, 'checked:', currentSongfavorite.checked);
-      
-      const player = getPlayerfavorite();
-      
-      if (player) {
-        console.log('Player checkbox element:', player.tagName, player.type, 'checked:', player.checked);
-      }
-      
-      if (player) {
-        if (player.checked !== currentSongfavorite.checked) {
-          console.log(`🔄 Song changed - syncing player from ${player.checked} to ${currentSongfavorite.checked}`);
-          lastChangeSource = 'sync';
-          player.click();
-          setTimeout(() => { lastChangeSource = null; }, 100);
-        } else {
-          console.log('Player already matches song:', player.checked);
-        }
-      }
-      
-      currentSongfavorite.addEventListener('change', handleSongfavoriteChange);
-      console.log('Synced favorite for current song');
-    }
-  }
-  
-  function handleSongfavoriteChange(e) {
-    if (lastChangeSource === 'player') {
-      console.log('Ignoring song change - triggered by player');
-      lastChangeSource = null;
-      return;
-    }
-    
-    const player = getPlayerfavorite();
-    if (!player) {
-      console.log('Player not available, song favorite changed to:', e.target.checked);
-      return;
-    }
-    
-    if (player.checked !== e.target.checked) {
-      lastChangeSource = 'song';
-      console.log('💛 Song favorite clicked, syncing player to:', e.target.checked);
-      player.click();
-    }
-  }
-  
-  function handlePlayerfavoriteChange() {
-    if (lastChangeSource === 'song' || lastChangeSource === 'sync') {
-      console.log('Ignoring player change - triggered by', lastChangeSource);
-      lastChangeSource = null;
-      return;
-    }
-    
-    if (currentSongfavorite && currentSongfavorite.checked !== this.checked) {
-      lastChangeSource = 'player';
-      console.log('💛 Player favorite clicked, syncing song to:', this.checked);
-      currentSongfavorite.click();
-    }
-  }
-  
-  let lastSyncedSongId = null;
-  setInterval(() => {
-    if (g.currentSongData && g.currentSongData.id !== lastSyncedSongId) {
-      lastSyncedSongId = g.currentSongData.id;
-      
-      const matchingData = g.waveformData.find(data => 
-        data.songData && data.songData.id === g.currentSongData.id
-      );
-      
-      if (matchingData && matchingData.cardElement) {
-        console.log('🎵 New song detected, syncing favorites');
-        syncFavorites(matchingData.cardElement);
-      }
-    }
-    
-    if (!g.currentSongData && currentSongfavorite) {
-      if (currentSongfavorite) {
-        currentSongfavorite.removeEventListener('change', handleSongfavoriteChange);
-      }
-      currentSongfavorite = null;
-      lastSyncedSongId = null;
-    }
-  }, 500);
-  
-  setTimeout(() => {
-    if (g.currentSongData) {
-      const matchingData = g.waveformData.find(data => 
-        data.songData && data.songData.id === g.currentSongData.id
-      );
-      
-      if (matchingData && matchingData.cardElement) {
-        console.log('🎵 Initial song detected, syncing favorites');
-        syncFavorites(matchingData.cardElement);
-      }
-    }
-  }, 1000);
-}
+// Click SVG → toggle the real checkbox
+document.addEventListener('click', (e) => {
+  const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
+  if (!icon) return;
 
-window.addEventListener('load', function() {
-  setTimeout(() => {
-    console.log('🚀 Initializing favorite sync system');
-    initFavoriteSync();
-  }, 2000);
+  const checkbox = icon
+    .closest('.w-checkbox')
+    ?.querySelector('input[type="checkbox"]');
+
+  if (!checkbox) return;
+
+  checkbox.checked = !checkbox.checked;
+  checkbox.dispatchEvent(new Event('change', { bubbles: true }));
 });
 
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', function() {
-    console.log('🔄 Re-initializing favorite sync after Barba transition');
-    setTimeout(initFavoriteSync, 1000);
-  });
-}
+// Checkbox change → update SVG visibility
+document.addEventListener('change', (e) => {
+  const checkbox = e.target;
+  if (checkbox.type !== 'checkbox') return;
+
+  const button = checkbox.closest('.favorite-button');
+  if (!button) return;
+
+  const emptyIcon = button.querySelector('.favorite-icon-empty');
+  const filledIcon = button.querySelector('.favorite-icon-filled');
+  if (!emptyIcon || !filledIcon) return;
+
+  emptyIcon.style.display = checkbox.checked ? 'none' : 'flex';
+  filledIcon.style.display = checkbox.checked ? 'flex' : 'none';
+});
 
 /**
  * ============================================================
@@ -6613,6 +6822,123 @@ if (typeof barba !== 'undefined') {
 }
 
 console.log('💾 localStorage persistence initialized');
+
+/**
+ * ============================================================
+ * SYNC FAVORITE ICONS (Syncs Song Card and Music Player Icons)
+ * ============================================================
+ */
+
+// Sync song card <-> player (robust selectors + avoids stale song id)
+let favSyncLock = false;
+let lastSongId = null;
+
+function getPlayerInput() {
+  return (
+    document.querySelector('.music-player-wrapper input.player-favorite-checkbox') ||
+    document.querySelector('.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]') ||
+    document.querySelector('.music-player-wrapper input.w-checkbox-input') ||
+    document.querySelector('.music-player-wrapper input[type="checkbox"]')
+  );
+}
+
+function getSongInputById(songId) {
+  return (
+    document.querySelector(`[data-song-id="${songId}"] input.favorite-checkbox`) ||
+    document.querySelector(`[data-song-id="${songId}"] .favorite-checkbox input[type="checkbox"]`) ||
+    document.querySelector(`[data-song-id="${songId}"] input[type="checkbox"]`)
+  );
+}
+
+// Instant: watch current song changes and sync player immediately
+const songIdObserver = new MutationObserver(() => {
+  const id = window.musicPlayerPersistent?.currentSongData?.id;
+  if (id == null) return;
+
+  const songId = String(id);
+  if (songId === lastSongId) return;
+  lastSongId = songId;
+
+  const songInput = getSongInputById(songId);
+  const playerInput = getPlayerInput();
+  if (!songInput || !playerInput) return;
+
+  if (playerInput.checked !== songInput.checked) {
+    favSyncLock = true;
+    playerInput.checked = songInput.checked;
+    playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+    favSyncLock = false;
+  }
+});
+
+songIdObserver.observe(document.body, { childList: true, subtree: true });
+
+// Also run once immediately (first load)
+(() => {
+  const id = window.musicPlayerPersistent?.currentSongData?.id;
+  if (id == null) return;
+
+  const songId = String(id);
+  lastSongId = songId;
+
+  const songInput = getSongInputById(songId);
+  const playerInput = getPlayerInput();
+  if (!songInput || !playerInput) return;
+
+  if (playerInput.checked !== songInput.checked) {
+    favSyncLock = true;
+    playerInput.checked = songInput.checked;
+    playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+    favSyncLock = false;
+  }
+})();
+document.addEventListener('change', (e) => {
+  const input = e.target;
+  if (!input || input.type !== 'checkbox') return;
+  if (favSyncLock) return;
+
+  const isPlayer = !!input.closest('.music-player-wrapper');
+  const isSong = !!input.closest('.song-wrapper');
+
+     // SONG -> PLAYER (ONLY if this card is the currently playing song)
+  if (isSong) {
+    const songId = input.closest('.song-wrapper')?.dataset?.songId;
+    if (!songId) return;
+
+    const currentId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (!currentId) return;
+
+    // Not the current song → do NOT sync the player
+    if (String(songId) !== currentId) return;
+
+    const playerInput = getPlayerInput();
+    if (!playerInput) return;
+
+    if (playerInput.checked !== input.checked) {
+      favSyncLock = true;
+      playerInput.checked = input.checked;
+      playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+      favSyncLock = false;
+    }
+    return;
+  }
+
+  // PLAYER -> CURRENT SONG
+  if (isPlayer) {
+    const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (!songId) return;
+
+    const songInput = getSongInputById(songId);
+    if (!songInput) return;
+
+    if (songInput.checked !== input.checked) {
+      favSyncLock = true;
+      songInput.checked = input.checked;
+      songInput.dispatchEvent(new Event('change', { bubbles: true }));
+      favSyncLock = false;
+    }
+  }
+});
 
 /**
  * ============================================================
@@ -8694,9 +9020,15 @@ async function initDashboardTiles() {
   });
   
   // Ensure songs are loaded
-  if (g.MASTER_DATA.length === 0) {
+  if (!g.MASTER_DATA || g.MASTER_DATA.length === 0) {
     await fetchSongs();
   }
+  
+  if (!g.MASTER_DATA || g.MASTER_DATA.length === 0) {
+    console.log('⚠️ No MASTER_DATA available for dashboard tiles');
+    return;
+  }
+  
   console.log(`📊 Total songs in MASTER_DATA: ${g.MASTER_DATA.length}`);
 
   // Use cached random selection if available, otherwise create new one
@@ -9122,82 +9454,3 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
     container.style.pointerEvents = '';
   }
 }
-
-/* ============================================================
-   NAVIGATION HEIGHT CHANGE (BARBA-SAFE, WEBFLOW-SAFE)
-   - No inline styles (Webflow/IX2 overwrites those)
-   - Injects CSS from JS + toggles a class
-   ============================================================ */
-
-(function initNavResizeSystem() {
-  if (window.__fwNavResizeInstalled) return;
-  window.__fwNavResizeInstalled = true;
-
-  const STYLE_ID = 'fw-nav-resize-style';
-  const COMPACT_CLASS = 'fw-nav-compact';
-
-  function injectStyleOnce() {
-    if (document.getElementById(STYLE_ID)) return;
-
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
-      .${COMPACT_CLASS} .navigation {
-        height: 60px !important;
-        transition: height 200ms ease !important;
-      }
-      .${COMPACT_CLASS} .global-nav-wrapper {
-        margin-top: 60px !important;
-        transition: margin-top 200ms ease !important;
-      }
-      .${COMPACT_CLASS} .nav-logo {
-        width: 150px !important;
-        transition: width 200ms ease !important;
-      }
-
-      /* top-of-page uses your Webflow values naturally */
-      .navigation { transition: height 200ms ease !important; }
-      .global-nav-wrapper { transition: margin-top 200ms ease !important; }
-      .nav-logo { transition: width 200ms ease !important; }
-    `;
-    document.head.appendChild(style);
-    console.log('✅ fw nav resize CSS injected');
-  }
-
-  function apply(reason = 'scroll') {
-    injectStyleOnce();
-
-    const nav = document.querySelector('.navigation');
-    const wrap = document.querySelector('.global-nav-wrapper');
-    const logo = document.querySelector('.nav-logo');
-
-    // If the nav doesn’t exist on some pages, just do nothing
-    if (!nav || !wrap || !logo) {
-      // optional debug:
-      // console.log('🧭 nav resize skipped', reason, { nav: !!nav, wrap: !!wrap, logo: !!logo });
-      return;
-    }
-
-    const compact = window.scrollY > 0;
-    document.documentElement.classList.toggle(COMPACT_CLASS, compact);
-
-    // optional debug:
-    // console.log('🧭 nav resize applied', reason, { compact, y: window.scrollY });
-  }
-
-  // Bind once
-  window.addEventListener('scroll', () => apply('scroll'), { passive: true });
-
-  // Initial run
-  apply('init');
-  requestAnimationFrame(() => apply('init+raf'));
-  setTimeout(() => apply('init+50'), 50);
-
-  // Re-apply after Barba swaps DOM (call this from your Barba hook)
-  window.addEventListener('barbaAfterTransition', () => {
-    apply('barbaAfterTransition');
-    requestAnimationFrame(() => apply('barbaAfterTransition+raf'));
-    setTimeout(() => apply('barbaAfterTransition+50'), 50);
-    setTimeout(() => apply('barbaAfterTransition+200'), 200);
-  });
-})();
