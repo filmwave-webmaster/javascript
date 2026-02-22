@@ -9175,7 +9175,7 @@ function restoreFavorites() {
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target.matches('input.favorite-checkbox')) {
+  if (e.target.type === 'checkbox' && e.target.closest('.favorite-button')) {
     saveFavorites();
   }
 });
