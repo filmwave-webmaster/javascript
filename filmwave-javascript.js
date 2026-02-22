@@ -12295,19 +12295,10 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content to the left with fade
+      // Hide content immediately to prevent scrolling
         contentToSlide.forEach(el => {
-          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
-          el.style.transform = 'translateX(-100%)';
-          el.style.opacity = '0';
+          el.style.display = 'none';
         });
-        
-        // Hide content after animation to prevent scrolling
-        setTimeout(() => {
-          contentToSlide.forEach(el => {
-            el.style.display = 'none';
-          });
-        }, 350);
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
