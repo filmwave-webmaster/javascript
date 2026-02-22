@@ -415,6 +415,18 @@ function updateMasterPlayerVisibility() {
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
     
+    // Add click blocker to prevent clicks going through to elements beneath
+    if (!playerWrapper.querySelector('.player-click-blocker')) {
+      const blocker = document.createElement('div');
+      blocker.className = 'player-click-blocker';
+      blocker.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:-1;';
+      blocker.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }, true);
+      playerWrapper.insertBefore(blocker, playerWrapper.firstChild);
+    }
+    
     // Re-enable scroll anchoring after layout settles
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
