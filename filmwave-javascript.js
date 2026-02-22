@@ -12288,12 +12288,15 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Scroll to top first to prevent iOS jump issues
-        window.scrollTo(0, 0);
+        // Get navbar height
+        const navbarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--navbar--height')) || 60;
         
-        // Make filter fixed so it doesn't depend on scroll position
-        filterWrapper.style.position = 'fixed';
-        filterWrapper.style.top = 'var(--navbar--height, 60px)';
+        // Calculate top position based on current scroll
+        const scrollY = window.scrollY;
+        
+        // Make filter absolute positioned at current viewport top
+        filterWrapper.style.position = 'absolute';
+        filterWrapper.style.top = `${scrollY + navbarHeight}px`;
         filterWrapper.style.left = '0';
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
