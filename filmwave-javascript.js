@@ -9525,7 +9525,7 @@ function pickImageAsBase64({ onPicked, onCancel } = {}) {
 
     if (textEl) {
       textEl.textContent = fileName || 'Image selected';
-      textEl.style.color = '--color-11';
+      textEl.style.color = '';
     }
 
     // ✅ Hide icon (do NOT remove)
