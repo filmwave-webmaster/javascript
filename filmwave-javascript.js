@@ -640,19 +640,6 @@ function navigateStandaloneTrack(direction) {
     songsToNavigate = domIds
       .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
       .filter(Boolean);
-  } else if (isOnMusicPage) {
-    // MUSIC PAGE: use DOM order to respect shuffle/filter order
-    const container = document.querySelector('.music-list-wrapper');
-    if (container) {
-      const visibleCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'))
-        .filter(card => card.style.display !== 'none');
-      
-      songsToNavigate = visibleCards
-        .map(card => g.MASTER_DATA.find(song => String(song.id) === String(card.dataset.songId)))
-        .filter(Boolean);
-    } else {
-      songsToNavigate = g.MASTER_DATA;
-    }
   } else if (
     g.activeSongSource === 'dashboard' &&
     isOnDashboard &&
@@ -662,10 +649,8 @@ function navigateStandaloneTrack(direction) {
     // Only use dashboard tiles if we're still on dashboard
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
-    // Use filtered songs if available - preserve order from filteredSongIds
-    songsToNavigate = g.filteredSongIds
-      .map(id => g.MASTER_DATA.find(song => String(song.id) === String(id)))
-      .filter(Boolean);
+    // Use filtered songs if available
+    songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
   } else {
     // Fallback to all songs
     songsToNavigate = g.MASTER_DATA;
@@ -1393,22 +1378,39 @@ if (playerCoverArt) {
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
   if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
-    const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
+    // Get visible cards in current DOM order (respects shuffle)
+    const container = document.querySelector('.music-list-wrapper');
+    const visibleCards = Array.from(container?.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)') || [])
+      .filter(card => card.style.display !== 'none');
+    
+    // Find current card index in DOM order
+    const currentData = g.waveformData.find(d => d.wavesurfer === g.currentWavesurfer);
+    const currentCard = currentData?.cardElement?.closest('.song-wrapper') || currentData?.cardElement;
+    const currentIndex = visibleCards.indexOf(currentCard);
+    
     let targetWS = null;
     
     if (direction === 'next') {
-      for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
-        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+      for (let i = currentIndex + 1; i < visibleCards.length; i++) {
+        const card = visibleCards[i];
+        const data = g.waveformData.find(d => {
+          const dataCard = d.cardElement?.closest('.song-wrapper') || d.cardElement;
+          return dataCard === card;
+        });
         if (data && data.cardElement.offsetParent !== null) {
-          targetWS = g.allWavesurfers[i];
+          targetWS = data.wavesurfer;
           break;
         }
       }
     } else {
       for (let i = currentIndex - 1; i >= 0; i--) {
-        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+        const card = visibleCards[i];
+        const data = g.waveformData.find(d => {
+          const dataCard = d.cardElement?.closest('.song-wrapper') || d.cardElement;
+          return dataCard === card;
+        });
         if (data && data.cardElement.offsetParent !== null) {
-          targetWS = g.allWavesurfers[i];
+          targetWS = data.wavesurfer;
           break;
         }
       }
