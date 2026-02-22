@@ -1,6 +1,6 @@
   /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - VERSION 49
+ * FILMWAVE MUSIC PLATFORM - VERSION 44
  * Updated: January 17, 2026
  * ============================================================
  */
@@ -383,7 +383,6 @@ function positionMasterPlayer(theme) {
  * MASTER PLAYER VISIBILITY CONTROL
  * ============================================================
  */
-
 function updateMasterPlayerVisibility() {
   const g = window.musicPlayerPersistent;
   const playerWrapper = document.querySelector('.music-player-wrapper');
@@ -393,69 +392,51 @@ function updateMasterPlayerVisibility() {
   const hasFooter = !!document.querySelector('.footer-wrapper');
   const shouldShow = g.hasActiveSong || g.currentSongData || g.standaloneAudio || g.currentWavesurfer;
   
-  // Get player height dynamically
-  const playerHeight = playerWrapper.offsetHeight || 77;
-  
   console.log('👁️ updateMasterPlayerVisibility - shouldShow:', shouldShow, 'hasFooter:', hasFooter);
   
   positionMasterPlayer();
   
   if (shouldShow) {
-    // Prevent browser scroll anchoring from causing jumps
-    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
-    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
-    
-    if (favoriteSongsWrapper) favoriteSongsWrapper.style.overflowAnchor = 'none';
-    if (playlistsTemplateContainer) playlistsTemplateContainer.style.overflowAnchor = 'none';
-    document.documentElement.style.overflowAnchor = 'none';
-    
     playerWrapper.style.display = 'flex';
     playerWrapper.style.visibility = 'visible';
     playerWrapper.style.opacity = '1';
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
     
-    // Re-enable scroll anchoring after layout settles
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (favoriteSongsWrapper) favoriteSongsWrapper.style.overflowAnchor = '';
-        if (playlistsTemplateContainer) playlistsTemplateContainer.style.overflowAnchor = '';
-        document.documentElement.style.overflowAnchor = '';
-      });
-    });
-    
     // ADD PADDING TO MUSIC AREA CONTAINER ON MUSIC PAGE
     if (isMusicPage) {
       const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
-        musicAreaContainer.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
+        musicAreaContainer.style.setProperty('padding-bottom', '77px', 'important');
       }
     }
     
-   // ADD PADDING TO FOOTER WHEN PLAYER IS VISIBLE
+   // ADD PADDING TO FOOTER ON ANY PAGE THAT HAS IT
     if (hasFooter) {
       const footerWrapper = document.querySelector('.footer-wrapper');
       if (footerWrapper) {
-        footerWrapper.style.setProperty('padding-bottom', `${playerHeight}px`, 'important');
+        footerWrapper.style.setProperty('padding-bottom', '77px', 'important');
         console.log('✅ Added padding to footer-wrapper');
       }
     }
     
-  // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
-    const sidebarNav = document.querySelector('.sidebar-nav');
-    if (sidebarNav) {
-      if (!sidebarNav.dataset.heightAdjusted) {
-        sidebarNav.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
-        sidebarNav.setAttribute('data-height-adjusted', 'true');
-        console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
-      }
+    // ADD PADDING TO SIDEBAR NAV WHEN PLAYER IS VISIBLE
+   const sidebarNav = document.querySelector('.sidebar-nav');
+if (sidebarNav) {
+    // Check if we've already added the adjustment to prevent compounding
+    if (!sidebarNav.dataset.paddingAdjusted) {
+        const currentPadding = parseFloat(window.getComputedStyle(sidebarNav).paddingBottom) || 0;
+        sidebarNav.style.setProperty('padding-bottom', `${currentPadding + 77}px`, 'important');
+        sidebarNav.setAttribute('data-padding-adjusted', 'true');
+        console.log('✅ Added padding to sidebar-nav');
     }
+}
 
     // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
     const filterWrapper = document.querySelector('.filter-wrapper');
     if (filterWrapper && !filterWrapper.dataset.paddingAdjusted) {
       const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
-      filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
+      filterWrapper.style.setProperty('padding-bottom', `${currentPadding + 77}px`, 'important');
       filterWrapper.setAttribute('data-padding-adjusted', 'true');
     }
     
@@ -472,27 +453,21 @@ function updateMasterPlayerVisibility() {
       }
     }
     
-   // REMOVE PADDING FROM BOTTOM ELEMENT WHEN PLAYER IS HIDDEN
-    const favoriteSongsWrapper = document.querySelector('.favorite-songs-wrapper');
-    const playlistsTemplateContainer = document.querySelector('.playlists-template-container');
-    const footerWrapper = document.querySelector('.footer-wrapper');
-    
-    if (favoriteSongsWrapper) {
-      favoriteSongsWrapper.style.setProperty('padding-bottom', '0px', 'important');
-    }
-    if (playlistsTemplateContainer) {
-      playlistsTemplateContainer.style.setProperty('padding-bottom', '0px', 'important');
-    }
-    if (footerWrapper) {
-      footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
+   // REMOVE PADDING FROM FOOTER ON ANY PAGE WHEN PLAYER IS HIDDEN
+    if (hasFooter) {
+      const footerWrapper = document.querySelector('.footer-wrapper');
+      if (footerWrapper) {
+        footerWrapper.style.setProperty('padding-bottom', '0px', 'important');
+        console.log('🗑️ Removed padding from footer-wrapper');
+      }
     }
     
-   // RESET SIDEBAR NAV HEIGHT WHEN PLAYER IS HIDDEN
+   // RESET SIDEBAR NAV PADDING WHEN PLAYER IS HIDDEN
   const sidebarNav = document.querySelector('.sidebar-nav');
   if (sidebarNav) {
-    sidebarNav.style.removeProperty('height');
-    sidebarNav.removeAttribute('data-height-adjusted');
-    console.log('🗑️ Reset sidebar-nav height to Webflow default');
+    sidebarNav.style.removeProperty('padding-bottom');
+    sidebarNav.removeAttribute('data-padding-adjusted');
+    console.log('🗑️ Reset padding on sidebar-nav to Webflow defaults');
     }
     
     // RESET FILTER WRAPPER PADDING WHEN PLAYER IS HIDDEN
@@ -548,7 +523,6 @@ async function initMusicPage() {
     
     const songs = await fetchSongs();
     displaySongs(songs);
-    initShuffleSongs();
     initMasterPlayer();
     
     setTimeout(() => {
@@ -741,27 +715,10 @@ function navigateStandaloneTrack(direction) {
     });
   }
   
-  // Reset old song card waveform progress
-  if (g.currentSongData && g.currentWavesurfer) {
-    try {
-      g.currentWavesurfer.seekTo(0);
-    } catch (e) {}
-  }
-  
- // Find wavesurfer directly from DOM
+  // Find wavesurfer directly from DOM
   let newWavesurfer = null;
   
-  // First try to find wavesurfer from song card (.waveform container)
-  const nextCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
-  if (nextCard) {
-    const waveformContainer = nextCard.querySelector('.waveform');
-    if (waveformContainer && waveformContainer._wavesurfer) {
-      newWavesurfer = waveformContainer._wavesurfer;
-    }
-  }
-  
-  // If not found, try dashboard tile waveforms (.db-waveform container)
-  if (!newWavesurfer && isOnDashboard) {
+  if (isOnDashboard) {
     const waveformContainers = document.querySelectorAll('.db-waveform');
     waveformContainers.forEach(container => {
       if (container._songId === nextSong.id && container._wavesurfer) {
@@ -2930,52 +2887,9 @@ function displaySongs(songs) {
 
 /**
  * ============================================================
- * SHUFFLE SONGS ON MUSIC PAGE
- * ============================================================
- */
-function initShuffleSongs() {
-  const shuffleBtn = document.querySelector('.shuffle-songs');
-  if (!shuffleBtn) return;
-  
-  // Prevent multiple initializations
-  if (shuffleBtn._shuffleInit) return;
-  shuffleBtn._shuffleInit = true;
-  
-  shuffleBtn.addEventListener('click', () => {
-    const container = document.querySelector('.music-list-wrapper');
-    if (!container) return;
-    
-    // Get all visible song cards (respecting current filters)
-    const songCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'))
-      .filter(card => card.style.display !== 'none');
-    
-    if (songCards.length < 2) return;
-    
-    // Fisher-Yates shuffle
-    for (let i = songCards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [songCards[i], songCards[j]] = [songCards[j], songCards[i]];
-    }
-    
-    // Reorder in DOM
-    songCards.forEach(card => container.appendChild(card));
-    
-    // Update filtered song IDs for next/previous navigation
-    const g = window.musicPlayerPersistent;
-    g.filteredSongIds = songCards.map(card => card.dataset.songId);
-    
-    console.log('🔀 Songs shuffled');
-  });
-  
-  console.log('✅ Shuffle button initialized');
-}
-
-/**
- * ============================================================
  * DISPLAY FEATURED SONGS ON HOME PAGE
  * ============================================================
  */
-
 async function displayFeaturedSongs(limit = 6) {
   const container = document.querySelector('.featured-songs-wrapper');
   if (!container) {
@@ -3219,8 +3133,7 @@ function initDarkMode() {
     '--color-15': '#474747',
     '--color-16': '#474747',
     '--color-17': 'rgba(255, 255, 255, 0.2)',
-    '--color-18': 'rgba(255, 255, 255, 0.2)',
-    '--color-19': '#3d3d3d'
+    '--color-18': 'rgba(255, 255, 255, 0.2)'
   };
   
   // Update waveform colors function
@@ -4496,7 +4409,6 @@ if (typeof window.clearPlaylistFilterStorage === 'function') {
   }));
   
   toggleClearButton();
-  updateMusicTileSectionVisibility();
   
   if (typeof applyFilters === 'function') {
     applyFilters();
@@ -4575,7 +4487,7 @@ function initSearchAndFilters() {
     console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
   }
   
-  document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)').forEach(card => {
+  document.querySelectorAll('.song-wrapper').forEach(card => {
   const matchesOtherFilters = visibleIds.includes(card.dataset.songId);
   const hiddenByPlaylist = card.getAttribute('data-hidden-by-playlist') === 'true';
   
@@ -4594,7 +4506,6 @@ function initSearchAndFilters() {
 });
   
   toggleClearButton();
-  updateMusicTileSectionVisibility();
 }
   
   if (clearBtn) {
@@ -4767,7 +4678,6 @@ function loadSavedPlaylistFilter() {
       });
       
       console.log('🎵 Playlist filter cleared');
-      updateMusicTileSectionVisibility();
       return;
     }
     
@@ -4802,8 +4712,6 @@ function loadSavedPlaylistFilter() {
     } catch (error) {
       console.error('Error filtering by playlist:', error);
     }
-    
-    updateMusicTileSectionVisibility();
   }
   
   function handleCheckboxChange(checkbox, playlistId, playlistName) {
@@ -4862,9 +4770,6 @@ function loadSavedPlaylistFilter() {
     if (typeof toggleClearButton === 'function') {
       toggleClearButton();
     }
-    
-    // Call after savePlaylistFilter so localStorage is updated
-    updateMusicTileSectionVisibility();
   }
   
   function updatePlaylistFilterTag() {
@@ -4911,8 +4816,6 @@ function loadSavedPlaylistFilter() {
         if (typeof toggleClearButton === 'function') {
           toggleClearButton();
         }
-        
-        updateMusicTileSectionVisibility();
       });
       
       tagsContainer.insertBefore(tag, tagsContainer.firstChild);
@@ -5458,22 +5361,6 @@ function hideFilterDot(dot) {
   setTimeout(() => {
     dot.style.display = 'none';
   }, 200);
-}
-
-function updateMusicTileSectionVisibility() {
-  const musicTileSection = document.querySelector('.music-tile-section');
-  if (!musicTileSection) return;
-  
-  const searchBar = document.querySelector('[data-filter-search="true"]');
-  const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked')).length > 0;
-  const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
-  
-  if (hasSearch || hasFilters || hasPlaylistFilter) {
-    musicTileSection.style.display = 'none';
-  } else {
-    musicTileSection.style.display = '';
-  }
 }
 
 function updateFilterDots() {
@@ -6654,7 +6541,7 @@ function initUniversalSearch() {
     // Trigger fade in
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.35)';
       });
     });
     
@@ -6977,18 +6864,6 @@ barba.hooks.afterEnter((data) => {
           });
         }
       }
-      
-      // Update music tile section visibility based on filters (with delay for filter restoration)
-      if (typeof updateMusicTileSectionVisibility === 'function') {
-        updateMusicTileSectionVisibility();
-        setTimeout(updateMusicTileSectionVisibility, 100);
-        setTimeout(updateMusicTileSectionVisibility, 500);
-      }
-      
-      // Initialize music page filter pills after Barba transition
-      if (typeof initMusicPageFilterPills === 'function') {
-        setTimeout(initMusicPageFilterPills, 300);
-      }
     }
     
     // Preload playlists after page transition
@@ -7021,13 +6896,6 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
       if (typeof initDashboardSearch === 'function') initDashboardSearch();
-    }, 300);
-  }
-  
-  // Initialize music page filter pills
-  if (window.location.pathname === '/music' || window.location.pathname === '/music/') {
-    setTimeout(() => {
-      if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
     }, 300);
   }
   
@@ -7558,12 +7426,6 @@ if (shouldHaveSidebar && !sidebar) {
   newSidebar.style.visibility = 'visible';
   newSidebar.style.opacity = '0';
   newSidebar.style.transition = 'none';
-  
-  const newSidebarContainer = newSidebar.querySelector('.sidebar-container');
-  if (newSidebarContainer) {
-    newSidebarContainer.style.height = 'auto';
-    newSidebarContainer.style.flexShrink = '0';
-  }
         
         const mainContent = document.querySelector('[data-barba="container"]');
         if (mainContent) {
@@ -7588,13 +7450,6 @@ if (shouldHaveSidebar && !sidebar) {
 
 if (shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'visible';
-  
-  const sidebarContainer = sidebar.querySelector('.sidebar-container');
-  if (sidebarContainer) {
-    sidebarContainer.style.height = 'auto';
-    sidebarContainer.style.flexShrink = '0';
-  }
-  
   initDashboardWelcome();
   
   console.log('🔍 Sidebar fade check:', { cameFromDashboard, currentPath: data.current?.url?.path });
@@ -7730,10 +7585,8 @@ loadingPlaceholders.forEach(placeholder => {
 
     if (mainContent && isLoginPage) {
       if (isPlayerVisible) {
-        const playerWrapper = document.querySelector('.music-player-wrapper');
-        const playerHeight = playerWrapper?.offsetHeight || 77;
-        mainContent.style.height = `calc(100vh - ${playerHeight}px)`;
-        console.log(`📐 Main content: calc(100vh - ${playerHeight}px) - player visible`);
+        mainContent.style.height = 'calc(100vh - 77px)';
+        console.log('📐 Main content: calc(100vh - 77px) - player visible');
       } else {
         mainContent.style.height = '100vh';
         console.log('📐 Main content: 100vh - player hidden');
@@ -7963,17 +7816,10 @@ if (window.location.pathname.startsWith('/dashboard/')) {
 * ============================================================
 */
 
-// Click SVG → toggle the real checkbox (use capture phase for player)
+// Click SVG → toggle the real checkbox
 document.addEventListener('click', (e) => {
   const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
   if (!icon) return;
-
-  // If clicking player favorite, stop event from reaching song cards beneath
-  if (icon.closest('.music-player-wrapper')) {
-    e.stopImmediatePropagation();
-    e.stopPropagation();
-    e.preventDefault();
-  }
 
   const checkbox = icon
     .closest('.w-checkbox')
@@ -7983,7 +7829,7 @@ document.addEventListener('click', (e) => {
 
   checkbox.checked = !checkbox.checked;
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-}, true);  // <-- capture phase
+});
 
 // Checkbox change → update SVG visibility
 document.addEventListener('change', (e) => {
@@ -8095,7 +7941,7 @@ function initDashboardFilterPills() {
     pill.addEventListener('click', (e) => {
       e.preventDefault();
       
-      const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
+      const filterValue = pill.textContent.trim();
       if (filterValue) {
         // Save as a genre filter (not search query)
         localStorage.setItem('musicFilters', JSON.stringify({
@@ -8122,84 +7968,11 @@ function initDashboardFilterPills() {
   console.log('✅ Dashboard filter pills initialized');
 }
 
-// Music page filter pills - toggle genre filters directly
-function initMusicPageFilterPills() {
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (!isMusicPage) return;
-  
-  const tagsContainer = document.querySelector('.filter-tags-container');
-  if (!tagsContainer) return;
-  
-  document.querySelectorAll('.db-filter-pill').forEach(pill => {
-    // Skip if already initialized for music page
-    if (pill._musicPagePillInit) return;
-    pill._musicPagePillInit = true;
-    
-    pill.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
-      if (!filterValue) return;
-      
-      // Check if this filter is already active (tag exists)
-      const existingTag = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
-        const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
-        return tagText === filterValue;
-      });
-      
-      if (existingTag) {
-        // Filter is active - remove it
-        existingTag.querySelector('.filter-tag-remove')?.click();
-        pill.classList.remove('is-active');
-        console.log('🏷️ Music pill deactivated:', filterValue);
-      } else {
-        // Filter is not active - find and check the corresponding Genre checkbox
-        const genreCheckbox = document.querySelector(`[data-filter-group="Genre"][data-filter-value="${filterValue}" i]`);
-        
-        if (genreCheckbox && !genreCheckbox.checked) {
-          genreCheckbox.checked = true;
-          const wrapper = genreCheckbox.closest('.checkbox-single-select-wrapper, .w-checkbox');
-          if (wrapper) wrapper.classList.add('is-active');
-          genreCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-          pill.classList.add('is-active');
-          console.log('🏷️ Music pill activated:', filterValue);
-        } else if (!genreCheckbox) {
-          // No matching checkbox found - create tag manually
-          const tag = document.createElement('div');
-          tag.className = 'filter-tag';
-          tag.dataset.pillFilter = filterValue;
-          tag.innerHTML = `
-            <span class="filter-tag-text">${filterValue}</span>
-            <span class="filter-tag-remove x-button-style">×</span>
-          `;
-          
-          tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
-            tag.remove();
-            pill.classList.remove('is-active');
-            if (typeof applyFilters === 'function') applyFilters();
-            if (typeof toggleClearButton === 'function') toggleClearButton();
-          });
-          
-          tagsContainer.insertBefore(tag, tagsContainer.firstChild);
-          pill.classList.add('is-active');
-          if (typeof applyFilters === 'function') applyFilters();
-          if (typeof toggleClearButton === 'function') toggleClearButton();
-          console.log('🏷️ Music pill activated (manual):', filterValue);
-        }
-      }
-    });
-  });
-  
-  console.log('✅ Music page filter pills initialized');
-}
-
 /**
  * ============================================================
  * LOCALSTORAGE PERSISTENCE FOR FILTERS & FAVORITES
  * ============================================================
  */
-
 let filtersRestored = false;
 let favoritesRestored = false;
 let isClearing = false;
@@ -8967,18 +8740,12 @@ window.addEventListener('load', function() {
     dot.style.opacity = '0';
   });
 
-// Show sidebar on dashboard pages (hard refresh)
+   // Show sidebar on dashboard pages (hard refresh)
   if (window.location.pathname.startsWith('/dashboard/')) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       sidebar.style.visibility = 'visible';
       sidebar.style.opacity = '1';
-    }
-    
-    const sidebarContainer = document.querySelector('.sidebar-container');
-    if (sidebarContainer) {
-      sidebarContainer.style.height = 'auto';
-      sidebarContainer.style.flexShrink = '0';
     }
   }
   
@@ -11305,42 +11072,6 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       const header = document.querySelector('.playlist-template-title');
       if (header) header.textContent = playlist.name;
       
-      // Update playlist cover image
-      const playlistImage = document.querySelector('.playlist-info-image');
-      const playlistImagePlaceholder = document.querySelector('.playlist-info-image-placeholder');
-      const textWrapper = document.querySelector('.playlist-info-text-wrapper');
-      const textWrapperPlaceholder = document.querySelector('.playlist-info-text-wrapper-placeholder');
-      
-      if (playlistImage && playlist.cover_image_url) {
-        // Preload image with a new Image object
-        const img = new Image();
-        img.onload = () => {
-          playlistImage.src = playlist.cover_image_url;
-          playlistImage.style.display = 'block';
-          playlistImage.style.visibility = 'visible';
-          if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = 'none';
-          
-          // Swap text wrapper
-          if (textWrapper) textWrapper.style.display = 'flex';
-          if (textWrapperPlaceholder) textWrapperPlaceholder.style.display = 'none';
-          
-          console.log('✅ Playlist image loaded and swapped');
-        };
-        img.onerror = () => {
-          console.log('❌ Playlist image failed to load');
-          if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = '';
-        };
-        img.src = playlist.cover_image_url;
-      } else if (!playlist.cover_image_url) {
-        // No image - show placeholder, hide image
-        if (playlistImage) playlistImage.style.display = 'none';
-        if (playlistImagePlaceholder) playlistImagePlaceholder.style.display = '';
-        
-        // Still show text wrapper even without image
-        if (textWrapper) textWrapper.style.display = 'flex';
-        if (textWrapperPlaceholder) textWrapperPlaceholder.style.display = 'none';
-      }
-      
       // Update search placeholder with playlist name
       const searchInput = document.querySelector('.text-field');
       if (searchInput) {
@@ -11352,30 +11083,6 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     }
 
     await this.renderPlaylistSongs(playlistId);
-    
-    // Update song count after rendering
-    const playlistSongs = await this.getPlaylistSongs(playlistId);
-    const songCount = playlistSongs ? playlistSongs.length : 0;
-    
-    // Update all song count elements (with "X Songs" format)
-    document.querySelectorAll('.playlist-info-song-count').forEach(el => {
-      el.textContent = songCount === 1 ? '1 Song' : `${songCount} Songs`;
-    });
-    
-    // Update all stat count elements (just the number)
-    document.querySelectorAll('.playlist-stat-count').forEach(el => {
-      el.textContent = songCount;
-    });
-    
-    // Update all playlist description elements
-    document.querySelectorAll('.playlist-info-song-description').forEach(el => {
-      if (playlist && playlist.description && playlist.description.trim()) {
-        el.textContent = playlist.description;
-        el.style.display = '';
-      } else {
-        el.style.display = 'none';
-      }
-    });
   },
 
   async renderPlaylistSongs(playlistId) {
