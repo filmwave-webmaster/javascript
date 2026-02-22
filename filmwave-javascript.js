@@ -12288,6 +12288,9 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
+        // Scroll to top first to prevent iOS jump issues
+        window.scrollTo(0, 0);
+        
         // Make filter fixed so it doesn't depend on scroll position
         filterWrapper.style.position = 'fixed';
         filterWrapper.style.top = 'var(--navbar--height, 60px)';
