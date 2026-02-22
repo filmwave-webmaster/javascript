@@ -274,6 +274,16 @@ function adjustDropdownPosition(toggle, list) {
   if (!list || !toggle) return;
   
   const g = window.musicPlayerPersistent;
+
+  // Disable hover interactions on touch devices
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  ['mouseenter', 'mouseleave', 'mouseover', 'mouseout'].forEach(eventType => {
+    document.addEventListener(eventType, (e) => {
+      e.stopPropagation();
+    }, true);
+  });
+}
+// End  
   
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
