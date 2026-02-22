@@ -5078,7 +5078,7 @@ checkbox.addEventListener('change', () => {
     initAccordion();
     
     // Keep playlist dot visible when other filters change
-    document.addEventListener('change', function(e) {
+    
       if (e.target.matches('[data-filter-group]')) {
         setTimeout(() => {
           const currentDot = playlistSection.querySelector('.filter-dot-active');
@@ -6025,7 +6025,7 @@ setupEventListeners();
 setMode('range', false); // Start in range mode
 
 // Re-apply BPM filter whenever any other filter changes
-document.addEventListener('change', function(e) {
+
   if (e.target.matches('[data-filter-group]')) {
     // Clear BPM marks first - other filters will hide their songs
     document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
@@ -6046,7 +6046,7 @@ console.log('✅ BPM Filter System initialized');
 window.restoreBPMState = restoreBPMState;
 
 // Update filter dots when any filter changes
-document.addEventListener('change', function(e) {
+
   if (e.target.matches('[data-filter-group]')) {
     setTimeout(updateFilterDots, 50);
   }
@@ -8915,7 +8915,7 @@ function clearFilterState() {
   }
 }
 
-document.addEventListener('change', function(e) {
+
   if (e.target.matches('[data-filter-group]')) {
     saveFilterState();
   }
@@ -9175,7 +9175,7 @@ function restoreFavorites() {
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target.type === 'checkbox' && e.target.closest('.favorite-button')) {
+  if (e.target.matches('input.favorite-checkbox')) {
     saveFavorites();
   }
 });
