@@ -87,26 +87,6 @@ if (!window.musicPlayerPersistent) {
   };
 }
 
-// iOS audio unlock - must happen on first user interaction
-(function() {
-  const unlockAudio = () => {
-    const silentAudio = new Audio();
-    silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQAAAAAAAAAAQGwOjLOQgAAAAAAAAAAAAAAAAD/4xjEAAQsAB1kAAACAABpAAAATYkC7gAgDA4J4Pg+D5//ygPlAoBAMQ8H4OAgGP4Pg+8HwfE7/qAg7/B8HwfB9/5QKBQLg+D/BwEAQcuD4nB8HwfB//KBQ5cHwfB8Hwff+UCh/ygIO/wfB8HwfB8=';
-    silentAudio.play().then(() => {
-      silentAudio.pause();
-      window.musicPlayerPersistent._audioUnlocked = true;
-    }).catch(() => {});
-    
-    document.removeEventListener('touchstart', unlockAudio, true);
-    document.removeEventListener('touchend', unlockAudio, true);
-    document.removeEventListener('click', unlockAudio, true);
-  };
-  
-  document.addEventListener('touchstart', unlockAudio, true);
-  document.addEventListener('touchend', unlockAudio, true);
-  document.addEventListener('click', unlockAudio, true);
-})();
-
 // Local variables that reset per page load
 let lastPlayState = false;
 let searchTimeout;
@@ -271,48 +251,27 @@ function scrollToSelected(cardElement) {
 }
 
 function adjustDropdownPosition(toggle, list) {
-  if (!list || !toggle) return;
-  
-  const g = window.musicPlayerPersistent;
-  
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
                     document.querySelector('.favorite-songs-wrapper') ||
                     document.body;
   
-  // Get viewport height, accounting for music player if visible
-  let viewportBottom = window.innerHeight;
-  if (g && (g.hasActiveSong || g.standaloneAudio)) {
-    const musicPlayer = document.querySelector('.music-player-wrapper');
-    if (musicPlayer) {
-      viewportBottom -= musicPlayer.offsetHeight;
-    }
-  }
+  if (!list || !toggle) return;
   
   const containerRect = container.getBoundingClientRect();
   const toggleRect = toggle.getBoundingClientRect();
-  
-  // Temporarily show list to measure height
-  const originalDisplay = list.style.display;
-  const originalVisibility = list.style.visibility;
+  const original = list.style.display;
   list.style.display = 'block';
   list.style.visibility = 'hidden';
   const listHeight = list.offsetHeight;
-  list.style.display = originalDisplay;
-  list.style.visibility = originalVisibility;
-  
-  // Use the more restrictive bottom boundary (container or viewport)
-  const effectiveBottom = Math.min(containerRect.bottom, viewportBottom);
-  
-  const spaceBelow = effectiveBottom - toggleRect.bottom;
+  list.style.display = original;
+  list.style.visibility = '';
+  const spaceBelow = containerRect.bottom - toggleRect.bottom;
   const spaceAbove = toggleRect.top - containerRect.top;
-  
   if (spaceBelow < listHeight && spaceAbove > spaceBelow) {
-    // Not enough space below, show above
     list.style.top = 'auto';
     list.style.bottom = '100%';
   } else {
-    // Show below (default)
     list.style.top = '100%';
     list.style.bottom = 'auto';
   }
@@ -323,17 +282,9 @@ function adjustDropdownPosition(toggle, list) {
  * MASTER PLAYER POSITIONING - DO NOT MODIFY
  * ============================================================
  */
-
-function positionMasterPlayer(theme) {
+function positionMasterPlayer() {
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (!playerWrapper) return;
-  
-  // Get theme from parameter, global state, or localStorage
-  const currentTheme = theme || 
-                       (window.musicPlayerPersistent?.darkMode === true ? 'dark' : 
-                       window.musicPlayerPersistent?.darkMode === false ? 'light' :
-                       localStorage.getItem('filmwaveTheme') || 'light');
-  const isDark = currentTheme === 'dark';
   
   playerWrapper.style.setProperty('position', 'fixed', 'important');
   playerWrapper.style.setProperty('bottom', '0px', 'important');
@@ -342,40 +293,6 @@ function positionMasterPlayer(theme) {
   playerWrapper.style.setProperty('top', 'auto', 'important');
   playerWrapper.style.setProperty('width', '100%', 'important');
   playerWrapper.style.setProperty('z-index', '9999', 'important');
-  
-  if (isDark) {
-    // Dark mode - use blur effect
-    //playerWrapper.style.setProperty('background-color', 'color-mix(in srgb, var(--color-1) 85%, transparent)', 'important');
-    //playerWrapper.style.setProperty('backdrop-filter', 'blur(20px)', 'important');
-    //playerWrapper.style.setProperty('-webkit-backdrop-filter', 'blur(20px)', 'important');
-  } else {
-    // Light mode - solid opaque background, no blur
-    playerWrapper.style.setProperty('background-color', 'var(--color-1)', 'important');
-    playerWrapper.style.removeProperty('backdrop-filter');
-    playerWrapper.style.removeProperty('-webkit-backdrop-filter');
-  }
-  
-  // Handle searchbar blur elements
-  const searchbarBlur = document.querySelector('.searchbar-blur');
-  const searchbarBackground = document.querySelector('.searchbar-background');
-  
-  if (isDark) {
-    // Dark mode - use Webflow settings or add custom styles here
-    if (searchbarBlur) {
-      searchbarBlur.style.setProperty('display', 'none', 'important');
-    }
-    if (searchbarBackground) {
-      searchbarBackground.style.setProperty('opacity', '1', 'important');
-    }
-  } else {
-    // Light mode - hide blur, solid background
-    if (searchbarBlur) {
-      searchbarBlur.style.setProperty('display', 'none', 'important');
-    }
-    if (searchbarBackground) {
-      searchbarBackground.style.setProperty('opacity', '1', 'important');
-    }
-  }
 }
 
 /**
@@ -701,10 +618,7 @@ function navigateStandaloneTrack(direction) {
       g.standaloneAudio = null;
     }
   }
-  
-  // Reset progress tracker for new song
-  resetMobileProgress();
-  
+
   // Reset old dashboard tile waveform if exists
   if (isOnDashboard && g.currentSongData) {
     const waveformContainers = document.querySelectorAll('.db-waveform');
@@ -790,12 +704,9 @@ function navigateStandaloneTrack(direction) {
     }
   });
   
-audio.addEventListener('timeupdate', () => {
+    audio.addEventListener('timeupdate', () => {
   if (g.standaloneAudio !== audio) return;
   if (!audio.duration || !isFinite(audio.duration)) return;
-  
-  // Skip timeupdate events while seeking
-  if (g._seekingUntil && Date.now() < g._seekingUntil) return;
 
   g.currentTime = audio.currentTime;
 
@@ -975,81 +886,7 @@ function updateMasterPlayerInfo(song, wavesurfer) {
   if (masterCoverArt && fields['Cover Art']) {
     masterCoverArt.src = fields['Cover Art'][0].url;
   }
-  
-  // START of Music Player Wrapper Backgorund
-  if (fields['Cover Art']) {
-    const coverUrl = fields['Cover Art'][0].url;
-    let bgContainer = playerScope.querySelector('.player-bg-container');
-    
-    if (!bgContainer) {
-      // Create a container that clips the blur
-      bgContainer = document.createElement('div');
-      bgContainer.className = 'player-bg-container';
-      bgContainer.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow: hidden;
-        pointer-events: none;
-        z-index: 0;
-      `;
-      
-      // Create two layers for crossfade
-      for (let i = 0; i < 2; i++) {
-        const bgImage = document.createElement('div');
-        bgImage.className = 'player-bg-image';
-        bgImage.dataset.layer = i;
-        bgImage.style.cssText = `
-          position: absolute;
-          top: -50px;
-          left: -50px;
-          right: -50px;
-          bottom: -50px;
-          background-size: cover;
-          background-position: center center;
-          filter: blur(30px);
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.5s ease;
-        `;
-        bgContainer.appendChild(bgImage);
-      }
-      
-      playerScope.style.position = 'relative';
-      playerScope.insertBefore(bgContainer, playerScope.firstChild);
-      playerScope._bgActiveLayer = 0;
-      
-      // Ensure all other children are above the background
-      Array.from(playerScope.children).forEach(child => {
-        if (child !== bgContainer) {
-          child.style.zIndex = '1';
-        }
-      });
-    }
-    
-    // Crossfade to new image
-    const layers = bgContainer.querySelectorAll('.player-bg-image');
-    const activeLayer = playerScope._bgActiveLayer || 0;
-    const nextLayer = activeLayer === 0 ? 1 : 0;
-    
-    // Set new image on inactive layer
-    layers[nextLayer].style.backgroundImage = `url("${coverUrl}")`;
-    
-    // Fade in new layer, fade out old layer
-    requestAnimationFrame(() => {
-      layers[nextLayer].style.opacity = '0.15';
-      layers[activeLayer].style.opacity = '0';
-    });
-    
-    playerScope._bgActiveLayer = nextLayer;
-  }
-  
   if (masterKey) masterKey.textContent = fields['Key'] || '-';
-
-// END of Music Player Wrapper Backgorund
-  
   if (masterBpm) masterBpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
   
   if (masterDuration) {
@@ -1081,134 +918,91 @@ function updateMasterPlayerInfo(song, wavesurfer) {
 
 function drawMasterWaveform(peaks, progress) {
   const g = window.musicPlayerPersistent;
-  if (!g) return;
-  if (g.isTransitioning) return;
-
+  
+  if (g.isTransitioning) {
+    return;
+  }
+  
   const container = document.querySelector('.player-waveform-visual');
   if (!container) return;
-
   let canvas = container.querySelector('canvas');
-
   if (!canvas) {
     canvas = document.createElement('canvas');
     canvas.style.width = '100%';
     canvas.style.height = '25px';
     canvas.style.display = 'block';
     canvas.style.cursor = 'pointer';
-
     container.style.display = 'flex';
     container.style.alignItems = 'center';
     container.innerHTML = '';
     container.appendChild(canvas);
-  }
-
-  if (!canvas._wfClickInit) {
-    canvas._wfClickInit = true;
     canvas.addEventListener('click', (e) => {
-      const gg = window.musicPlayerPersistent;
+      const g = window.musicPlayerPersistent;
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
-      const newProgress = rect.width ? (clickX / rect.width) : 0;
-
-      if (gg?.standaloneAudio && gg.standaloneAudio.duration) {
-        gg.standaloneAudio.currentTime = newProgress * gg.standaloneAudio.duration;
-      } else if (gg?.currentWavesurfer) {
-        const wasPlaying = gg.currentWavesurfer.isPlaying?.() === true;
-        gg.currentWavesurfer.seekTo(newProgress);
+      const newProgress = clickX / rect.width;
+      
+      if (g.standaloneAudio) {
+        g.standaloneAudio.currentTime = newProgress * g.standaloneAudio.duration;
+      } else if (g.currentWavesurfer) {
+        const wasPlaying = g.currentWavesurfer.isPlaying();
+        g.currentWavesurfer.seekTo(newProgress);
         if (wasPlaying) {
           setTimeout(() => {
-            try {
-              if (!gg.currentWavesurfer.isPlaying()) gg.currentWavesurfer.play();
-            } catch (e) {}
+            if (!g.currentWavesurfer.isPlaying()) {
+              g.currentWavesurfer.play().catch(() => {});
+            }
           }, 50);
         }
       }
     });
   }
-
-    const dpr = window.devicePixelRatio || 1;
-
-  const displayWidth = Math.floor(container.getBoundingClientRect().width);
+  
+  const dpr = window.devicePixelRatio || 1;
+  const displayWidth = canvas.clientWidth;
   const displayHeight = 25;
-
-  if (!displayWidth || displayWidth < 10) return;
-
-  // ResizeObserver: redraw on resize so the bitmap never "stretches"
-  if (!container._masterWF_ro) {
-    let raf = 0;
-    container._masterWF_ro = new ResizeObserver(() => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const gg = window.musicPlayerPersistent;
-        let prog = 0;
-        if (gg?.standaloneAudio && gg.standaloneAudio.duration > 0) {
-          prog = gg.standaloneAudio.currentTime / gg.standaloneAudio.duration;
-        } else if (gg?._intendedMasterProgress != null) {
-          prog = gg._intendedMasterProgress;
-        }
-        drawMasterWaveform(gg?.currentPeaksData || null, prog);
-      });
-    });
-    container._masterWF_ro.observe(container);
-  }
-
-  // Backing store in device pixels; draw in CSS pixels
-  canvas.width = Math.floor(displayWidth * dpr);
-  canvas.height = Math.floor(displayHeight * dpr);
-
+  canvas.width = displayWidth * dpr;
+  canvas.height = displayHeight * dpr;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, displayWidth, displayHeight);
-
-  const styles = getComputedStyle(document.body);
-  const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
-  const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
-
-  const centerY = displayHeight / 2;
-
-  if (!peaks || !peaks.length) {
-    ctx.fillStyle = waveColor;
-    ctx.fillRect(0, centerY - 1, displayWidth, 2);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const internalHeight = canvas.height;
+  const centerY = internalHeight / 2;
+  
+  if (!peaks || peaks.length === 0) {
+    const fallbackStyles = getComputedStyle(document.body);
+    ctx.fillStyle = fallbackStyles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+    ctx.fillRect(0, centerY - (1 * dpr), canvas.width, 2 * dpr);
     return;
   }
-
-  const p = Math.max(0, Math.min(1, Number(progress) || 0));
-
+  
   let maxVal = 0;
   for (let i = 0; i < peaks.length; i++) {
-    const v = Math.abs(peaks[i] || 0);
-    if (v > maxVal) maxVal = v;
+    const p = Math.abs(peaks[i]);
+    if (p > maxVal) maxVal = p;
   }
-  const scale = maxVal > 0 ? (1 / maxVal) : 1;
-
-  // Fixed bar thickness in CSS px; more bars as width grows
-  const barWidth = 2;
-  const barGap = 1;
+  const normalizationScale = maxVal > 0 ? 1 / maxVal : 1;
+  const barWidth = 2 * dpr;
+  const barGap = 1 * dpr;
   const barTotal = barWidth + barGap;
-
-  const barsCount = Math.max(1, Math.floor(displayWidth / barTotal));
-  const samplesPerBar = Math.max(1, Math.ceil(peaks.length / barsCount));
-
+  const barsCount = Math.floor(canvas.width / barTotal);
+  const samplesPerBar = Math.floor(peaks.length / barsCount);
+  
   for (let i = 0; i < barsCount; i++) {
-    const start = i * samplesPerBar;
-    const end = Math.min(peaks.length, start + samplesPerBar);
-
+    const startSample = i * samplesPerBar;
+    const endSample = startSample + samplesPerBar;
     let barPeak = 0;
-    for (let j = start; j < end; j++) {
-      const v = Math.abs(peaks[j] || 0);
-      if (v > barPeak) barPeak = v;
+    for (let j = startSample; j < endSample; j++) {
+      const val = Math.abs(peaks[j] || 0);
+      if (val > barPeak) barPeak = val;
     }
-
-    const peak = barPeak * scale;
-    const maxBarHeight = displayHeight * 0.85;
-    const barHeight = Math.max(2, Math.min(maxBarHeight, peak * maxBarHeight));
-
+    const peak = barPeak * normalizationScale;
+    const barHeight = Math.max(peak * internalHeight * 0.85, 2 * dpr);
     const x = i * barTotal;
     const barProgress = i / barsCount;
-
-    ctx.fillStyle = barProgress < p ? progressColor : waveColor;
+    const styles = getComputedStyle(document.body);
+    const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+    const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
+    ctx.fillStyle = barProgress < progress ? progressColor : waveColor;
     ctx.fillRect(x, centerY - (barHeight / 2), barWidth, barHeight);
   }
 }
@@ -1233,70 +1027,38 @@ function updatePlayerCoverArtIcons(isPlaying) {
 
 function syncMasterTrack(wavesurfer, songData, forcedProgress = null) {
   const g = window.musicPlayerPersistent;
-
+  
   g.currentWavesurfer = wavesurfer;
   g.currentSongData = songData;
   g.hasActiveSong = true;
-
+  
   updateMasterPlayerVisibility();
-
+  
   const playerWrapper = document.querySelector('.music-player-wrapper');
   if (playerWrapper) {
     playerWrapper.style.display = 'flex';
     playerWrapper.style.alignItems = 'center';
   }
-
-  updateMasterPlayerInfo(songData, wavesurfer);
-
-  const computeProgress = () => {
-    if (forcedProgress !== null) return forcedProgress;
-
-    if (g.standaloneAudio && g.standaloneAudio.duration && isFinite(g.standaloneAudio.duration) && g.standaloneAudio.duration > 0) {
-      const p = g.standaloneAudio.currentTime / g.standaloneAudio.duration;
-      return isFinite(p) ? p : 0;
-    }
-
-    try {
-      const d = wavesurfer.getDuration?.() || 0;
-      const t = wavesurfer.getCurrentTime?.() || 0;
-      if (d > 0 && isFinite(d) && isFinite(t)) return t / d;
-    } catch (e) {}
-
-    return 0;
-  };
-
-  // Prefer Airtable peaks (works even when WaveSurfer never decodes)
-  try {
-    const peaksData = songData?.fields?.['Waveform Peaks'];
-    if (peaksData && typeof peaksData === 'string' && peaksData.trim().length > 0) {
-      const peaksArr = JSON.parse(peaksData);
-      if (Array.isArray(peaksArr) && peaksArr.length > 0) {
-        g.currentPeaksData = new Float32Array(peaksArr);
-        drawMasterWaveform(g.currentPeaksData, computeProgress());
-        return;
-      }
-    }
-  } catch (e) {}
-
-  // Fallback: decoded peaks (only available after decode)
+  
+    updateMasterPlayerInfo(songData, wavesurfer);
+  
   const getAndDrawPeaks = () => {
     if (g.currentWavesurfer !== wavesurfer) return;
     try {
-      const decodedData = wavesurfer.getDecodedData?.();
+      const decodedData = wavesurfer.getDecodedData();
       if (decodedData) {
         g.currentPeaksData = decodedData.getChannelData(0);
-        drawMasterWaveform(g.currentPeaksData, computeProgress());
+        const progress = forcedProgress !== null ? forcedProgress : (wavesurfer.getDuration() > 0 ? wavesurfer.getCurrentTime() / wavesurfer.getDuration() : 0);
+        drawMasterWaveform(g.currentPeaksData, progress);
       }
     } catch (e) {}
   };
-
-  try {
-    if (wavesurfer.getDecodedData?.()) {
-      getAndDrawPeaks();
-    } else if (typeof wavesurfer.once === 'function') {
-      wavesurfer.once('decode', getAndDrawPeaks);
-    }
-  } catch (e) {}
+  
+  if (wavesurfer.getDecodedData()) {
+    getAndDrawPeaks();
+  } else {
+    wavesurfer.once('decode', getAndDrawPeaks);
+  }
 }
 
 function setupMasterPlayerControls() {
@@ -1404,7 +1166,6 @@ if (playerCoverArt) {
  * VOLUME CONTROL
  * ============================================================
  */
-
 function initVolumeControl() {
   const g = window.musicPlayerPersistent;
   
@@ -1420,17 +1181,6 @@ function initVolumeControl() {
   
   if (!iconWrapper || !trackWrapper || !sliderHandle || !track) {
     console.log('ℹ️ Volume control elements not found');
-    return;
-  }
-  
-  // iPhone doesn't allow programmatic volume control - hide the slider
-  const isIPhone = /iPhone/.test(navigator.userAgent) && !window.MSStream;
-  if (isIPhone) {
-    const volumeWrapper = document.querySelector('.volume-wrapper');
-    if (volumeWrapper) {
-      volumeWrapper.style.display = 'none';
-    }
-    console.log('ℹ️ Volume control hidden on iPhone (not supported by iOS Safari)');
     return;
   }
   
@@ -1466,11 +1216,10 @@ function initVolumeControl() {
     }
   }
   
-// Update slider handle position
+  // Update slider handle position
   function updateSliderPosition(volume) {
-    // Use transform to center handle at correct position
-    sliderHandle.style.left = `${volume * 100}%`;
-    sliderHandle.style.transform = `translateX(-${volume * 100}%)`;
+    // Use calc to account for handle width at edges
+    sliderHandle.style.left = `calc(${volume * 100}% - ${volume * sliderHandle.offsetWidth}px)`;
   }
   
   // Set volume
@@ -1520,8 +1269,8 @@ function initVolumeControl() {
     }
   });
   
-// Click on track to set volume - use trackWrapper for larger hit area
-  trackWrapper.addEventListener('click', (e) => {
+  // Click on track to set volume
+  track.addEventListener('click', (e) => {
     const rect = track.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const volume = Math.max(0, Math.min(1, x / rect.width));
@@ -1860,12 +1609,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
   // Reset mobile progress when switching to a different song (not when seeking)
   if (g.currentSongData?.id !== songData.id && seekToTime === null) {
     resetMobileProgress();
-  } else if (g.currentSongData?.id !== songData.id && seekToTime !== null) {
-    // Set progress immediately when seeking into a new song
-    const dur = songData?.fields?.['Duration'] || 0;
-    if (dur > 0) {
-      updateMobileProgress(seekToTime, dur);
-    }
   }
 
   g._standaloneToken = (g._standaloneToken || 0) + 1;
@@ -1876,62 +1619,31 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     try { g.standaloneAudio.src = ''; g.standaloneAudio.load(); } catch (e) {}
   }
 
-  const oldWavesurfer = g.currentWavesurfer;
-  
-  // Set new wavesurfer FIRST so it won't be reset
-  g.currentWavesurfer = wavesurfer;
-  
-  if (oldWavesurfer && oldWavesurfer !== wavesurfer) {
-    oldWavesurfer.seekTo(0);
+  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+    g.currentWavesurfer.seekTo(0);
   }
   
-  // Extend seek protection for the new audio element
-  g._seekingUntil = Date.now() + 1500;
-  
-// Use preloaded audio if available
-  const songId = songData?.id;
-  let audio;
-  let alreadyLoaded = false;
-  audio = new Audio(audioUrl);
-  audio.preload = 'auto';
+  const audio = new Audio(audioUrl);
   audio.volume = (typeof g.volume === 'number') ? g.volume : 1;
   g.standaloneAudio = audio;
   g.currentSongData = songData;
+  g.currentWavesurfer = wavesurfer;
+  g.hasActiveSong = true;
   
-// Track if we've completed initial seek
-  let initialSeekComplete = (seekToTime === null);
-  
-  audio.addEventListener('loadedmetadata', () => {
+    audio.addEventListener('loadedmetadata', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
 
     g.currentDuration = audio.duration;
 
-    // Only apply initial seek if not already completed and audio is still at start
-    if (!initialSeekComplete && seekToTime !== null && seekToTime < audio.duration) {
-      const currentPos = audio.currentTime;
-      if (currentPos < 0.1) {
-        audio.currentTime = seekToTime;
-        updateMobileProgress(seekToTime, audio.duration);
-        wavesurfer.seekTo(seekToTime / audio.duration);
-      }
+    if (seekToTime !== null && seekToTime < audio.duration) {
+      audio.currentTime = seekToTime;
     }
-    initialSeekComplete = true;
   });
   
-  audio.addEventListener('seeked', () => {
+    audio.addEventListener('timeupdate', () => {
     if (g._standaloneToken !== token) return;
     if (g.standaloneAudio !== audio) return;
-    initialSeekComplete = true;
-    g._intendedMasterProgress = null;
-  });
-  
-  audio.addEventListener('timeupdate', () => {
-    if (g._standaloneToken !== token) return;
-    if (g.standaloneAudio !== audio) return;
-    
-    // Don't update UI until initial seek is complete
-    if (!initialSeekComplete) return;
       
     g.currentTime = audio.currentTime;
       
@@ -1940,7 +1652,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
       const progress = audio.currentTime / audio.duration;
       g.currentWavesurfer.seekTo(progress);
     }
-      
+
     const masterCounter = document.querySelector('.player-duration-counter');
     if (masterCounter) {
       masterCounter.textContent = formatDuration(audio.currentTime);
@@ -1963,17 +1675,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     const playButton = cardElement.querySelector('.play-button');
     if (playButton) playButton.style.opacity = '1';
     document.dispatchEvent(new CustomEvent('audioStateChange', { detail: { songId: songData.id, isPlaying: true } }));
-    
-    // Start smooth progress animation loop
-    if (g._progressRaf) cancelAnimationFrame(g._progressRaf);
-    const updateProgressSmooth = () => {
-      if (g.standaloneAudio !== audio || audio.paused) return;
-      if (audio.duration > 0) {
-        updateMobileProgress(audio.currentTime, audio.duration);
-      }
-      g._progressRaf = requestAnimationFrame(updateProgressSmooth);
-    };
-    g._progressRaf = requestAnimationFrame(updateProgressSmooth);
   });
   
     audio.addEventListener('pause', () => {
@@ -1981,7 +1682,6 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     if (g.standaloneAudio !== audio) return;
 
     g.isPlaying = false;
-    if (g._progressRaf) cancelAnimationFrame(g._progressRaf);
     updatePlayPauseIcons(cardElement, false);
     updateMasterControllerIcons(false);
     updatePlayerCoverArtIcons(false);
@@ -2029,25 +1729,15 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
     console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
   
-// Start playback first, then do UI updates asynchronously
-  if (shouldAutoPlay) {
+    if (shouldAutoPlay) {
     audio.play().catch(err => {
       if (err && err.name === 'AbortError') return;
       console.error('Playback error:', err);
     });
   }
   
-  // Defer heavy UI work to not block audio playback
-  requestAnimationFrame(() => {
-    if (seekToTime !== null) {
-      const dur = songData?.fields?.['Duration'] || 0;
-      const forcedProgress = (dur > 0) ? (seekToTime / dur) : null;
-      syncMasterTrack(wavesurfer, songData, forcedProgress);
-    } else {
-      syncMasterTrack(wavesurfer, songData);
-    }
-    updateMasterPlayerVisibility();
-  });
+  syncMasterTrack(wavesurfer, songData);
+  updateMasterPlayerVisibility();
   
   return audio;
 }
@@ -2060,7 +1750,7 @@ function createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seek
 function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToTime = null, shouldAutoPlay = true) {
   const g = window.musicPlayerPersistent;
   
-  if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
     syncMasterTrack(wavesurfer, songData);
     updateMasterPlayerVisibility();
     if (shouldAutoPlay) {
@@ -2074,18 +1764,8 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
     g.standaloneAudio = null;
   }
   
-  // Set new wavesurfer FIRST so the old one can be properly reset
-  const oldWavesurfer = g.currentWavesurfer;
-  g.currentWavesurfer = wavesurfer;
-  
-  // Reset old waveform
-  if (oldWavesurfer && oldWavesurfer !== wavesurfer) {
-    oldWavesurfer.seekTo(0);
-  }
-  
-  // Reset all OTHER waveforms (not the clicked one, not the old one which is already reset)
   g.allWavesurfers.forEach(ws => {
-    if (ws !== wavesurfer && ws !== oldWavesurfer) {
+    if (ws !== wavesurfer) {
       ws.seekTo(0);
     }
   });
@@ -2101,290 +1781,6 @@ function playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, seekToT
   createStandaloneAudio(audioUrl, songData, wavesurfer, cardElement, seekToTime, shouldAutoPlay);
 }
 
-function attachWaveformAutoFit(wavesurfer, waveformContainer) {
-  if (!wavesurfer || !waveformContainer) return;
-
-  waveformContainer._wfAutoFitAttached = true;
-
-  // prevent duplicates
-  if (waveformContainer._wfResizeObserver) {
-    try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
-    waveformContainer._wfResizeObserver = null;
-  }
-  if (waveformContainer._wfFitRaf) {
-    try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-    waveformContainer._wfFitRaf = null;
-  }
-  if (waveformContainer._wfFitTimer) {
-    try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
-    waveformContainer._wfFitTimer = null;
-  }
-
-  let lastW = 0;
-  let lastPxPerSec = 0;
-
-  function fit() {
-    waveformContainer._wfFitRaf = null;
-
-    const duration = wavesurfer.getDuration?.() || waveformContainer._wfStoredDuration;
-    if (!duration || !isFinite(duration) || duration <= 0) return;
-
-    const w = Math.floor(waveformContainer.getBoundingClientRect().width || 0);
-    if (!w || w < 10) return;
-
-    // ignore 0-width / collapsing states during layout/filters
-    if (w <= 2) return;
-
-    // avoid thrash
-    if (Math.abs(w - lastW) < 2) return;
-    lastW = w;
-
-    const pxPerSec = Math.max(1, w / duration);
-
-    // avoid re-zooming when change is tiny (reduces flashing)
-    if (Math.abs(pxPerSec - lastPxPerSec) < 0.5) return;
-    lastPxPerSec = pxPerSec;
-
-    try {
-      if (typeof wavesurfer.zoom === 'function') wavesurfer.zoom(pxPerSec);
-    } catch (e) {}
-  }
-
-  // run once after ready (layout settled)
-  wavesurfer.once('ready', () => {
-    // IMPORTANT: do NOT seek here (seeking here is what can show 100% on load if something else seeks later)
-    requestAnimationFrame(() => requestAnimationFrame(fit));
-  });
-
-  waveformContainer._wfResizeObserver = new ResizeObserver(() => {
-    if (waveformContainer._wfFitRaf) {
-      try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-      waveformContainer._wfFitRaf = null;
-    }
-
-    if (waveformContainer._wfFitTimer) {
-      try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
-      waveformContainer._wfFitTimer = null;
-    }
-
-    // debounce while actively resizing
-    waveformContainer._wfFitTimer = setTimeout(() => {
-      waveformContainer._wfFitRaf = requestAnimationFrame(fit);
-    }, 150);
-  });
-
-  waveformContainer._wfResizeObserver.observe(waveformContainer);
-
-  wavesurfer.once('destroy', () => {
-    if (waveformContainer._wfFitTimer) {
-      try { clearTimeout(waveformContainer._wfFitTimer); } catch (e) {}
-      waveformContainer._wfFitTimer = null;
-    }
-    if (waveformContainer._wfFitRaf) {
-      try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-      waveformContainer._wfFitRaf = null;
-    }
-    if (waveformContainer._wfResizeObserver) {
-      try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
-      waveformContainer._wfResizeObserver = null;
-    }
-    waveformContainer._wfAutoFitAttached = false;
-  });
-}
-
-/**
- * ============================================================
- * SONG CARD WAVEFORMS (CANVAS RENDERER - OPTION A)
- * ============================================================
- */
-
-function ensureCardWaveformCanvas(waveformContainer) {
-  if (!waveformContainer) return null;
-
-  let canvas = waveformContainer.querySelector('canvas.__cardWaveCanvas');
-  if (!canvas) {
-    canvas = document.createElement('canvas');
-    canvas.className = '__cardWaveCanvas';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.display = 'block';
-    canvas.style.pointerEvents = 'auto';
-    waveformContainer.innerHTML = '';
-    waveformContainer.appendChild(canvas);
-  }
-
-  return canvas;
-}
-
-function drawCardWaveform(waveformContainer, peaks, progress) {
-  const canvas = ensureCardWaveformCanvas(waveformContainer);
-  if (!canvas) return;
-
-  const rect = waveformContainer.getBoundingClientRect();
-  const w = Math.floor(rect.width || 0);
-  const h = Math.floor(rect.height || 0) || 30;
-
-  if (w < 10 || h < 4) return;
-
-  // match device pixel ratio for crisp bars
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(w * dpr);
-  canvas.height = Math.floor(h * dpr);
-
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, w, h);
-
-  const styles = getComputedStyle(document.body);
-
-const waveColor =
-  styles.getPropertyValue('--waveform-base-color').trim() ||
-  styles.getPropertyValue('--color-8').trim() ||
-  '#2c2c2c';
-
-const progressColor =
-  styles.getPropertyValue('--waveform-progress-color').trim() ||
-  styles.getPropertyValue('--color-2').trim() ||
-  '#ffffff';
-
-
-  const barWidth = 2;
-  const barGap = 1;
-  const barTotal = barWidth + barGap;
-
-  const barCount = Math.max(1, Math.floor(w / barTotal));
-  const midY = h / 2;
-
-  const p = Math.max(0, Math.min(1, Number(progress) || 0));
-  const progressBars = Math.floor(barCount * p);
-
-  // peaks can be:
-  // - array of floats [-1..1] (preferred)
-  // - typed array (Float32Array)
-  // - array of arrays (stereo) -> use [0]
-  let arr = peaks;
-  if (Array.isArray(peaks) && Array.isArray(peaks[0])) arr = peaks[0];
-
-  if (!arr || typeof arr.length !== 'number' || arr.length === 0) {
-    // draw a simple baseline if no peaks
-    ctx.fillStyle = waveColor;
-    ctx.fillRect(0, Math.floor(midY), w, 1);
-    return;
-  }
-
-  // normalize (match master waveform)
-  let maxVal = 0;
-  for (let i = 0; i < arr.length; i++) {
-    const v = Math.abs(arr[i] || 0);
-    if (v > maxVal) maxVal = v;
-  }
-  const scale = maxVal > 0 ? (1 / maxVal) : 1;
-
-  // peak-per-bar buckets (match master waveform)
-  const samplesPerBar = Math.max(1, Math.ceil(arr.length / barCount));
-
-  for (let i = 0; i < barCount; i++) {
-    const start = i * samplesPerBar;
-    const end = Math.min(arr.length, start + samplesPerBar);
-
-    let barPeak = 0;
-    for (let j = start; j < end; j++) {
-      const v = Math.abs(arr[j] || 0);
-      if (v > barPeak) barPeak = v;
-    }
-
-    const peak = barPeak * scale;
-
-    const maxBarHeight = h * 0.85;
-    const barH = Math.max(2, Math.min(maxBarHeight, peak * maxBarHeight));
-
-    const x = i * barTotal;
-
-    // FIX: no 1-bar “sliver” when p = 0
-    ctx.fillStyle = (i < progressBars) ? progressColor : waveColor;
-    ctx.fillRect(x, midY - (barH / 2), barWidth, barH);
-  }
-}
-
-function attachCardWaveformCanvasAutoRedraw(waveformContainer) {
-  if (!waveformContainer) return;
-
-  // prevent duplicates
-  if (waveformContainer._wfCanvasRO) {
-    try { waveformContainer._wfCanvasRO.disconnect(); } catch (e) {}
-    waveformContainer._wfCanvasRO = null;
-  }
-  if (waveformContainer._wfCanvasRaf) {
-    try { cancelAnimationFrame(waveformContainer._wfCanvasRaf); } catch (e) {}
-    waveformContainer._wfCanvasRaf = null;
-  }
-  if (waveformContainer._wfCanvasSettle) {
-    clearTimeout(waveformContainer._wfCanvasSettle);
-    waveformContainer._wfCanvasSettle = null;
-  }
-
-  const redraw = () => {
-    waveformContainer._wfCanvasRaf = null;
-    drawCardWaveform(
-      waveformContainer,
-      waveformContainer._wfPeaks,
-      waveformContainer._wfProgress || 0
-    );
-  };
-
-  waveformContainer._wfCanvasRO = new ResizeObserver(() => {
-    // redraw next frame (no debounce) to avoid “stretch then snap”
-    if (waveformContainer._wfCanvasRaf) {
-      cancelAnimationFrame(waveformContainer._wfCanvasRaf);
-      waveformContainer._wfCanvasRaf = null;
-    }
-    waveformContainer._wfCanvasRaf = requestAnimationFrame(redraw);
-  });
-
-  waveformContainer._wfCanvasRO.observe(waveformContainer);
-
-  // immediate first draw so there's never a stretched bitmap
-  waveformContainer._wfCanvasRaf = requestAnimationFrame(redraw);
-}
-
-function createCardWaveformStub(waveformContainer) {
-  return {
-    __isCardCanvasStub: true,
-    container: waveformContainer,
-    seekTo(p) {
-      waveformContainer._wfProgress = Math.max(0, Math.min(1, Number(p) || 0));
-      drawCardWaveform(waveformContainer, waveformContainer._wfPeaks, waveformContainer._wfProgress);
-    },
-    getDuration() {
-      return Number(waveformContainer._wfStoredDuration) || 0;
-    },
-    getCurrentTime() {
-      const d = this.getDuration();
-      const p = Math.max(0, Math.min(1, Number(waveformContainer._wfProgress) || 0));
-      return d * p;
-    },
-    on() {},
-    once() {},
-    unAll() {},
-    destroy() {
-      if (waveformContainer._wfCanvasSettle) {
-        clearTimeout(waveformContainer._wfCanvasSettle);
-        waveformContainer._wfCanvasSettle = null;
-      }
-      if (waveformContainer._wfCanvasRaf) {
-        cancelAnimationFrame(waveformContainer._wfCanvasRaf);
-        waveformContainer._wfCanvasRaf = null;
-      }
-      if (waveformContainer._wfCanvasRO) {
-        try { waveformContainer._wfCanvasRO.disconnect(); } catch (e) {}
-        waveformContainer._wfCanvasRO = null;
-      }
-    }
-  };
-}
-
 /**
  * ============================================================
  * INITIALIZE WAVEFORMS WITH LAZY LOADING (BARBA-COMPATIBLE)
@@ -2393,24 +1789,26 @@ function createCardWaveformStub(waveformContainer) {
 function initializeWaveforms() {
   const g = window.musicPlayerPersistent;
   const songCards = document.querySelectorAll('.song-wrapper');
-
+  
   const visibleCards = [];
   const notVisibleCards = [];
-
+  
   const observer = new IntersectionObserver((entries) => {
     const cardsToLoad = [];
-
+    
     entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-
-      const cardElement = entry.target;
-
-      if (cardElement.dataset.waveformInitialized === 'true') return;
-
-      cardsToLoad.push(cardElement);
-      observer.unobserve(cardElement);
+      if (entry.isIntersecting) {
+        const cardElement = entry.target;
+        
+        if (cardElement.dataset.waveformInitialized === 'true') {
+          return;
+        }
+        
+        cardsToLoad.push(cardElement);
+        observer.unobserve(cardElement);
+      }
     });
-
+    
     if (cardsToLoad.length > 0) {
       loadWaveformBatch(cardsToLoad);
     }
@@ -2419,26 +1817,29 @@ function initializeWaveforms() {
     rootMargin: '200px',
     threshold: 0
   });
-
+  
   songCards.forEach((cardElement) => {
     const isInTemplate = cardElement.closest('.template-wrapper');
     const hasNoData = !cardElement.dataset.audioUrl || !cardElement.dataset.songId;
-    if (isInTemplate || hasNoData) return;
-
+    
+    if (isInTemplate || hasNoData) {
+      return;
+    }
+    
     const waveformContainer = cardElement.querySelector('.waveform');
     if (waveformContainer) {
       waveformContainer.style.opacity = '0';
       waveformContainer.style.transition = 'opacity 0.6s ease-in-out';
     }
-
+    
     const rect = cardElement.getBoundingClientRect();
     const container = document.querySelector('.music-list-wrapper');
     const containerRect = container ? container.getBoundingClientRect() : null;
-
-    const isVisible = containerRect &&
-      rect.top < containerRect.bottom + 200 &&
-      rect.bottom > containerRect.top - 200;
-
+    
+    const isVisible = containerRect && 
+                     rect.top < containerRect.bottom + 200 && 
+                     rect.bottom > containerRect.top - 200;
+    
     if (isVisible) {
       visibleCards.push(cardElement);
     } else {
@@ -2446,11 +1847,11 @@ function initializeWaveforms() {
       observer.observe(cardElement);
     }
   });
-
+  
   if (visibleCards.length > 0) {
     loadWaveformBatch(visibleCards);
   }
-
+  
   setTimeout(() => linkStandaloneToWaveform(), 100);
   setTimeout(() => linkStandaloneToWaveform(), 300);
   setTimeout(() => linkStandaloneToWaveform(), 600);
@@ -2469,33 +1870,12 @@ function loadWaveformBatch(cardElements) {
   cardElements.forEach((cardElement) => {
     const audioUrl = cardElement.dataset.audioUrl;
     const songId = cardElement.dataset.songId;
-
-    let songData = {};
-    try { songData = JSON.parse(cardElement.dataset.songData || '{}'); } catch (e) {}
+    const songData = JSON.parse(cardElement.dataset.songData || '{}');
     
     if (!audioUrl) return;
     
     const waveformContainer = cardElement.querySelector('.waveform');
-    if (!waveformContainer) return;
-
-    // If an old instance exists, destroy it (prevents flashing + allows rebuild)
-    if (waveformContainer._wfResizeObserver) {
-  try { waveformContainer._wfResizeObserver.disconnect(); } catch (e) {}
-  waveformContainer._wfResizeObserver = null;
-}
-if (waveformContainer._wfFitRaf) {
-  try { cancelAnimationFrame(waveformContainer._wfFitRaf); } catch (e) {}
-  waveformContainer._wfFitRaf = null;
-}
-waveformContainer._wfAutoFitAttached = false;
-
-if (waveformContainer._wavesurfer) {
-  try { waveformContainer._wavesurfer.destroy(); } catch (e) {}
-  waveformContainer._wavesurfer = null;
-}
-
-    // Clear leftover DOM (wavesurfer leaves canvas + wrappers behind)
-    waveformContainer.innerHTML = '';
+    if (!waveformContainer || waveformContainer.hasChildNodes()) return;
     
     const durationElement = cardElement.querySelector('.duration');
     const coverArtWrapper = cardElement.querySelector('.cover-art-wrapper');
@@ -2503,8 +1883,9 @@ if (waveformContainer._wavesurfer) {
     const songName = cardElement.querySelector('.song-name');
     
     waveformContainer.id = `waveform-${songId}`;
+    waveformContainers.push(waveformContainer);
     
-    if (playButton) {
+   if (playButton) {
       const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       
       playButton.style.opacity = '0';
@@ -2518,147 +1899,84 @@ if (waveformContainer._wavesurfer) {
             playButton.style.opacity = '0';
           }
         });
-      } else {
-        // On touch devices, show play button when this is the active song
-        if (g.currentSongData?.id === songId) {
-          playButton.style.opacity = '1';
-        }
       }
     }
     
-    // Get computed CSS variable values
-    const styles = getComputedStyle(document.body);
-    const waveColor = styles.getPropertyValue('--color-8').trim();
-    const progressColor = styles.getPropertyValue('--color-2').trim();
+   // Get computed CSS variable values
+const styles = getComputedStyle(document.body);
+const waveColor = styles.getPropertyValue('--color-8').trim();
+const progressColor = styles.getPropertyValue('--color-2').trim();
 
-    let wavesurfer;
-
-// Track containers
-waveformContainers.push(waveformContainer);
-
-// Peaks + duration from Airtable
-const peaksData = songData?.fields?.['Waveform Peaks'];
-const storedDuration = Number(songData?.fields?.['Duration']) || 0;
-
-// Set duration immediately (no audio fetch)
-if (durationElement && storedDuration) {
-  durationElement.textContent = formatDuration(storedDuration);
-}
-
-// Store on container for canvas renderer + seeking math
-waveformContainer._wfStoredDuration = storedDuration || 0;
-waveformContainer._wfAudioUrl = audioUrl;
-waveformContainer._wfProgress = 0;
-
-// Parse peaks once and store
-let parsedPeaks = null;
-if (peaksData && typeof peaksData === 'string' && peaksData.trim().length > 0) {
-  try { parsedPeaks = JSON.parse(peaksData); } catch (e) { parsedPeaks = null; }
-}
-waveformContainer._wfPeaks = parsedPeaks;
-
-// Build canvas + resize redraw
-ensureCardWaveformCanvas(waveformContainer);
-attachCardWaveformCanvasAutoRedraw(waveformContainer);
-
-// Initial draw (progress = 0)
-drawCardWaveform(waveformContainer, waveformContainer._wfPeaks, 0);
-
-// Create stub so the rest of your system can keep using seekTo(), destroy(), etc.
-wavesurfer = createCardWaveformStub(waveformContainer);
-waveformContainer._wavesurfer = wavesurfer;
-
-// Clicking/touching the waveform seeks (instant on mobile)
-const canvas = waveformContainer.querySelector('canvas.__cardWaveCanvas');
-if (canvas && !canvas._wfCanvasSeekBound) {
-  canvas._wfCanvasSeekBound = true;
-
-  // allow vertical scroll, but remove tap->click delay
-  canvas.style.touchAction = 'pan-y';
-
-  canvas._wfIgnoreNextClick = false;
-
-  const getClientX = (ev) => {
-    if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
-    if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
-    return ev.clientX;
-  };
-
-  const handleSeek = (e) => {
-
-  canvas._wfIgnoreNextClick = true;
-  setTimeout(() => { canvas._wfIgnoreNextClick = false; }, 400);
-
-  // prevent the browser from waiting to synthesize a delayed "click"
-  if (e.cancelable) e.preventDefault();
-  e.stopPropagation();
-
-    const g = window.musicPlayerPersistent;
-    
-    // Update border on clicked song wrapper
-    document.querySelectorAll('.song-wrapper').forEach(sw => {
-      sw.style.removeProperty('border');
-    });
-    const songWrapper = cardElement.classList.contains('song-wrapper') ? cardElement : cardElement.querySelector('.song-wrapper');
-    if (songWrapper) {
-      songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
-    }
-    const rect = canvas.getBoundingClientRect();
-    const x = getClientX(e) - rect.left;
-    const p = rect.width ? Math.max(0, Math.min(1, x / rect.width)) : 0;
-
-    const dur =
-      (g?.currentSongData?.id === songData?.id && g?.standaloneAudio?.duration)
-        ? Number(g.standaloneAudio.duration) || storedDuration
-        : storedDuration;
-
-    const newTime = Math.max(0, Math.min(dur || 0, (dur || 0) * p));
-
-    // Update card progress immediately (no lag)
-    wavesurfer.seekTo(dur ? (newTime / dur) : 0);
-    
-    // Update simple progress tracker immediately on touch
-    updateMobileProgress(newTime, dur);
-    g._intendedMasterProgress = dur ? (newTime / dur) : 0;
-
-    if (g.currentPeaksData) {
-      drawMasterWaveform(g.currentPeaksData, g._intendedMasterProgress);
-    }
-    
-    // Block timeupdate from overwriting our seek
-    g._seekingUntil = Date.now() + 1500;
-
-// Show play button on touch
-    if (playButton) {
-      playButton.style.opacity = '1';
-    }
-
-    // If this is the current song, just seek
-    if (g?.currentSongData?.id === songData?.id && g?.standaloneAudio) {
-      try { g.standaloneAudio.currentTime = newTime; } catch (err) {}
-      return;
-    }
-
-    // Otherwise, start this song at newTime
-    const wasPlaying = !!g?.isPlaying;
-    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement, newTime, wasPlaying);
-  };
-
-  // pointer events work on both touch and mouse
-  canvas.addEventListener('pointerdown', handleSeek, { passive: false });
-
-// swallow delayed mobile click after touch/pointer seek
-canvas.addEventListener('click', (e) => {
-  if (!canvas._wfIgnoreNextClick) return;
-  if (e.cancelable) e.preventDefault();
-  e.stopPropagation();
-}, true);
-}
-
-// No WaveSurfer "ready" now — treat as ready immediately
-const waveformReadyPromise = Promise.resolve().then(() => {
-  setTimeout(() => linkStandaloneToWaveform(), 50);
+const wavesurfer = WaveSurfer.create({
+  container: waveformContainer,
+  waveColor: waveColor,
+  progressColor: progressColor,
+  cursorColor: 'transparent',
+  cursorWidth: 0,
+  height: 30,
+  barWidth: 2,
+  barGap: 1,
+  normalize: true,
+  backend: 'WebAudio',
+  fillParent: true,
+  scrollParent: false,
+  responsive: 300,
+  interact: true,
+  hideScrollbar: true,
+  minPxPerSec: 1,
+  audioContext: window.sharedAudioContext,
 });
+    
+    const peaksData = songData.fields['Waveform Peaks'];
+    const storedDuration = songData.fields['Duration'];
+    
+    // Set duration immediately from Airtable data
+    if (durationElement && storedDuration) {
+      durationElement.textContent = formatDuration(storedDuration);
+    }
+
+    if (peaksData && peaksData.trim().length > 0 && storedDuration) {
+      try {
+        const peaks = JSON.parse(peaksData);
+        wavesurfer.load(audioUrl, [peaks], storedDuration);
+        console.log(`⚡ Instant load with peaks + duration (no audio fetch!)`);
+      } catch (e) {
+        console.error('Error loading peaks:', e);
+        wavesurfer.load(audioUrl);
+      }
+    } else {
+      if (!peaksData || peaksData.trim().length === 0) {
+        console.warn('⚠️ No peaks available - loading audio');
+      }
+      if (!storedDuration) {
+        console.warn('⚠️ No duration stored - loading audio');
+      }
+      wavesurfer.load(audioUrl);
+    }
+    
+    const waveformReadyPromise = new Promise((resolve) => {
+      let resolved = false;
+      
+      wavesurfer.on('ready', function () {
+        if (resolved) return;
+        resolved = true;
+        
+        const duration = wavesurfer.getDuration();
+        const containerWidth = waveformContainer.offsetWidth || 300;
+        wavesurfer.zoom(containerWidth / duration);
+        if (durationElement) durationElement.textContent = formatDuration(duration);
+        
+        resolve();
+        setTimeout(() => linkStandaloneToWaveform(), 50);
+      });
+      
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve();
+        }
+      }, 5000);
+    });
     
     waveformPromises.push(waveformReadyPromise);
     
@@ -2672,72 +1990,63 @@ const waveformReadyPromise = Promise.resolve().then(() => {
     });
     
 const handlePlayPause = (e) => {
-      if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
+  if (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  
+  // Mark that we're now using music page songs for navigation
+  g.activeSongSource = 'music';
+  
+  if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
+  
+  console.log('═══════════════════════════════════════════');
+  console.log('🎯 CLICK DETECTED');
+  console.log('Clicked song:', songData?.fields?.['Song Title']);
+  console.log('Clicked song ID:', songData?.id);
+  console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
+  console.log('Current song ID:', g.currentSongData?.id);
+  console.log('Is same song?', g.currentSongData?.id === songData.id);
+  console.log('═══════════════════════════════════════════');
       
-      // Debounce to prevent double-firing on mobile
-      const now = Date.now();
-      if (g._lastPlayPauseTime && (now - g._lastPlayPauseTime) < 300) {
-        return;
-      }
-      g._lastPlayPauseTime = now;
-      
-      // Mark that we're now using music page songs for navigation
-      g.activeSongSource = 'music';
-      
-      if (e && e.target.closest('.w-dropdown-toggle, .w-dropdown-list')) return;
-      
-      console.log('═══════════════════════════════════════════');
-      console.log('🎯 CLICK DETECTED');
-      console.log('Clicked song:', songData?.fields?.['Song Title']);
-      console.log('Clicked song ID:', songData?.id);
-      console.log('Current song:', g.currentSongData?.fields?.['Song Title']);
-      console.log('Current song ID:', g.currentSongData?.id);
-      console.log('Is same song?', g.currentSongData?.id === songData.id);
-      console.log('═══════════════════════════════════════════');
-          
-      if (g.currentSongData && g.currentSongData.id !== songData.id) {
-        console.log('🔀 Different song clicked - always play it');
-        
-        if (g.standaloneAudio) {
-          g.standaloneAudio.pause();
-        }
-        
-        if (g.currentWavesurfer) {
-          g.currentWavesurfer.seekTo(0);
-        }
-        
-        // ALWAYS play when clicking a different song
-        playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+  if (g.currentWavesurfer && g.currentWavesurfer !== wavesurfer) {
+    console.log('🔀 Different song clicked - always play it');
+    
+    if (g.standaloneAudio) {
+      g.standaloneAudio.pause();
+    }
+    
+    g.currentWavesurfer.seekTo(0);
+    
+    // ALWAYS play when clicking a different song
+    playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
+  } else {
+    // Same song or no current song - toggle play/pause
+    if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
+      console.log('⏯️ Toggling current song');
+      if (g.standaloneAudio.paused) {
+        g.standaloneAudio.play();
       } else {
-        // Same song or no current song - toggle play/pause
-        if (g.standaloneAudio && g.currentSongData?.id === songData.id) {
-          console.log('⏯️ Toggling current song');
-          if (g.standaloneAudio.paused) {
-            g.standaloneAudio.play();
-          } else {
-            g.standaloneAudio.pause();
-          }
-        } else {
-          console.log('▶️ Playing new song');
-          playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
-        }
+        g.standaloneAudio.pause();
       }
-    };
-        
-    if (coverArtWrapper) {
-      coverArtWrapper.style.cursor = 'pointer';
-      coverArtWrapper.addEventListener('click', handlePlayPause);
+    } else {
+      console.log('▶️ Playing new song');
+      playStandaloneSong(audioUrl, songData, wavesurfer, cardElement);
     }
+  }
+};
+    
+if (coverArtWrapper) {
+  coverArtWrapper.style.cursor = 'pointer';
+  coverArtWrapper.addEventListener('click', handlePlayPause);
+}
 
-    if (songName) {
-      songName.style.cursor = 'pointer';
-      songName.addEventListener('click', handlePlayPause);
-    }
-
-    wavesurfer.on('interaction', function (newProgress) {
+if (songName) {
+  songName.style.cursor = 'pointer';
+  songName.addEventListener('click', handlePlayPause);
+}
+    
+  wavesurfer.on('interaction', function (newProgress) {
       g.activeSongSource = 'music';
       if (g.currentSongData?.id === songData.id) {
         if (g.standaloneAudio) {
@@ -3131,9 +2440,7 @@ function initDarkMode() {
     '--color-13': '#2c2c2c',
     '--color-14': '#ddff43',
     '--color-15': '#474747',
-    '--color-16': '#474747',
-    '--color-17': 'rgba(255, 255, 255, 0.2)',
-    '--color-18': 'rgba(255, 255, 255, 0.2)'
+    '--color-16': '#474747'
   };
   
   // Update waveform colors function
@@ -3178,12 +2485,6 @@ function initDarkMode() {
           : (g.currentWavesurfer ? g.currentWavesurfer.getCurrentTime() / g.currentWavesurfer.getDuration() : 0);
         drawMasterWaveform(g.currentPeaksData, progress || 0);
       }
-
-      // Redraw ALL song card canvas waveforms (so theme color changes apply)
-document.querySelectorAll('.waveform').forEach((wf) => {
-  if (!wf || !wf._wfPeaks) return;
-  drawCardWaveform(wf, wf._wfPeaks, wf._wfProgress || 0);
-});
       
       console.log('🎨 Waveform colors updated');
     }, 50);
@@ -3228,7 +2529,8 @@ document.querySelectorAll('.waveform').forEach((wf) => {
 }
   
   // Full theme application
-function applyTheme(theme) {
+  function applyTheme(theme) {
+
       // Remove preload style so JS can take over
     const preloadStyle = document.getElementById('dark-mode-preload');
     if (preloadStyle) {
@@ -3243,9 +2545,6 @@ function applyTheme(theme) {
     
     applyThemeColors(theme);
     updateIconVisibility(theme);
-    
-    // Update music player and searchbar for theme
-    positionMasterPlayer(theme);
   }
   
   // Get current theme
@@ -3400,14 +2699,12 @@ function initDynamicTagging() {
           tagsContainer.insertBefore(tag, tagsContainer.firstChild);
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
-          const tags = tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])');
-tags.forEach(tag => {
-  const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
-  if (tagText === labelText) {
-    tag.remove();
-  }
-});
-
+          const tags = tagsContainer.querySelectorAll('.filter-tag');
+          tags.forEach(tag => {
+            if (tag.querySelector('.filter-tag-text').textContent === labelText) {
+              tag.remove();
+            }
+          });
         }
       });
     });
@@ -4653,7 +3950,7 @@ function loadSavedPlaylistFilter() {
       currentActiveText.style.color = ''; // reset to Webflow default
     }
     if (currentDot) {
-      showFilterDot(currentDot);
+      currentDot.style.setProperty('display', 'block', 'important');
     }
   } else {
     if (currentActiveText) {
@@ -4661,7 +3958,7 @@ function loadSavedPlaylistFilter() {
       currentActiveText.style.color = 'var(--color-9)'; // placeholder color
     }
     if (currentDot) {
-      hideFilterDot(currentDot);
+      currentDot.style.setProperty('display', 'none', 'important');
     }
   }
 }
@@ -4972,7 +4269,7 @@ checkbox.addEventListener('change', () => {
         setTimeout(() => {
           const currentDot = playlistSection.querySelector('.filter-dot-active');
           if (selectedPlaylistId && currentDot) {
-            showFilterDot(currentDot);
+            currentDot.style.setProperty('display', 'block', 'important');
           }
         }, 50);
       }
@@ -5341,28 +4638,6 @@ setTimeout(() => {
 
 // START OF FILTER DOTS
 
-// Fade in/out helper for filter dots
-function showFilterDot(dot) {
-  if (!dot) return;
-  dot.style.transition = 'opacity 0.2s ease';
-  dot.style.display = 'block';
-  dot.style.opacity = '0';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      dot.style.opacity = '1';
-    });
-  });
-}
-
-function hideFilterDot(dot) {
-  if (!dot) return;
-  dot.style.transition = 'opacity 0.2s ease';
-  dot.style.opacity = '0';
-  setTimeout(() => {
-    dot.style.display = 'none';
-  }, 200);
-}
-
 function updateFilterDots() {
   document.querySelectorAll('[data-filter-type]').forEach(section => {
     const filterType = section.getAttribute('data-filter-type');
@@ -5393,11 +4668,7 @@ function updateFilterDots() {
     }
     
     // Show/hide dot
-    if (isActive) {
-      showFilterDot(dot);
-    } else {
-      hideFilterDot(dot);
-    }
+    dot.style.display = isActive ? 'block' : 'none';
   });
 }
 // START OF INIT BPM FILTER
@@ -6515,182 +5786,52 @@ function initUniversalSearch() {
 */
 
 (function () {
+  const html = document.documentElement;
   const body = document.body;
-  let scrollY = 0;
-  let isLocked = false;
-  let overlay = null;
-
-  function createOverlay() {
-    if (overlay) return overlay;
-    
-    overlay = document.createElement('div');
-    overlay.className = 'modal-backdrop-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0);
-      z-index: 9998;
-      pointer-events: none;
-      transition: background-color 0.25s ease;
-    `;
-    document.body.appendChild(overlay);
-    
-    // Trigger fade in
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.35)';
-      });
-    });
-    
-    return overlay;
-  }
-
-  function removeOverlay() {
-    if (overlay) {
-      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-      const overlayToRemove = overlay;
-      setTimeout(() => {
-        overlayToRemove.remove();
-      }, 250);
-      overlay = null;
-    }
-  }
-
-  function animateModuleIn(moduleEl) {
-    if (!moduleEl) return;
-    
-    // Set initial state
-    moduleEl.style.transition = 'none';
-    moduleEl.style.opacity = '0';
-    moduleEl.style.transform = 'translateY(20px)';
-    
-    // Trigger animation
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        moduleEl.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-        moduleEl.style.opacity = '1';
-        moduleEl.style.transform = 'translateY(0)';
-      });
-    });
-  }
-
-  function resetModuleStyles(moduleEl) {
-    if (!moduleEl) return;
-    moduleEl.style.transition = '';
-    moduleEl.style.opacity = '';
-    moduleEl.style.transform = '';
-  }
 
   function lockScroll() {
-    if (isLocked) return;
-    isLocked = true;
+    if (body.classList.contains("modal-open")) return;
 
-    scrollY = window.scrollY || window.pageYOffset;
-    body.style.position = 'fixed';
+    const scrollY = window.scrollY || window.pageYOffset;
+    body.dataset.scrollY = String(scrollY);
+
+    html.classList.add("modal-open");
+    body.classList.add("modal-open");
+
     body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    
-    // Push music player behind overlay
-    const musicPlayer = document.querySelector('.music-player-wrapper');
-    if (musicPlayer) {
-      musicPlayer.dataset.originalZIndex = musicPlayer.style.zIndex || '';
-      musicPlayer.style.zIndex = '9997';
-    }
-    
-    createOverlay();
   }
 
   function unlockScroll() {
-    if (!isLocked) return;
-    isLocked = false;
+    if (!body.classList.contains("modal-open")) return;
 
-    body.style.position = '';
-    body.style.top = '';
-    body.style.left = '';
-    body.style.right = '';
+    const scrollY = parseInt(body.dataset.scrollY || "0", 10);
+
+    html.classList.remove("modal-open");
+    body.classList.remove("modal-open");
+
+    body.style.top = "";
     window.scrollTo(0, scrollY);
-    
-    // Restore music player z-index
-    const musicPlayer = document.querySelector('.music-player-wrapper');
-    if (musicPlayer) {
-      musicPlayer.style.zIndex = musicPlayer.dataset.originalZIndex || '';
-    }
-    
-    removeOverlay();
-    
-    // Reset all module styles
-    document.querySelectorAll('.add-to-playlist-module, .create-playlist-module').forEach(m => {
-      resetModuleStyles(m);
-    });
   }
 
-  const wrapperSelectors = [
+  // Watch your two modules for “active” state
+  const selectors = [
     ".create-playlist-module-wrapper",
     ".add-to-playlist-module-wrapper"
-  ];
-
-  const moduleSelectors = [
-    ".create-playlist-module",
-    ".add-to-playlist-module"
   ];
 
   function isActive(el) {
     if (!el) return false;
     const cs = getComputedStyle(el);
+    // treat visible modules as active (covers flex/block/etc)
     return cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0";
   }
 
-  let previousActiveModules = new Set();
-
   function updateLock() {
-    const currentActiveModules = new Set();
-    
-    wrapperSelectors.forEach((sel, index) => {
-      const wrapper = document.querySelector(sel);
-      if (isActive(wrapper)) {
-        currentActiveModules.add(moduleSelectors[index]);
-      }
-    });
-    
-    const anyActive = currentActiveModules.size > 0;
-    const wasActive = previousActiveModules.size > 0;
-    
-    // Find newly opened modules
-    currentActiveModules.forEach(sel => {
-      if (!previousActiveModules.has(sel)) {
-        const moduleEl = document.querySelector(sel);
-        if (moduleEl) {
-          // Only animate if this is the first module opening
-          if (!wasActive) {
-            animateModuleIn(moduleEl);
-          }
-        }
-      }
-    });
-    
-    // Find closed modules and reset styles
-    previousActiveModules.forEach(sel => {
-      if (!currentActiveModules.has(sel)) {
-        const moduleEl = document.querySelector(sel);
-        if (moduleEl) {
-          resetModuleStyles(moduleEl);
-        }
-      }
-    });
-    
-    previousActiveModules = currentActiveModules;
-    
-    if (anyActive && !wasActive) {
-      lockScroll();
-    } else if (!anyActive && wasActive) {
-      unlockScroll();
-    }
+    const anyActive = selectors.some(sel => isActive(document.querySelector(sel)));
+    anyActive ? lockScroll() : unlockScroll();
   }
 
+  // Observe changes (style/class changes when Webflow shows/hides)
   const observer = new MutationObserver(updateLock);
   observer.observe(document.documentElement, {
     subtree: true,
@@ -6698,17 +5839,8 @@ function initUniversalSearch() {
     attributeFilter: ["style", "class"]
   });
 
+  // Initial run
   updateLock();
-
-  // Reset state after Barba transitions
-  document.addEventListener('barba:after', () => {
-    previousActiveModules = new Set();
-    if (overlay) {
-      overlay.remove();
-      overlay = null;
-    }
-    isLocked = false;
-  });
 })();
 
 /**
@@ -6843,35 +5975,12 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       }
     }
   });
-barba.hooks.afterEnter((data) => { 
+  barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
-    initMobileFilterToggle(data.next.container);
-    
-    // Re-initialize audio preloader if on music page
-    const path = data?.next?.url?.path || '';
-    if (path === '/music' || path === '/music/') {
-      setTimeout(() => initializeAudioPreloader(), 300);
-      
-      // Prevent form submission on music page search
-      const searchInput = document.querySelector('.music-area-container .text-field');
-      if (searchInput) {
-        const searchForm = searchInput.closest('form');
-        if (searchForm) {
-          searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          });
-        }
-      }
-    }
-    
-    // Preload playlists after page transition
-    if (typeof PlaylistManager !== 'undefined' && PlaylistManager.preloadPlaylists) {
-      PlaylistManager.preloadPlaylists();
-    }
-  });
+    initMobileFilterToggle(data.next.container); 
+  }); 
 }
+
 
 /**
  * ============================================================
@@ -8253,7 +7362,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           // Check if playlist tag already exists
           if (!document.querySelector('[data-playlist-filter-tag]')) {
             const tag = document.createElement('div');
-            tag.className = 'filter-tag filter-tag-playlist';
+            tag.className = 'filter-tag';
             tag.setAttribute('data-playlist-filter-tag', 'true');
             tag.innerHTML = `
               <span class="filter-tag-text">${playlistData.name}</span>
@@ -8285,7 +7394,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
             if (playlistSection) {
               const dot = playlistSection.querySelector('.filter-dot-active');
               if (dot) {
-                showFilterDot(dot);
+                dot.style.setProperty('display', 'block', 'important');
               }
             }
           }
@@ -8737,7 +7846,6 @@ window.addEventListener('load', function() {
   // Hide all filter dots immediately
   document.querySelectorAll('.filter-dot-active').forEach(dot => {
     dot.style.display = 'none';
-    dot.style.opacity = '0';
   });
 
    // Show sidebar on dashboard pages (hard refresh)
@@ -9572,39 +8680,12 @@ const PlaylistManager = {
   /* ----------------------------
      INIT
      ---------------------------- */
-  
- async init() {
+
+  async init() {
     console.log('🎵 Initializing Playlist Manager');
     await this.getUserId();
     this.setupEventListeners();
     this.setupPageSpecificFeatures();
-    
-    // Preload playlists for add-to-playlist modal
-    this.preloadPlaylists();
-  },
-  
-preloadPlaylists() {
-    // Preload on any page if user is logged in (non-blocking)
-    if (this.currentUserId) {
-      console.log('🎵 Preloading playlists for add-to-playlist modal');
-      this.getUserPlaylists().then(playlists => {
-        // Also preload songs for each playlist (for instant checkmarks)
-        if (playlists && playlists.length) {
-          console.log('🎵 Preloading playlist songs');
-          playlists.forEach(playlist => {
-            this.getPlaylistSongs(playlist.id).catch(() => {});
-          });
-        }
-      }).catch(() => {});
-    }
-  },
-  
-async preloadPlaylists() {
-    // Preload on any page if user is logged in
-    if (this.currentUserId) {
-      console.log('🎵 Preloading playlists for add-to-playlist modal');
-      await this.getUserPlaylists();
-    }
   },
 
   async getUserId() {
@@ -9719,39 +8800,21 @@ async preloadPlaylists() {
     return playlists.find((p) => p.id === parseInt(playlistId));
   },
 
-async getPlaylistSongs(playlistId, forceRefresh = false) {
-    // Check cache first
-    if (!forceRefresh) {
-      if (!this._playlistSongsCache) this._playlistSongsCache = {};
-      const cached = this._playlistSongsCache[playlistId];
-      if (cached && Date.now() - cached.timestamp < 60000) { // 1 minute cache
-        return cached.songs;
-      }
-    }
-    
+  async getPlaylistSongs(playlistId) {
     try {
       const response = await fetch(
         `${XANO_PLAYLISTS_API}/Get_Playlist_Songs?playlist_id=${playlistId}`
       );
 
       if (!response.ok) throw new Error('Failed to fetch playlist songs');
-      const songs = await response.json();
-      
-      // Cache the result
-      if (!this._playlistSongsCache) this._playlistSongsCache = {};
-      this._playlistSongsCache[playlistId] = {
-        songs,
-        timestamp: Date.now()
-      };
-      
-      return songs;
+      return response.json();
     } catch (error) {
       console.error('Error fetching playlist songs:', error);
       return [];
     }
   },
 
-async addSongToPlaylist(playlistId, songId, position = 0) {
+  async addSongToPlaylist(playlistId, songId, position = 0) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Add_Song_to_Playlist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9763,16 +8826,10 @@ async addSongToPlaylist(playlistId, songId, position = 0) {
     });
 
     if (!response.ok) throw new Error('Failed to add song to playlist');
-    
-    // Invalidate cache for this playlist
-    if (this._playlistSongsCache && this._playlistSongsCache[playlistId]) {
-      delete this._playlistSongsCache[playlistId];
-    }
-    
     return response.json();
   },
 
-async removeSongFromPlaylist(playlistId, songId) {
+  async removeSongFromPlaylist(playlistId, songId) {
     const url =
       `${XANO_PLAYLISTS_API}/Remove_Song_from_Playlist` +
       `?playlist_id=${encodeURIComponent(parseInt(playlistId))}` +
@@ -9781,12 +8838,6 @@ async removeSongFromPlaylist(playlistId, songId) {
     const response = await fetch(url, { method: 'DELETE' });
 
     if (!response.ok) throw new Error('Failed to remove song');
-    
-    // Invalidate cache for this playlist
-    if (this._playlistSongsCache && this._playlistSongsCache[playlistId]) {
-      delete this._playlistSongsCache[playlistId];
-    }
-    
     return response.json();
   },
 
@@ -9848,43 +8899,21 @@ async removeSongFromPlaylist(playlistId, songId) {
       }
 
 
-// Add to Playlist Module
+      // Add to Playlist Module
       if (e.target.closest('.dd-add-to-playlist')) {
   e.preventDefault();
   e.stopPropagation();
 
-  const button = e.target.closest('.dd-add-to-playlist');
-  
-  // Check specific parent elements
-  const songWrapper = button.closest('.song-wrapper');
-  const masonryTile = button.closest('.masonry-song-tile');
-  const musicPlayer = button.closest('.music-player-wrapper');
-  
-  let songId = null;
-  let uiSource = null;
-  
-  if (songWrapper) {
-    songId = songWrapper.dataset.songId || songWrapper.dataset.airtableId;
-    uiSource = songWrapper;
-  } else if (masonryTile) {
-    // Masonry tile - find the wrapper inside that has the song ID
-    const tileWrapper = masonryTile.querySelector('.masonry-song-tile-wrapper');
-    songId = masonryTile.dataset.songId || tileWrapper?.dataset.songId;
-    uiSource = masonryTile;
-  } else if (musicPlayer) {
-    songId = window.musicPlayerPersistent?.currentSongData?.id;
-    uiSource = null;
-  }
+  const songWrapper = e.target.closest('.song-wrapper');
+  const songId = songWrapper?.dataset.songId || songWrapper?.dataset.airtableId;
 
   console.log('✅ dd-add-to-playlist CLICK -> songId:', songId);
 
   if (songId) {
-    if (uiSource) {
-      this._setAddToPlaylistSelectedSongFromCard(uiSource);
-    } else {
-      this._setAddToPlaylistSelectedSongFromPlayer();
-    }
+    // ✅ Capture selected song UI data from the clicked card
+    this._setAddToPlaylistSelectedSongFromCard(songWrapper);
 
+    // ✅ Open modal
     this.openAddToPlaylistModal(songId);
   } else {
     console.warn('❌ Could not find songId for add-to-playlist');
@@ -9892,7 +8921,6 @@ async removeSongFromPlaylist(playlistId, songId) {
 
   return;
 }
-      
 //End
 
       if (e.target.closest('.add-to-playlist-x-button')) {
@@ -10509,13 +9537,10 @@ if (uploadIcon) uploadIcon.style.display = '';
 _setAddToPlaylistSelectedSongFromCard(songWrapper) {
   if (!songWrapper) return;
 
-  const title = (songWrapper.querySelector('.song-name')?.textContent || 
-                 songWrapper.querySelector('.db-player-song-name')?.textContent || '').trim();
-  const artist = (songWrapper.querySelector('.artist-name')?.textContent || 
-                  songWrapper.querySelector('.db-artist-name')?.textContent || '').trim();
+  const title = (songWrapper.querySelector('.song-name')?.textContent || '').trim();
+  const artist = (songWrapper.querySelector('.artist-name')?.textContent || '').trim();
 
-  const coverEl = songWrapper.querySelector('.cover-art') || 
-                  songWrapper.querySelector('.db-player-song-cover');
+  const coverEl = songWrapper.querySelector('.cover-art');
   let coverSrc = '';
 
   if (coverEl && coverEl.tagName === 'IMG') {
@@ -10525,18 +9550,6 @@ _setAddToPlaylistSelectedSongFromCard(songWrapper) {
     const match = bg.match(/url\(["']?(.*?)["']?\)/i);
     coverSrc = match?.[1] || '';
   }
-
-  this._selectedSongForAddToPlaylistUI = { title, artist, coverSrc };
-},
-  
-_setAddToPlaylistSelectedSongFromPlayer() {
-  const g = window.musicPlayerPersistent;
-  if (!g?.currentSongData) return;
-
-  const songData = g.currentSongData;
-  const title = songData.fields?.['Song Title'] || '';
-  const artist = songData.fields?.['Artist'] || '';
-  const coverSrc = songData.fields?.['Cover Art']?.[0]?.url || '';
 
   this._selectedSongForAddToPlaylistUI = { title, artist, coverSrc };
 },
@@ -10616,45 +9629,63 @@ _renderAddToPlaylistSelectedSongUI() {
   }
 },
 
-async populateAddToPlaylistModal() {
+  async populateAddToPlaylistModal() {
     const container = document.querySelector('.module-bod-container');
     const template = container?.querySelector('.add-to-playlist-row');
     if (!container || !template) return;
+
+    // Hide immediately to prevent icon flash
+    container.style.opacity = '0';
 
     // Clear existing rows except template
     container.querySelectorAll('.add-to-playlist-row').forEach((row, i) => {
       if (i > 0) row.remove();
     });
 
-    // Hide template row
+    // Hide template row immediately
     template.style.display = 'none';
 
     const playlists = await this.getUserPlaylists();
 
-    // Sort order priority
-    const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
-    const lastClickedId = this._getLastClickedPlaylistForAddModal?.();
+    // ✅ Sort order priority:
+// 1) last created playlist (if any)
+// 2) last clicked playlist (if any)
+// 3) otherwise keep original order
+const lastCreatedId = this._getLastCreatedPlaylistForAddModal?.();
+const lastClickedId = this._getLastClickedPlaylistForAddModal?.();
 
-    if (lastCreatedId || lastClickedId) {
-      playlists.sort((a, b) => {
-        const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
-        const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
-        if (aCreated && !bCreated) return -1;
-        if (!aCreated && bCreated) return 1;
+if (lastCreatedId || lastClickedId) {
+  playlists.sort((a, b) => {
+    const aCreated = lastCreatedId && String(a.id) === String(lastCreatedId);
+    const bCreated = lastCreatedId && String(b.id) === String(lastCreatedId);
+    if (aCreated && !bCreated) return -1;
+    if (!aCreated && bCreated) return 1;
 
-        const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
-        const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
-        if (aClicked && !bClicked) return -1;
-        if (!aClicked && bClicked) return 1;
+    const aClicked = lastClickedId && String(a.id) === String(lastClickedId);
+    const bClicked = lastClickedId && String(b.id) === String(lastClickedId);
+    if (aClicked && !bClicked) return -1;
+    if (!aClicked && bClicked) return 1;
 
-        return 0;
-      });
-    }
+    return 0;
+  });
+}
 
+    const songInPlaylists = [];
     this.originalPlaylistIds = [];
 
-    // Build rows immediately (without waiting for song checks)
-    const rows = [];
+    const songsByPlaylist = await Promise.all(
+      playlists.map(async (playlist) => {
+        const songs = await this.getPlaylistSongs(playlist.id);
+        return { playlistId: playlist.id, songs };
+      })
+    );
+
+    for (const { playlistId, songs } of songsByPlaylist) {
+      if (songs.some((s) => String(s.song_id) === String(this.currentSongForPlaylist))) {
+        songInPlaylists.push(playlistId);
+      }
+    }
+
     playlists.forEach((playlist) => {
       const row = template.cloneNode(true);
       const title = row.querySelector('.add-to-playlist-title');
@@ -10666,14 +9697,14 @@ async populateAddToPlaylistModal() {
       row.dataset.playlistId = playlist.id;
       row.style.display = '';
 
-      // Auto-select newly created playlist
-      const autoSelectId = this._getLastCreatedPlaylistAutoSelectId?.();
-      if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
-        if (!this.selectedPlaylistIds.includes(playlist.id)) {
-          this.selectedPlaylistIds.push(playlist.id);
-        }
-        if (icon) icon.style.opacity = '1';
-      }
+      // ✅ AUTO-SELECT newly created playlist (one-time via separate key)
+const autoSelectId = this._getLastCreatedPlaylistAutoSelectId?.();
+if (autoSelectId && String(playlist.id) === String(autoSelectId)) {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    this.selectedPlaylistIds.push(playlist.id);
+  }
+  if (icon) icon.style.opacity = '1';
+}
 
       row.onmouseenter = () => {
         if (!this.selectedPlaylistIds.includes(playlist.id)) {
@@ -10689,37 +9720,22 @@ async populateAddToPlaylistModal() {
         }
       };
 
+     if (songInPlaylists.includes(playlist.id)) {
+  if (!this.selectedPlaylistIds.includes(playlist.id)) {
+    this.selectedPlaylistIds.push(playlist.id);
+  }
+  if (!this.originalPlaylistIds.includes(playlist.id)) {
+    this.originalPlaylistIds.push(playlist.id);
+  }
+  if (icon) icon.style.opacity = '1';
+}
+
       container.appendChild(row);
-      rows.push({ row, playlist, icon });
     });
 
-    // Show container immediately
     container.style.opacity = '1';
-
-    // Check which playlists already contain this song (in background)
-    Promise.all(
-      playlists.map(async (playlist) => {
-        const songs = await this.getPlaylistSongs(playlist.id);
-        return { playlistId: playlist.id, songs };
-      })
-    ).then((songsByPlaylist) => {
-      for (const { playlistId, songs } of songsByPlaylist) {
-        if (songs.some((s) => String(s.song_id) === String(this.currentSongForPlaylist))) {
-          const rowData = rows.find(r => r.playlist.id === playlistId);
-          if (rowData) {
-            if (!this.selectedPlaylistIds.includes(playlistId)) {
-              this.selectedPlaylistIds.push(playlistId);
-            }
-            if (!this.originalPlaylistIds.includes(playlistId)) {
-              this.originalPlaylistIds.push(playlistId);
-            }
-            if (rowData.icon) rowData.icon.style.opacity = '1';
-          }
-        }
-      }
-    });
   },
-  
+
   togglePlaylistSelection(row) {
     const playlistId = parseInt(row.dataset.playlistId);
     const icon = row.querySelector('.add-to-playlist-icon');
@@ -11544,9 +10560,6 @@ async function initDashboardTiles() {
           e.preventDefault();
           e.stopPropagation();
           
-          // Mark that we're using dashboard tiles for navigation
-          g.activeSongSource = 'dashboard';
-          
           const wsData = g.waveformData.find(w =>
   w.songId === song.id &&
   w.cardElement &&
@@ -11580,9 +10593,6 @@ async function initDashboardTiles() {
       songName.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        // Mark that we're using dashboard tiles for navigation
-        g.activeSongSource = 'dashboard';
         
         const wsData = g.waveformData.find(w =>
   w.songId === song.id &&
