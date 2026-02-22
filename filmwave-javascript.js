@@ -274,29 +274,6 @@ function adjustDropdownPosition(toggle, list) {
   if (!list || !toggle) return;
   
   const g = window.musicPlayerPersistent;
-
-  // Disable Webflow IX2 hover interactions on touch devices
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.Webflow && window.Webflow.require) {
-      const ix2 = window.Webflow.require('ix2');
-      if (ix2 && ix2.store) {
-        const originalDispatch = ix2.store.dispatch;
-        ix2.store.dispatch = function(action) {
-          // Block hover-triggered interactions
-          if (action && action.type && 
-              (action.type.includes('MOUSE_OVER') || 
-               action.type.includes('MOUSE_OUT') ||
-               action.type.includes('HOVER'))) {
-            return;
-          }
-          return originalDispatch.apply(this, arguments);
-        };
-      }
-    }
-  });
-}
-//End  
   
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
