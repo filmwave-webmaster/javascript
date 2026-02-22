@@ -12283,10 +12283,7 @@ function initMobileFilterToggle(container = document) {
     newFilterButton.addEventListener('click', () => {
       g.savedScrollPosition = window.scrollY;
       
-      const musicList = document.querySelector('.music-list-wrapper');
-      const mobileSearchHeader = document.querySelector('.mobile-search-header');
-      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-      const footerContainer = document.querySelector('.footer-container');
+      const musicAreaContainer = document.querySelector('.music-area-container');
       
       if (window.innerWidth < 768) {
         // Make filter fixed so it doesn't depend on scroll position
@@ -12297,7 +12294,6 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.zIndex = '999';
         
        // Slide music area container to the left with fade
-        const musicAreaContainer = document.querySelector('.music-area-container');
         if (musicAreaContainer) {
           musicAreaContainer.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
           musicAreaContainer.style.transform = 'translateX(-100%)';
@@ -12363,10 +12359,7 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
     
     newFilterClose.addEventListener('click', () => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      const mobileSearchHeader = document.querySelector('.mobile-search-header');
-      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-      const footerContainer = document.querySelector('.footer-container');
+      const musicAreaContainer = document.querySelector('.music-area-container');
       
       // Save accordion states before resetting
       g.filterAccordionStates = [];
@@ -12389,7 +12382,6 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transform = 'translateX(100%)';
       
       // Set music area container to start position off-screen, fully visible, with no transition
-      const musicAreaContainer = document.querySelector('.music-area-container');
       if (musicAreaContainer) {
         musicAreaContainer.style.transition = 'none';
         musicAreaContainer.style.transform = 'translateX(-100%)';
@@ -12420,14 +12412,12 @@ function initMobileFilterToggle(container = document) {
         });
         filterWrapper.scrollTop = 0;
         
-        // Clean up content transitions
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transform = '';
-            el.style.transition = '';
-            el.style.opacity = '';
-          }
-        });
+        /// Clean up content transitions
+        if (musicAreaContainer) {
+          musicAreaContainer.style.transform = '';
+          musicAreaContainer.style.transition = '';
+          musicAreaContainer.style.opacity = '';
+        }
       }, 350);
     });
   }
