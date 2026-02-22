@@ -9176,7 +9176,9 @@ function restoreFavorites() {
 }
 
 document.addEventListener('change', function(e) {
-  if (e.target.matches('input.favorite-checkbox')) {
+  // Save when either the styled checkbox OR the native checkbox in favorite-button changes
+  if (e.target.matches('input.favorite-checkbox') || 
+      (e.target.type === 'checkbox' && e.target.closest('.favorite-button, .song-wrapper'))) {
     saveFavorites();
   }
 });
