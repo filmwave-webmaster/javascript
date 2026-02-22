@@ -12283,10 +12283,9 @@ function initMobileFilterToggle(container = document) {
     newFilterButton.addEventListener('click', () => {
       g.savedScrollPosition = window.scrollY;
       
-      const musicList = document.querySelector('.music-list-wrapper');
-      const mobileSearchHeader = document.querySelector('.mobile-search-header');
-      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-      const footerContainer = document.querySelector('.footer-container');
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      const contentToSlide = musicAreaContainer ? 
+        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
         // Make filter fixed so it doesn't depend on scroll position
@@ -12297,12 +12296,10 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.zIndex = '999';
         
        // Slide all content to the left with fade
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
-            el.style.transform = 'translateX(-100%)';
-            el.style.opacity = '0';
-          }
+        contentToSlide.forEach(el => {
+          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
+          el.style.transform = 'translateX(-100%)';
+          el.style.opacity = '0';
         });
         
         // Set up filter slide-in at the same time
@@ -12364,10 +12361,9 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
     
     newFilterClose.addEventListener('click', () => {
-      const musicList = document.querySelector('.music-list-wrapper');
-      const mobileSearchHeader = document.querySelector('.mobile-search-header');
-      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-      const footerContainer = document.querySelector('.footer-container');
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      const contentToSlide = musicAreaContainer ? 
+        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       // Save accordion states before resetting
       g.filterAccordionStates = [];
@@ -12390,23 +12386,19 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transform = 'translateX(100%)';
       
       // Set all content to start position off-screen, fully visible, with no transition
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-        if (el) {
-          el.style.transition = 'none';
-          el.style.transform = 'translateX(-100%)';
-          el.style.opacity = '1';
-        }
+      contentToSlide.forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = 'translateX(-100%)';
+        el.style.opacity = '1';
       });
       
       // Force reflow to ensure starting positions are applied
       void filterWrapper.offsetWidth;
       
       // Then animate back in
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-        if (el) {
-          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-          el.style.transform = 'translateX(0)';
-        }
+      contentToSlide.forEach(el => {
+        el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        el.style.transform = 'translateX(0)';
       });
       
       // Clean up after animation completes
@@ -12425,12 +12417,10 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.scrollTop = 0;
         
         // Clean up content transitions
-        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-          if (el) {
-            el.style.transform = '';
-            el.style.transition = '';
-            el.style.opacity = '';
-          }
+        contentToSlide.forEach(el => {
+          el.style.transform = '';
+          el.style.transition = '';
+          el.style.opacity = '';
         });
       }, 350);
     });
