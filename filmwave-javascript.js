@@ -275,29 +275,28 @@ function adjustDropdownPosition(toggle, list) {
   
   const g = window.musicPlayerPersistent;
 
-  // Disable sticky hover states on touch devices
+  // Disable Webflow IX2 hover interactions on touch devices
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-  const style = document.createElement('style');
-  style.textContent = `
-    @media (hover: none) {
-      body * { 
-        -webkit-tap-highlight-color: transparent;
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.Webflow && window.Webflow.require) {
+      const ix2 = window.Webflow.require('ix2');
+      if (ix2 && ix2.store) {
+        const originalDispatch = ix2.store.dispatch;
+        ix2.store.dispatch = function(action) {
+          // Block hover-triggered interactions
+          if (action && action.type && 
+              (action.type.includes('MOUSE_OVER') || 
+               action.type.includes('MOUSE_OUT') ||
+               action.type.includes('HOVER'))) {
+            return;
+          }
+          return originalDispatch.apply(this, arguments);
+        };
       }
     }
-  `;
-  document.head.appendChild(style);
-  
-  // Clear "stuck" hover state after each touch
-  document.body.addEventListener('touchend', () => {
-    setTimeout(() => {
-      if (document.activeElement && document.activeElement !== document.body) {
-        document.activeElement.blur();
-      }
-    }, 100);
   });
 }
-
-// End of disable sticky hover states on touch devices  
+//End  
   
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
