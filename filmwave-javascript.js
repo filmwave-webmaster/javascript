@@ -12283,7 +12283,10 @@ function initMobileFilterToggle(container = document) {
     newFilterButton.addEventListener('click', () => {
       g.savedScrollPosition = window.scrollY;
       
-      const musicAreaContainer = document.querySelector('.music-area-container');
+      const musicList = document.querySelector('.music-list-wrapper');
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
       
       if (window.innerWidth < 768) {
         // Make filter fixed so it doesn't depend on scroll position
@@ -12293,12 +12296,14 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide music area container to the left with fade
-        if (musicAreaContainer) {
-          musicAreaContainer.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
-          musicAreaContainer.style.transform = 'translateX(-100%)';
-          musicAreaContainer.style.opacity = '0';
-        }
+       // Slide all content to the left with fade
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
+            el.style.transform = 'translateX(-100%)';
+            el.style.opacity = '0';
+          }
+        });
         
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
@@ -12359,7 +12364,10 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
     
     newFilterClose.addEventListener('click', () => {
-      const musicAreaContainer = document.querySelector('.music-area-container');
+      const musicList = document.querySelector('.music-list-wrapper');
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
       
       // Save accordion states before resetting
       g.filterAccordionStates = [];
@@ -12381,21 +12389,25 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set music area container to start position off-screen, fully visible, with no transition
-      if (musicAreaContainer) {
-        musicAreaContainer.style.transition = 'none';
-        musicAreaContainer.style.transform = 'translateX(-100%)';
-        musicAreaContainer.style.opacity = '1';
-      }
+      // Set all content to start position off-screen, fully visible, with no transition
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transition = 'none';
+          el.style.transform = 'translateX(-100%)';
+          el.style.opacity = '1';
+        }
+      });
       
       // Force reflow to ensure starting positions are applied
       void filterWrapper.offsetWidth;
       
       // Then animate back in
-      if (musicAreaContainer) {
-        musicAreaContainer.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        musicAreaContainer.style.transform = 'translateX(0)';
-      }
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+          el.style.transform = 'translateX(0)';
+        }
+      });
       
       // Clean up after animation completes
       setTimeout(() => {
@@ -12412,12 +12424,14 @@ function initMobileFilterToggle(container = document) {
         });
         filterWrapper.scrollTop = 0;
         
-        /// Clean up content transitions
-        if (musicAreaContainer) {
-          musicAreaContainer.style.transform = '';
-          musicAreaContainer.style.transition = '';
-          musicAreaContainer.style.opacity = '';
-        }
+        // Clean up content transitions
+        [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+          if (el) {
+            el.style.transform = '';
+            el.style.transition = '';
+            el.style.opacity = '';
+          }
+        });
       }, 350);
     });
   }
