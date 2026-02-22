@@ -9176,10 +9176,12 @@ function restoreFavorites() {
 }
 
 document.addEventListener('change', function(e) {
-  // Save when either the styled checkbox OR the native checkbox in favorite-button changes
-  if (e.target.matches('input.favorite-checkbox') || 
-      (e.target.type === 'checkbox' && e.target.closest('.favorite-button, .song-wrapper'))) {
-    saveFavorites();
+  if (e.target.type === 'checkbox') {
+    const inFavoriteButton = e.target.closest('.favorite-button');
+    const inSongWrapper = e.target.closest('.song-wrapper');
+    if (inFavoriteButton || inSongWrapper) {
+      saveFavorites();
+    }
   }
 });
 
