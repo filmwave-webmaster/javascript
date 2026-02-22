@@ -415,18 +415,6 @@ function updateMasterPlayerVisibility() {
     playerWrapper.style.alignItems = 'center';
     playerWrapper.style.pointerEvents = 'auto';
     
-    // Add click blocker to prevent clicks going through to elements beneath
-    if (!playerWrapper.querySelector('.player-click-blocker')) {
-      const blocker = document.createElement('div');
-      blocker.className = 'player-click-blocker';
-      blocker.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;z-index:-1;';
-      blocker.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      }, true);
-      playerWrapper.insertBefore(blocker, playerWrapper.firstChild);
-    }
-    
     // Re-enable scroll anchoring after layout settles
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -7995,7 +7983,17 @@ document.addEventListener('change', (e) => {
   const checkbox = e.target;
   if (checkbox.type !== 'checkbox') return;
 
-  const button = checkbox.closest('.favorite-button');
+  // Look for favorite button OR the w-checkbox wrapper, then find icons within the song-wrapper
+  let button = checkbox.closest('.favorite-button');
+  
+  if (!button) {
+    // For song cards, the checkbox is in .w-checkbox but icons might be elsewhere in the card
+    const songWrapper = checkbox.closest('.song-wrapper');
+    if (songWrapper) {
+      button = songWrapper.querySelector('.favorite-button') || songWrapper;
+    }
+  }
+  
   if (!button) return;
 
   const emptyIcon = button.querySelector('.favorite-icon-empty');
