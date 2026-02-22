@@ -12302,6 +12302,13 @@ function initMobileFilterToggle(container = document) {
           el.style.opacity = '0';
         });
         
+        // Hide content after animation to prevent scrolling
+        setTimeout(() => {
+          contentToSlide.forEach(el => {
+            el.style.display = 'none';
+          });
+        }, 350);
+        
         // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
@@ -12384,6 +12391,11 @@ function initMobileFilterToggle(container = document) {
       // Slide filter out to right and content back in from left simultaneously
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
+      
+      // Show content again before animating back
+      contentToSlide.forEach(el => {
+        el.style.display = '';
+      });
       
       // Set all content to start position off-screen, fully visible, with no transition
       contentToSlide.forEach(el => {
