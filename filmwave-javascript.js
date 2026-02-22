@@ -767,16 +767,7 @@ function navigateStandaloneTrack(direction) {
         newWavesurfer = waveformContainer._wavesurfer;
       }
     }
-  } else {
-    // Find wavesurfer from song card on favorites/playlist pages
-    const nextCard = document.querySelector(`.song-wrapper[data-song-id="${nextSong.id}"]`);
-    if (nextCard) {
-      const waveformContainer = nextCard.querySelector('.waveform');
-      if (waveformContainer && waveformContainer._wavesurfer) {
-        newWavesurfer = waveformContainer._wavesurfer;
-      }
-    }
-  }
+  } 
   
   // Hide play button and reset icons on previous song card
   if (g.currentSongData) {
