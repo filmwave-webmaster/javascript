@@ -1378,32 +1378,28 @@ if (playerCoverArt) {
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
   
   if (isMusicPage && g.allWavesurfers.length > 0 && g.currentWavesurfer) {
-    // Get visible cards in DOM order (respects shuffle)
-    const container = document.querySelector('.music-list-wrapper');
-    const visibleCards = Array.from(container?.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)') || [])
-      .filter(card => card.style.display !== 'none');
-    
-    // Find current song's card and index in DOM order
-    const currentSongId = g.currentSongData?.id;
-    const currentCardIndex = visibleCards.findIndex(card => card.dataset.songId === currentSongId);
-    
-    let nextData = null;
-    let targetCardIndex = -1;
+    const currentIndex = g.allWavesurfers.indexOf(g.currentWavesurfer);
+    let targetWS = null;
     
     if (direction === 'next') {
-      targetCardIndex = currentCardIndex + 1;
-      if (targetCardIndex >= visibleCards.length) targetCardIndex = -1;
+      for (let i = currentIndex + 1; i < g.allWavesurfers.length; i++) {
+        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+        if (data && data.cardElement.offsetParent !== null) {
+          targetWS = g.allWavesurfers[i];
+          break;
+        }
+      }
     } else {
-      targetCardIndex = currentCardIndex - 1;
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        const data = g.waveformData.find(d => d.wavesurfer === g.allWavesurfers[i]);
+        if (data && data.cardElement.offsetParent !== null) {
+          targetWS = g.allWavesurfers[i];
+          break;
+        }
+      }
     }
     
-    if (targetCardIndex >= 0 && targetCardIndex < visibleCards.length) {
-      const targetCard = visibleCards[targetCardIndex];
-      const targetSongId = targetCard.dataset.songId;
-      nextData = g.waveformData.find(d => d.songData?.id === targetSongId);
-    }
-    
-    if (nextData && nextData.wavesurfer) {
+    if (targetWS) {
       const wasPlaying = g.isPlaying;
       const prevData = g.waveformData.find(data => data.wavesurfer === g.currentWavesurfer);
       if (prevData?.cardElement.querySelector('.play-button')) {
@@ -1416,6 +1412,7 @@ if (playerCoverArt) {
       }
       
       g.currentWavesurfer.seekTo(0);
+      const nextData = g.waveformData.find(data => data.wavesurfer === targetWS);
       
       if (nextData?.cardElement.querySelector('.play-button')) {
         nextData.cardElement.querySelector('.play-button').style.opacity = '1';
@@ -1433,7 +1430,7 @@ if (playerCoverArt) {
         songWrapper.style.setProperty('border', '1px solid var(--color-8)', 'important');
       }
       
-      playStandaloneSong(nextData.audioUrl, nextData.songData, nextData.wavesurfer, nextData.cardElement, null, wasPlaying);
+      playStandaloneSong(nextData.audioUrl, nextData.songData, targetWS, nextData.cardElement, null, wasPlaying);
     }
   } else {
     // Not on music page or no waveforms - use standalone navigation
@@ -2966,6 +2963,20 @@ function initShuffleSongs() {
     // Update filtered song IDs for next/previous navigation
     const g = window.musicPlayerPersistent;
     g.filteredSongIds = songCards.map(card => card.dataset.songId);
+    
+    // Reorder allWavesurfers and waveformData to match shuffled DOM order
+    const newWaveformData = [];
+    const newAllWavesurfers = [];
+    songCards.forEach(card => {
+      const songId = card.dataset.songId;
+      const data = g.waveformData.find(d => d.songData?.id === songId);
+      if (data) {
+        newWaveformData.push(data);
+        newAllWavesurfers.push(data.wavesurfer);
+      }
+    });
+    g.waveformData = newWaveformData;
+    g.allWavesurfers = newAllWavesurfers;
     
     console.log('🔀 Songs shuffled');
   });
