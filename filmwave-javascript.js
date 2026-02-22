@@ -274,6 +274,30 @@ function adjustDropdownPosition(toggle, list) {
   if (!list || !toggle) return;
   
   const g = window.musicPlayerPersistent;
+
+  // Disable sticky hover states on touch devices
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  const style = document.createElement('style');
+  style.textContent = `
+    @media (hover: none) {
+      body * { 
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Clear "stuck" hover state after each touch
+  document.body.addEventListener('touchend', () => {
+    setTimeout(() => {
+      if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+      }
+    }, 100);
+  });
+}
+
+// End of disable sticky hover states on touch devices  
   
   const container = document.querySelector('.music-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
