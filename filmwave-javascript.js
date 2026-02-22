@@ -7968,16 +7968,11 @@ document.addEventListener('click', (e) => {
   const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
   if (!icon) return;
 
-  // Find checkbox within the same container (not bubbling up too far)
-  const container = icon.closest('.favorite-button, .w-checkbox');
-  if (!container) return;
-  
-  const checkbox = container.querySelector('input[type="checkbox"]');
-  if (!checkbox) return;
+  const checkbox = icon
+    .closest('.w-checkbox')
+    ?.querySelector('input[type="checkbox"]');
 
-  // Prevent double-firing by checking if this event already processed
-  if (e._favoriteHandled) return;
-  e._favoriteHandled = true;
+  if (!checkbox) return;
 
   checkbox.checked = !checkbox.checked;
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
@@ -9307,18 +9302,27 @@ document.addEventListener('change', (e) => {
 
   // PLAYER -> CURRENT SONG
   if (isPlayer) {
-    const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
-    if (!songId) return;
+    setTimeout(() => {
+      const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+      if (!songId) return;
 
-    const songInput = getSongInputById(songId);
-    if (!songInput) return;
+      const songInput = getSongInputById(songId);
+      if (!songInput) return;
 
-    if (songInput.checked !== input.checked) {
-      favSyncLock = true;
-      songInput.checked = input.checked;
-      songInput.dispatchEvent(new Event('change', { bubbles: true }));
-      favSyncLock = false;
-    }
+      if (songInput.checked !== input.checked) {
+        favSyncLock = true;
+        songInput.checked = input.checked;
+        // Update icon visually
+        const button = songInput.closest('.favorite-button');
+        if (button) {
+          const emptyIcon = button.querySelector('.favorite-icon-empty');
+          const filledIcon = button.querySelector('.favorite-icon-filled');
+          if (emptyIcon) emptyIcon.style.display = input.checked ? 'none' : 'flex';
+          if (filledIcon) filledIcon.style.display = input.checked ? 'flex' : 'none';
+        }
+        favSyncLock = false;
+      }
+    }, 50);
   }
 });
 
