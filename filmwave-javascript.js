@@ -9145,9 +9145,10 @@ if (typeof barba !== 'undefined') {
 
 function saveFavorites() {
   const favorites = [];
-  document.querySelectorAll('input.favorite-checkbox:checked').forEach(checkbox => {
-    const songCard = checkbox.closest('.song-wrapper');
-    if (songCard?.dataset.songId) {
+  // Find all checked checkboxes inside song cards
+  document.querySelectorAll('.song-wrapper').forEach(songCard => {
+    const checkbox = songCard.querySelector('.favorite-button input[type="checkbox"], input.favorite-checkbox');
+    if (checkbox?.checked && songCard.dataset.songId) {
       favorites.push(songCard.dataset.songId);
     }
   });
@@ -9175,9 +9176,7 @@ function restoreFavorites() {
 }
 
 document.addEventListener('change', function(e) {
-  // Save when either the styled checkbox OR the native checkbox in favorite-button changes
-  if (e.target.matches('input.favorite-checkbox') || 
-      (e.target.type === 'checkbox' && e.target.closest('.favorite-button, .song-wrapper'))) {
+  if (e.target.matches('input.favorite-checkbox')) {
     saveFavorites();
   }
 });
