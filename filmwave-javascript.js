@@ -7968,13 +7968,46 @@ document.addEventListener('click', (e) => {
   const icon = e.target.closest('.favorite-icon-empty, .favorite-icon-filled');
   if (!icon) return;
 
-  const checkbox = icon
-    .closest('.w-checkbox')
-    ?.querySelector('input[type="checkbox"]');
+  e.stopPropagation();
+  e.preventDefault();
 
+  const wrapper = icon.closest('.w-checkbox, .favorite-button');
+  if (!wrapper) return;
+  
+  const checkbox = wrapper.querySelector('input[type="checkbox"]');
   if (!checkbox) return;
 
-  checkbox.checked = !checkbox.checked;
+  const isPlayer = !!wrapper.closest('.music-player-wrapper');
+  const newChecked = !checkbox.checked;
+  
+  checkbox.checked = newChecked;
+  
+  // Update this icon
+  const emptyIcon = wrapper.querySelector('.favorite-icon-empty');
+  const filledIcon = wrapper.querySelector('.favorite-icon-filled');
+  if (emptyIcon) emptyIcon.style.display = newChecked ? 'none' : 'flex';
+  if (filledIcon) filledIcon.style.display = newChecked ? 'flex' : 'none';
+  
+  // Manually sync if player
+  if (isPlayer) {
+    const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (songId) {
+      const songCard = document.querySelector(`[data-song-id="${songId}"]`);
+      if (songCard) {
+        const songCheckbox = songCard.querySelector('input[type="checkbox"]');
+        const songButton = songCard.querySelector('.favorite-button');
+        if (songCheckbox && songCheckbox.checked !== newChecked) {
+          songCheckbox.checked = newChecked;
+          const songEmpty = songButton?.querySelector('.favorite-icon-empty');
+          const songFilled = songButton?.querySelector('.favorite-icon-filled');
+          if (songEmpty) songEmpty.style.display = newChecked ? 'none' : 'flex';
+          if (songFilled) songFilled.style.display = newChecked ? 'flex' : 'none';
+        }
+      }
+    }
+  }
+  
+  // Dispatch change for other listeners (like saving to favorites)
   checkbox.dispatchEvent(new Event('change', { bubbles: true }));
 });
 
@@ -9302,27 +9335,18 @@ document.addEventListener('change', (e) => {
 
   // PLAYER -> CURRENT SONG
   if (isPlayer) {
-    setTimeout(() => {
-      const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
-      if (!songId) return;
+    const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (!songId) return;
 
-      const songInput = getSongInputById(songId);
-      if (!songInput) return;
+    const songInput = getSongInputById(songId);
+    if (!songInput) return;
 
-      if (songInput.checked !== input.checked) {
-        favSyncLock = true;
-        songInput.checked = input.checked;
-        // Update icon visually
-        const button = songInput.closest('.favorite-button');
-        if (button) {
-          const emptyIcon = button.querySelector('.favorite-icon-empty');
-          const filledIcon = button.querySelector('.favorite-icon-filled');
-          if (emptyIcon) emptyIcon.style.display = input.checked ? 'none' : 'flex';
-          if (filledIcon) filledIcon.style.display = input.checked ? 'flex' : 'none';
-        }
-        favSyncLock = false;
-      }
-    }, 50);
+    if (songInput.checked !== input.checked) {
+      favSyncLock = true;
+      songInput.checked = input.checked;
+      songInput.dispatchEvent(new Event('change', { bubbles: true }));
+      favSyncLock = false;
+    }
   }
 });
 
