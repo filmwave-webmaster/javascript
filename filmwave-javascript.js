@@ -1,7 +1,7 @@
   /**
  * ============================================================
- * FILMWAVE MUSIC PLATFORM - VERSION 49
- * Updated: January 17, 2026
+ * FILMWAVE MUSIC PLATFORM - VERSION 50
+ * Updated: February 22, 2026
  * ============================================================
  */
 /**
@@ -640,6 +640,19 @@ function navigateStandaloneTrack(direction) {
     songsToNavigate = domIds
       .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
       .filter(Boolean);
+  } else if (isOnMusicPage) {
+    // MUSIC PAGE: use DOM order to respect shuffle/filter order
+    const container = document.querySelector('.music-list-wrapper');
+    if (container) {
+      const visibleCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'))
+        .filter(card => card.style.display !== 'none');
+      
+      songsToNavigate = visibleCards
+        .map(card => g.MASTER_DATA.find(song => String(song.id) === String(card.dataset.songId)))
+        .filter(Boolean);
+    } else {
+      songsToNavigate = g.MASTER_DATA;
+    }
   } else if (
     g.activeSongSource === 'dashboard' &&
     isOnDashboard &&
@@ -649,8 +662,10 @@ function navigateStandaloneTrack(direction) {
     // Only use dashboard tiles if we're still on dashboard
     songsToNavigate = g.dashboardTileSongs;
   } else if (g.filteredSongIds && g.filteredSongIds.length > 0) {
-    // Use filtered songs if available
-    songsToNavigate = g.MASTER_DATA.filter(song => g.filteredSongIds.includes(song.id));
+    // Use filtered songs if available - preserve order from filteredSongIds
+    songsToNavigate = g.filteredSongIds
+      .map(id => g.MASTER_DATA.find(song => String(song.id) === String(id)))
+      .filter(Boolean);
   } else {
     // Fallback to all songs
     songsToNavigate = g.MASTER_DATA;
