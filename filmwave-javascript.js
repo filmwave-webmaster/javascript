@@ -12293,12 +12293,22 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Make filter fixed so it doesn't depend on scroll position
-        filterWrapper.style.position = 'fixed';
-        filterWrapper.style.top = 'var(--navbar--height, 60px)';
-        filterWrapper.style.left = '0';
-        filterWrapper.style.right = '0';
-        filterWrapper.style.zIndex = '999';
+        // Hide content immediately
+        contentToSlide.forEach(el => {
+          el.style.display = 'none';
+        });
+        
+        // Scroll to top first to prevent iOS visual viewport issues
+        window.scrollTo(0, 0);
+        
+        // Wait for scroll to settle before showing filter
+        setTimeout(() => {
+          // Make filter fixed so it doesn't depend on scroll position
+          filterWrapper.style.position = 'fixed';
+          filterWrapper.style.top = 'var(--navbar--height, 60px)';
+          filterWrapper.style.left = '0';
+          filterWrapper.style.right = '0';
+          filterWrapper.style.zIndex = '999';
         
        // Slide all content to the left with fade
         contentToSlide.forEach(el => {
@@ -12357,6 +12367,7 @@ function initMobileFilterToggle(container = document) {
         }, 350);
         
         g.mobileFilterOpen = true;
+        }, 50); // End of setTimeout
       }
     });
   }
