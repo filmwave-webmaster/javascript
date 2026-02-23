@@ -12293,15 +12293,21 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Hide content and lock scroll immediately to prevent iOS jump
-        contentToSlide.forEach(el => {
-          el.style.display = 'none';
-        });
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        window.scrollTo(0, 0);
+        // Make filter fixed so it doesn't depend on scroll position
+        filterWrapper.style.position = 'fixed';
+        filterWrapper.style.top = 'var(--navbar--height, 60px)';
+        filterWrapper.style.left = '0';
+        filterWrapper.style.right = '0';
+        filterWrapper.style.zIndex = '999';
         
-        // Set up filter wrapper
+       // Slide all content to the left with fade
+        contentToSlide.forEach(el => {
+          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
+          el.style.transform = 'translateX(-100%)';
+          el.style.opacity = '0';
+        });
+        
+        // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -12320,16 +12326,26 @@ function initMobileFilterToggle(container = document) {
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
         
-        // Trigger animation on next frame
+        // Trigger both animations on next frame
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             filterWrapper.style.transform = 'translateX(0)';
           });
         });
         
-        // After animation complete, restore accordion scroll
+        // After animations complete: adjust scroll, hide content, restore accordion scroll
         setTimeout(() => {
+          window.scrollTo(0, 0);
           enableScrollLimit();
+          
+          // Reset filter to normal positioning now that we're at top
+          filterWrapper.style.position = '';
+          filterWrapper.style.top = '';
+          filterWrapper.style.left = '';
+          filterWrapper.style.right = '';
+          filterWrapper.style.zIndex = '';
+          
+          // Restore accordion scroll positions
           if (g.filterAccordionStates) {
             filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
               const state = g.filterAccordionStates[index];
@@ -12374,9 +12390,8 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Show content and set to start position off-screen
+      // Set all content to start position off-screen, fully visible, with no transition
       contentToSlide.forEach(el => {
-        el.style.display = '';
         el.style.transition = 'none';
         el.style.transform = 'translateX(-100%)';
         el.style.opacity = '1';
@@ -12412,10 +12427,6 @@ function initMobileFilterToggle(container = document) {
           el.style.transition = '';
           el.style.opacity = '';
         });
-        
-        // Unlock body scroll
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
       }, 350);
     });
   }
