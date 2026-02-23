@@ -12292,11 +12292,14 @@ function initMobileFilterToggle(container = document) {
       const contentToSlide = musicAreaContainer ? 
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
-      if (window.innerWidth < 768) {
-        // Hide content immediately
+      // Hide content immediately
         contentToSlide.forEach(el => {
           el.style.display = 'none';
         });
+        
+        // Lock body scroll
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
         
         // Scroll to top first to prevent iOS visual viewport issues
         window.scrollTo(0, 0);
@@ -12439,6 +12442,10 @@ function initMobileFilterToggle(container = document) {
           el.style.transition = '';
           el.style.opacity = '';
         });
+        
+        // Unlock body scroll
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
       }, 350);
     });
   }
