@@ -12313,26 +12313,12 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Hide content immediately
-        contentToSlide.forEach(el => {
-          el.style.display = 'none';
-        });
-        
-        // Lock body scroll
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        
-        // Scroll to top first to prevent iOS visual viewport issues
-        window.scrollTo(0, 0);
-        
-        // Wait for scroll to settle before showing filter
-        setTimeout(() => {
-          // Make filter fixed so it doesn't depend on scroll position
-          filterWrapper.style.position = 'fixed';
-          filterWrapper.style.top = 'var(--navbar--height, 60px)';
-          filterWrapper.style.left = '0';
-          filterWrapper.style.right = '0';
-          filterWrapper.style.zIndex = '999';
+        // Make filter fixed so it doesn't depend on scroll position
+        filterWrapper.style.position = 'fixed';
+        filterWrapper.style.top = 'var(--navbar--height, 60px)';
+        filterWrapper.style.left = '0';
+        filterWrapper.style.right = '0';
+        filterWrapper.style.zIndex = '999';
         
        // Slide all content to the left with fade
         contentToSlide.forEach(el => {
@@ -12341,7 +12327,7 @@ function initMobileFilterToggle(container = document) {
           el.style.opacity = '0';
         });
         
-       // Set up filter slide-in at the same time
+        // Set up filter slide-in at the same time
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -12391,7 +12377,7 @@ function initMobileFilterToggle(container = document) {
         }, 350);
         
         g.mobileFilterOpen = true;
-        }, 50); // End of setTimeout
+      }, 50); // End of setTimeout
       }
     });
   }
@@ -12425,9 +12411,8 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Show content again and set to start position off-screen
+      // Set all content to start position off-screen, fully visible, with no transition
       contentToSlide.forEach(el => {
-        el.style.display = '';
         el.style.transition = 'none';
         el.style.transform = 'translateX(-100%)';
         el.style.opacity = '1';
@@ -12463,10 +12448,6 @@ function initMobileFilterToggle(container = document) {
           el.style.transition = '';
           el.style.opacity = '';
         });
-        
-        // Unlock body scroll
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
       }, 350);
     });
   }
