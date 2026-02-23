@@ -12213,6 +12213,26 @@ function initMobileFilterToggle(container = document) {
     g.mobileFilterOpen = false;
   }
   
+  // Reset any stuck states on page load/init
+  g.mobileFilterOpen = false;
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
+  filterWrapper.style.display = '';
+  filterWrapper.style.position = '';
+  filterWrapper.style.transform = '';
+  
+  // Reset content visibility
+  const musicAreaContainer = container.querySelector('.music-area-container');
+  if (musicAreaContainer) {
+    Array.from(musicAreaContainer.children).forEach(el => {
+      if (!el.classList.contains('filter-wrapper')) {
+        el.style.display = '';
+        el.style.transform = '';
+        el.style.opacity = '';
+      }
+    });
+  }
+  
   function getMaxScroll() {
     const filterRect = filterWrapper.getBoundingClientRect();
     const filterBottom = filterRect.bottom + window.scrollY;
@@ -12297,6 +12317,10 @@ function initMobileFilterToggle(container = document) {
         contentToSlide.forEach(el => {
           el.style.display = 'none';
         });
+        
+        // Lock body scroll
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
         
         // Scroll to top first to prevent iOS visual viewport issues
         window.scrollTo(0, 0);
@@ -12439,6 +12463,10 @@ function initMobileFilterToggle(container = document) {
           el.style.transition = '';
           el.style.opacity = '';
         });
+        
+        // Unlock body scroll
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
       }, 350);
     });
   }
