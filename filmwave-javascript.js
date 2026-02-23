@@ -12401,8 +12401,9 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set all content to start position off-screen, fully visible, with no transition
+      // Show content again and set to start position off-screen
       contentToSlide.forEach(el => {
+        el.style.display = '';
         el.style.transition = 'none';
         el.style.transform = 'translateX(-100%)';
         el.style.opacity = '1';
