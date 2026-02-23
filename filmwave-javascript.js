@@ -12213,26 +12213,6 @@ function initMobileFilterToggle(container = document) {
     g.mobileFilterOpen = false;
   }
   
-  // Reset any stuck states on page load/init
-  g.mobileFilterOpen = false;
-  document.body.style.overflow = '';
-  document.documentElement.style.overflow = '';
-  filterWrapper.style.display = '';
-  filterWrapper.style.position = '';
-  filterWrapper.style.transform = '';
-  
-  // Reset content visibility
-  const musicAreaContainer = container.querySelector('.music-area-container');
-  if (musicAreaContainer) {
-    Array.from(musicAreaContainer.children).forEach(el => {
-      if (!el.classList.contains('filter-wrapper')) {
-        el.style.display = '';
-        el.style.transform = '';
-        el.style.opacity = '';
-      }
-    });
-  }
-  
   function getMaxScroll() {
     const filterRect = filterWrapper.getBoundingClientRect();
     const filterBottom = filterRect.bottom + window.scrollY;
@@ -12377,7 +12357,6 @@ function initMobileFilterToggle(container = document) {
         }, 350);
         
         g.mobileFilterOpen = true;
-      }, 50); // End of setTimeout
       }
     });
   }
