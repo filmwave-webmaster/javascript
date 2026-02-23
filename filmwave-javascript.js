@@ -12345,7 +12345,6 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        filterWrapper.style.overflowY = 'auto';
         
         // Restore accordion states if saved
         if (g.filterAccordionStates) {
@@ -12448,7 +12447,6 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.display = 'none';
         filterWrapper.style.transform = '';
         filterWrapper.style.transition = '';
-        filterWrapper.style.overflowY = '';
         g.mobileFilterOpen = false;
         
         // Reset accordion visual state
