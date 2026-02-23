@@ -9163,7 +9163,7 @@ function restoreFavorites() {
     const favoriteIds = JSON.parse(saved);
     favoriteIds.forEach(songId => {
       const songCard = document.querySelector(`[data-song-id="${songId}"]`);
-      const checkbox = songCard?.querySelector('input.favorite-checkbox');
+      const checkbox = songCard?.querySelector('.favorite-button input[type="checkbox"], input.favorite-checkbox');
       if (checkbox && !checkbox.checked) {
         checkbox.checked = true;
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
