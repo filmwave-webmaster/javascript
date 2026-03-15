@@ -3349,11 +3349,32 @@ function applyTheme(theme) {
     positionMasterPlayer(theme);
   }
   
-  // Get current theme
-  const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
+  // Check if user is logged in before applying theme
+  async function getThemeForUser() {
+    try {
+      if (window.$memberstackDom) {
+        const member = await window.$memberstackDom.getCurrentMember();
+        if (member && member.data) {
+          // Logged in - use saved preference
+          return localStorage.getItem('filmwaveTheme') || 'light';
+        }
+      }
+    } catch (e) {}
+    // Logged out - force light mode
+    return 'light';
+  }
   
-  // Apply current theme (icons + colors)
-  applyTheme(currentTheme);
+  // Get current theme (async for memberstack check)
+  getThemeForUser().then(currentTheme => {
+    // Apply current theme (icons + colors)
+    applyTheme(currentTheme);
+    
+    // Re-apply icon visibility after theme is set
+    updateIconVisibility(currentTheme);
+  });
+  
+  // Also apply light mode immediately for logged out users (before async check)
+  const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
   
   // Attach click handlers to ALL color-modes elements on the page
   const colorModesElements = document.querySelectorAll('.color-modes');
@@ -3363,9 +3384,23 @@ function applyTheme(theme) {
     const newColorModes = colorModes.cloneNode(true);
     colorModes.parentNode.replaceChild(newColorModes, colorModes);
     
-    newColorModes.addEventListener('click', (e) => {
+   newColorModes.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
+      
+      // Check if user is logged in
+      let isLoggedIn = false;
+      try {
+        if (window.$memberstackDom) {
+          const member = await window.$memberstackDom.getCurrentMember();
+          isLoggedIn = !!(member && member.data);
+        }
+      } catch (e) {}
+      
+      // Only allow theme toggle if logged in
+      if (!isLoggedIn) {
+        return; // Do nothing for logged out users
+      }
       
       const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
