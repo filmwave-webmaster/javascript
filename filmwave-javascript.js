@@ -3363,6 +3363,12 @@ function applyTheme(theme) {
   
   // Check if user is logged in before applying theme
   async function getThemeForUser() {
+    // Always light mode on home page
+    const isHomePage = window.location.pathname === '/' || window.location.pathname === '';
+    if (isHomePage) {
+      return 'light';
+    }
+    
     try {
       if (window.$memberstackDom) {
         const member = await window.$memberstackDom.getCurrentMember();
@@ -3399,6 +3405,12 @@ function applyTheme(theme) {
    newColorModes.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
+      
+      // No theme toggle on home page
+      const isHomePage = window.location.pathname === '/' || window.location.pathname === '';
+      if (isHomePage) {
+        return;
+      }
       
       // Check if user is logged in
       let isLoggedIn = false;
