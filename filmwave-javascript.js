@@ -7745,6 +7745,7 @@ if (shouldHaveSidebar && sidebar) {
 } else if (!shouldHaveSidebar && sidebar) {
   sidebar.style.visibility = 'hidden';
   sidebar.style.opacity = '0';
+  sidebar.style.display = 'none';
   console.log('🚫 Sidebar hidden');
 }
         
