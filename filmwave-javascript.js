@@ -7000,6 +7000,58 @@ if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
     
+    // Apply correct theme immediately to prevent flash
+    const nextPath = data?.next?.url?.path || '';
+    const isHomePage = nextPath === '/' || nextPath === '';
+    if (isHomePage) {
+      // Force light mode on home page
+      const darkColors = ['--color-0', '--color-1', '--color-2', '--color-3', '--color-4', '--color-5', '--color-6', '--color-7', '--color-8', '--color-9', '--color-10', '--color-11', '--color-12', '--color-13', '--color-14', '--color-15', '--color-16', '--color-17', '--color-18', '--color-19'];
+      darkColors.forEach(variable => {
+        document.body.style.removeProperty(variable);
+      });
+      window.musicPlayerPersistent.darkMode = false;
+    } else {
+      // Restore user's theme preference for other pages
+      const isLoggedIn = localStorage.getItem('_ms-mem') || localStorage.getItem('_ms-mid');
+      const savedPreference = localStorage.getItem('filmwaveThemePreference') || 'light';
+      const theme = isLoggedIn ? savedPreference : 'light';
+      
+      if (theme === 'dark') {
+        const darkColors = {
+          '--color-0': 'transparent',
+          '--color-1': '#191919',
+          '--color-2': '#ffffff',
+          '--color-3': '#ddff43',
+          '--color-4': '#7900b6',
+          '--color-5': '#a88419',
+          '--color-6': '#242424',
+          '--color-7': '#eeeee7',
+          '--color-8': '#2c2c2c',
+          '--color-9': '#474747',
+          '--color-10': '#fb8f61',
+          '--color-11': '#3d3d3d',
+          '--color-12': '#2c2c2c',
+          '--color-13': '#2c2c2c',
+          '--color-14': '#ddff43',
+          '--color-15': '#474747',
+          '--color-16': '#474747',
+          '--color-17': 'rgba(255, 255, 255, 0.2)',
+          '--color-18': 'rgba(255, 255, 255, 0.2)',
+          '--color-19': '#3d3d3d'
+        };
+        Object.entries(darkColors).forEach(([variable, value]) => {
+          document.body.style.setProperty(variable, value);
+        });
+        window.musicPlayerPersistent.darkMode = true;
+      } else {
+        const darkColorKeys = ['--color-0', '--color-1', '--color-2', '--color-3', '--color-4', '--color-5', '--color-6', '--color-7', '--color-8', '--color-9', '--color-10', '--color-11', '--color-12', '--color-13', '--color-14', '--color-15', '--color-16', '--color-17', '--color-18', '--color-19'];
+        darkColorKeys.forEach(variable => {
+          document.body.style.removeProperty(variable);
+        });
+        window.musicPlayerPersistent.darkMode = false;
+      }
+    }
+    
     // Hide tags container immediately to prevent flash
     const savedState = localStorage.getItem('musicFilters');
     const savedPlaylist = localStorage.getItem('playlistFilter');
