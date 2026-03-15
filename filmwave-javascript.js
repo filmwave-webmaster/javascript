@@ -441,6 +441,12 @@ function updateMasterPlayerVisibility() {
       }
     }
     
+    // REDUCE HEIGHT OF FORM-WRAP-SPACER WHEN PLAYER IS VISIBLE
+    const formWrapSpacer = document.querySelector('.form-wrap-spacer');
+    if (formWrapSpacer) {
+      formWrapSpacer.style.setProperty('height', `calc(100% - ${playerHeight}px)`, 'important');
+    }
+    
   // ADJUST SIDEBAR NAV HEIGHT WHEN PLAYER IS VISIBLE
     const sidebarNav = document.querySelector('.sidebar-nav');
     if (sidebarNav) {
@@ -500,6 +506,12 @@ function updateMasterPlayerVisibility() {
     if (filterWrapper) {
       filterWrapper.style.removeProperty('padding-bottom');
       filterWrapper.removeAttribute('data-padding-adjusted');
+    }
+    
+    // RESET FORM-WRAP-SPACER HEIGHT WHEN PLAYER IS HIDDEN
+    const formWrapSpacer = document.querySelector('.form-wrap-spacer');
+    if (formWrapSpacer) {
+      formWrapSpacer.style.setProperty('height', '100%', 'important');
     }
   }
 }
