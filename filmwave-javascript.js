@@ -3418,6 +3418,7 @@ function applyTheme(theme) {
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       
       localStorage.setItem('filmwaveTheme', newTheme);
+      localStorage.setItem('filmwaveThemePreference', newTheme);
       applyTheme(newTheme);
     });
   });
