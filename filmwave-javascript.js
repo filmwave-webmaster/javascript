@@ -7794,11 +7794,11 @@ loadingPlaceholders.forEach(placeholder => {
       if (isPlayerVisible) {
         const playerWrapper = document.querySelector('.music-player-wrapper');
         const playerHeight = playerWrapper?.offsetHeight || 77;
-        mainContent.style.height = `calc(100vh - ${playerHeight}px)`;
-        console.log(`📐 Main content: calc(100vh - ${playerHeight}px) - player visible`);
+        mainContent.style.height = `calc(100vh - var(--navbar--height, 60px) - ${playerHeight}px)`;
+        console.log(`📐 Main content: calc(100vh - navbar - ${playerHeight}px) - player visible`);
       } else {
-        mainContent.style.height = '100vh';
-        console.log('📐 Main content: 100vh - player hidden');
+        mainContent.style.height = 'calc(100vh - var(--navbar--height, 60px))';
+        console.log('📐 Main content: calc(100vh - navbar) - player hidden');
       }
       
       // Remove hiding CSS and reveal .login-section smoothly
