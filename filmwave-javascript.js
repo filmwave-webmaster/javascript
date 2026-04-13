@@ -5679,11 +5679,14 @@ function updateFilterDots() {
       isActive = !!section.querySelector('[data-filter-group]:checked');
     }
     
-    // Show/hide dot
+    // Show/hide dot and adjust header text padding
+    const filterHeaderText = section.querySelector('.filter-header-text');
     if (isActive) {
       showFilterDot(dot);
+      if (filterHeaderText) filterHeaderText.style.paddingRight = '11px';
     } else {
       hideFilterDot(dot);
+      if (filterHeaderText) filterHeaderText.style.paddingRight = '';
     }
   });
 }
