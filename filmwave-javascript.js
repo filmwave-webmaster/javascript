@@ -3450,6 +3450,8 @@ function initFilterAccordions() {
       });
       
       if (!isOpen) {
+        // Force display in case Webflow has it set to none
+        content.style.display = 'block';
         const actualHeight = Math.min(content.scrollHeight, 300);
         content.style.maxHeight = actualHeight + 'px';
         content.classList.add('open');
