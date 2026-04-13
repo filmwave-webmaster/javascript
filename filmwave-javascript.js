@@ -7370,7 +7370,7 @@ if (typeof barba !== 'undefined') {
     // Don't clear activeSongSource - keep using dashboard songs even after leaving
   }
      
-  const goingToMusic = goingPath === '/music' || goingPath === '/music/';
+  const goingToMusic = goingToPath === '/music' || goingToPath === '/music/';
   
   if (leavingDashboard && !goingToDashboard && !goingToMusic) {
     const sidebar = document.querySelector('.sidebar-nav');
