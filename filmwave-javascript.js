@@ -5683,7 +5683,7 @@ function updateFilterDots() {
     const filterHeaderText = section.querySelector('.filter-header-text');
     if (isActive) {
       showFilterDot(dot);
-      if (filterHeaderText) filterHeaderText.style.paddingRight = '11px';
+      if (filterHeaderText) filterHeaderText.style.paddingRight = '15px';
     } else {
       hideFilterDot(dot);
       if (filterHeaderText) filterHeaderText.style.paddingRight = '';
