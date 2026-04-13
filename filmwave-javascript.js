@@ -7654,7 +7654,9 @@ const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/') ||
                           window.location.pathname === '/music' || 
                           window.location.pathname === '/music/';
 let sidebar = document.querySelector('.sidebar-nav');
-const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/');
+const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/') ||
+                          data.current?.url?.path === '/music' ||
+                          data.current?.url?.path === '/music/';
 
 // Inject sidebar if it doesn't exist and we need it
 if (shouldHaveSidebar && !sidebar) {
@@ -7718,6 +7720,7 @@ if (shouldHaveSidebar && !sidebar) {
 }
 
 if (shouldHaveSidebar && sidebar) {
+  sidebar.style.display = 'flex';
   sidebar.style.visibility = 'visible';
   
   const sidebarContainer = sidebar.querySelector('.sidebar-container');
