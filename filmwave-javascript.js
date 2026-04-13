@@ -456,14 +456,6 @@ function updateMasterPlayerVisibility() {
         console.log('✅ Adjusted sidebar-nav height for player:', playerHeight);
       }
     }
-
-    // ADD PADDING TO FILTER WRAPPER WHEN PLAYER IS VISIBLE
-    const filterWrapper = document.querySelector('.filter-wrapper');
-    if (filterWrapper && !filterWrapper.dataset.paddingAdjusted) {
-      const currentPadding = parseFloat(window.getComputedStyle(filterWrapper).paddingBottom) || 0;
-      filterWrapper.style.setProperty('padding-bottom', `${currentPadding + playerHeight}px`, 'important');
-      filterWrapper.setAttribute('data-padding-adjusted', 'true');
-    }
     
   } else {
     playerWrapper.style.display = 'none';
@@ -499,13 +491,6 @@ function updateMasterPlayerVisibility() {
     sidebarNav.style.removeProperty('height');
     sidebarNav.removeAttribute('data-height-adjusted');
     console.log('🗑️ Reset sidebar-nav height to Webflow default');
-    }
-    
-    // RESET FILTER WRAPPER PADDING WHEN PLAYER IS HIDDEN
-    const filterWrapper = document.querySelector('.filter-wrapper');
-    if (filterWrapper) {
-      filterWrapper.style.removeProperty('padding-bottom');
-      filterWrapper.removeAttribute('data-padding-adjusted');
     }
     
     // RESET FORM-WRAP-SPACER HEIGHT WHEN PLAYER IS HIDDEN
