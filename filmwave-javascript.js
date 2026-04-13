@@ -3480,9 +3480,40 @@ function initFilterAccordions() {
         arr.style.transform = 'rotate(0deg)';
       });
     }
-  }, true);  // Use capture phase to intercept before link click
+  }, true);
+  
+  // Elastic overscroll effect - move entire list instead of internal rubber-band
+  document.querySelectorAll('.filter-list').forEach(list => {
+    let currentTranslate = 0;
+    
+    list.addEventListener('wheel', function(e) {
+      const atTop = this.scrollTop <= 0;
+      const atBottom = this.scrollTop >= this.scrollHeight - this.clientHeight;
+      
+      if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+        e.preventDefault();
+        
+        // Calculate bounce amount (diminishing effect)
+        const bounce = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.3, 15);
+        currentTranslate += bounce;
+        currentTranslate = Math.max(-30, Math.min(30, currentTranslate));
+        
+        this.style.transform = `translateY(${-currentTranslate}px)`;
+        
+        // Snap back
+        clearTimeout(this._bounceTimeout);
+        this._bounceTimeout = setTimeout(() => {
+          this.style.transition = 'transform 0.3s ease-out';
+          this.style.transform = 'translateY(0)';
+          currentTranslate = 0;
+          setTimeout(() => {
+            this.style.transition = '';
+          }, 300);
+        }, 100);
+      }
+    }, { passive: false });
+  });
 }
-
 function initCheckboxTextColor() {
   document.querySelectorAll('.checkbox-include-wrapper input[type="checkbox"]').forEach(checkbox => {
     checkbox.addEventListener('change', function() {
