@@ -3433,7 +3433,8 @@ function applyTheme(theme) {
  */
 function initFilterAccordions() {
   document.querySelectorAll('.filter-header').forEach(header => {
-    header.addEventListener('click', function() {
+    header.addEventListener('click', function(e) {
+      e.stopPropagation();
       const content = this.nextElementSibling;
       const arrow = this.querySelector('.arrow-icon');
       const isOpen = content.classList.contains('open');
@@ -3458,6 +3459,21 @@ function initFilterAccordions() {
         if (arrow) arrow.style.transform = 'rotate(180deg)';
       }
     });
+  });
+  
+  // Close accordions when clicking outside
+  document.addEventListener('click', function(e) {
+    const clickedInsideAccordion = e.target.closest('.filter-category, .filter-header, .filter-list');
+    if (!clickedInsideAccordion) {
+      document.querySelectorAll('.filter-list').forEach(list => {
+        list.scrollTop = 0;
+        list.style.maxHeight = '0px';
+        list.classList.remove('open');
+      });
+      document.querySelectorAll('.arrow-icon').forEach(arr => {
+        arr.style.transform = 'rotate(0deg)';
+      });
+    }
   });
 }
 
