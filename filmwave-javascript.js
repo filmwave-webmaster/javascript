@@ -3731,24 +3731,10 @@ function updateSingleSelectPadding() {
       const acapFilterSingleSelect = acapWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
       
       if (instFilterSingleSelect) {
-        if (instInput.checked) {
-          instFilterSingleSelect.style.paddingRight = '11px';
-        } else {
-          // Delay padding removal until after dot fade completes (200ms)
-          setTimeout(() => {
-            instFilterSingleSelect.style.paddingRight = '';
-          }, 200);
-        }
+        instFilterSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
       }
       if (acapFilterSingleSelect) {
-        if (acapInput.checked) {
-          acapFilterSingleSelect.style.paddingRight = '11px';
-        } else {
-          // Delay padding removal until after dot fade completes (200ms)
-          setTimeout(() => {
-            acapFilterSingleSelect.style.paddingRight = '';
-          }, 200);
-        }
+        acapFilterSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
       }
     }
     
@@ -5654,23 +5640,16 @@ setTimeout(() => {
 // Fade in/out helper for filter dots
 function showFilterDot(dot) {
   if (!dot) return;
-  dot.style.transition = 'opacity 0.2s ease';
+  dot.style.transition = 'none';
   dot.style.display = 'block';
-  dot.style.opacity = '0';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      dot.style.opacity = '1';
-    });
-  });
+  dot.style.opacity = '1';
 }
 
 function hideFilterDot(dot) {
   if (!dot) return;
-  dot.style.transition = 'opacity 0.2s ease';
+  dot.style.transition = 'none';
   dot.style.opacity = '0';
-  setTimeout(() => {
-    dot.style.display = 'none';
-  }, 200);
+  dot.style.display = 'none';
 }
 
 function updateMusicTileSectionVisibility() {
@@ -5726,15 +5705,11 @@ function updateFilterDots() {
       if (filterHeaderText) filterHeaderText.style.paddingRight = '11px';
     } else {
       hideFilterDot(dot);
-      // Delay padding removal until after dot fade completes (200ms)
-      if (filterHeaderText) {
-        setTimeout(() => {
-          filterHeaderText.style.paddingRight = '';
-        }, 200);
-      }
+      if (filterHeaderText) filterHeaderText.style.paddingRight = '';
     }
   });
 }
+
 // START OF INIT BPM FILTER
 
 function initBPMFilter() {
