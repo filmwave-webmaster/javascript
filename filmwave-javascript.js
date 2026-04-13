@@ -3461,10 +3461,16 @@ function initFilterAccordions() {
     });
   });
   
-  // Close accordions when clicking outside
+// Close accordions when clicking outside
   document.addEventListener('click', function(e) {
     const clickedInsideAccordion = e.target.closest('.filter-category, .filter-header, .filter-list');
-    if (!clickedInsideAccordion) {
+    const hasOpenAccordion = document.querySelector('.filter-list.open');
+    
+    if (!clickedInsideAccordion && hasOpenAccordion) {
+      // Prevent link navigation if clicking outside while accordion is open
+      e.preventDefault();
+      e.stopPropagation();
+      
       document.querySelectorAll('.filter-list').forEach(list => {
         list.scrollTop = 0;
         list.style.maxHeight = '0px';
@@ -3474,7 +3480,7 @@ function initFilterAccordions() {
         arr.style.transform = 'rotate(0deg)';
       });
     }
-  });
+  }, true);  // Use capture phase to intercept before link click
 }
 
 function initCheckboxTextColor() {
