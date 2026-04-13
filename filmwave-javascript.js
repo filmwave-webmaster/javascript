@@ -2943,16 +2943,15 @@ function initShuffleSongs() {
     const container = document.querySelector('.music-list-wrapper');
     if (!container) return;
     
-    // If already shuffled, don't shuffle again
-    if (g.isShuffled) return;
-    
     // Get all song cards (not just visible ones for storing original order)
     const allSongCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'));
     
-    // Store original order before shuffling
-    g.originalSongOrder = allSongCards.map(card => card.dataset.songId);
-    g.originalWaveformData = [...g.waveformData];
-    g.originalAllWavesurfers = [...g.allWavesurfers];
+    // Store original order ONLY on first shuffle
+    if (!g.isShuffled) {
+      g.originalSongOrder = allSongCards.map(card => card.dataset.songId);
+      g.originalWaveformData = [...g.waveformData];
+      g.originalAllWavesurfers = [...g.allWavesurfers];
+    }
     
     // Get visible song cards for shuffling
     const songCards = allSongCards.filter(card => card.style.display !== 'none');
@@ -2994,7 +2993,7 @@ function initShuffleSongs() {
       musicTileSection.style.display = 'none';
     }
     
-    // Create shuffle tag
+    // Create shuffle tag (only if not already present)
     createShuffleTag();
     
     console.log('🔀 Songs shuffled');
@@ -3007,9 +3006,9 @@ function createShuffleTag() {
   const tagsContainer = document.querySelector('.filter-tags-container');
   if (!tagsContainer) return;
   
-  // Remove existing shuffle tag if present
+  // Don't create if already exists
   const existingTag = tagsContainer.querySelector('[data-shuffle-tag]');
-  if (existingTag) existingTag.remove();
+  if (existingTag) return;
   
   const tag = document.createElement('div');
   tag.className = 'filter-tag';
@@ -3043,11 +3042,11 @@ function undoShuffle() {
   });
   
   // Restore original waveform data and wavesurfers
-  if (g.originalWaveformData) g.waveformData = g.originalWaveformData;
-  if (g.originalAllWavesurfers) g.allWavesurfers = g.originalAllWavesurfers;
+  if (g.originalWaveformData) g.waveformData = [...g.originalWaveformData];
+  if (g.originalAllWavesurfers) g.allWavesurfers = [...g.originalAllWavesurfers];
   
   // Update filtered song IDs
-  g.filteredSongIds = g.originalSongOrder;
+  g.filteredSongIds = [...g.originalSongOrder];
   
   // Clear shuffle state
   g.isShuffled = false;
@@ -4548,11 +4547,13 @@ function toggleClearButton() {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (!clearBtn) return;
 
+  const g = window.musicPlayerPersistent;
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
   const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
   const hasBPMFilter = document.querySelector('[data-bpm-tag]') !== null;
-
+  const isShuffled = g && g.isShuffled;
+  
   // Check if we have saved filters (includes playlist filter and BPM)
   let hasSavedFilters = false;
   let hasSavedPlaylistFilter = false;
@@ -4580,7 +4581,7 @@ function toggleClearButton() {
   if (!isMusicPage && (hasSavedFilters || hasSavedPlaylistFilter || hasSavedBPMFilter)) return;
 
   // Show button if active filters OR saved playlist/BPM filter (for music page during restore)
-  const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter || 
+const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter || isShuffled ||
                      (isMusicPage && (hasSavedPlaylistFilter || hasSavedBPMFilter));
   clearBtn.style.display = shouldShow ? 'flex' : 'none';
 }
