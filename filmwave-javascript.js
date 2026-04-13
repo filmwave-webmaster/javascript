@@ -2939,12 +2939,23 @@ function initShuffleSongs() {
   shuffleBtn._shuffleInit = true;
   
   shuffleBtn.addEventListener('click', () => {
+    const g = window.musicPlayerPersistent;
     const container = document.querySelector('.music-list-wrapper');
     if (!container) return;
     
-    // Get all visible song cards (respecting current filters)
-    const songCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'))
-      .filter(card => card.style.display !== 'none');
+    // If already shuffled, don't shuffle again
+    if (g.isShuffled) return;
+    
+    // Get all song cards (not just visible ones for storing original order)
+    const allSongCards = Array.from(container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)'));
+    
+    // Store original order before shuffling
+    g.originalSongOrder = allSongCards.map(card => card.dataset.songId);
+    g.originalWaveformData = [...g.waveformData];
+    g.originalAllWavesurfers = [...g.allWavesurfers];
+    
+    // Get visible song cards for shuffling
+    const songCards = allSongCards.filter(card => card.style.display !== 'none');
     
     if (songCards.length < 2) return;
     
@@ -2958,7 +2969,6 @@ function initShuffleSongs() {
     songCards.forEach(card => container.appendChild(card));
     
     // Update filtered song IDs for next/previous navigation
-    const g = window.musicPlayerPersistent;
     g.filteredSongIds = songCards.map(card => card.dataset.songId);
     
     // Reorder allWavesurfers and waveformData to match shuffled DOM order
@@ -2975,10 +2985,80 @@ function initShuffleSongs() {
     g.waveformData = newWaveformData;
     g.allWavesurfers = newAllWavesurfers;
     
+    // Mark as shuffled
+    g.isShuffled = true;
+    
+    // Hide music tile section
+    const musicTileSection = document.querySelector('.music-tile-section');
+    if (musicTileSection) {
+      musicTileSection.style.display = 'none';
+    }
+    
+    // Create shuffle tag
+    createShuffleTag();
+    
     console.log('🔀 Songs shuffled');
   });
   
   console.log('✅ Shuffle button initialized');
+}
+
+function createShuffleTag() {
+  const tagsContainer = document.querySelector('.filter-tags-container');
+  if (!tagsContainer) return;
+  
+  // Remove existing shuffle tag if present
+  const existingTag = tagsContainer.querySelector('[data-shuffle-tag]');
+  if (existingTag) existingTag.remove();
+  
+  const tag = document.createElement('div');
+  tag.className = 'filter-tag';
+  tag.setAttribute('data-shuffle-tag', 'true');
+  tag.innerHTML = `
+    <span class="filter-tag-text">Shuffle</span>
+    <span class="filter-tag-remove x-button-style">×</span>
+  `;
+  
+  tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+    undoShuffle();
+    tag.remove();
+    toggleClearButton();
+  });
+  
+  tagsContainer.appendChild(tag);
+  toggleClearButton();
+}
+
+function undoShuffle() {
+  const g = window.musicPlayerPersistent;
+  if (!g.isShuffled || !g.originalSongOrder) return;
+  
+  const container = document.querySelector('.music-list-wrapper');
+  if (!container) return;
+  
+  // Restore original order
+  g.originalSongOrder.forEach(songId => {
+    const card = container.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
+    if (card) container.appendChild(card);
+  });
+  
+  // Restore original waveform data and wavesurfers
+  if (g.originalWaveformData) g.waveformData = g.originalWaveformData;
+  if (g.originalAllWavesurfers) g.allWavesurfers = g.originalAllWavesurfers;
+  
+  // Update filtered song IDs
+  g.filteredSongIds = g.originalSongOrder;
+  
+  // Clear shuffle state
+  g.isShuffled = false;
+  g.originalSongOrder = null;
+  g.originalWaveformData = null;
+  g.originalAllWavesurfers = null;
+  
+  // Show music tile section if no other filters active
+  updateMusicTileSectionVisibility();
+  
+  console.log('🔄 Shuffle undone, original order restored');
 }
 
 /**
@@ -4557,6 +4637,13 @@ if (playlistCheckbox) {
   const playlistTag = document.querySelector('[data-playlist-filter-tag]');
   if (playlistTag) playlistTag.remove();
 
+// Remove shuffle tag and undo shuffle
+  const shuffleTag = document.querySelector('[data-shuffle-tag]');
+  if (shuffleTag) {
+    shuffleTag.remove();
+    undoShuffle();
+  }
+
   // Clear playlist filter from localStorage
 if (typeof window.clearPlaylistFilterStorage === 'function') {
   window.clearPlaylistFilterStorage();
@@ -5547,18 +5634,19 @@ function updateMusicTileSectionVisibility() {
   const musicTileSection = document.querySelector('.music-tile-section');
   if (!musicTileSection) return;
   
+  const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked')).length > 0;
   const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
+  const isShuffled = g.isShuffled;
   
-  if (hasSearch || hasFilters || hasPlaylistFilter) {
+  if (hasSearch || hasFilters || hasPlaylistFilter || isShuffled) {
     musicTileSection.style.display = 'none';
   } else {
     musicTileSection.style.display = '';
   }
 }
-
 function updateFilterDots() {
   document.querySelectorAll('[data-filter-type]').forEach(section => {
     const filterType = section.getAttribute('data-filter-type');
