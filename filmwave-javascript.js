@@ -3731,10 +3731,24 @@ function updateSingleSelectPadding() {
       const acapFilterSingleSelect = acapWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
       
       if (instFilterSingleSelect) {
-        instFilterSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
+        if (instInput.checked) {
+          instFilterSingleSelect.style.paddingRight = '11px';
+        } else {
+          // Delay padding removal until after dot fade completes (200ms)
+          setTimeout(() => {
+            instFilterSingleSelect.style.paddingRight = '';
+          }, 200);
+        }
       }
       if (acapFilterSingleSelect) {
-        acapFilterSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
+        if (acapInput.checked) {
+          acapFilterSingleSelect.style.paddingRight = '11px';
+        } else {
+          // Delay padding removal until after dot fade completes (200ms)
+          setTimeout(() => {
+            acapFilterSingleSelect.style.paddingRight = '';
+          }, 200);
+        }
       }
     }
     
@@ -5692,14 +5706,19 @@ function updateFilterDots() {
       isActive = !!section.querySelector('[data-filter-group]:checked');
     }
     
-    // Show/hide dot and adjust header text padding
+// Show/hide dot and adjust header text padding
     const filterHeaderText = section.querySelector('.filter-header-text');
     if (isActive) {
       showFilterDot(dot);
       if (filterHeaderText) filterHeaderText.style.paddingRight = '11px';
     } else {
       hideFilterDot(dot);
-      if (filterHeaderText) filterHeaderText.style.paddingRight = '';
+      // Delay padding removal until after dot fade completes (200ms)
+      if (filterHeaderText) {
+        setTimeout(() => {
+          filterHeaderText.style.paddingRight = '';
+        }, 200);
+      }
     }
   });
 }
