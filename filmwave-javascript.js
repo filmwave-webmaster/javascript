@@ -3726,15 +3726,15 @@ function initMutualExclusion() {
       }
     }
     
-    function updateSingleSelectPadding() {
-      const instSingleSelect = instWrapper.closest('.filter-category')?.querySelector('.single-select');
-      const acapSingleSelect = acapWrapper.closest('.filter-category')?.querySelector('.single-select');
+function updateSingleSelectPadding() {
+      const instFilterSingleSelect = instWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
+      const acapFilterSingleSelect = acapWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
       
-      if (instSingleSelect) {
-        instSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
+      if (instFilterSingleSelect) {
+        instFilterSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
       }
-      if (acapSingleSelect) {
-        acapSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
+      if (acapFilterSingleSelect) {
+        acapFilterSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
       }
     }
     
