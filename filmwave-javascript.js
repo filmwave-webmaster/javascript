@@ -3488,7 +3488,7 @@ function initCheckboxTextColor() {
     checkbox.addEventListener('change', function() {
       const label = this.parentElement.querySelector('.w-form-label');
       if (label) {
-        label.style.color = this.checked ? 'var(--color-14)' : '';
+        label.style.color = this.checked ? 'var(--color-2)' : '';
       }
     });
   });
@@ -8579,7 +8579,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           // Also set label color for visual styling
           const label = wrapper.querySelector('.filter-text, .w-form-label');
           if (label) {
-            label.style.color = 'var(--color-14)';
+            label.style.color = 'var(--color-2)';
           }
           // Add Webflow checked class to checkbox icon
           const checkboxIcon = wrapper.querySelector('.w-checkbox-input');
