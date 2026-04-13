@@ -7370,7 +7370,9 @@ if (typeof barba !== 'undefined') {
     // Don't clear activeSongSource - keep using dashboard songs even after leaving
   }
      
-  if (leavingDashboard && !goingToDashboard) {
+  const goingToMusic = goingPath === '/music' || goingPath === '/music/';
+  
+  if (leavingDashboard && !goingToDashboard && !goingToMusic) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       // Reset any transitions on children so they fade with parent
@@ -7383,6 +7385,7 @@ if (typeof barba !== 'undefined') {
       sidebar.style.transition = 'opacity 0.15s ease';
       sidebar.style.opacity = '0';
       sidebar.style.visibility = 'hidden';
+      sidebar.style.display = 'none';
     }
   }
 
@@ -7647,7 +7650,9 @@ if (musicArea) {
   }      
         
 // === SIDEBAR MANAGEMENT ===
-const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/');
+const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/') || 
+                          window.location.pathname === '/music' || 
+                          window.location.pathname === '/music/';
 let sidebar = document.querySelector('.sidebar-nav');
 const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/');
 
