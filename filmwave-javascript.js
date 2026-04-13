@@ -3531,10 +3531,10 @@ function initFilterAccordions() {
       
       if (!isOpen) {
         // Force display in case Webflow has it set to none
-        filterList.style.display = 'block';
-        const actualHeight = Math.min(filterList.scrollHeight, 300);
-        filterList.style.maxHeight = actualHeight + 'px';
-        filterList.classList.add('open');
+        content.style.display = 'block';
+        const actualHeight = Math.min(content.scrollHeight, 300);
+        content.style.maxHeight = actualHeight + 'px';
+        content.classList.add('open');
         if (arrow) arrow.style.transform = 'rotate(180deg)';
       }
     });
@@ -5218,6 +5218,39 @@ checkbox.addEventListener('change', () => {
     console.log(`🎵 Playlist filter populated with ${playlists.length} playlists`);
   }
   
+  function initAccordion() {
+    if (!filterHeader) return;
+    
+    const newHeader = filterHeader.cloneNode(true);
+    filterHeader.parentNode.replaceChild(newHeader, filterHeader);
+    filterHeader = newHeader;
+    
+    newHeader.addEventListener('click', function(e) {
+      e.stopPropagation();
+      
+      const isOpen = filterList.classList.contains('open');
+      const arrow = newHeader.querySelector('.arrow-icon');
+      
+      document.querySelectorAll('.filter-list').forEach(list => {
+        list.style.maxHeight = '0px';
+        list.classList.remove('open');
+      });
+      
+      document.querySelectorAll('.arrow-icon').forEach(arr => {
+        arr.style.transform = 'rotate(0deg)';
+      });
+      
+      if (!isOpen) {
+        // Force display in case Webflow has it set to none
+        filterList.style.display = 'block';
+        const actualHeight = Math.min(filterList.scrollHeight, 300);
+        filterList.style.maxHeight = actualHeight + 'px';
+        filterList.classList.add('open');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      }
+    });
+  }
+  
  async function init() {
   // Reset populated flag for fresh init (but not during Barba transitions)
   const g = window.musicPlayerPersistent;
@@ -5230,8 +5263,7 @@ checkbox.addEventListener('change', () => {
     
     updateActivePlaylistDisplay();
     await populatePlaylistFilter();
-    // Re-init filter accordions to include dynamically populated playlist
-    initFilterAccordions();
+    initAccordion();
     
     // Keep playlist dot visible when other filters change
     document.addEventListener('change', function(e) {
