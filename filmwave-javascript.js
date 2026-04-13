@@ -4932,9 +4932,10 @@ function loadSavedPlaylistFilter() {
     }
   }
   
-  function updateActivePlaylistDisplay() {
+function updateActivePlaylistDisplay() {
   const currentActiveText = playlistSection.querySelector('.active-playlists');
   const currentDot = playlistSection.querySelector('.filter-dot-active');
+  const filterHeaderText = playlistSection.querySelector('.filter-header-text');
 
   if (selectedPlaylistId && selectedPlaylistName) {
     if (currentActiveText) {
@@ -4944,6 +4945,10 @@ function loadSavedPlaylistFilter() {
     if (currentDot) {
       showFilterDot(currentDot);
     }
+    // Add padding when filter is active
+    if (filterHeaderText) {
+      filterHeaderText.style.paddingRight = '11px';
+    }
   } else {
     if (currentActiveText) {
       currentActiveText.textContent = 'Select Playlist';
@@ -4951,6 +4956,12 @@ function loadSavedPlaylistFilter() {
     }
     if (currentDot) {
       hideFilterDot(currentDot);
+    }
+    // Delay padding removal until after dot fade completes (200ms)
+    if (filterHeaderText) {
+      setTimeout(() => {
+        filterHeaderText.style.paddingRight = '';
+      }, 200);
     }
   }
 }
