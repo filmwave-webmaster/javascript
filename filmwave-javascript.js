@@ -4587,12 +4587,14 @@ const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter 
 }
 
 function clearAllFilters() {
+  const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
   const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
+  const isShuffled = g && g.isShuffled;
   
-  if (!hasSearch && !hasFilters && !hasPlaylistFilter) {
+  if (!hasSearch && !hasFilters && !hasPlaylistFilter && !isShuffled) {
     return;
   }
   
