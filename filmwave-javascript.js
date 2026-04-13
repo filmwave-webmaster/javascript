@@ -6979,9 +6979,41 @@ function runForPath(pathname) {
 
 // Fresh load
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => runForPath(window.location.pathname));
+  document.addEventListener('DOMContentLoaded', () => {
+    runForPath(window.location.pathname);
+    
+    // Show sidebar on music page on fresh load
+    const path = window.location.pathname;
+    const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/';
+    const sidebar = document.querySelector('.sidebar-nav');
+    
+    if (shouldHaveSidebar && sidebar) {
+      sidebar.style.display = 'flex';
+      sidebar.style.visibility = 'visible';
+      sidebar.style.opacity = '1';
+    } else if (!shouldHaveSidebar && sidebar) {
+      sidebar.style.display = 'none';
+      sidebar.style.visibility = 'hidden';
+      sidebar.style.opacity = '0';
+    }
+  });
 } else {
   runForPath(window.location.pathname);
+  
+  // Show sidebar on music page on fresh load
+  const path = window.location.pathname;
+  const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/';
+  const sidebar = document.querySelector('.sidebar-nav');
+  
+  if (shouldHaveSidebar && sidebar) {
+    sidebar.style.display = 'flex';
+    sidebar.style.visibility = 'visible';
+    sidebar.style.opacity = '1';
+  } else if (!shouldHaveSidebar && sidebar) {
+    sidebar.style.display = 'none';
+    sidebar.style.visibility = 'hidden';
+    sidebar.style.opacity = '0';
+  }
 }
 
 // Barba hooks
