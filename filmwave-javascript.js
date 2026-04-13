@@ -3726,16 +3726,29 @@ function initMutualExclusion() {
       }
     }
     
+    function updateSingleSelectPadding() {
+      const instSingleSelect = instWrapper.closest('.filter-category')?.querySelector('.single-select');
+      const acapSingleSelect = acapWrapper.closest('.filter-category')?.querySelector('.single-select');
+      
+      if (instSingleSelect) {
+        instSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
+      }
+      if (acapSingleSelect) {
+        acapSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
+      }
+    }
+    
     instInput.addEventListener('change', function() {
-      if (this.checked) clearOther(acapInput, acapWrapper); 
+      if (this.checked) clearOther(acapInput, acapWrapper);
+      updateSingleSelectPadding();
     });
     
     acapInput.addEventListener('change', function() {
-      if (this.checked) clearOther(instInput, instWrapper); 
+      if (this.checked) clearOther(instInput, instWrapper);
+      updateSingleSelectPadding();
     });
   }
 }
-
 
 /**
  * ============================================================
