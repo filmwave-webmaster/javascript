@@ -3647,6 +3647,15 @@ function initDynamicTagging() {
           if (wrapper) wrapper.classList.add('is-active');
           const tag = createTag(this, labelText);
           tagsContainer.insertBefore(tag, tagsContainer.firstChild);
+          
+          // Sync db-filter-pill if matching
+          const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
+            pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
+          );
+          if (matchingPill) {
+            matchingPill.classList.add('is-active');
+            matchingPill.style.color = 'var(--color-2)';
+          }
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
           const tags = tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])');
@@ -3657,6 +3666,14 @@ tags.forEach(tag => {
   }
 });
 
+          // Sync db-filter-pill if matching
+          const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
+            pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
+          );
+          if (matchingPill) {
+            matchingPill.classList.remove('is-active');
+            matchingPill.style.color = '';
+          }
         }
       });
     });
