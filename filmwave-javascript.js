@@ -8456,6 +8456,7 @@ function initMusicPageFilterPills() {
           if (wrapper) wrapper.classList.add('is-active');
           genreCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
           pill.classList.add('is-active');
+          pill.style.color = 'var(--color-2)';
           console.log('🏷️ Music pill activated:', filterValue);
         } else if (!genreCheckbox) {
           // No matching checkbox found - create tag manually
