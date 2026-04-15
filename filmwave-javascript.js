@@ -11490,12 +11490,26 @@ if (!window.__fw_placeholders_initialized) {
     });
     
    // Clone placeholders to match playlist count - insert after the original placeholder
+    // Get card dimensions from template for sizing
+    const cardTemplate = container.querySelector('.playlist-card-template.is-template');
+    const cardStyles = cardTemplate ? getComputedStyle(cardTemplate) : null;
+    
     let insertAfter = placeholderTemplate;
     for (let i = 1; i < playlistCount; i++) {
       const clone = placeholderTemplate.cloneNode(true);
-      clone.style.display = ''; // Ensure visible
+      clone.style.display = 'block';
+      if (cardStyles) {
+        clone.style.width = cardStyles.width;
+        clone.style.minHeight = cardStyles.minHeight || '150px';
+      }
       insertAfter.after(clone);
       insertAfter = clone;
+    }
+    
+    // Also set dimensions on the original placeholder
+    if (cardStyles) {
+      placeholderTemplate.style.width = cardStyles.width;
+      placeholderTemplate.style.minHeight = cardStyles.minHeight || '150px';
     }
   }
   
