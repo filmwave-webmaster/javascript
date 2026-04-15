@@ -11505,6 +11505,9 @@ if (!window.__fw_placeholders_initialized) {
   });
   
   console.log(`📊 Generated ${playlistCount} placeholders`);
+  
+  // DEBUG: Add delay to see placeholders
+  await new Promise(resolve => setTimeout(resolve, 2000));
 }
 
 // On any render call, DO NOT re-show placeholders.
