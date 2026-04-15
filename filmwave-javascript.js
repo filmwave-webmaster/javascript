@@ -12387,11 +12387,11 @@ async function initPlaylistsPage() {
     card.remove();
   });
   
-  // Fetch playlists once
-  const playlistCount = allPlaylists ? allPlaylists.length : 0;
+  // Use cached playlist count if available to generate placeholders immediately
+  const cachedCount = PlaylistManager.playlists?.length || 0;
   
-  // Generate placeholders based on playlist count
-  if (placeholderTemplate && playlistCount > 0) {
+  // Generate placeholders based on cached playlist count
+  if (placeholderTemplate && cachedCount > 0) {
     // Remove all existing placeholders except the first one
     const existingPlaceholders = sortableContainer.querySelectorAll('.playlist-placeholder');
     existingPlaceholders.forEach((el, index) => {
@@ -12399,7 +12399,7 @@ async function initPlaylistsPage() {
     });
     
     // Clone placeholders to match playlist count
-    for (let i = 1; i < playlistCount; i++) {
+    for (let i = 1; i < cachedCount; i++) {
       const clone = placeholderTemplate.cloneNode(true);
       sortableContainer.appendChild(clone);
     }
