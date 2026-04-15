@@ -11490,9 +11490,11 @@ if (!window.__fw_placeholders_initialized) {
     });
     
     // Clone placeholders to match playlist count
+    let lastPlaceholder = placeholderTemplate;
     for (let i = 1; i < playlistCount; i++) {
       const clone = placeholderTemplate.cloneNode(true);
-      container.appendChild(clone);
+      lastPlaceholder.after(clone);
+      lastPlaceholder = clone;
     }
   }
   
