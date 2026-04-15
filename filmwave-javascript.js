@@ -12373,6 +12373,7 @@ async function initPlaylistsPage() {
   }
   
   const template = sortableContainer.querySelector('.playlist-card-template.is-template');
+  const placeholderTemplate = sortableContainer.querySelector('.playlist-placeholder');
   
   if (!template) {
     console.log('❌ No playlist template found');
@@ -12386,11 +12387,28 @@ async function initPlaylistsPage() {
     card.remove();
   });
   
-  // Show placeholders while loading
-  sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
-    el.style.display = '';
-  });
+  // Fetch playlists once
+  const playlistCount = allPlaylists ? allPlaylists.length : 0;
   
+  // Generate placeholders based on playlist count
+  if (placeholderTemplate && playlistCount > 0) {
+    // Remove all existing placeholders except the first one
+    const existingPlaceholders = sortableContainer.querySelectorAll('.playlist-placeholder');
+    existingPlaceholders.forEach((el, index) => {
+      if (index > 0) el.remove();
+    });
+    
+    // Clone placeholders to match playlist count
+    for (let i = 1; i < playlistCount; i++) {
+      const clone = placeholderTemplate.cloneNode(true);
+      sortableContainer.appendChild(clone);
+    }
+    
+    // Show all placeholders
+    sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      el.style.display = '';
+    });
+  }  
   try {
     const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
