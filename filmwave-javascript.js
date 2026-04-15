@@ -11489,16 +11489,19 @@ if (!window.__fw_placeholders_initialized) {
       if (index > 0) el.remove();
     });
     
-    // Clone placeholders to match playlist count
+   // Clone placeholders to match playlist count - insert after the original placeholder
+    let insertAfter = placeholderTemplate;
     for (let i = 1; i < playlistCount; i++) {
       const clone = placeholderTemplate.cloneNode(true);
-      container.appendChild(clone);
+      clone.style.display = ''; // Ensure visible
+      insertAfter.after(clone);
+      insertAfter = clone;
     }
   }
   
-  // Show all placeholders
+  // Show all placeholders with correct grid display
   container.querySelectorAll('.playlist-placeholder').forEach((el) => {
-    el.style.display = '';
+    el.style.display = 'block'; // or 'flex' if needed for grid
   });
   
   console.log(`📊 Generated ${playlistCount} placeholders`);
