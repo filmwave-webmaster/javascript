@@ -11472,14 +11472,36 @@ async populateAddToPlaylistModal() {
       return;
     }
 
-   // ✅ Placeholders: show once, then only ever hide (never re-show)
+   // ✅ Placeholders: generate based on playlist count, show once, then only ever hide
 if (!window.__fw_placeholders_initialized) {
   window.__fw_placeholders_initialized = true;
 
-  // Make sure they are visible on first load
-  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  // Fetch playlists to get count
+  const playlists = await this.getUserPlaylists();
+  const playlistCount = playlists?.length || 0;
+  
+  const placeholderTemplate = container.querySelector('.playlist-placeholder');
+  
+  if (placeholderTemplate && playlistCount > 0) {
+    // Remove all existing placeholders except the first one
+    const existingPlaceholders = container.querySelectorAll('.playlist-placeholder');
+    existingPlaceholders.forEach((el, index) => {
+      if (index > 0) el.remove();
+    });
+    
+    // Clone placeholders to match playlist count
+    for (let i = 1; i < playlistCount; i++) {
+      const clone = placeholderTemplate.cloneNode(true);
+      container.appendChild(clone);
+    }
+  }
+  
+  // Show all placeholders
+  container.querySelectorAll('.playlist-placeholder').forEach((el) => {
     el.style.display = '';
   });
+  
+  console.log(`📊 Generated ${playlistCount} placeholders`);
 }
 
 // On any render call, DO NOT re-show placeholders.
