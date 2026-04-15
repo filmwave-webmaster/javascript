@@ -11472,38 +11472,14 @@ async populateAddToPlaylistModal() {
       return;
     }
 
-   // ✅ Placeholders: generate based on playlist count, show once, then only ever hide
+   // ✅ Placeholders: show once, then only ever hide (never re-show)
 if (!window.__fw_placeholders_initialized) {
   window.__fw_placeholders_initialized = true;
 
-  // Fetch playlists to get count
-  const playlists = await this.getUserPlaylists();
-  const playlistCount = playlists?.length || 0;
-  
-  const placeholderTemplate = container.querySelector('.playlist-placeholder');
-  
-  if (placeholderTemplate && playlistCount > 0) {
-    // Remove all existing placeholders except the first one
-    const existingPlaceholders = container.querySelectorAll('.playlist-placeholder');
-    existingPlaceholders.forEach((el, index) => {
-      if (index > 0) el.remove();
-    });
-    
-    // Clone placeholders to match playlist count
-    let lastPlaceholder = placeholderTemplate;
-    for (let i = 1; i < playlistCount; i++) {
-      const clone = placeholderTemplate.cloneNode(true);
-      lastPlaceholder.after(clone);
-      lastPlaceholder = clone;
-    }
-  }
-  
-  // Show all placeholders
-  container.querySelectorAll('.playlist-placeholder').forEach((el) => {
+  // Make sure they are visible on first load
+  document.querySelectorAll('.playlist-placeholder').forEach((el) => {
     el.style.display = '';
   });
-  
-  console.log(`📊 Generated ${playlistCount} placeholders`);
 }
 
 // On any render call, DO NOT re-show placeholders.
@@ -12293,6 +12269,7 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
   });
 
   try {
+    const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
     
     const playlists = allPlaylists.sort((a, b) => {
@@ -12396,7 +12373,6 @@ async function initPlaylistsPage() {
   }
   
   const template = sortableContainer.querySelector('.playlist-card-template.is-template');
-  const placeholderTemplate = sortableContainer.querySelector('.playlist-placeholder');
   
   if (!template) {
     console.log('❌ No playlist template found');
@@ -12410,40 +12386,14 @@ async function initPlaylistsPage() {
     card.remove();
   });
   
-  // Fetch playlists first to get the count
-  const allPlaylists = await PlaylistManager.getUserPlaylists();
-  const playlistCount = allPlaylists?.length || 0;
+  // Show placeholders while loading
+  sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
+    el.style.display = '';
+  });
   
-  console.log('📊 Playlist count for placeholders:', playlistCount);
-  
-  // Generate placeholders based on playlist count
-  if (placeholderTemplate && playlistCount > 0) {
-    // Remove all existing placeholders except the first one
-    const existingPlaceholders = sortableContainer.querySelectorAll('.playlist-placeholder');
-    existingPlaceholders.forEach((el, index) => {
-      if (index > 0) el.remove();
-    });
-    
-    // Clone placeholders to match playlist count
-    for (let i = 1; i < playlistCount; i++) {
-      const clone = placeholderTemplate.cloneNode(true);
-      sortableContainer.appendChild(clone);
-    }
-    
-    // Show all placeholders
-    sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      el.style.display = '';
-    });
-    
-    console.log(`📊 Generated ${playlistCount} placeholders`);
-  } else {
-    // Show the single placeholder
-    sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
-      el.style.display = '';
-    });
-  }
-  
-  try {    console.log('📊 Total playlists:', allPlaylists.length);
+  try {
+    const allPlaylists = await PlaylistManager.getUserPlaylists();
+    console.log('📊 Total playlists:', allPlaylists.length);
     
     const playlists = allPlaylists.sort((a, b) => {
       if (a.position !== b.position) {
