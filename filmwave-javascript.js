@@ -12269,7 +12269,6 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
   });
 
   try {
-    const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
     
     const playlists = allPlaylists.sort((a, b) => {
@@ -12387,24 +12386,14 @@ async function initPlaylistsPage() {
     card.remove();
   });
   
-  // Use cached playlist count if available to generate placeholders immediately
-  let cachedCount = PlaylistManager.playlists?.length || 0;
+  // Fetch playlists first to get the count
+  const allPlaylists = await PlaylistManager.getUserPlaylists();
+  const playlistCount = allPlaylists?.length || 0;
   
-  // Also check sessionStorage cache if memory cache is empty
-  if (cachedCount === 0) {
-    try {
-      const cached = sessionStorage.getItem('playlistsCache');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        cachedCount = parsed.playlists?.length || 0;
-      }
-    } catch (e) {}
-  }
+  console.log('📊 Playlist count for placeholders:', playlistCount);
   
-  console.log('📊 Cached playlist count for placeholders:', cachedCount);
-  
-  // Generate placeholders based on cached playlist count
-  if (placeholderTemplate && cachedCount > 0) {
+  // Generate placeholders based on playlist count
+  if (placeholderTemplate && playlistCount > 0) {
     // Remove all existing placeholders except the first one
     const existingPlaceholders = sortableContainer.querySelectorAll('.playlist-placeholder');
     existingPlaceholders.forEach((el, index) => {
@@ -12412,7 +12401,7 @@ async function initPlaylistsPage() {
     });
     
     // Clone placeholders to match playlist count
-    for (let i = 1; i < cachedCount; i++) {
+    for (let i = 1; i < playlistCount; i++) {
       const clone = placeholderTemplate.cloneNode(true);
       sortableContainer.appendChild(clone);
     }
@@ -12422,17 +12411,15 @@ async function initPlaylistsPage() {
       el.style.display = '';
     });
     
-    console.log(`📊 Generated ${cachedCount} placeholders`);
+    console.log(`📊 Generated ${playlistCount} placeholders`);
   } else {
-    // No cache available, show the single placeholder
+    // Show the single placeholder
     sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
       el.style.display = '';
     });
   }
   
-  try {
-    const allPlaylists = await PlaylistManager.getUserPlaylists();
-    console.log('📊 Total playlists:', allPlaylists.length);
+  try {    console.log('📊 Total playlists:', allPlaylists.length);
     
     const playlists = allPlaylists.sort((a, b) => {
       if (a.position !== b.position) {
