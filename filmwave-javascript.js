@@ -8445,6 +8445,7 @@ function initMusicPageFilterPills() {
         // Filter is active - remove it
         existingTag.querySelector('.filter-tag-remove')?.click();
         pill.classList.remove('is-active');
+        pill.style.color = '';
         console.log('🏷️ Music pill deactivated:', filterValue);
       } else {
         // Filter is not active - find and check the corresponding Genre checkbox
@@ -8471,6 +8472,7 @@ function initMusicPageFilterPills() {
           tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
             tag.remove();
             pill.classList.remove('is-active');
+            pill.style.color = '';
             if (typeof applyFilters === 'function') applyFilters();
             if (typeof toggleClearButton === 'function') toggleClearButton();
           });
