@@ -12388,7 +12388,20 @@ async function initPlaylistsPage() {
   });
   
   // Use cached playlist count if available to generate placeholders immediately
-  const cachedCount = PlaylistManager.playlists?.length || 0;
+  let cachedCount = PlaylistManager.playlists?.length || 0;
+  
+  // Also check sessionStorage cache if memory cache is empty
+  if (cachedCount === 0) {
+    try {
+      const cached = sessionStorage.getItem('playlistsCache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        cachedCount = parsed.playlists?.length || 0;
+      }
+    } catch (e) {}
+  }
+  
+  console.log('📊 Cached playlist count for placeholders:', cachedCount);
   
   // Generate placeholders based on cached playlist count
   if (placeholderTemplate && cachedCount > 0) {
@@ -12408,7 +12421,15 @@ async function initPlaylistsPage() {
     sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
       el.style.display = '';
     });
-  }  
+    
+    console.log(`📊 Generated ${cachedCount} placeholders`);
+  } else {
+    // No cache available, show the single placeholder
+    sortableContainer.querySelectorAll('.playlist-placeholder').forEach((el) => {
+      el.style.display = '';
+    });
+  }
+  
   try {
     const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
