@@ -6714,17 +6714,18 @@ function showOverlay(overlay) {
     });
   }
 
-// Ensure overlay is above background and centered
-  overlay.style.zIndex = '9999';
-  overlay.style.position = 'fixed';
-  overlay.style.top = '50%';
-  overlay.style.left = '50%';
-  overlay.style.transform = 'translate(-50%, -50%)';
-
-  // Slide-in animation (accounting for centering)
-  overlay.style.transition = 'none';
-  overlay.style.opacity = '0';
-  overlay.style.transform = 'translate(-50%, calc(-50% + 20px))';
+// Ensure overlay is above background and centered with slide-in animation
+  overlay.style.cssText += `
+    z-index: 9999;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transition: none;
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 20px));
+  `;
   
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
