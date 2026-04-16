@@ -6396,8 +6396,14 @@ function toggleEditMode(container, button) {
       // Disable playlist links in edit mode
       const playlistLinks = document.querySelectorAll('.playlist-link-block');
       playlistLinks.forEach(link => {
-      link.style.pointerEvents = 'none';
-      link.style.cursor = 'grab';
+        link.style.pointerEvents = 'none';
+        link.style.cursor = 'grab';
+      });
+      
+      // Set grab cursor on playlist cards
+      const playlistCards = document.querySelectorAll('.playlist-card-template:not(.is-template)');
+      playlistCards.forEach(card => {
+        card.style.cursor = 'grab';
       });
       
       toggleEditIcons(true); // Show edit icons
@@ -6420,8 +6426,14 @@ function toggleEditMode(container, button) {
       // Re-enable playlist links
       const playlistLinks = document.querySelectorAll('.playlist-link-block');
       playlistLinks.forEach(link => {
-      link.style.pointerEvents = 'auto';
-      link.style.cursor = 'pointer';
+        link.style.pointerEvents = 'auto';
+        link.style.cursor = 'pointer';
+      });
+      
+      // Reset cursor on playlist cards
+      const playlistCards = document.querySelectorAll('.playlist-card-template:not(.is-template)');
+      playlistCards.forEach(card => {
+        card.style.cursor = '';
       });
       
       toggleEditIcons(false); // Hide edit icons
