@@ -6628,6 +6628,50 @@ function initializePlaylistOverlay() {
       console.log('✅ Playlist edit module hidden');
     });
   }
+  
+  // Handle playlist-template page edit button
+  const playlistPageEditButton = document.querySelector('.playlist-page-edit-button');
+  if (playlistPageEditButton) {
+    const newBtn = playlistPageEditButton.cloneNode(true);
+    playlistPageEditButton.parentNode.replaceChild(newBtn, playlistPageEditButton);
+    
+    newBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Get playlist ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const playlistId = urlParams.get('playlist');
+      if (!playlistId) return;
+      
+      PlaylistManager.editingPlaylistId = playlistId;
+      
+      showOverlay(module);
+      console.log('✅ Playlist edit module shown from template page');
+      
+      // Set editable values for name + description
+      PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
+        const nameInput = module.querySelector('.edit-playlist-text-field-1');
+        const descInput = module.querySelector('.edit-playlist-text-field-2');
+        
+        if (nameInput) {
+          nameInput.placeholder = '';
+          nameInput.value = playlist?.name || '';
+        }
+        if (descInput) {
+          descInput.placeholder = '';
+          descInput.value = playlist?.description || '';
+        }
+      });
+      
+      const textEl = module.querySelector('.change-cover-image .add-image-text');
+      if (textEl && !textEl.dataset.originalText) {
+        textEl.dataset.originalText = textEl.textContent;
+      }
+    });
+    
+    console.log('✅ Playlist page edit button initialized');
+  }
 
   console.log(`✅ Initialized playlist edit module with ${editIcons.length} edit icons`);
 }
@@ -10614,6 +10658,21 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         if (playlistId && confirm(`Delete "${title}"?`)) {
          this.deletePlaylist(playlistId)
   .then(async () => {
+    // If on playlist-template page, redirect to playlists page
+    if (isPlaylistTemplatePage()) {
+      hideOverlay(document.querySelector('.playlist-edit-module'));
+      this.showNotification('Playlist deleted');
+      
+      setTimeout(() => {
+        if (typeof barba !== 'undefined') {
+          barba.go('/dashboard/playlists');
+        } else {
+          window.location.href = '/dashboard/playlists';
+        }
+      }, 300);
+      return;
+    }
+    
     const container = document.querySelector('.sortable-container');
 
     if (container && card) {
@@ -10885,6 +10944,18 @@ if (card) {
           }
 
          this.showNotification('Playlist updated');
+
+          // Update playlist-template page if we're on it
+          if (isPlaylistTemplatePage()) {
+            const header = document.querySelector('.playlist-template-title');
+            if (header && updates.name) header.textContent = updates.name;
+            
+            // Update search placeholder
+            const searchInput = document.querySelector('.text-field');
+            if (searchInput && updates.name) {
+              searchInput.placeholder = `Search "${updates.name}"`;
+            }
+          }
 
 // ✅ reset cover filename text back to default BEFORE closing
 const overlayEl =
