@@ -6427,7 +6427,7 @@ function toggleEditMode(container, button) {
       toggleEditIcons(false); // Hide edit icons
 
       // Close any open playlist overlays
-      const openOverlays = document.querySelectorAll('.playlist-edit-overlay.is-visible');
+      const openOverlays = document.querySelectorAll('.playlist-edit-module.is-visible');
       openOverlays.forEach(overlay => {
       hideOverlay(overlay);
       });
@@ -6539,21 +6539,25 @@ window.addEventListener('load', () => {
 
 function initializePlaylistOverlay() {
   const editIcons = document.querySelectorAll('.playlist-edit-icon');
-  const closeButtons = document.querySelectorAll('.playlist-x-button');
-  const overlays = document.querySelectorAll('.playlist-edit-overlay');
+  const module = document.querySelector('.playlist-edit-module');
+  const wrapper = document.querySelector('.playlist-edit-module-wrapper');
+  const closeButton = document.querySelector('.playlist-edit-module .playlist-x-button');
   
   if (editIcons.length === 0) {
     console.log('ℹ️ No playlist edit icons found');
     return;
   }
-
-  function closeAllPlaylistOverlays() {
-  document.querySelectorAll('.playlist-edit-overlay.is-visible').forEach((ov) => {
-    hideOverlay(ov);
-  });
-}
   
-  // Show overlay when edit icon is clicked
+  if (!module || !wrapper) {
+    console.log('ℹ️ No playlist edit module found');
+    return;
+  }
+
+  function closePlaylistModule() {
+    hideOverlay(module);
+  }
+  
+  // Show module when edit icon is clicked
   editIcons.forEach(editIcon => {
     // Clone to remove old listeners
     const newEditIcon = editIcon.cloneNode(true);
@@ -6563,92 +6567,62 @@ function initializePlaylistOverlay() {
       e.preventDefault();
       e.stopPropagation();
       
-      // Find the associated overlay (could be parent/sibling)
-      const overlay = findAssociatedOverlay(newEditIcon);
-      
-      if (overlay) {
-  const card = newEditIcon.closest('.playlist-card-template');
-  if (!card) return;
+      const card = newEditIcon.closest('.playlist-card-template');
+      if (!card) return;
 
-  const playlistId = card.dataset.playlistId;
-  PlaylistManager.editingPlaylistId = playlistId; // ✅ fix error
+      const playlistId = card.dataset.playlistId;
+      PlaylistManager.editingPlaylistId = playlistId;
 
-  closeAllPlaylistOverlays();
-  showOverlay(overlay);
-  console.log('✅ Playlist overlay shown');
+      showOverlay(module);
+      console.log('✅ Playlist edit module shown');
 
- // Set REAL editable values for name + description (no placeholders)
-PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
-  const nameInput = overlay.querySelector('.edit-playlist-text-field-1');
-  const descInput = overlay.querySelector('.edit-playlist-text-field-2');
+      // Set REAL editable values for name + description
+      PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
+        const nameInput = module.querySelector('.edit-playlist-text-field-1');
+        const descInput = module.querySelector('.edit-playlist-text-field-2');
 
-  if (nameInput) {
-    nameInput.placeholder = '';
-    nameInput.value = playlist?.name || '';
-  }
-  if (descInput) {
-    descInput.placeholder = '';
-    descInput.value = playlist?.description || '';
-  }
-});
+        if (nameInput) {
+          nameInput.placeholder = '';
+          nameInput.value = playlist?.name || '';
+        }
+        if (descInput) {
+          descInput.placeholder = '';
+          descInput.value = playlist?.description || '';
+        }
+      });
 
-  const textEl = overlay.querySelector('.change-cover-image .add-image-text');
-  if (textEl && !textEl.dataset.originalText) {
-    textEl.dataset.originalText = textEl.textContent;
-  }
-}
+      const textEl = module.querySelector('.change-cover-image .add-image-text');
+      if (textEl && !textEl.dataset.originalText) {
+        textEl.dataset.originalText = textEl.textContent;
+      }
     });
   });
   
-  // Hide overlay when X button is clicked
-  closeButtons.forEach(closeBtn => {
-    const newCloseBtn = closeBtn.cloneNode(true);
-    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+  // Hide module when X button is clicked
+  if (closeButton) {
+    const newCloseBtn = closeButton.cloneNode(true);
+    closeButton.parentNode.replaceChild(newCloseBtn, closeButton);
     
     newCloseBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
       
-      // Find the overlay (usually a parent)
-      const overlay = newCloseBtn.closest('.playlist-edit-overlay');
-      
-      if (overlay) {
-  const textEl = overlay.querySelector('.change-cover-image .add-image-text');
-  if (textEl && textEl.dataset.originalText) {
-    textEl.textContent = textEl.dataset.originalText;
-  }
+      const textEl = module.querySelector('.change-cover-image .add-image-text');
+      if (textEl && textEl.dataset.originalText) {
+        textEl.textContent = textEl.dataset.originalText;
+      }
 
-  hideOverlay(overlay);
-  console.log('✅ Playlist overlay hidden');
-}
+      closePlaylistModule();
+      console.log('✅ Playlist edit module hidden');
     });
-  });
+  }
 
-  console.log(`✅ Initialized ${editIcons.length} playlist overlays`);
+  console.log(`✅ Initialized playlist edit module with ${editIcons.length} edit icons`);
 }
 
-// Find the associated overlay for an edit icon
-function findAssociatedOverlay(editIcon) {
-  // Try to find overlay in same parent
-  let overlay = editIcon.parentElement.querySelector('.playlist-edit-overlay');
-  
-  // If not found, try siblings
-  if (!overlay) {
-    overlay = editIcon.nextElementSibling;
-    if (overlay && !overlay.classList.contains('playlist-edit-overlay')) {
-      overlay = null;
-    }
-  }
-  
-  // If still not found, try closest parent container
-  if (!overlay) {
-    const container = editIcon.closest('.playlist-item, .playlist-card, .playlist-container');
-    if (container) {
-      overlay = container.querySelector('.playlist-edit-overlay');
-    }
-  }
-  
-  return overlay;
+// Find the playlist edit module (now global, not per-card)
+function findPlaylistEditModule() {
+  return document.querySelector('.playlist-edit-module');
 }
 
 function showOverlay(overlay) {
@@ -6656,27 +6630,19 @@ function showOverlay(overlay) {
     clearTimeout(overlay.__fwHideTimer);
     overlay.__fwHideTimer = null;
   }
-  // ✅ undo forced-close inline styles so overlay can open again
-  const wrappersToReset = [
-    overlay,
-    overlay?.closest('.playlist-edit-overlay-wrapper'),
-    overlay?.closest('.playlist-edit-module-wrapper'),
-    overlay?.closest('.playlist-edit-modal-wrapper'),
-    overlay?.closest('.w-modal'),
-    overlay?.closest('.w-lightbox-backdrop')
-  ].filter(Boolean);
-
-  wrappersToReset.forEach((el) => {
-    el.style.display = '';
-    el.style.opacity = '';
-    el.style.pointerEvents = '';
-  });
+  
+  // Show the wrapper
+  const wrapper = overlay.closest('.playlist-edit-module-wrapper');
+  if (wrapper) {
+    wrapper.style.display = 'flex';
+    wrapper.style.opacity = '';
+    wrapper.style.pointerEvents = '';
+  }
 
   // Set display first
-  overlay.style.display = 'flex'; // or 'block' depending on your layout
+  overlay.style.display = 'flex';
 
-  const overlayEl = document.querySelector('.playlist-edit-overlay');
-  const textEl = overlayEl?.querySelector('.change-cover-image .add-image-text');
+  const textEl = overlay.querySelector('.change-cover-image .add-image-text');
   if (textEl && !textEl.dataset.originalText) {
     textEl.dataset.originalText = textEl.textContent;
   }
@@ -6714,31 +6680,19 @@ function showOverlay(overlay) {
     });
   }
 
-// Move overlay to body for proper fixed positioning
-  if (overlay.parentElement !== document.body) {
-    overlay._originalParent = overlay.parentElement;
-    overlay._originalNextSibling = overlay.nextSibling;
-    document.body.appendChild(overlay);
-  }
+  // Ensure overlay is above background
+  overlay.style.zIndex = '9999';
 
-  // Ensure overlay is above background and centered with slide-in animation
-  overlay.style.cssText += `
-    z-index: 9999;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    right: auto;
-    bottom: auto;
-    transition: none;
-    opacity: 0;
-    transform: translate(-50%, calc(-50% + 20px));
-  `;
+  // Slide-in animation
+  overlay.style.transition = 'none';
+  overlay.style.opacity = '0';
+  overlay.style.transform = 'translateY(20px)';
   
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
       overlay.style.opacity = '1';
-      overlay.style.transform = 'translate(-50%, -50%)';
+      overlay.style.transform = 'translateY(0)';
     });
   });
 
@@ -6757,8 +6711,8 @@ function hideOverlay(overlay) {
   // Slide-out animation
   overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
   overlay.style.opacity = '0';
-  overlay.style.transform = 'translate(-50%, calc(-50% + 20px))';
-  
+  overlay.style.transform = 'translateY(20px)';
+
   // Fade out background overlay
   const bgOverlay = document.getElementById('playlist-edit-bg-overlay');
   if (bgOverlay) {
@@ -6771,22 +6725,17 @@ function hideOverlay(overlay) {
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
 
-// Wait for transition to complete before hiding
+  // Wait for transition to complete before hiding
   overlay.__fwHideTimer = setTimeout(() => {
     overlay.style.display = 'none';
     overlay.style.transition = '';
     overlay.style.transform = '';
     overlay.__fwHideTimer = null;
     
-    // Move overlay back to original parent
-    if (overlay._originalParent) {
-      if (overlay._originalNextSibling) {
-        overlay._originalParent.insertBefore(overlay, overlay._originalNextSibling);
-      } else {
-        overlay._originalParent.appendChild(overlay);
-      }
-      overlay._originalParent = null;
-      overlay._originalNextSibling = null;
+    // Hide the wrapper too
+    const wrapper = overlay.closest('.playlist-edit-module-wrapper');
+    if (wrapper) {
+      wrapper.style.display = 'none';
     }
   }, 300); // Match the CSS transition duration
 }
@@ -10740,7 +10689,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         this.pendingCoverImageBase64 = null;
         this.editingPlaylistId = null;
 
-        const overlay = document.querySelector('.playlist-edit-overlay');
+        const overlay = document.querySelector('.playlist-edit-module');
         const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
 
         if (textEl) {
@@ -10854,7 +10803,7 @@ if (descInput) {
           saveBtn.style.opacity = '0.7';
         }
 
-       const overlay = e.target.closest('.playlist-edit-overlay');
+       const overlay = e.target.closest('.playlist-edit-module');
 const nameInput = overlay?.querySelector('.edit-playlist-text-field-1');
 const descInput = overlay?.querySelector('.edit-playlist-text-field-2');
 
@@ -10916,7 +10865,7 @@ if (card) {
 
           this.pendingCoverImageBase64 = null;
 
-          const overlay = document.querySelector('.playlist-edit-overlay');
+          const overlay = document.querySelector('.playlist-edit-module');
           const textEl = overlay?.querySelector('.change-cover-image .add-image-text');
 
           if (textEl) {
@@ -10927,8 +10876,8 @@ if (card) {
 
 // ✅ reset cover filename text back to default BEFORE closing
 const overlayEl =
-  e.target.closest('.playlist-edit-overlay') ||
-  document.querySelector('.playlist-edit-overlay');
+  e.target.closest('.playlist-edit-module') ||
+  document.querySelector('.playlist-edit-module');
 
 const textElAfterSave = overlayEl?.querySelector('.change-cover-image .add-image-text');
 if (textElAfterSave) {
@@ -10939,7 +10888,7 @@ if (textElAfterSave) {
 // FORCE CLOSE EDIT OVERLAY
 const wrappersToHide = [
   overlayEl,
-  overlayEl?.closest('.playlist-edit-overlay-wrapper'),
+  overlayEl?.closest('.playlist-edit-module-wrapper'),
   overlayEl?.closest('.playlist-edit-module-wrapper'),
   overlayEl?.closest('.playlist-edit-modal-wrapper'),
   overlayEl?.closest('.w-modal'),
