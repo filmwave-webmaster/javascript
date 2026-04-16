@@ -10885,22 +10885,10 @@ if (textElAfterSave) {
     textElAfterSave.dataset.originalText || textElAfterSave.textContent;
 }
 
-// FORCE CLOSE EDIT OVERLAY
-const wrappersToHide = [
-  overlayEl,
-  overlayEl?.closest('.playlist-edit-module-wrapper'),
-  overlayEl?.closest('.playlist-edit-module-wrapper'),
-  overlayEl?.closest('.playlist-edit-modal-wrapper'),
-  overlayEl?.closest('.w-modal'),
-  overlayEl?.closest('.w-lightbox-backdrop')
-].filter(Boolean);
-
-wrappersToHide.forEach((el) => {
-  el.style.display = 'none';
-  el.style.opacity = '0';
-  el.style.pointerEvents = 'none';
-  el.classList.remove('open', 'is-open', 'is-active', 'active', 'w--open');
-});
+// CLOSE EDIT MODULE using hideOverlay
+if (overlayEl) {
+  hideOverlay(overlayEl);
+}
 
 this.editingPlaylistId = null;
 this.pendingCoverImageBase64 = null;
