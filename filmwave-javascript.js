@@ -6696,10 +6696,15 @@ function showOverlay(overlay) {
       bottom: 0;
       background-color: rgba(0, 0, 0, 0);
       z-index: 9998;
-      pointer-events: none;
+      cursor: pointer;
       transition: background-color 0.25s ease;
     `;
     document.body.appendChild(bgOverlay);
+    
+    // Click to close
+    bgOverlay.addEventListener('click', () => {
+      hideOverlay(overlay);
+    });
     
     // Trigger fade in
     requestAnimationFrame(() => {
@@ -6708,6 +6713,9 @@ function showOverlay(overlay) {
       });
     });
   }
+
+  // Ensure overlay is above background
+  overlay.style.zIndex = '9999';
 
   // Slide-in animation
   overlay.style.transition = 'none';
