@@ -6714,19 +6714,23 @@ function showOverlay(overlay) {
     });
   }
 
-  // Ensure overlay is above background
+// Ensure overlay is above background and centered
   overlay.style.zIndex = '9999';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '50%';
+  overlay.style.left = '50%';
+  overlay.style.transform = 'translate(-50%, -50%)';
 
-  // Slide-in animation
+  // Slide-in animation (accounting for centering)
   overlay.style.transition = 'none';
   overlay.style.opacity = '0';
-  overlay.style.transform = 'translateY(20px)';
+  overlay.style.transform = 'translate(-50%, calc(-50% + 20px))';
   
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
       overlay.style.opacity = '1';
-      overlay.style.transform = 'translateY(0)';
+      overlay.style.transform = 'translate(-50%, -50%)';
     });
   });
 
@@ -6745,8 +6749,8 @@ function hideOverlay(overlay) {
   // Slide-out animation
   overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
   overlay.style.opacity = '0';
-  overlay.style.transform = 'translateY(20px)';
-
+  overlay.style.transform = 'translate(-50%, calc(-50% + 20px))';
+  
   // Fade out background overlay
   const bgOverlay = document.getElementById('playlist-edit-bg-overlay');
   if (bgOverlay) {
