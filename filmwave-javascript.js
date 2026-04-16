@@ -6714,7 +6714,14 @@ function showOverlay(overlay) {
     });
   }
 
-// Ensure overlay is above background and centered with slide-in animation
+// Move overlay to body for proper fixed positioning
+  if (overlay.parentElement !== document.body) {
+    overlay._originalParent = overlay.parentElement;
+    overlay._originalNextSibling = overlay.nextSibling;
+    document.body.appendChild(overlay);
+  }
+
+  // Ensure overlay is above background and centered with slide-in animation
   overlay.style.cssText += `
     z-index: 9999;
     position: fixed;
@@ -6764,14 +6771,26 @@ function hideOverlay(overlay) {
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
 
-  // Wait for transition to complete before hiding
+// Wait for transition to complete before hiding
   overlay.__fwHideTimer = setTimeout(() => {
     overlay.style.display = 'none';
     overlay.style.transition = '';
     overlay.style.transform = '';
     overlay.__fwHideTimer = null;
+    
+    // Move overlay back to original parent
+    if (overlay._originalParent) {
+      if (overlay._originalNextSibling) {
+        overlay._originalParent.insertBefore(overlay, overlay._originalNextSibling);
+      } else {
+        overlay._originalParent.appendChild(overlay);
+      }
+      overlay._originalParent = null;
+      overlay._originalNextSibling = null;
+    }
   }, 300); // Match the CSS transition duration
 }
+
 // Initialize on page load
 window.addEventListener('load', () => {
   initializePlaylistOverlay();
