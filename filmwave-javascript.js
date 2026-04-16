@@ -2931,14 +2931,15 @@ function displaySongs(songs) {
  * ============================================================
  */
 function initShuffleSongs() {
-  const shuffleBtn = document.querySelector('.shuffle-songs');
-  if (!shuffleBtn) return;
+  const shuffleBtns = document.querySelectorAll('.shuffle-songs');
+  if (!shuffleBtns.length) return;
   
-  // Prevent multiple initializations
-  if (shuffleBtn._shuffleInit) return;
-  shuffleBtn._shuffleInit = true;
-  
-  shuffleBtn.addEventListener('click', () => {
+  shuffleBtns.forEach(shuffleBtn => {
+    // Prevent multiple initializations
+    if (shuffleBtn._shuffleInit) return;
+    shuffleBtn._shuffleInit = true;
+    
+    shuffleBtn.addEventListener('click', () => {
     const g = window.musicPlayerPersistent;
     const container = document.querySelector('.music-list-wrapper');
     if (!container) return;
@@ -2999,7 +3000,9 @@ function initShuffleSongs() {
     console.log('🔀 Songs shuffled');
   });
   
-  console.log('✅ Shuffle button initialized');
+   }); // end forEach
+  
+  console.log('✅ Shuffle buttons initialized');
 }
 
 function createShuffleTag() {
