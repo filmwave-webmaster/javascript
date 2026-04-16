@@ -6653,9 +6653,9 @@ function findAssociatedOverlay(editIcon) {
 
 function showOverlay(overlay) {
   if (overlay.__fwHideTimer) {
-  clearTimeout(overlay.__fwHideTimer);
-  overlay.__fwHideTimer = null;
-}
+    clearTimeout(overlay.__fwHideTimer);
+    overlay.__fwHideTimer = null;
+  }
   // ✅ undo forced-close inline styles so overlay can open again
   const wrappersToReset = [
     overlay,
@@ -6684,6 +6684,44 @@ function showOverlay(overlay) {
   // Force reflow to ensure display is applied
   overlay.offsetHeight;
 
+  // Create background overlay
+  if (!document.getElementById('playlist-edit-bg-overlay')) {
+    const bgOverlay = document.createElement('div');
+    bgOverlay.id = 'playlist-edit-bg-overlay';
+    bgOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0);
+      z-index: 9998;
+      pointer-events: none;
+      transition: background-color 0.25s ease;
+    `;
+    document.body.appendChild(bgOverlay);
+    
+    // Trigger fade in
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bgOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      });
+    });
+  }
+
+  // Slide-in animation
+  overlay.style.transition = 'none';
+  overlay.style.opacity = '0';
+  overlay.style.transform = 'translateY(20px)';
+  
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      overlay.style.opacity = '1';
+      overlay.style.transform = 'translateY(0)';
+    });
+  });
+
   // Add visible class for fade in
   overlay.classList.add('is-visible');
 }
@@ -6696,16 +6734,31 @@ function hideOverlay(overlay) {
     overlay.__fwHideTimer = null;
   }
 
+  // Slide-out animation
+  overlay.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+  overlay.style.opacity = '0';
+  overlay.style.transform = 'translateY(20px)';
+
+  // Fade out background overlay
+  const bgOverlay = document.getElementById('playlist-edit-bg-overlay');
+  if (bgOverlay) {
+    bgOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+    setTimeout(() => {
+      bgOverlay.remove();
+    }, 250);
+  }
+
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
 
   // Wait for transition to complete before hiding
   overlay.__fwHideTimer = setTimeout(() => {
     overlay.style.display = 'none';
+    overlay.style.transition = '';
+    overlay.style.transform = '';
     overlay.__fwHideTimer = null;
   }, 300); // Match the CSS transition duration
 }
-
 // Initialize on page load
 window.addEventListener('load', () => {
   initializePlaylistOverlay();
