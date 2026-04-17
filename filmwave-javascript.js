@@ -6553,12 +6553,63 @@ function initializePlaylistOverlay() {
   const editIcons = document.querySelectorAll('.playlist-edit-icon');
   const module = document.querySelector('.playlist-edit-module');
   const wrapper = document.querySelector('.playlist-edit-module-wrapper');
-  const closeButton = document.querySelector('.playlist-edit-module .playlist-x-button');
   
   if (!module || !wrapper) {
     console.log('ℹ️ No playlist edit module found');
     return;
   }
+  
+  // Prevent re-initializing module buttons (they're already cloned)
+  if (module._buttonsInitialized) {
+    // Only re-initialize edit icons for new playlist cards
+    if (editIcons.length > 0) {
+      editIcons.forEach(editIcon => {
+        if (editIcon._initialized) return;
+        editIcon._initialized = true;
+        
+        const newEditIcon = editIcon.cloneNode(true);
+        newEditIcon._initialized = true;
+        editIcon.parentNode.replaceChild(newEditIcon, editIcon);
+        
+        newEditIcon.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const card = newEditIcon.closest('.playlist-card-template');
+          if (!card) return;
+
+          const playlistId = card.dataset.playlistId;
+          PlaylistManager.editingPlaylistId = playlistId;
+
+          showOverlay(module);
+          console.log('✅ Playlist edit module shown');
+
+          PlaylistManager.getPlaylistById(playlistId).then((playlist) => {
+            const nameInput = module.querySelector('.edit-playlist-text-field-1');
+            const descInput = module.querySelector('.edit-playlist-text-field-2');
+
+            if (nameInput) {
+              nameInput.placeholder = '';
+              nameInput.value = playlist?.name || '';
+            }
+            if (descInput) {
+              descInput.placeholder = '';
+              descInput.value = playlist?.description || '';
+            }
+          });
+
+          const textEl = module.querySelector('.change-cover-image .add-image-text');
+          if (textEl && !textEl.dataset.originalText) {
+            textEl.dataset.originalText = textEl.textContent;
+          }
+        });
+      });
+      console.log(`✅ Initialized ${editIcons.length} new playlist edit icons`);
+    }
+    return;
+  }
+  
+  module._buttonsInitialized = true;
   
   // Handle playlist-template page edit button (before editIcons check)
   const playlistPageEditButton = document.querySelector('.playlist-page-edit-button');
