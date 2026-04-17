@@ -6604,6 +6604,15 @@ function initializePlaylistOverlay() {
     console.log('✅ Playlist page edit button initialized');
   }
   
+  // Prevent save button link navigation
+  const saveButton = document.querySelector('.playlist-save-button');
+  if (saveButton) {
+    saveButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }, true); // Use capture phase to run first
+  }
+  
   if (editIcons.length === 0) {
     console.log('ℹ️ No playlist edit icons found');
     return;
