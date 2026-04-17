@@ -6620,10 +6620,6 @@ function initializePlaylistOverlay() {
   if (playlistPageEditButton) {
     const newBtn = playlistPageEditButton.cloneNode(true);
     playlistPageEditButton.parentNode.replaceChild(newBtn, playlistPageEditButton);
-    
-    function handleEditButtonClick(e) {
-      e.preventDefault();
-      e.stopPropagation();
       
       let editButtonHandled = false;
     
