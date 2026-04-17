@@ -60,13 +60,12 @@
 // Apply cached member name immediately on load
 (function() {
   const name = localStorage.getItem('fw_member_name');
-  if (!name) return;
+  console.log('IIFE running, name:', name);
   const el = document.querySelector('.user-name-dropdown');
-  if (!el) return;
-  
+  console.log('IIFE element found:', el);
+  if (!name || !el) return;
   el.textContent = name;
 
-  // Watch for Memberstack clearing the element and immediately re-apply
   const observer = new MutationObserver(() => {
     if (!el.textContent.trim()) el.textContent = name;
   });
