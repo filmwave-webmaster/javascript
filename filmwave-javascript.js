@@ -6604,13 +6604,104 @@ function initializePlaylistOverlay() {
     console.log('✅ Playlist page edit button initialized');
   }
   
-  // Prevent save button link navigation
-  const saveButton = document.querySelector('.playlist-save-button');
+  // Direct save button handler (needed because it's an <a> tag)
+  const saveButton = module.querySelector('.playlist-save-button');
   if (saveButton) {
-    saveButton.addEventListener('click', function(e) {
+    const newSaveBtn = saveButton.cloneNode(true);
+    saveButton.parentNode.replaceChild(newSaveBtn, saveButton);
+    
+    newSaveBtn.addEventListener('click', async function(e) {
       e.preventDefault();
       e.stopPropagation();
-    }, true); // Use capture phase to run first
+      
+      const playlistId = PlaylistManager.editingPlaylistId;
+      if (!playlistId) {
+        console.warn('❌ No editingPlaylistId set');
+        return;
+      }
+      
+      const originalText = newSaveBtn.textContent;
+      newSaveBtn.textContent = 'Saving...';
+      newSaveBtn.style.pointerEvents = 'none';
+      newSaveBtn.style.opacity = '0.7';
+      
+      const nameInput = module.querySelector('.edit-playlist-text-field-1');
+      const descInput = module.querySelector('.edit-playlist-text-field-2');
+      
+      const existing = await PlaylistManager.getPlaylistById(playlistId);
+      
+      const updates = {
+        name: nameInput?.value?.trim() || existing?.name || '',
+        description: descInput?.value?.trim() || existing?.description || '',
+        cover_image_url: existing?.cover_image_url || '',
+      };
+      
+      const newCover = PlaylistManager.pendingCoverImageBase64;
+      if (newCover) updates.cover_image_url = newCover;
+      
+      try {
+        await PlaylistManager.updatePlaylist(playlistId, updates);
+        PlaylistManager.pendingCoverImageBase64 = null;
+        
+        // Update card on playlists page if it exists
+        const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
+        if (card) {
+          const titleEl = card.querySelector('.playlist-title');
+          const detailEl = card.querySelector('.playlist-detail');
+          if (titleEl && updates.name) titleEl.textContent = updates.name;
+          if (detailEl) detailEl.textContent = updates.description || '';
+        }
+        
+        // Update playlist-template page if we're on it
+        if (isPlaylistTemplatePage()) {
+          const header = document.querySelector('.playlist-template-title');
+          if (header && updates.name) header.textContent = updates.name;
+          
+          const searchInput = document.querySelector('.text-field');
+          if (searchInput && updates.name) {
+            searchInput.placeholder = `Search "${updates.name}"`;
+          }
+        }
+        
+        await PlaylistManager.getUserPlaylists(true);
+        invalidateAddToPlaylistDropdownCache();
+        
+        PlaylistManager.showNotification('Playlist updated');
+        hideOverlay(module);
+        
+      } catch (err) {
+        console.error('Error saving playlist:', err);
+        PlaylistManager.showNotification('Error saving playlist', 'error');
+      } finally {
+        newSaveBtn.textContent = originalText || 'Save';
+        newSaveBtn.style.pointerEvents = '';
+        newSaveBtn.style.opacity = '';
+      }
+    });
+    
+    console.log('✅ Playlist save button initialized');
+  }
+  
+  // Direct close button handler
+  const closeBtn = module.querySelector('.playlist-x-button');
+  if (closeBtn) {
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    
+    newCloseBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const textEl = module.querySelector('.change-cover-image .add-image-text');
+      if (textEl && textEl.dataset.originalText) {
+        textEl.textContent = textEl.dataset.originalText;
+      }
+      
+      hideOverlay(module);
+      console.log('✅ Playlist edit module closed');
+    });
+    
+    console.log('✅ Playlist close button initialized');
   }
   
   if (editIcons.length === 0) {
