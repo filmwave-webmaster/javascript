@@ -4752,8 +4752,15 @@ function initSearchAndFilters() {
         .filter(([key]) => !excludeFields.includes(key))
         .map(([, v]) => String(v))
         .join(' ')
-        .toLowerCase();
-    const matchesSearch = keywords.every(k => allText.includes(k));
+        .toLowerCase()
+        .replace(/-/g, ' ');
+    const matchesSearch = keywords.every(k => {
+      const normalized = k.replace(/-/g, ' ');
+      const singular = normalized.replace(/s$/, '');
+      return allText.includes(normalized) ||
+             allText.includes(singular) ||
+             allText.includes(normalized + 's');
+    });
     
     const matchesAttributes = selectedFilters.every(filter => {
       let recVal = fields[filter.group];
@@ -9252,8 +9259,20 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       
       const visibleIds = g.MASTER_DATA.filter(record => {
         const fields = record.fields;
-        const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
-        const matchesSearch = keywords.every(k => allText.includes(k));
+        const excludeFields = ['R2 Audio URL', 'Stems'];
+        const allText = Object.entries(fields)
+          .filter(([key]) => !excludeFields.includes(key))
+          .map(([, v]) => String(v))
+          .join(' ')
+          .toLowerCase()
+          .replace(/-/g, ' ');
+        const matchesSearch = keywords.every(k => {
+          const normalized = k.replace(/-/g, ' ');
+          const singular = normalized.replace(/s$/, '');
+          return allText.includes(normalized) ||
+                 allText.includes(singular) ||
+                 allText.includes(normalized + 's');
+        });
         
         if (!matchesSearch) return false;
         if (selectedFilters.length === 0) return true;
