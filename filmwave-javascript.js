@@ -7749,37 +7749,6 @@ window.addEventListener('load', () => {
   }, 500);
 });
 
-// Populate user name in nav dropdown
-async function initUserNameDropdown() {
-  const el = document.querySelector('.user-name-dropdown');
-  if (!el) return;
-
-  function applyName(name) {
-    if (name && !el.textContent.trim()) el.textContent = name;
-  }
-
-  // Show cached name immediately
-  const cached = localStorage.getItem('fw_member_name');
-  if (cached) el.textContent = cached;
-
-  try {
-    const member = await window.$memberstackDom.getCurrentMember();
-    if (member?.data) {
-      const firstName = member.data.customFields?.['first-name'];
-      const lastName = member.data.customFields?.['last-name'];
-      const fullName = [firstName, lastName].filter(Boolean).join(' ');
-      if (fullName) {
-        el.textContent = fullName;
-        localStorage.setItem('fw_member_name', fullName);
-      }
-    } else {
-      localStorage.removeItem('fw_member_name');
-    }
-  } catch (e) {
-    console.warn('Could not load member name:', e);
-  }
-}
-
 // Shared function to initialize all Memberstack handlers
 function initializeMemberstackHandlers() {
   console.log('🔧 Initializing Memberstack handlers...');
