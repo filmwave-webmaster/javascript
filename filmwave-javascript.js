@@ -7658,6 +7658,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
 barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
+    initUserNameDropdown();
     
     // Re-initialize audio preloader if on music page
     const path = data?.next?.url?.path || '';
