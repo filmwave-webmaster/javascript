@@ -1,4 +1,12 @@
-  /**
+// Apply cached member name immediately on load
+(function() {
+  const name = localStorage.getItem('fw_member_name');
+  if (!name) return;
+  const el = document.querySelector('.user-name-dropdown');
+  if (el) el.textContent = name;
+})();
+
+/**
  * ============================================================
  * FILMWAVE MUSIC PLATFORM - VERSION 50
  * Updated: February 22, 2026
