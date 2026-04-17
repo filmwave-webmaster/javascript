@@ -4747,7 +4747,12 @@ function initSearchAndFilters() {
   
   const visibleIds = g.MASTER_DATA.filter(record => {
     const fields = record.fields;
-    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+    const excludeFields = ['R2 Audio URL', 'Stems'];
+    const allText = Object.entries(fields)
+        .filter(([key]) => !excludeFields.includes(key))
+        .map(([, v]) => String(v))
+        .join(' ')
+        .toLowerCase();
     const matchesSearch = keywords.every(k => allText.includes(k));
     
     const matchesAttributes = selectedFilters.every(filter => {
