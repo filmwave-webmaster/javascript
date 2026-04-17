@@ -6835,17 +6835,16 @@ function initializePlaylistOverlay() {
     console.log('✅ Playlist delete button initialized');
   }
   
-  // Direct change cover image handler
+  // Direct change cover image handler (no cloning - use capture phase)
   const changeCoverBtn = module.querySelector('.change-cover-image');
-  if (changeCoverBtn) {
-    const newCoverBtn = changeCoverBtn.cloneNode(true);
-    changeCoverBtn.parentNode.replaceChild(newCoverBtn, changeCoverBtn);
+  if (changeCoverBtn && !changeCoverBtn._coverHandlerAttached) {
+    changeCoverBtn._coverHandlerAttached = true;
     
-    newCoverBtn.addEventListener('click', function(e) {
+    changeCoverBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
       
-      const textEl = newCoverBtn.querySelector('.add-image-text');
+      const textEl = changeCoverBtn.querySelector('.add-image-text');
       
       if (textEl && !textEl.dataset.originalText) {
         textEl.dataset.originalText = textEl.textContent;
@@ -6868,7 +6867,7 @@ function initializePlaylistOverlay() {
           if (textEl) textEl.textContent = file?.name || 'Image selected';
         },
       });
-    });
+    }, true); // capture phase
     
     console.log('✅ Playlist change cover button initialized');
   }
