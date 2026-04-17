@@ -4894,10 +4894,19 @@ function expandSearchQuery(query) {
   // Original keywords (for direct matching)
   const originalKeywords = normalizedQuery.split(/\s+/).filter(k => k.length > 0);
   
-  // Apply typo correction to each word
+  // Apply typo correction and context mapping to each word
   originalKeywords.forEach(word => {
     const corrected = correctTypo(word);
     expandedTerms.add(corrected);
+    
+    // Check music context map
+    if (MUSIC_CONTEXT_MAP[corrected]) {
+      MUSIC_CONTEXT_MAP[corrected].forEach(term => expandedTerms.add(term));
+    }
+    // Also check original word in case typo correction changed it
+    if (MUSIC_CONTEXT_MAP[word]) {
+      MUSIC_CONTEXT_MAP[word].forEach(term => expandedTerms.add(term));
+    }
   });
   
   // Use compromise.js for NLP if available
@@ -4907,13 +4916,25 @@ function expandSearchQuery(query) {
     // Extract nouns (fantasy, movie, music)
     doc.nouns().forEach(n => {
       const word = n.text('normal');
-      if (word.length > 2) expandedTerms.add(correctTypo(word));
+      if (word.length > 2) {
+        const corrected = correctTypo(word);
+        expandedTerms.add(corrected);
+        if (MUSIC_CONTEXT_MAP[corrected]) {
+          MUSIC_CONTEXT_MAP[corrected].forEach(term => expandedTerms.add(term));
+        }
+      }
     });
     
     // Extract adjectives (happy, dark, epic)
     doc.adjectives().forEach(a => {
       const word = a.text('normal');
-      if (word.length > 2) expandedTerms.add(correctTypo(word));
+      if (word.length > 2) {
+        const corrected = correctTypo(word);
+        expandedTerms.add(corrected);
+        if (MUSIC_CONTEXT_MAP[corrected]) {
+          MUSIC_CONTEXT_MAP[corrected].forEach(term => expandedTerms.add(term));
+        }
+      }
     });
     
     // Get root/lemma forms (running → run, movies → movie)
@@ -4921,7 +4942,13 @@ function expandSearchQuery(query) {
     doc.nouns().toSingular();
     const normalized = doc.text('normal');
     normalized.split(/\s+/).forEach(word => {
-      if (word.length > 2) expandedTerms.add(correctTypo(word));
+      if (word.length > 2) {
+        const corrected = correctTypo(word);
+        expandedTerms.add(corrected);
+        if (MUSIC_CONTEXT_MAP[corrected]) {
+          MUSIC_CONTEXT_MAP[corrected].forEach(term => expandedTerms.add(term));
+        }
+      }
     });
     
     // Handle hyphenated words (hip-hop → hip hop, sci-fi → sci fi)
@@ -4932,6 +4959,10 @@ function expandSearchQuery(query) {
         word.split('-').forEach(part => {
           if (part.length > 2) expandedTerms.add(part); // Add: hip, hop
         });
+        // Check context map for hyphenated word
+        if (MUSIC_CONTEXT_MAP[word]) {
+          MUSIC_CONTEXT_MAP[word].forEach(term => expandedTerms.add(term));
+        }
       }
     });
   }
