@@ -6704,6 +6704,75 @@ function initializePlaylistOverlay() {
     console.log('✅ Playlist close button initialized');
   }
   
+  // Direct delete button handler
+  const deleteBtn = module.querySelector('.playlist-delete-button');
+  if (deleteBtn) {
+    const newDeleteBtn = deleteBtn.cloneNode(true);
+    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+    
+    newDeleteBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const playlistId = PlaylistManager.editingPlaylistId;
+      if (!playlistId) {
+        console.warn('❌ No editingPlaylistId set');
+        return;
+      }
+      
+      // Get playlist name for confirmation
+      const playlist = await PlaylistManager.getPlaylistById(playlistId);
+      const playlistName = playlist?.name || 'this playlist';
+      
+      if (!confirm(`Delete "${playlistName}"?`)) {
+        return;
+      }
+      
+      try {
+        await PlaylistManager.deletePlaylist(playlistId);
+        
+        hideOverlay(module);
+        
+        // If on playlist-template page, redirect to playlists page
+        if (isPlaylistTemplatePage()) {
+          PlaylistManager.showNotification('Playlist deleted');
+          
+          setTimeout(() => {
+            if (typeof barba !== 'undefined') {
+              barba.go('/dashboard/playlists');
+            } else {
+              window.location.href = '/dashboard/playlists';
+            }
+          }, 300);
+          return;
+        }
+        
+        // On playlists page, remove the card
+        const card = document.querySelector(`.playlist-card-template[data-playlist-id="${playlistId}"]`);
+        if (card) {
+          const container = document.querySelector('.sortable-container');
+          if (container && typeof FW_flipAnimate === 'function') {
+            FW_flipAnimate(container, () => {
+              card.remove();
+            });
+          } else {
+            card.remove();
+          }
+        }
+        
+        await PlaylistManager.getUserPlaylists(true);
+        invalidateAddToPlaylistDropdownCache();
+        PlaylistManager.showNotification('Playlist deleted');
+        
+      } catch (err) {
+        console.error('Error deleting playlist:', err);
+        PlaylistManager.showNotification('Error deleting playlist', 'error');
+      }
+    });
+    
+    console.log('✅ Playlist delete button initialized');
+  }
+  
   if (editIcons.length === 0) {
     console.log('ℹ️ No playlist edit icons found');
     return;
