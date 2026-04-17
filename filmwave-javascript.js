@@ -7750,9 +7750,6 @@ async function initUserNameDropdown() {
 
 // Shared function to initialize all Memberstack handlers
 function initializeMemberstackHandlers() {
-
-// Shared function to initialize all Memberstack handlers
-function initializeMemberstackHandlers() {
   console.log('🔧 Initializing Memberstack handlers...');
   
   // Handle login form
