@@ -6731,7 +6731,14 @@ function initializePlaylistOverlay() {
       try {
         await PlaylistManager.deletePlaylist(playlistId);
         
+        // Clear the editing state
+        PlaylistManager.editingPlaylistId = null;
+        
         hideOverlay(module);
+        
+        // Force refresh the playlists cache FIRST
+        await PlaylistManager.getUserPlaylists(true);
+        invalidateAddToPlaylistDropdownCache();
         
         // If on playlist-template page, redirect to playlists page
         if (isPlaylistTemplatePage()) {
@@ -6760,8 +6767,6 @@ function initializePlaylistOverlay() {
           }
         }
         
-        await PlaylistManager.getUserPlaylists(true);
-        invalidateAddToPlaylistDropdownCache();
         PlaylistManager.showNotification('Playlist deleted');
         
       } catch (err) {
