@@ -6829,6 +6829,44 @@ function initializePlaylistOverlay() {
     console.log('✅ Playlist delete button initialized');
   }
   
+  // Direct change cover image handler
+  const changeCoverBtn = module.querySelector('.change-cover-image');
+  if (changeCoverBtn) {
+    const newCoverBtn = changeCoverBtn.cloneNode(true);
+    changeCoverBtn.parentNode.replaceChild(newCoverBtn, changeCoverBtn);
+    
+    newCoverBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const textEl = newCoverBtn.querySelector('.add-image-text');
+      
+      if (textEl && !textEl.dataset.originalText) {
+        textEl.dataset.originalText = textEl.textContent;
+      }
+      
+      pickImageAsBase64({
+        onPicked: async ({ base64, file }) => {
+          try {
+            const small = await downsampleImageBase64(base64, {
+              maxWidth: 800,
+              maxHeight: 800,
+              quality: 0.8,
+              mimeType: 'image/jpeg',
+            });
+            PlaylistManager.pendingCoverImageBase64 = small;
+          } catch {
+            PlaylistManager.pendingCoverImageBase64 = base64;
+          }
+          
+          if (textEl) textEl.textContent = file?.name || 'Image selected';
+        },
+      });
+    });
+    
+    console.log('✅ Playlist change cover button initialized');
+  }
+  
   if (editIcons.length === 0) {
     console.log('ℹ️ No playlist edit icons found');
     return;
