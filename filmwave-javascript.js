@@ -7739,7 +7739,8 @@ async function initUserNameDropdown() {
   try {
     const member = await window.$memberstackDom.getCurrentMember();
     if (member?.data) {
-      const { firstName, lastName } = member.data;
+      const firstName = member.data.customFields?.['first-name'];
+      const lastName = member.data.customFields?.['last-name'];
       const fullName = [firstName, lastName].filter(Boolean).join(' ');
       if (fullName) el.textContent = fullName;
     }
