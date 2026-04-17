@@ -6617,7 +6617,7 @@ function initializePlaylistOverlay() {
     const newBtn = playlistPageEditButton.cloneNode(true);
     playlistPageEditButton.parentNode.replaceChild(newBtn, playlistPageEditButton);
     
-    newBtn.addEventListener('click', function(e) {
+    function handleEditButtonClick(e) {
       e.preventDefault();
       e.stopPropagation();
       
@@ -6650,7 +6650,10 @@ function initializePlaylistOverlay() {
       if (textEl && !textEl.dataset.originalText) {
         textEl.dataset.originalText = textEl.textContent;
       }
-    });
+    }
+    
+    newBtn.addEventListener('click', handleEditButtonClick);
+    newBtn.addEventListener('touchend', handleEditButtonClick);
     
     console.log('✅ Playlist page edit button initialized');
   }
