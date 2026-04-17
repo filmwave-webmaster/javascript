@@ -6664,7 +6664,10 @@ function initializePlaylistOverlay() {
     }
     
     newBtn.addEventListener('click', handleEditButtonClick);
-    newBtn.addEventListener('touchend', handleEditButtonClick);
+    newBtn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      handleEditButtonClick(e);
+    }, { passive: false });
     
     console.log('✅ Playlist page edit button initialized');
   }
