@@ -7736,13 +7736,24 @@ window.addEventListener('load', () => {
 async function initUserNameDropdown() {
   const el = document.querySelector('.user-name-dropdown');
   if (!el) return;
+
+  // Show cached name immediately to prevent flash
+  const cached = localStorage.getItem('fw_member_name');
+  if (cached) el.textContent = cached;
+
   try {
     const member = await window.$memberstackDom.getCurrentMember();
     if (member?.data) {
       const firstName = member.data.customFields?.['first-name'];
       const lastName = member.data.customFields?.['last-name'];
       const fullName = [firstName, lastName].filter(Boolean).join(' ');
-      if (fullName) el.textContent = fullName;
+      if (fullName) {
+        el.textContent = fullName;
+        localStorage.setItem('fw_member_name', fullName);
+      }
+    } else {
+      // Not logged in — clear cache
+      localStorage.removeItem('fw_member_name');
     }
   } catch (e) {
     console.warn('Could not load member name:', e);
@@ -7875,6 +7886,7 @@ window._logoutHandler = function(e) {
       window.$memberstackDom.logout()
         .then(() => {
           console.log('✅ Logged out successfully');
+          localStorage.removeItem('fw_member_name');
           window.location.href = '/';
         })
         .catch(err => {
