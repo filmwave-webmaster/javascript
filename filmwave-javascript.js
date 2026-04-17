@@ -4997,10 +4997,12 @@ function expandSearchQuery(query) {
     // Check for typos using Fuse.js
     else if (fuseInstance) {
       const results = fuseInstance.search(word);
-      if (results.length > 0 && results[0].score < 0.4) {
+      if (results.length > 0) {
         // Found a close match - add the corrected term
         expandedTerms.add(results[0].item.tag);
-        console.log(`🔧 Typo corrected: "${word}" → "${results[0].item.tag}"`);
+        if (results[0].item.tag !== word) {
+          console.log(`🔧 Typo corrected: "${word}" → "${results[0].item.tag}"`);
+        }
       } else {
         // No match found - keep original word
         expandedTerms.add(word);
