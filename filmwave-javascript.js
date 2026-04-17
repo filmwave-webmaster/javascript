@@ -7724,7 +7724,7 @@ window.addEventListener('load', () => {
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
-    ();
+    initializeMemberstackHandlers(); 
     
     // Initialize welcome text on any page that has it
     initDashboardWelcome();
