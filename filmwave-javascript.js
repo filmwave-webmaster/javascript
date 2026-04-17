@@ -6532,6 +6532,9 @@ async function saveOrder(container) {
     
     if (!response.ok) throw new Error('Failed to update positions');
     
+    // Clear cache so next load uses new order
+    sessionStorage.removeItem('playlistsCache');
+    
     console.log('✅ Saved order to Xano');
   } catch (err) {
     console.error('❌ Error saving order:', err);
