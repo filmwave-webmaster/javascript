@@ -7724,12 +7724,32 @@ window.addEventListener('load', () => {
   
   // Initialize Memberstack handlers on initial page load
   setTimeout(() => {
-    initializeMemberstackHandlers();
+    ();
     
     // Initialize welcome text on any page that has it
     initDashboardWelcome();
+    initUserNameDropdown();
   }, 500);
 });
+
+// Populate user name in nav dropdown
+async function initUserNameDropdown() {
+  const el = document.querySelector('.user-name-dropdown');
+  if (!el) return;
+  try {
+    const member = await window.$memberstackDom.getCurrentMember();
+    if (member?.data) {
+      const { firstName, lastName } = member.data;
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      if (fullName) el.textContent = fullName;
+    }
+  } catch (e) {
+    console.warn('Could not load member name:', e);
+  }
+}
+
+// Shared function to initialize all Memberstack handlers
+function initializeMemberstackHandlers() {
 
 // Shared function to initialize all Memberstack handlers
 function initializeMemberstackHandlers() {
@@ -8587,12 +8607,13 @@ loadingPlaceholders.forEach(placeholder => {
       });
 
    // Call shared Memberstack handler function
-initializeMemberstackHandlers();
-initializeProfileSortable(); 
-initializePlaylistOverlay();  
-initVolumeControl();   
-initPlayerCloseButton();
-initDarkMode();
+      initializeMemberstackHandlers();
+      initUserNameDropdown();      
+      initializeProfileSortable(); 
+      initializePlaylistOverlay();  
+      initVolumeControl();   
+      initPlayerCloseButton();
+      initDarkMode();
 
 // Dashboard Initialization
 if (window.location.pathname.startsWith('/dashboard/')) {
