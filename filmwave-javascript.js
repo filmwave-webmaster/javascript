@@ -62,7 +62,15 @@
   const name = localStorage.getItem('fw_member_name');
   if (!name) return;
   const el = document.querySelector('.user-name-dropdown');
-  if (el) el.textContent = name;
+  if (!el) return;
+  
+  el.textContent = name;
+
+  // Watch for Memberstack clearing the element and immediately re-apply
+  const observer = new MutationObserver(() => {
+    if (!el.textContent.trim()) el.textContent = name;
+  });
+  observer.observe(el, { childList: true, characterData: true, subtree: true });
 })();
 
 /**
@@ -7753,13 +7761,6 @@ async function initUserNameDropdown() {
   // Show cached name immediately
   const cached = localStorage.getItem('fw_member_name');
   if (cached) el.textContent = cached;
-
-  // Watch for Webflow/Memberstack clearing the element
-  const observer = new MutationObserver(() => {
-    const name = localStorage.getItem('fw_member_name');
-    if (name) applyName(name);
-  });
-  observer.observe(el, { childList: true, characterData: true, subtree: true });
 
   try {
     const member = await window.$memberstackDom.getCurrentMember();
