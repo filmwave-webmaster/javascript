@@ -60,16 +60,15 @@
 // Apply cached member name immediately on load
 (function() {
   const name = localStorage.getItem('fw_member_name');
-  console.log('IIFE running, name:', name);
-  const el = document.querySelector('.user-name-dropdown');
-  console.log('IIFE element found:', el);
-  if (!name || !el) return;
-  el.textContent = name;
+  if (!name) return;
 
-  const observer = new MutationObserver(() => {
-    if (!el.textContent.trim()) el.textContent = name;
-  });
-  observer.observe(el, { childList: true, characterData: true, subtree: true });
+  let attempts = 0;
+  const interval = setInterval(() => {
+    const el = document.querySelector('.user-name-dropdown');
+    if (el) el.textContent = name;
+    attempts++;
+    if (attempts >= 20) clearInterval(interval); // stop after 2 seconds
+  }, 100);
 })();
 
 /**
