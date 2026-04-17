@@ -6625,6 +6625,17 @@ function initializePlaylistOverlay() {
       e.preventDefault();
       e.stopPropagation();
       
+      let editButtonHandled = false;
+    
+    function handleEditButtonClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Prevent double-firing from touch + click
+      if (editButtonHandled) return;
+      editButtonHandled = true;
+      setTimeout(() => { editButtonHandled = false; }, 300);
+      
       // Get playlist ID from URL
       const urlParams = new URLSearchParams(window.location.search);
       const playlistId = urlParams.get('playlist');
