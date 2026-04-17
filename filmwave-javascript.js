@@ -4719,6 +4719,435 @@ if (typeof window.clearPlaylistFilterStorage === 'function') {
   }
 }
 
+/**
+ * ============================================================
+ * SMART SEARCH - Natural Language & Typo Tolerance
+ * ============================================================
+ * 
+ * Features:
+ * 1. Synonym mapping - "fantasy movie music" → cinematic, epic, orchestral
+ * 2. Typo correction via Fuse.js - "cinemtic" → "cinematic"
+ * 
+ * Installation:
+ * 1. Add Fuse.js to your page: <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+ * 2. Add this code before initSearchAndFilters()
+ * 3. Update the applyFilters() function as shown below
+ */
+
+// ============================================================
+// SYNONYM MAPPING - Natural phrases → filter tags
+// ============================================================
+
+const SEARCH_SYNONYMS = {
+  // Film/Video Genres
+  'fantasy movie': ['cinematic', 'epic', 'orchestral', 'adventure'],
+  'fantasy film': ['cinematic', 'epic', 'orchestral', 'adventure'],
+  'horror movie': ['dark', 'tension', 'suspense', 'cinematic'],
+  'horror film': ['dark', 'tension', 'suspense', 'horror'],
+  'scary movie': ['dark', 'tension', 'horror', 'suspense'],
+  'action movie': ['energetic', 'epic', 'cinematic', 'intense'],
+  'action film': ['energetic', 'epic', 'cinematic', 'intense'],
+  'romantic movie': ['romantic', 'emotional', 'soft', 'love'],
+  'romance film': ['romantic', 'emotional', 'soft', 'love'],
+  'love story': ['romantic', 'emotional', 'soft'],
+  'comedy movie': ['upbeat', 'playful', 'fun', 'quirky'],
+  'funny video': ['upbeat', 'playful', 'fun', 'quirky'],
+  'documentary': ['ambient', 'cinematic', 'atmospheric', 'neutral'],
+  'nature documentary': ['ambient', 'nature', 'peaceful', 'organic'],
+  'sci-fi': ['electronic', 'synth', 'futuristic', 'cinematic'],
+  'science fiction': ['electronic', 'synth', 'futuristic', 'cinematic'],
+  'thriller': ['tension', 'suspense', 'dark', 'intense'],
+  'drama': ['emotional', 'cinematic', 'orchestral'],
+  'indie film': ['indie', 'acoustic', 'minimal'],
+  'indie movie': ['indie', 'acoustic', 'minimal'],
+  'trailer music': ['epic', 'cinematic', 'trailer', 'intense'],
+  'movie trailer': ['epic', 'cinematic', 'trailer', 'intense'],
+  
+  // Moods & Feelings
+  'happy': ['upbeat', 'cheerful', 'happy', 'joyful', 'positive'],
+  'sad': ['melancholy', 'emotional', 'sad', 'somber', 'reflective'],
+  'sad music': ['melancholy', 'emotional', 'sad', 'somber'],
+  'uplifting': ['uplifting', 'inspiring', 'hopeful', 'positive'],
+  'inspiring': ['inspiring', 'uplifting', 'motivational', 'epic'],
+  'motivational': ['motivational', 'inspiring', 'energetic', 'uplifting'],
+  'relaxing': ['ambient', 'chill', 'relaxing', 'calm', 'peaceful'],
+  'chill': ['chill', 'lo-fi', 'ambient', 'relaxed', 'easy listening'],
+  'calm': ['calm', 'peaceful', 'ambient', 'soft', 'gentle'],
+  'peaceful': ['peaceful', 'calm', 'ambient', 'nature', 'serene'],
+  'angry': ['intense', 'aggressive', 'dark', 'heavy'],
+  'intense': ['intense', 'dramatic', 'powerful', 'epic'],
+  'dramatic': ['dramatic', 'cinematic', 'emotional', 'epic'],
+  'mysterious': ['mysterious', 'dark', 'ambient', 'atmospheric'],
+  'dreamy': ['dreamy', 'ambient', 'ethereal', 'soft'],
+  'nostalgic': ['nostalgic', 'emotional', 'retro', 'reflective'],
+  'melancholy': ['melancholy', 'sad', 'emotional', 'reflective'],
+  'dark': ['dark', 'moody', 'tension', 'atmospheric'],
+  'bright': ['bright', 'upbeat', 'cheerful', 'positive'],
+  'ethereal': ['ethereal', 'ambient', 'dreamy', 'atmospheric'],
+  
+  // Use Cases / Activities
+  'workout': ['energetic', 'upbeat', 'electronic', 'intense', 'pump'],
+  'workout music': ['energetic', 'upbeat', 'electronic', 'intense'],
+  'gym': ['energetic', 'electronic', 'intense', 'pump'],
+  'exercise': ['energetic', 'upbeat', 'motivational'],
+  'running': ['energetic', 'upbeat', 'electronic', 'fast'],
+  'yoga': ['ambient', 'calm', 'peaceful', 'meditation'],
+  'meditation': ['ambient', 'calm', 'meditation', 'peaceful', 'soft'],
+  'study music': ['ambient', 'lo-fi', 'chill', 'focus', 'minimal'],
+  'studying': ['ambient', 'lo-fi', 'chill', 'focus'],
+  'focus': ['ambient', 'lo-fi', 'focus', 'minimal', 'concentration'],
+  'concentration': ['ambient', 'focus', 'minimal', 'lo-fi'],
+  'sleep': ['ambient', 'calm', 'soft', 'peaceful', 'sleep'],
+  'sleeping': ['ambient', 'calm', 'soft', 'peaceful'],
+  'party': ['dance', 'electronic', 'upbeat', 'party', 'energetic'],
+  'party music': ['dance', 'electronic', 'upbeat', 'party'],
+  'dancing': ['dance', 'electronic', 'upbeat', 'groovy'],
+  'cooking': ['acoustic', 'jazz', 'chill', 'upbeat'],
+  'dinner party': ['jazz', 'acoustic', 'elegant', 'sophisticated'],
+  'road trip': ['indie', 'rock', 'upbeat', 'adventure'],
+  'driving': ['electronic', 'rock', 'energetic', 'upbeat'],
+  'gaming': ['electronic', 'epic', 'intense', 'synth'],
+  'video game': ['electronic', 'epic', 'synth', '8-bit', 'retro'],
+  
+  // Content Types
+  'youtube video': ['upbeat', 'modern', 'pop', 'energetic'],
+  'youtube': ['upbeat', 'modern', 'pop', 'energetic'],
+  'vlog': ['upbeat', 'acoustic', 'happy', 'indie'],
+  'vlog music': ['upbeat', 'acoustic', 'happy', 'indie'],
+  'podcast': ['ambient', 'minimal', 'soft', 'background'],
+  'podcast intro': ['upbeat', 'modern', 'energetic'],
+  'podcast background': ['ambient', 'minimal', 'soft'],
+  'commercial': ['upbeat', 'corporate', 'modern', 'positive'],
+  'advertisement': ['upbeat', 'corporate', 'modern', 'commercial'],
+  'corporate video': ['corporate', 'upbeat', 'modern', 'professional'],
+  'corporate': ['corporate', 'business', 'professional', 'modern'],
+  'presentation': ['corporate', 'ambient', 'modern', 'professional'],
+  'wedding': ['romantic', 'elegant', 'emotional', 'soft'],
+  'wedding video': ['romantic', 'elegant', 'emotional', 'cinematic'],
+  'timelapse': ['ambient', 'cinematic', 'atmospheric', 'epic'],
+  'time lapse': ['ambient', 'cinematic', 'atmospheric'],
+  'montage': ['energetic', 'upbeat', 'cinematic', 'epic'],
+  'intro music': ['energetic', 'upbeat', 'modern', 'short'],
+  'outro music': ['upbeat', 'positive', 'modern'],
+  'background music': ['ambient', 'soft', 'background', 'minimal'],
+  'background': ['ambient', 'soft', 'background', 'minimal'],
+  
+  // Genres (common misspellings and alternatives)
+  'hip hop': ['hip-hop', 'hip hop', 'rap', 'urban'],
+  'hiphop': ['hip-hop', 'hip hop', 'rap', 'urban'],
+  'r&b': ['r&b', 'rnb', 'soul', 'urban'],
+  'rnb': ['r&b', 'rnb', 'soul'],
+  'lofi': ['lo-fi', 'lofi', 'chill', 'ambient'],
+  'lo fi': ['lo-fi', 'lofi', 'chill'],
+  'edm': ['electronic', 'edm', 'dance'],
+  'classical': ['classical', 'orchestral', 'orchestra'],
+  'orchestra': ['orchestral', 'classical', 'cinematic'],
+  'piano music': ['piano', 'classical', 'soft'],
+  'guitar music': ['guitar', 'acoustic', 'folk'],
+  'acoustic': ['acoustic', 'folk', 'unplugged'],
+  'country': ['country', 'folk', 'acoustic', 'americana'],
+  'jazz': ['jazz', 'smooth', 'swing'],
+  'blues': ['blues', 'jazz', 'soul'],
+  'rock': ['rock', 'guitar', 'energetic'],
+  'metal': ['metal', 'heavy', 'intense', 'rock'],
+  'punk': ['punk', 'rock', 'energetic', 'aggressive'],
+  'reggae': ['reggae', 'island', 'tropical', 'chill'],
+  'tropical': ['tropical', 'island', 'summer', 'beach'],
+  'summer': ['summer', 'tropical', 'upbeat', 'beach'],
+  'christmas': ['christmas', 'holiday', 'festive', 'winter'],
+  'holiday': ['holiday', 'christmas', 'festive'],
+  'halloween': ['halloween', 'horror', 'dark', 'spooky'],
+  'spooky': ['spooky', 'halloween', 'dark', 'horror'],
+  
+  // Instruments
+  'piano': ['piano', 'keys', 'classical'],
+  'guitar': ['guitar', 'acoustic', 'strings'],
+  'strings': ['strings', 'orchestral', 'violin', 'cello'],
+  'violin': ['violin', 'strings', 'classical'],
+  'drums': ['drums', 'percussion', 'beats'],
+  'beats': ['beats', 'drums', 'electronic', 'hip-hop'],
+  'synth': ['synth', 'electronic', 'synthesizer'],
+  'synthesizer': ['synth', 'electronic', 'synthesizer'],
+  
+  // Descriptors
+  'fast': ['fast', 'upbeat', 'energetic', 'uptempo'],
+  'slow': ['slow', 'ambient', 'soft', 'downtempo'],
+  'loud': ['loud', 'intense', 'powerful', 'epic'],
+  'soft': ['soft', 'gentle', 'quiet', 'calm'],
+  'quiet': ['quiet', 'soft', 'ambient', 'minimal'],
+  'epic': ['epic', 'cinematic', 'powerful', 'orchestral'],
+  'powerful': ['powerful', 'epic', 'intense', 'dramatic'],
+  'gentle': ['gentle', 'soft', 'calm', 'peaceful'],
+  'groovy': ['groovy', 'funky', 'dance', 'rhythm'],
+  'funky': ['funky', 'funk', 'groovy', 'dance'],
+  
+  // Vocal Types
+  'no vocals': ['instrumental', 'no vocals'],
+  'without vocals': ['instrumental', 'no vocals'],
+  'instrumental only': ['instrumental'],
+  'with vocals': ['vocals', 'singing'],
+  'with singing': ['vocals', 'singing'],
+  'female vocals': ['female vocals', 'female singer'],
+  'male vocals': ['male vocals', 'male singer'],
+  'acapella': ['acapella', 'a cappella', 'vocals only'],
+  'a cappella': ['acapella', 'a cappella'],
+};
+
+// ============================================================
+// KNOWN TAGS - All valid filter values for fuzzy matching
+// ============================================================
+
+const KNOWN_TAGS = [
+  // Genres
+  'cinematic', 'electronic', 'ambient', 'pop', 'rock', 'indie', 'hip-hop', 'hip hop',
+  'r&b', 'jazz', 'classical', 'orchestral', 'folk', 'acoustic', 'country', 'blues',
+  'soul', 'funk', 'disco', 'dance', 'edm', 'house', 'techno', 'trance', 'dubstep',
+  'trap', 'lo-fi', 'lofi', 'chillhop', 'synthwave', 'retrowave', 'vaporwave',
+  'metal', 'punk', 'alternative', 'grunge', 'reggae', 'ska', 'latin', 'world',
+  'new age', 'experimental', 'avant-garde',
+  
+  // Moods
+  'happy', 'sad', 'melancholy', 'upbeat', 'energetic', 'calm', 'peaceful', 'relaxing',
+  'intense', 'dramatic', 'emotional', 'romantic', 'mysterious', 'dark', 'bright',
+  'dreamy', 'ethereal', 'nostalgic', 'hopeful', 'inspiring', 'uplifting', 'motivational',
+  'aggressive', 'angry', 'tension', 'suspense', 'playful', 'quirky', 'fun', 'cheerful',
+  'joyful', 'triumphant', 'epic', 'powerful', 'gentle', 'soft', 'warm', 'cool',
+  'groovy', 'funky', 'sexy', 'sensual', 'spiritual', 'meditative',
+  
+  // Themes
+  'adventure', 'love', 'nature', 'urban', 'retro', 'futuristic', 'fantasy', 'horror',
+  'comedy', 'action', 'thriller', 'documentary', 'corporate', 'commercial', 'trailer',
+  'wedding', 'party', 'holiday', 'christmas', 'halloween', 'summer', 'winter',
+  'travel', 'sports', 'gaming', 'technology', 'science', 'space',
+  
+  // Instruments
+  'piano', 'guitar', 'strings', 'violin', 'cello', 'brass', 'woodwind', 'drums',
+  'percussion', 'bass', 'synth', 'synthesizer', 'organ', 'harmonica', 'saxophone',
+  'trumpet', 'flute', 'harp', 'ukulele', 'banjo', 'mandolin',
+  
+  // Build/Energy
+  'building', 'climax', 'drop', 'breakdown', 'intro', 'outro', 'loop', 'steady',
+  'rising', 'falling', 'dynamic', 'static', 'minimal', 'maximal', 'sparse', 'dense',
+  
+  // Vocals
+  'instrumental', 'vocals', 'male vocals', 'female vocals', 'choir', 'acapella',
+  'spoken word', 'rap', 'singing',
+  
+  // Other
+  'background', 'focus', 'study', 'work', 'sleep', 'meditation', 'yoga', 'workout',
+  'modern', 'vintage', 'classic', 'contemporary', 'traditional', 'authentic',
+];
+
+// ============================================================
+// FUSE.JS SETUP - Typo tolerance
+// ============================================================
+
+let fuseInstance = null;
+
+function initFuseSearch() {
+  if (typeof Fuse === 'undefined') {
+    console.warn('⚠️ Fuse.js not loaded - typo correction disabled');
+    return;
+  }
+  
+  // Create searchable items from known tags
+  const searchableItems = KNOWN_TAGS.map(tag => ({ tag: tag.toLowerCase() }));
+  
+  fuseInstance = new Fuse(searchableItems, {
+    keys: ['tag'],
+    threshold: 0.4, // 0 = exact match, 1 = match anything (0.4 is good for typos)
+    distance: 100,
+    minMatchCharLength: 2,
+  });
+  
+  console.log('✅ Fuse.js initialized for typo correction');
+}
+
+// ============================================================
+// SMART SEARCH FUNCTION
+// ============================================================
+
+function expandSearchQuery(query) {
+  if (!query || typeof query !== 'string') return { keywords: [], expandedTerms: [] };
+  
+  const normalizedQuery = query.toLowerCase().trim();
+  const expandedTerms = new Set();
+  let remainingQuery = normalizedQuery;
+  
+  // 1. Check for synonym phrase matches (longest match first)
+  const sortedPhrases = Object.keys(SEARCH_SYNONYMS).sort((a, b) => b.length - a.length);
+  
+  for (const phrase of sortedPhrases) {
+    if (remainingQuery.includes(phrase)) {
+      // Add all synonyms for this phrase
+      SEARCH_SYNONYMS[phrase].forEach(synonym => expandedTerms.add(synonym.toLowerCase()));
+      // Remove the matched phrase from remaining query
+      remainingQuery = remainingQuery.replace(phrase, ' ').trim();
+    }
+  }
+  
+  // 2. Process remaining individual words
+  const remainingWords = remainingQuery.split(/\s+/).filter(w => w.length > 1);
+  
+  for (const word of remainingWords) {
+    // Check if word itself is a synonym key
+    if (SEARCH_SYNONYMS[word]) {
+      SEARCH_SYNONYMS[word].forEach(synonym => expandedTerms.add(synonym.toLowerCase()));
+    }
+    // Check for typos using Fuse.js
+    else if (fuseInstance) {
+      const results = fuseInstance.search(word);
+      if (results.length > 0 && results[0].score < 0.4) {
+        // Found a close match - add the corrected term
+        expandedTerms.add(results[0].item.tag);
+        console.log(`🔧 Typo corrected: "${word}" → "${results[0].item.tag}"`);
+      } else {
+        // No match found - keep original word
+        expandedTerms.add(word);
+      }
+    } else {
+      // No Fuse.js - keep original word
+      expandedTerms.add(word);
+    }
+  }
+  
+  // 3. Also keep original keywords for direct text matching
+  const originalKeywords = normalizedQuery.split(/\s+/).filter(k => k.length > 0);
+  
+  return {
+    keywords: originalKeywords,
+    expandedTerms: Array.from(expandedTerms)
+  };
+}
+
+// ============================================================
+// UPDATED applyFilters FUNCTION
+// ============================================================
+// Replace your existing applyFilters() function with this one
+
+function applyFiltersWithSmartSearch() {
+  const g = window.musicPlayerPersistent;
+  const searchBar = document.querySelector('[data-filter-search="true"]');
+  const query = searchBar ? searchBar.value.toLowerCase().trim() : '';
+  
+  // Get expanded search terms
+  const { keywords, expandedTerms } = expandSearchQuery(query);
+  
+  // Log what we're searching for
+  if (query && expandedTerms.length > 0) {
+    console.log(`🔍 Search: "${query}"`);
+    console.log(`   Expanded to: [${expandedTerms.join(', ')}]`);
+  }
+  
+  const filterInputs = document.querySelectorAll('[data-filter-group]');
+  const selectedFilters = [];
+  
+  filterInputs.forEach(input => {
+    if (input.checked) {
+      const group = input.getAttribute('data-filter-group');
+      const value = input.getAttribute('data-filter-value');
+      const keyGroup = input.getAttribute('data-key-group');
+      
+      selectedFilters.push({
+        group: group,
+        value: value ? value.toLowerCase() : null,
+        keyGroup: keyGroup ? keyGroup.toLowerCase() : null
+      });
+    }
+  });
+  
+  const visibleIds = g.MASTER_DATA.filter(record => {
+    const fields = record.fields;
+    const allText = Object.values(fields).map(v => String(v)).join(' ').toLowerCase();
+    
+    // Smart search matching:
+    // 1. Original keywords must match (for specific song titles, artists)
+    // 2. OR any expanded term must match (for synonym/typo matches)
+    let matchesSearch = true;
+    
+    if (keywords.length > 0) {
+      // Check if all original keywords match
+      const allKeywordsMatch = keywords.every(k => allText.includes(k));
+      
+      // Check if any expanded term matches
+      const anyExpandedMatch = expandedTerms.some(term => allText.includes(term));
+      
+      // Match if either original query matches OR expanded terms match
+      matchesSearch = allKeywordsMatch || anyExpandedMatch;
+    }
+    
+    const matchesAttributes = selectedFilters.every(filter => {
+      let recVal = fields[filter.group];
+      if (recVal === undefined || recVal === null) return false;
+      
+      if (filter.keyGroup) {
+        if (filter.keyGroup === 'major') {
+          return String(recVal).toLowerCase().endsWith('maj');
+        }
+        if (filter.keyGroup === 'minor') {
+          return String(recVal).toLowerCase().endsWith('min');
+        }
+      }
+      
+      if (filter.value) {
+        if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
+        return String(recVal).toLowerCase() === filter.value;
+      }
+      
+      return false;
+    });
+
+    return matchesSearch && matchesAttributes;
+  }).map(r => r.id);
+  
+  // ONLY UPDATE FILTERED IDS IF WE'RE ON THE MUSIC PAGE
+  const isMusicPage = !!document.querySelector('.music-list-wrapper');
+  if (isMusicPage) {
+    g.filteredSongIds = visibleIds;
+    console.log(`🎵 Stored ${visibleIds.length} filtered song IDs for navigation`);
+  }
+  
+  document.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)').forEach(card => {
+    const matchesOtherFilters = visibleIds.includes(card.dataset.songId);
+    const hiddenByPlaylist = card.getAttribute('data-hidden-by-playlist') === 'true';
+    
+    // Clear previous other-filter state first
+    card.removeAttribute('data-hidden-by-other');
+    
+    if (hiddenByPlaylist) {
+      // Always hide if not in selected playlist
+      card.style.display = 'none';
+    } else if (matchesOtherFilters) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+      card.setAttribute('data-hidden-by-other', 'true');
+    }
+  });
+  
+  toggleClearButton();
+  updateMusicTileSectionVisibility();
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+// Call this after Fuse.js is loaded
+function initSmartSearch() {
+  initFuseSearch();
+  console.log('✅ Smart Search initialized');
+  console.log(`   - ${Object.keys(SEARCH_SYNONYMS).length} synonym phrases loaded`);
+  console.log(`   - ${KNOWN_TAGS.length} tags available for typo correction`);
+}
+
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSmartSearch);
+} else {
+  initSmartSearch();
+}
+
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
@@ -4836,13 +5265,13 @@ function initSearchAndFilters() {
     searchBar.addEventListener('input', () => {
       clearTimeout(searchTimeout);
       toggleClearButton();
-      searchTimeout = setTimeout(applyFilters, 400);
+      searchTimeout = setTimeout(applyFiltersWithSmartSearch, 400);
     });
   }
   
   document.querySelectorAll('[data-filter-group]').forEach(input => {
     input.addEventListener('change', () => {
-      applyFilters();
+      applyFiltersWithSmartSearch();
       toggleClearButton();
     });
   });
