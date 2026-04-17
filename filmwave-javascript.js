@@ -62,18 +62,17 @@
   const name = localStorage.getItem('fw_member_name');
   if (!name) return;
 
-  let attempts = 0;
-  const interval = setInterval(() => {
+  function applyToEl() {
     const el = document.querySelector('.user-name-dropdown');
-    if (el) {
-      if (el.textContent.trim() !== name) {
-        console.log('⚠️ Name mismatch at attempt', attempts, '- was:', JSON.stringify(el.textContent));
-        el.textContent = name;
-      }
-    }
-    attempts++;
-    if (attempts >= 20) clearInterval(interval);
-  }, 100);
+    if (el && el.textContent.trim() !== name) el.textContent = name;
+  }
+
+  // Watch entire document for nav being added/changed
+  const observer = new MutationObserver(applyToEl);
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  // Stop observing after 3 seconds
+  setTimeout(() => observer.disconnect(), 3000);
 })();
 
 /**
