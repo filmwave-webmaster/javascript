@@ -6404,6 +6404,9 @@ function toggleEditMode(container, button) {
       const playlistCards = document.querySelectorAll('.playlist-card-template:not(.is-template)');
       playlistCards.forEach(card => {
         card.style.cursor = 'grab';
+        card.addEventListener('mousedown', function() { this.style.cursor = 'grabbing'; });
+        card.addEventListener('mouseup', function() { this.style.cursor = 'grab'; });
+        card.addEventListener('mouseleave', function() { this.style.cursor = 'grab'; });
       });
       
       toggleEditIcons(true); // Show edit icons
