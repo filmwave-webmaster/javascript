@@ -6535,6 +6535,7 @@ async function saveOrder(container) {
     // Clear cache so next load uses new order
     sessionStorage.removeItem('playlistsCache');
     
+    PlaylistManager.showNotification('Order saved');
     console.log('✅ Saved order to Xano');
   } catch (err) {
     console.error('❌ Error saving order:', err);
