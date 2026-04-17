@@ -62,16 +62,18 @@
   const name = localStorage.getItem('fw_member_name');
   if (!name) return;
 
+  // User is known to be logged in - prevent Memberstack flash by showing nav immediately
+  const style = document.createElement('style');
+  style.textContent = '[data-ms-content="members"].logged-in-nav-wrapper { display: flex !important; }';
+  document.head.appendChild(style);
+
   function applyToEl() {
     const el = document.querySelector('.user-name-dropdown');
     if (el && el.textContent.trim() !== name) el.textContent = name;
   }
 
-  // Watch entire document for nav being added/changed
   const observer = new MutationObserver(applyToEl);
   observer.observe(document.documentElement, { childList: true, subtree: true });
-
-  // Stop observing after 3 seconds
   setTimeout(() => observer.disconnect(), 3000);
 })();
 
