@@ -4740,6 +4740,7 @@ if (typeof window.clearPlaylistFilterStorage === 'function') {
 
 const SEARCH_SYNONYMS = {
   // Film/Video Genres
+  'fantasy': ['cinematic', 'epic', 'orchestral', 'adventure', 'fantasy'],
   'fantasy movie': ['cinematic', 'epic', 'orchestral', 'adventure'],
   'fantasy film': ['cinematic', 'epic', 'orchestral', 'adventure'],
   'horror movie': ['dark', 'tension', 'suspense', 'cinematic'],
@@ -4834,6 +4835,7 @@ const SEARCH_SYNONYMS = {
   
   // Genres (common misspellings and alternatives)
   'hip hop': ['hip-hop', 'hip hop', 'rap', 'urban'],
+  'hip-hop': ['hip-hop', 'hip hop', 'rap', 'urban'],
   'hiphop': ['hip-hop', 'hip hop', 'rap', 'urban'],
   'r&b': ['r&b', 'rnb', 'soul', 'urban'],
   'rnb': ['r&b', 'rnb', 'soul'],
