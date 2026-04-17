@@ -6699,8 +6699,14 @@ function initializePlaylistOverlay() {
         if (card) {
           const titleEl = card.querySelector('.playlist-title');
           const detailEl = card.querySelector('.playlist-detail');
+          const imgEl = card.querySelector('.playlist-image');
+          
           if (titleEl && updates.name) titleEl.textContent = updates.name;
           if (detailEl) detailEl.textContent = updates.description || '';
+          if (imgEl && newCover) {
+            imgEl.src = newCover;
+            imgEl.srcset = '';
+          }
         }
         
         // Update playlist-template page if we're on it
