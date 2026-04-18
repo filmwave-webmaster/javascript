@@ -7371,13 +7371,15 @@ function initUniversalSearch() {
   const wrapperSelectors = [
     ".create-playlist-module-wrapper",
     ".add-to-playlist-module-wrapper",
-    ".playlist-edit-module-wrapper"
+    ".playlist-edit-module-wrapper",
+    ".create-project-module-wrapper"
   ];
 
   const moduleSelectors = [
     ".create-playlist-module",
     ".add-to-playlist-module",
-    ".playlist-edit-module"
+    ".playlist-edit-module",
+    ".create-project-module"
   ];
 
   function isActive(el) {
@@ -10986,6 +10988,25 @@ if (playlistRow && playlistRow.dataset.playlistId) {
 
       if (e.target.classList.contains('create-playlist-module-wrapper')) {
         this.closeCreatePlaylistModal();
+        return;
+      }
+
+      /* ----------------------------
+         CREATE PROJECT MODAL
+         ---------------------------- */
+      if (e.target.closest('.new-project-x-button')) {
+        const wrapper = document.querySelector('.create-project-module-wrapper');
+        if (wrapper) wrapper.style.display = 'none';
+        return;
+      }
+      if (e.target.classList.contains('create-project-module-wrapper')) {
+        e.target.style.display = 'none';
+        return;
+      }
+      if (e.target.closest('.new-project-button')) {
+        e.preventDefault();
+        const wrapper = document.querySelector('.create-project-module-wrapper');
+        if (wrapper) wrapper.style.display = 'flex';
         return;
       }
 
