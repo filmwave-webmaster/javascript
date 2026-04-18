@@ -7026,35 +7026,16 @@ function showOverlay(overlay) {
   // Force reflow to ensure display is applied
   overlay.offsetHeight;
 
-  // Create background overlay
-  if (!document.getElementById('playlist-edit-bg-overlay')) {
-    const bgOverlay = document.createElement('div');
-    bgOverlay.id = 'playlist-edit-bg-overlay';
-    bgOverlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0);
-      z-index: 9998;
-      cursor: pointer;
-      transition: background-color 0.25s ease;
-    `;
-    document.body.appendChild(bgOverlay);
-    
-    // Click to close
-    bgOverlay.addEventListener('click', () => {
-      hideOverlay(overlay);
-    });
-    
-    // Trigger fade in
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        bgOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-      });
-    });
-  }
+  // Click on the shared modal backdrop to close
+const existingBg = document.querySelector('.modal-backdrop-overlay');
+if (existingBg && !existingBg._editOverlayClose) {
+  existingBg._editOverlayClose = true;
+  existingBg.style.cursor = 'pointer';
+  existingBg.style.pointerEvents = 'auto';
+  existingBg.addEventListener('click', () => {
+    hideOverlay(overlay);
+  });
+}
 
   // Ensure overlay is above background
   overlay.style.zIndex = '9999';
@@ -7089,14 +7070,13 @@ function hideOverlay(overlay) {
   overlay.style.opacity = '0';
   overlay.style.transform = 'translateY(20px)';
 
-  // Fade out background overlay
-  const bgOverlay = document.getElementById('playlist-edit-bg-overlay');
-  if (bgOverlay) {
-    bgOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0)';
-    setTimeout(() => {
-      bgOverlay.remove();
-    }, 250);
-  }
+  // Clean up shared modal backdrop click handler
+const existingBg = document.querySelector('.modal-backdrop-overlay');
+if (existingBg) {
+  existingBg._editOverlayClose = false;
+  existingBg.style.cursor = '';
+  existingBg.style.pointerEvents = '';
+}
 
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
