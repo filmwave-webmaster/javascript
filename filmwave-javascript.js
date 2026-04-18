@@ -10985,6 +10985,25 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         this.closeCreatePlaylistModal();
         return;
       }
+      if (e.target.closest('.new-project-button')) {
+        e.preventDefault();
+        const wrapper = document.querySelector('.create-project-module-wrapper');
+        if (wrapper) wrapper.style.display = 'flex';
+        return;
+      }
+
+      /* ----------------------------
+         CREATE PROJECT MODAL
+         ---------------------------- */
+      if (e.target.closest('.new-project-x-button')) {
+        const wrapper = document.querySelector('.create-project-module-wrapper');
+        if (wrapper) wrapper.style.display = 'none';
+        return;
+      }
+      if (e.target.classList.contains('create-project-module-wrapper')) {
+        e.target.style.display = 'none';
+        return;
+      }
 
       /* ----------------------------
          CREATE PROJECT MODAL
