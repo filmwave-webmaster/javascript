@@ -7541,7 +7541,7 @@ if (document.readyState === 'loading') {
     
     // Show sidebar on music page on fresh load
     const path = window.location.pathname;
-    const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/';
+    const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/' || path === '/sound-fx' || path === '/sound-fx/';
     const sidebar = document.querySelector('.sidebar-nav');
     
     if (shouldHaveSidebar && sidebar) {
@@ -7559,7 +7559,7 @@ if (document.readyState === 'loading') {
   
   // Show sidebar on music page on fresh load
   const path = window.location.pathname;
-  const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/';
+  const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/' || path === '/sound-fx' || path === '/sound-fx/';
   const sidebar = document.querySelector('.sidebar-nav');
   
   if (shouldHaveSidebar && sidebar) {
@@ -7991,8 +7991,9 @@ if (typeof barba !== 'undefined') {
   }
      
   const goingToMusic = goingToPath === '/music' || goingToPath === '/music/';
+const goingToSfx = goingToPath === '/sound-fx' || goingToPath === '/sound-fx/';
   
-  if (leavingDashboard && !goingToDashboard && !goingToMusic) {
+if (leavingDashboard && !goingToDashboard && !goingToMusic && !goingToSfx) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       // Reset any transitions on children so they fade with parent
