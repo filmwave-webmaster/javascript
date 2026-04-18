@@ -10768,7 +10768,7 @@ async getPlaylistSongs(playlistId, forceRefresh = false) {
     }
   },
 
-async addSongToPlaylist(playlistId, songId, position = 0) {
+async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Add_Song_to_Playlist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -10780,13 +10780,50 @@ async addSongToPlaylist(playlistId, songId, position = 0) {
     });
 
     if (!response.ok) throw new Error('Failed to add song to playlist');
-    
+
     // Invalidate cache for this playlist
     if (this._playlistSongsCache && this._playlistSongsCache[playlistId]) {
       delete this._playlistSongsCache[playlistId];
     }
-    
-    return response.json();
+
+    const result = await response.json();
+
+    // Auto-set cover image if playlist has none
+    try {
+      const playlist = this.playlists?.find(p => String(p.id) === String(playlistId));
+      if (playlist && !playlist.cover_image_url) {
+        let coverUrl = songCoverUrl;
+
+        if (!coverUrl) {
+          // Try MASTER_DATA first
+          const g = window.musicPlayerPersistent;
+          const song = g?.MASTER_DATA?.find(s => String(s.id) === String(songId));
+          coverUrl = song?.fields?.['Cover Art']?.[0]?.url || null;
+        }
+
+        if (!coverUrl) {
+          // Fall back to direct Airtable fetch
+          const atRes = await fetch(
+            `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}/${songId}`,
+            { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }
+          );
+          if (atRes.ok) {
+            const atData = await atRes.json();
+            coverUrl = atData?.fields?.['Cover Art']?.[0]?.url || null;
+          }
+        }
+
+        if (coverUrl) {
+          await this.updatePlaylist(playlistId, { cover_image_url: coverUrl });
+          playlist.cover_image_url = coverUrl;
+          console.log('🖼️ Auto-set playlist cover from first song:', coverUrl);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not auto-set playlist cover:', err);
+    }
+
+    return result;
   },
 
 async removeSongFromPlaylist(playlistId, songId) {
