@@ -12816,8 +12816,8 @@ async function initDashboardPlaylists() {
   console.log('🎵 Initializing dashboard playlists...');
 
   // Clear ALL non-template cards
-container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
-  card.remove();
+container.querySelectorAll('.playlist-card-template').forEach((card) => {
+  if (card !== template) card.remove();
 });
 
   // Remove template from DOM temporarily
