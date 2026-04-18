@@ -12839,7 +12839,14 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
         return a.position - b.position;
       }
       return new Date(b.created_at) - new Date(a.created_at);
-    }).slice(0, 4);
+    const grid = document.querySelector('.db-playlists-grid');
+    const isMobile = window.innerWidth < 768;
+    let maxPlaylists = 4;
+    if (!isMobile && grid) {
+      const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+      maxPlaylists = cols;
+    }
+    }).slice(0, maxPlaylists);
 
     console.log('📊 Showing first 4 playlists');
 
