@@ -7240,33 +7240,51 @@ function initUniversalSearch() {
   let isLocked = false;
   let overlay = null;
 
-  function createOverlay() {
-    if (overlay) return overlay;
-    
-    overlay = document.createElement('div');
-    overlay.className = 'modal-backdrop-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0);
-      z-index: 9998;
-      pointer-events: none;
-      transition: background-color 0.25s ease;
-    `;
-    document.body.appendChild(overlay);
-    
-    // Trigger fade in
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-      });
+ function createOverlay() {
+  if (overlay) return overlay;
+  
+  overlay = document.createElement('div');
+  overlay.className = 'modal-backdrop-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0);
+    z-index: 9998;
+    pointer-events: auto;
+    transition: background-color 0.25s ease;
+    cursor: pointer;
+  `;
+  document.body.appendChild(overlay);
+
+  // Click backdrop to close active module
+  overlay.addEventListener('click', () => {
+    // playlist edit module
+    const editOverlay = document.querySelector('.playlist-edit-module');
+    if (editOverlay && getComputedStyle(editOverlay).display !== 'none') {
+      hideOverlay(editOverlay);
+      return;
+    }
+    // all other wrappers — hide by removing display
+    wrapperSelectors.forEach(sel => {
+      const wrapper = document.querySelector(sel);
+      if (wrapper && getComputedStyle(wrapper).display !== 'none') {
+        wrapper.style.display = 'none';
+      }
     });
-    
-    return overlay;
-  }
+  });
+
+  // Trigger fade in
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    });
+  });
+
+  return overlay;
+}
 
   function removeOverlay() {
     if (overlay) {
