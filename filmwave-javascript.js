@@ -12924,11 +12924,14 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
       } catch (e) {}
     }
   } finally {
+    // Re-insert template so subsequent calls can find it
+    templateParent.insertBefore(template, templateNextSibling);
+    template.style.display = 'none';
+
     // Hide all placeholders once real cards exist
     container.querySelectorAll('.playlist-placeholder').forEach((el) => {
       el.style.display = 'none';
     });
-
     container.style.opacity = '1';
     container.style.pointerEvents = '';
   }
