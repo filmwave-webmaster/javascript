@@ -34,7 +34,7 @@
  * 20. KEYBOARD CONTROLS                                             
  * 21. DARK MODE TOGGLE                                              
  * 22. FILTER HELPERS                                                
- * 23. MUSIC PAGE SEARCHBAR PLACEHOLDER                              
+ * 23.  PAGE SEARCHBAR PLACEHOLDER                              
  * 24. REMOVE DUPLICATE IDS                                          
  * 25. HANDLE TAB VISIBILITY                                         
  * 26. MANUAL TAB REINITIALIZATION FOR BARBA                         
@@ -50,7 +50,7 @@
  * 36. ENHANCED FILTER PERSISTENCE - WITH KEY FILTER SUPPORT         
  * 37. FAVORITE SONGS PERSISTENCE                                    
  * 38. XANO PLAYLIST SYSTEM                                          
- * 39. TOGGLE SEARCH FILTERS MUSIC PAGE                              
+ * 39. TOGGLE SEARCH FILTERS  PAGE                              
  * 40. SIMPLE PROGRESS TRACKER                                       
  * 41. TOUCH DEVICE DOUBLE-TAP FIX                                   
  * 
@@ -82,8 +82,8 @@
  * GLOBAL STATE - Persists across Barba page transitions
  * ============================================================
  */
-if (!window.musicPlayerPersistent) {
-  window.musicPlayerPersistent = {
+if (!window.PlayerPersistent) {
+  window.PlayerPersistent = {
     currentWavesurfer: null,
     currentSongData: null,
     currentPeaksData: null,
@@ -114,7 +114,7 @@ if (!window.musicPlayerPersistent) {
     silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQAAAAAAAAAAQGwOjLOQgAAAAAAAAAAAAAAAAD/4xjEAAQsAB1kAAACAABpAAAATYkC7gAgDA4J4Pg+D5//ygPlAoBAMQ8H4OAgGP4Pg+8HwfE7/qAg7/B8HwfB9/5QKBQLg+D/BwEAQcuD4nB8HwfB//KBQ5cHwfB8Hwff+UCh/ygIO/wfB8HwfB8=';
     silentAudio.play().then(() => {
       silentAudio.pause();
-      window.musicPlayerPersistent._audioUnlocked = true;
+      window.PlayerPersistent._audioUnlocked = true;
     }).catch(() => {});
     
     document.removeEventListener('touchstart', unlockAudio, true);
@@ -221,7 +221,7 @@ window.navCache = {
   
   if (window._isFreshPageLoad) {
     // Fresh page load - clear all filter storage
-    localStorage.removeItem('musicFilters');
+    localStorage.removeItem('Filters');
     localStorage.removeItem('playlistFilter');
     console.log('🧹 Fresh page load - cleared all filter storage');
   }
@@ -276,7 +276,7 @@ function formatDuration(seconds) {
 }
 
 function scrollToSelected(cardElement) {
-  const container = document.querySelector('.music-list-wrapper');
+  const container = document.querySelector('.-list-wrapper');
   if (!container || !cardElement) return;
   const containerRect = container.getBoundingClientRect();
   const cardRect = cardElement.getBoundingClientRect();
@@ -293,9 +293,9 @@ function scrollToSelected(cardElement) {
 function adjustDropdownPosition(toggle, list) {
   if (!list || !toggle) return;
   
-  const g = window.musicPlayerPersistent;
+  const g = window.PlayerPersistent;
 
-  const container = document.querySelector('.music-list-wrapper') || 
+  const container = document.querySelector('.-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
                     document.querySelector('.favorite-songs-wrapper') ||
                     document.body;
@@ -7372,12 +7372,14 @@ function initUniversalSearch() {
     ".create-playlist-module-wrapper",
     ".add-to-playlist-module-wrapper",
     ".playlist-edit-module-wrapper"
+    ".create-project-module-wrapper"
   ];
 
   const moduleSelectors = [
     ".create-playlist-module",
     ".add-to-playlist-module",
     ".playlist-edit-module"
+    ".create-project-module"
   ];
 
   function isActive(el) {
@@ -10969,6 +10971,12 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         return;
       }
 
+      if (e.target.closest('.new-project-x-button')) {
+        const wrapper = document.querySelector('.create-project-module-wrapper');
+        if (wrapper) wrapper.style.display = 'none';
+        return;
+      }
+
       if (e.target.closest('.create-playlist-button') || e.target.closest('.playlist-add-button')) {
         e.preventDefault();
         e.stopPropagation();
@@ -10986,6 +10994,11 @@ if (playlistRow && playlistRow.dataset.playlistId) {
 
       if (e.target.classList.contains('create-playlist-module-wrapper')) {
         this.closeCreatePlaylistModal();
+        return;
+      }
+
+       if (e.target.classList.contains('create-project-module-wrapper')) {
+        e.target.style.display = 'none';
         return;
       }
 
