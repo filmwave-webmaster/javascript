@@ -10814,9 +10814,31 @@ async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null) {
         }
 
         if (coverUrl) {
-          await this.updatePlaylist(playlistId, { cover_image_url: coverUrl });
-          playlist.cover_image_url = coverUrl;
-          console.log('🖼️ Auto-set playlist cover from first song:', coverUrl);
+          // Convert URL to base64 to match how all other covers are stored in Xano
+          let coverBase64 = null;
+          try {
+            const imgRes = await fetch(coverUrl);
+            const blob = await imgRes.blob();
+            coverBase64 = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+            coverBase64 = await downsampleImageBase64(coverBase64, {
+              maxWidth: 800,
+              maxHeight: 800,
+              quality: 0.8,
+              mimeType: 'image/jpeg',
+            });
+          } catch (e) {
+            console.warn('Could not convert cover to base64, storing URL instead:', e);
+            coverBase64 = coverUrl;
+          }
+
+          await this.updatePlaylist(playlistId, { cover_image_url: coverBase64 });
+          playlist.cover_image_url = coverBase64;
+          console.log('🖼️ Auto-set playlist cover from first song');
         }
       }
     } catch (err) {
