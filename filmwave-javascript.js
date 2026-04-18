@@ -12931,6 +12931,15 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
   }
 }
 
+let dashboardResizeTimer;
+window.addEventListener('resize', () => {
+  if (!document.querySelector('.db-sortable-container')) return;
+  clearTimeout(dashboardResizeTimer);
+  dashboardResizeTimer = setTimeout(() => {
+    initDashboardPlaylists();
+  }, 300);
+});
+
 /* ============================================================
    33. PLAYLISTS PAGE
    ============================================================ */
