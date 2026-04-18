@@ -7026,16 +7026,12 @@ function showOverlay(overlay) {
   // Force reflow to ensure display is applied
   overlay.offsetHeight;
 
-  // Click on the shared modal backdrop to close
-const existingBg = document.querySelector('.modal-backdrop-overlay');
-if (existingBg && !existingBg._editOverlayClose) {
-  existingBg._editOverlayClose = true;
-  existingBg.style.cursor = 'pointer';
-  existingBg.style.pointerEvents = 'auto';
-  existingBg.addEventListener('click', () => {
-    hideOverlay(overlay);
-  });
-}
+ // Hook close handler onto shared modal backdrop
+  const sharedBg = document.querySelector('.modal-backdrop-overlay');
+  if (sharedBg && !sharedBg._editCloseHandler) {
+    sharedBg._editCloseHandler = () => hideOverlay(overlay);
+    sharedBg.addEventListener('click', sharedBg._editCloseHandler);
+  }
 
   // Ensure overlay is above background
   overlay.style.zIndex = '9999';
@@ -7070,14 +7066,12 @@ function hideOverlay(overlay) {
   overlay.style.opacity = '0';
   overlay.style.transform = 'translateY(20px)';
 
-  // Clean up shared modal backdrop click handler
-const existingBg = document.querySelector('.modal-backdrop-overlay');
-if (existingBg) {
-  existingBg._editOverlayClose = false;
-  existingBg.style.cursor = '';
-  existingBg.style.pointerEvents = '';
-}
-
+ // Remove close handler from shared modal backdrop
+  const sharedBg = document.querySelector('.modal-backdrop-overlay');
+  if (sharedBg && sharedBg._editCloseHandler) {
+    sharedBg.removeEventListener('click', sharedBg._editCloseHandler);
+    sharedBg._editCloseHandler = null;
+  }
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
 
@@ -7234,13 +7228,7 @@ function initUniversalSearch() {
 * =============================================================
 */
 
-(function () {
-  const body = document.body;
-  let scrollY = 0;
-  let isLocked = false;
-  let overlay = null;
-
- function createOverlay() {
+function createOverlay() {
   if (overlay) return overlay;
   
   overlay = document.createElement('div');
@@ -7255,19 +7243,19 @@ function initUniversalSearch() {
     z-index: 9998;
     pointer-events: auto;
     transition: background-color 0.25s ease;
-    cursor: pointer;
+    cursor: default;
   `;
   document.body.appendChild(overlay);
 
   // Click backdrop to close active module
   overlay.addEventListener('click', () => {
-    // playlist edit module
+    // playlist edit module (uses showOverlay/hideOverlay system)
     const editOverlay = document.querySelector('.playlist-edit-module');
     if (editOverlay && getComputedStyle(editOverlay).display !== 'none') {
       hideOverlay(editOverlay);
       return;
     }
-    // all other wrappers — hide by removing display
+    // all other wrappers — hide wrapper which triggers MutationObserver → unlockScroll
     wrapperSelectors.forEach(sel => {
       const wrapper = document.querySelector(sel);
       if (wrapper && getComputedStyle(wrapper).display !== 'none') {
