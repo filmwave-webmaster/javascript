@@ -7249,14 +7249,10 @@ function createOverlay() {
 
   // Click backdrop to close active module
   overlay.addEventListener('click', () => {
-    // playlist edit module (uses showOverlay/hideOverlay system)
-    const editOverlay = document.querySelector('.playlist-edit-module');
-    if (editOverlay && getComputedStyle(editOverlay).display !== 'none') {
-      hideOverlay(editOverlay);
-      return;
-    }
     // all other wrappers — hide wrapper which triggers MutationObserver → unlockScroll
+    // (playlist-edit-module is handled separately via showOverlay/hideOverlay)
     wrapperSelectors.forEach(sel => {
+      if (sel === '.playlist-edit-module-wrapper') return;
       const wrapper = document.querySelector(sel);
       if (wrapper && getComputedStyle(wrapper).display !== 'none') {
         wrapper.style.display = 'none';
