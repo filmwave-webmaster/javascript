@@ -3334,7 +3334,7 @@ function initDarkMode() {
     '--color-17': 'rgba(255, 255, 255, 0.2)',
     '--color-18': 'rgba(255, 255, 255, 0.2)',
     '--color-19': '#3d3d3d',
-    '--color-20': '#151515'
+    '--color-20': '#141414'
   };
   
   // Update waveform colors function
