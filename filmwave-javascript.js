@@ -12830,7 +12830,8 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
     el.style.display = '';
   });
 
-  try {
+ try {
+    const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
     
     const playlists = allPlaylists.sort((a, b) => {
