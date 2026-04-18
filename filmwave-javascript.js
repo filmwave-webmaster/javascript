@@ -12856,7 +12856,7 @@ container.querySelectorAll('.playlist-card-template').forEach((card) => {
       return new Date(b.created_at) - new Date(a.created_at);
     }).slice(0, maxPlaylists);
    
-   console.log('📊 Showing first 4 playlists');
+   console.log('📊 maxPlaylists:', maxPlaylists, 'showing:', playlists.length);
 
     // Pre-fetch counts in parallel
     const playlistCounts = await Promise.all(
