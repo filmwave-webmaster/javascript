@@ -10843,7 +10843,21 @@ async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null, p
         cover_image_url: coverBase64,
         });
           playlist.cover_image_url = coverBase64;
-          console.log('🖼️ Auto-set playlist cover from first song');
+
+// Update sessionStorage cache directly so a page refresh reflects the new cover
+try {
+  const cached = sessionStorage.getItem('playlistsCache');
+  if (cached) {
+    const parsed = JSON.parse(cached);
+    const p = parsed.playlists?.find(p => String(p.id) === String(playlistId));
+    if (p) {
+      p.cover_image_url = coverBase64;
+      sessionStorage.setItem('playlistsCache', JSON.stringify(parsed));
+    }
+  }
+} catch (e) {}
+
+console.log('🖼️ Auto-set playlist cover from first song');
         }
       }
     } catch (err) {
