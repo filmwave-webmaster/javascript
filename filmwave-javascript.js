@@ -12834,12 +12834,18 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
     const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
     
-   const grid = document.querySelector('.db-playlists-grid');
-    const isMobile = window.innerWidth < 768;
+   const isMobile = window.innerWidth < 768;
     let maxPlaylists = 4;
-    if (!isMobile && grid) {
-      const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
-      maxPlaylists = cols;
+    if (!isMobile) {
+      const grid = document.querySelector('.db-playlists-grid');
+      if (grid) {
+        // Force layout recalc
+        grid.getBoundingClientRect();
+        const cols = getComputedStyle(grid).gridTemplateColumns;
+        if (cols && cols !== 'none') {
+          maxPlaylists = cols.split(' ').length;
+        }
+      }
     }
 
     const playlists = allPlaylists.sort((a, b) => {
