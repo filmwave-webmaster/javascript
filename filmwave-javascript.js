@@ -7370,13 +7370,13 @@ function initUniversalSearch() {
 
   const wrapperSelectors = [
     ".create-playlist-module-wrapper",
-    ".add-to-playlist-module-wrapper"
+    ".add-to-playlist-module-wrapper",
     ".playlist-edit-module-wrapper"
   ];
 
   const moduleSelectors = [
     ".create-playlist-module",
-    ".add-to-playlist-module"
+    ".add-to-playlist-module",
     ".playlist-edit-module"
   ];
 
