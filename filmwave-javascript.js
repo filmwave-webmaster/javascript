@@ -82,8 +82,8 @@
  * GLOBAL STATE - Persists across Barba page transitions
  * ============================================================
  */
-if (!window.PlayerPersistent) {
-  window.PlayerPersistent = {
+if (!window.musicPlayerPersistent)
+  window.musicPlayerPersistent = {
     currentWavesurfer: null,
     currentSongData: null,
     currentPeaksData: null,
@@ -114,7 +114,7 @@ if (!window.PlayerPersistent) {
     silentAudio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQAAAAAAAAAAQGwOjLOQgAAAAAAAAAAAAAAAAD/4xjEAAQsAB1kAAACAABpAAAATYkC7gAgDA4J4Pg+D5//ygPlAoBAMQ8H4OAgGP4Pg+8HwfE7/qAg7/B8HwfB9/5QKBQLg+D/BwEAQcuD4nB8HwfB//KBQ5cHwfB8Hwff+UCh/ygIO/wfB8HwfB8=';
     silentAudio.play().then(() => {
       silentAudio.pause();
-      window.PlayerPersistent._audioUnlocked = true;
+      window.musicPlayerPersistent._audioUnlocked = true;
     }).catch(() => {});
     
     document.removeEventListener('touchstart', unlockAudio, true);
@@ -293,7 +293,7 @@ function scrollToSelected(cardElement) {
 function adjustDropdownPosition(toggle, list) {
   if (!list || !toggle) return;
   
-  const g = window.PlayerPersistent;
+  const g = window.musicPlayerPersistent;
 
   const container = document.querySelector('.-list-wrapper') || 
                     document.querySelector('.featured-songs-wrapper') ||
