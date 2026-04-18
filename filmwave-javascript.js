@@ -10768,7 +10768,7 @@ async getPlaylistSongs(playlistId, forceRefresh = false) {
     }
   },
 
-async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null) {
+async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null, playlistMeta = null) {
     const response = await fetch(`${XANO_PLAYLISTS_API}/Add_Song_to_Playlist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -10836,12 +10836,12 @@ async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null) {
             coverBase64 = coverUrl;
           }
 
-          const existing = await this.getPlaylistById(playlistId);
-          await this.updatePlaylist(playlistId, {
-          name: existing?.name || '',
-          description: existing?.description || '',
-          cover_image_url: coverBase64,
-          });
+         const existing = playlistMeta || await this.getPlaylistById(playlistId);
+        await this.updatePlaylist(playlistId, {
+        name: existing?.name || '',
+        description: existing?.description || '',
+        cover_image_url: coverBase64,
+        });
           playlist.cover_image_url = coverBase64;
           console.log('🖼️ Auto-set playlist cover from first song');
         }
@@ -11575,8 +11575,7 @@ if (addModalOpen) {
       this.closeCreatePlaylistModal();
 
       if (this.pendingSongToAdd?.songId) {
-        await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1);
-        await this.getUserPlaylists(true); // refresh cache after auto-cover is set
+        await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1, null, playlist);
         this.showNotification('Playlist created and song added!');
         this.pendingSongToAdd = null;
       } else {
