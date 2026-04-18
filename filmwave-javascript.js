@@ -3461,7 +3461,7 @@ function applyTheme(theme) {
         const member = await window.$memberstackDom.getCurrentMember();
         if (member && member.data) {
           // Logged in - use saved preference
-          return localStorage.getItem('filmwaveTheme') || 'light';
+          return localStorage.getItem('filmwaveThemePreference') || localStorage.getItem('filmwaveTheme') || 'light';
         }
       }
     } catch (e) {}
@@ -8273,11 +8273,15 @@ if (musicArea) {
 // === SIDEBAR MANAGEMENT ===
 const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/') || 
                           window.location.pathname === '/music' || 
-                          window.location.pathname === '/music/';
+                          window.location.pathname === '/music/' ||
+                          window.location.pathname === '/sound-fx' ||
+                          window.location.pathname === '/sound-fx/';
 let sidebar = document.querySelector('.sidebar-nav');
 const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/') ||
                           data.current?.url?.path === '/music' ||
-                          data.current?.url?.path === '/music/';
+                          data.current?.url?.path === '/music/' ||
+                          data.current?.url?.path === '/sound-fx' ||
+                          data.current?.url?.path === '/sound-fx/';
 
 // Inject sidebar if it doesn't exist and we need it
 if (shouldHaveSidebar && !sidebar) {
