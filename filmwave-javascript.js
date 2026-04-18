@@ -7026,12 +7026,16 @@ function showOverlay(overlay) {
   // Force reflow to ensure display is applied
   overlay.offsetHeight;
 
- // Hook close handler onto shared modal backdrop
-  const sharedBg = document.querySelector('.modal-backdrop-overlay');
-  if (sharedBg && !sharedBg._editCloseHandler) {
-    sharedBg._editCloseHandler = () => hideOverlay(overlay);
-    sharedBg.addEventListener('click', sharedBg._editCloseHandler);
-  }
+  // Click on the shared modal backdrop to close
+const existingBg = document.querySelector('.modal-backdrop-overlay');
+if (existingBg && !existingBg._editOverlayClose) {
+  existingBg._editOverlayClose = true;
+  existingBg.style.cursor = 'pointer';
+  existingBg.style.pointerEvents = 'auto';
+  existingBg.addEventListener('click', () => {
+    hideOverlay(overlay);
+  });
+}
 
   // Ensure overlay is above background
   overlay.style.zIndex = '9999';
@@ -7066,12 +7070,14 @@ function hideOverlay(overlay) {
   overlay.style.opacity = '0';
   overlay.style.transform = 'translateY(20px)';
 
- // Remove close handler from shared modal backdrop
-  const sharedBg = document.querySelector('.modal-backdrop-overlay');
-  if (sharedBg && sharedBg._editCloseHandler) {
-    sharedBg.removeEventListener('click', sharedBg._editCloseHandler);
-    sharedBg._editCloseHandler = null;
-  }
+  // Clean up shared modal backdrop click handler
+const existingBg = document.querySelector('.modal-backdrop-overlay');
+if (existingBg) {
+  existingBg._editOverlayClose = false;
+  existingBg.style.cursor = '';
+  existingBg.style.pointerEvents = '';
+}
+
   // Remove visible class for fade out
   overlay.classList.remove('is-visible');
 
@@ -7228,7 +7234,13 @@ function initUniversalSearch() {
 * =============================================================
 */
 
-function createOverlay() {
+(function () {
+  const body = document.body;
+  let scrollY = 0;
+  let isLocked = false;
+  let overlay = null;
+
+ function createOverlay() {
   if (overlay) return overlay;
   
   overlay = document.createElement('div');
@@ -7243,16 +7255,20 @@ function createOverlay() {
     z-index: 9998;
     pointer-events: auto;
     transition: background-color 0.25s ease;
-    cursor: default;
+    cursor: pointer;
   `;
   document.body.appendChild(overlay);
 
   // Click backdrop to close active module
   overlay.addEventListener('click', () => {
-    // all other wrappers — hide wrapper which triggers MutationObserver → unlockScroll
-    // (playlist-edit-module is handled separately via showOverlay/hideOverlay)
+    // playlist edit module
+    const editOverlay = document.querySelector('.playlist-edit-module');
+    if (editOverlay && getComputedStyle(editOverlay).display !== 'none') {
+      hideOverlay(editOverlay);
+      return;
+    }
+    // all other wrappers — hide by removing display
     wrapperSelectors.forEach(sel => {
-      if (sel === '.playlist-edit-module-wrapper') return;
       const wrapper = document.querySelector(sel);
       if (wrapper && getComputedStyle(wrapper).display !== 'none') {
         wrapper.style.display = 'none';
