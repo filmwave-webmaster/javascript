@@ -10964,44 +10964,41 @@ if (playlistRow && playlistRow.dataset.playlistId) {
       /* ----------------------------
          CREATE PLAYLIST MODAL
          ---------------------------- */
-
       if (e.target.closest('.create-playlist-x-button')) {
         e.preventDefault();
         this.closeCreatePlaylistModal();
         return;
       }
-
-      if (e.target.closest('.new-project-x-button')) {
-        const wrapper = document.querySelector('.create-project-module-wrapper');
-        if (wrapper) wrapper.style.display = 'none';
-        return;
-      }
-
       if (e.target.closest('.create-playlist-button') || e.target.closest('.playlist-add-button')) {
         e.preventDefault();
         e.stopPropagation();
-
         this.pendingSongToAdd = null;
         this.openCreatePlaylistModal();
         return;
       }
-
       if (e.target.closest('.create-playlist-save-button')) {
         e.preventDefault();
         this.handleCreatePlaylist();
         return;
       }
-
       if (e.target.classList.contains('create-playlist-module-wrapper')) {
         this.closeCreatePlaylistModal();
         return;
       }
 
-       if (e.target.classList.contains('create-project-module-wrapper')) {
+      /* ----------------------------
+         CREATE PROJECT MODAL
+         ---------------------------- */
+      if (e.target.closest('.new-project-x-button')) {
+        const wrapper = document.querySelector('.create-project-module-wrapper');
+        if (wrapper) wrapper.style.display = 'none';
+        return;
+      }
+      if (e.target.classList.contains('create-project-module-wrapper')) {
         e.target.style.display = 'none';
         return;
       }
-
+      
       /* ----------------------------
          ADD SONG TO PLAYLIST (hover dropdown item)
          ---------------------------- */
