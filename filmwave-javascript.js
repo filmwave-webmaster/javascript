@@ -12847,7 +12847,6 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
       maxPlaylists = cols;
     }
     }).slice(0, maxPlaylists);
-
     console.log('📊 Showing first 4 playlists');
 
     // Pre-fetch counts in parallel
