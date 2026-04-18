@@ -12834,20 +12834,22 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
     const allPlaylists = await PlaylistManager.getUserPlaylists();
     console.log('📊 Total playlists:', allPlaylists.length);
     
-    const playlists = allPlaylists.sort((a, b) => {
-      if (a.position !== b.position) {
-        return a.position - b.position;
-      }
-      return new Date(b.created_at) - new Date(a.created_at);
-    const grid = document.querySelector('.db-playlists-grid');
+   const grid = document.querySelector('.db-playlists-grid');
     const isMobile = window.innerWidth < 768;
     let maxPlaylists = 4;
     if (!isMobile && grid) {
       const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
       maxPlaylists = cols;
     }
+
+    const playlists = allPlaylists.sort((a, b) => {
+      if (a.position !== b.position) {
+        return a.position - b.position;
+      }
+      return new Date(b.created_at) - new Date(a.created_at);
     }).slice(0, maxPlaylists);
-    console.log('📊 Showing first 4 playlists');
+   
+   console.log('📊 Showing first 4 playlists');
 
     // Pre-fetch counts in parallel
     const playlistCounts = await Promise.all(
