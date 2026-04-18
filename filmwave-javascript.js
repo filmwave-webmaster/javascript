@@ -11576,6 +11576,7 @@ if (addModalOpen) {
 
       if (this.pendingSongToAdd?.songId) {
         await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1, null, playlist);
+        await this.getUserPlaylists(true);
         this.showNotification('Playlist created and song added!');
         this.pendingSongToAdd = null;
       } else {
