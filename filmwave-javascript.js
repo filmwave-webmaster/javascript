@@ -12011,7 +12011,7 @@ if (!window.__fw_placeholders_initialized) {
     
    // Clone placeholders to match playlist count - insert after the original placeholder
     // Get card dimensions from template for sizing
-    const cardTemplate = container.querySelector('.playlist-card-template[data-template="true"]');
+    const cardTemplate = container.querySelector('.playlist-card-template.is-template');
     const cardStyles = cardTemplate ? getComputedStyle(cardTemplate) : null;
     
     let insertAfter = placeholderTemplate;
@@ -12807,7 +12807,7 @@ async function initDashboardPlaylists() {
     return;
   }
 
-  const template = container.querySelector('.playlist-card-template[data-template="true"]');
+  const template = container.querySelector('.playlist-card-template.is-template');
   if (!template) {
     console.log('❌ No playlist template found');
     return;
@@ -12816,7 +12816,7 @@ async function initDashboardPlaylists() {
   console.log('🎵 Initializing dashboard playlists...');
 
   // Clear ALL non-template cards
-container.querySelectorAll('.playlist-card-template:not([data-template="true"])').forEach((card) => {
+container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
   card.remove();
 });
 
@@ -12933,7 +12933,7 @@ async function initPlaylistsPage() {
     return;
   }
   
-  const template = sortablecontainer.querySelector('.playlist-card-template[data-template="true"]');
+  const template = sortableContainer.querySelector('.playlist-card-template.is-template');
   const placeholderTemplate = sortableContainer.querySelector('.playlist-placeholder');
   
   if (!template) {
@@ -12944,7 +12944,7 @@ async function initPlaylistsPage() {
   console.log('🎵 Initializing playlists page...');
   
   // Clear ALL non-template cards
-  sortablecontainer.querySelectorAll('.playlist-card-template:not([data-template="true"])').forEach((card) => {
+  sortableContainer.querySelectorAll('.playlist-card-template:not(.is-template)').forEach((card) => {
     card.remove();
   });
   
