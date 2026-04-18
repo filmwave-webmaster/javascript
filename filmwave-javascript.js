@@ -11576,6 +11576,7 @@ if (addModalOpen) {
 
       if (this.pendingSongToAdd?.songId) {
         await this.addSongToPlaylist(playlist.id, this.pendingSongToAdd.songId, 1);
+        await this.getUserPlaylists(true); // refresh cache after auto-cover is set
         this.showNotification('Playlist created and song added!');
         this.pendingSongToAdd = null;
       } else {
