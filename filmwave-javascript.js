@@ -12840,9 +12840,12 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
       const grid = document.querySelector('.db-playlists-grid');
       if (grid) {
         const gridWidth = grid.getBoundingClientRect().width;
-        const gap = parseInt(getComputedStyle(grid).columnGap) || 0;
         const minItemWidth = 150;
-        maxPlaylists = Math.floor((gridWidth + gap) / (minItemWidth + gap));
+        maxPlaylists = Math.floor(gridWidth / minItemWidth);
+        // Verify the cards actually fit by checking if remainder leaves room
+        if ((maxPlaylists * minItemWidth) > gridWidth) {
+          maxPlaylists -= 1;
+        }
       }
     }
    
