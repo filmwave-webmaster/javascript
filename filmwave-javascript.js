@@ -7255,7 +7255,7 @@ function initUniversalSearch() {
     z-index: 9998;
     pointer-events: auto;
     transition: background-color 0.25s ease;
-    cursor: pointer;
+    cursor: default;
   `;
   document.body.appendChild(overlay);
 
