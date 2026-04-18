@@ -12838,13 +12838,11 @@ container.querySelectorAll('.playlist-card-template:not(.is-template)').forEach(
     let maxPlaylists = 4;
     if (!isMobile) {
       const grid = document.querySelector('.db-playlists-grid');
-      const placeholder = grid?.querySelector('.playlist-placeholder');
-      if (grid && placeholder) {
+      if (grid) {
         const gridWidth = grid.getBoundingClientRect().width;
-        const itemWidth = placeholder.getBoundingClientRect().width;
-        if (gridWidth > 0 && itemWidth > 0) {
-          maxPlaylists = Math.floor(gridWidth / itemWidth);
-        }
+        const gap = parseInt(getComputedStyle(grid).columnGap) || 0;
+        const minItemWidth = 150;
+        maxPlaylists = Math.floor((gridWidth + gap) / (minItemWidth + gap));
       }
     }
    
