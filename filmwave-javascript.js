@@ -10836,7 +10836,12 @@ async addSongToPlaylist(playlistId, songId, position = 0, songCoverUrl = null) {
             coverBase64 = coverUrl;
           }
 
-          await this.updatePlaylist(playlistId, { cover_image_url: coverBase64 });
+          const existing = await this.getPlaylistById(playlistId);
+          await this.updatePlaylist(playlistId, {
+          name: existing?.name || '',
+          description: existing?.description || '',
+          cover_image_url: coverBase64,
+          });
           playlist.cover_image_url = coverBase64;
           console.log('🖼️ Auto-set playlist cover from first song');
         }
