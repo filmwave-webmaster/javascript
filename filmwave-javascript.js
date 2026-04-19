@@ -10036,8 +10036,10 @@ const FavoriteManager = {
           document.querySelector('.music-player-wrapper input[type="checkbox"]')
         );
         if (playerInput) {
+          favSyncLock = true;
           playerInput.checked = false;
           playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+          favSyncLock = false;
         }
       }
     } else {
