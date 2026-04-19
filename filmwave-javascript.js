@@ -10009,46 +10009,31 @@ const FavoriteManager = {
   },
 
   syncAllCards() {
-    // Sync all song cards on the page
+    favSyncLock = true;
     document.querySelectorAll('.song-wrapper[data-song-id]').forEach(card => {
       const songId = String(card.dataset.songId);
       const checkbox = card.querySelector('input.favorite-checkbox, .favorite-checkbox input[type="checkbox"], input[type="checkbox"]');
       if (checkbox) {
         const shouldBeChecked = this.favoritedIds.has(songId);
-        if (checkbox.checked !== shouldBeChecked) {
-          favSyncLock = true;
-          checkbox.checked = shouldBeChecked;
-          checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-          favSyncLock = false;
-        }
+        checkbox.checked = shouldBeChecked;
       }
     });
 
-    // Sync player if current song is in view
     const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
     if (currentSongId) {
       const playerInput = getPlayerInput();
       if (playerInput) {
-        const shouldBeChecked = this.favoritedIds.has(currentSongId);
-        if (playerInput.checked !== shouldBeChecked) {
-          favSyncLock = true;
-          playerInput.checked = shouldBeChecked;
-          playerInput.dispatchEvent(new Event('change', { bubbles: true }));
-          favSyncLock = false;
-        }
+        playerInput.checked = this.favoritedIds.has(currentSongId);
       }
     }
-  },
-};
+    favSyncLock = false;
+  },};
 
 console.log('⭐ FavoriteManager defined');
 
 // Initialize FavoriteManager on first load and re-sync after Barba transitions
 window.addEventListener('load', () => FavoriteManager.init().then(() => FavoriteManager.syncAllCards()));
-window.addEventListener('barbaAfterTransition', () => {
-  FavoriteManager.initialized = false;
-  FavoriteManager.init().then(() => FavoriteManager.syncAllCards());
-});
+window.addEventListener('barbaAfterTransition', () => FavoriteManager.syncAllCards());
 
 /**
  * ============================================================
