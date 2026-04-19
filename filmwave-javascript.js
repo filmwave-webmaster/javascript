@@ -10098,14 +10098,10 @@ const FavoriteManager = {
       this.favoritedIds.add(songId);
     }
 
-    // If on favorites page and removing, just remove the card from DOM
-    const onFavoritesPage = !!document.querySelector('.favorite-songs-wrapper');
-    if (onFavoritesPage && wasFavorited) {
-      const card = document.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
-      if (card) card.remove();
-      // Also sync the player if this is the currently playing song
+    // Helper to sync player icon when removed song is currently playing
+    const syncPlayerIcon = (removedSongId) => {
       const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
-      if (currentSongId === songId) {
+      if (currentSongId === removedSongId) {
         const playerInput = (
           document.querySelector('.music-player-wrapper input.player-favorite-checkbox') ||
           document.querySelector('.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]') ||
@@ -10117,8 +10113,7 @@ const FavoriteManager = {
             playerInput.checked = false;
             playerInput.dispatchEvent(new Event('change', { bubbles: true }));
             favSyncLock = false;
-            // Also directly update the player icons
-            const playerWrapper = playerInput.closest('.music-player-wrapper') || document.querySelector('.music-player-wrapper');
+            const playerWrapper = document.querySelector('.music-player-wrapper');
             const emptyIcon = playerWrapper?.querySelector('.favorite-icon-empty');
             const filledIcon = playerWrapper?.querySelector('.favorite-icon-filled');
             if (emptyIcon) emptyIcon.style.display = 'flex';
@@ -10126,6 +10121,20 @@ const FavoriteManager = {
           }, 50);
         }
       }
+    };
+
+    const onFavoritesPage = !!document.querySelector('.favorite-songs-wrapper');
+    const onDashboardFavorites = !!document.querySelector('.dashboard-favorite-songs-wrapper');
+
+    if (onFavoritesPage && wasFavorited) {
+      const card = document.querySelector(`.favorite-songs-wrapper .song-wrapper[data-song-id="${songId}"]`);
+      if (card) card.remove();
+      syncPlayerIcon(songId);
+    } else if (onDashboardFavorites && wasFavorited) {
+      const card = document.querySelector(`.dashboard-favorite-songs-wrapper .song-wrapper[data-song-id="${songId}"]`);
+      if (card) card.remove();
+      syncPlayerIcon(songId);
+      displayDashboardFavorites();
     } else {
       this.syncAllCards();
     }
