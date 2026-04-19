@@ -593,7 +593,7 @@ async function initMusicPage() {
         displayFeaturedSongs(6);
       }
       
-    if (hasFavoriteSongs) {
+    if (hasFavoriteSongs && !window._barbaTransitioning) {
         console.log('💛 Calling displayFavoriteSongs...');
         displayFavoriteSongsRunning = false;
         displayFavoriteSongs();
@@ -8563,6 +8563,7 @@ loadingPlaceholders.forEach(placeholder => {
   
   if (hasFavoriteSongs) {
     console.log('💛 [BARBA AFTER] Calling displayFavoriteSongs...');
+    window._barbaTransitioning = false;
     displayFavoriteSongsRunning = false;
     displayFavoriteSongs();
     
@@ -9834,6 +9835,7 @@ if (typeof barba !== 'undefined') {
   
   barba.hooks.beforeEnter((data) => {
     console.log('📥 Barba beforeEnter hook');
+    window._barbaTransitioning = true;
 
     // Pre-hide favorites content to prevent flash on transition
     const favWrapper = data.next.container.querySelector('.favorite-songs-wrapper');
