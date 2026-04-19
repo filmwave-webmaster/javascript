@@ -8973,7 +8973,6 @@ function initMusicPageFilterPills() {
  */
 
 let filtersRestored = false;
-let favoritesRestored = false;
 let isClearing = false;
 let searchSaveTimeout;
 
@@ -10154,6 +10153,15 @@ document.addEventListener('change', (e) => {
  * XANO PLAYLIST SYSTEM
  * ============================================================
  */
+
+// Initialize FavoriteManager on load and after Barba transitions
+window.addEventListener('load', () => FavoriteManager.init());
+if (typeof barba !== 'undefined') {
+  window.addEventListener('barbaAfterTransition', () => {
+    FavoriteManager.initialized = false;
+    FavoriteManager.init().then(() => FavoriteManager.syncAllCards());
+  });
+}
 
 /* ============================================================
    SHARED HELPERS
