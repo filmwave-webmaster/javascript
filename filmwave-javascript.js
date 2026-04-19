@@ -3206,8 +3206,8 @@ async function displayFavoriteSongs(limit = null) {
   
 console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
 
-  // Sync favorite checkbox states
-  setTimeout(() => FavoriteManager.syncAllCards(), 50);
+  // Sync favorite checkbox states on initial render only
+  FavoriteManager.syncAllCards();
   
  // Initialize waveforms for these cards
   setTimeout(() => {
