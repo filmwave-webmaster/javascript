@@ -146,6 +146,7 @@ const TABLE_ID = 'tbl0RZuyC0LtAo7GY';
 const VIEW_ID = 'viwkfM9RnnZtxL2z5';
 
 const XANO_PLAYLISTS_API = 'https://xuvv-ysql-w1uc.n2.xano.io/api:Pjks2U_C';
+const XANO_FAVORITES_API = 'https://xuvv-ysql-w1uc.n2.xano.io/api:ep7-hzIX';
 
 // Cache navigation variants
 window.navCache = {
@@ -3172,12 +3173,17 @@ async function displayFavoriteSongs(limit = null) {
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
   
-  // Decide which songs to show
-  let songsToDisplay = g.MASTER_DATA;
-  
-  // If limit is specified, take the most recent songs
+  // Ensure FavoriteManager is initialized
+  await FavoriteManager.init();
+
+  // Filter to only favorited songs
+  let songsToDisplay = g.MASTER_DATA.filter(song =>
+    FavoriteManager.isFavorited(song.id)
+  );
+
+  // If limit is specified, take the most recent
   if (limit) {
-    songsToDisplay = g.MASTER_DATA.slice(-limit).reverse();
+    songsToDisplay = songsToDisplay.slice(-limit).reverse();
   }
   
   // Create song cards
@@ -9900,95 +9906,131 @@ if (typeof barba !== 'undefined') {
 
 /**
  * ============================================================
- * FAVORITE SONGS PERSISTENCE
+ * FAVORITE MANAGER (Xano-backed)
  * ============================================================
  */
 
-function saveFavorites() {
-  const favorites = [];
-  // Find all checked checkboxes inside song cards
-  document.querySelectorAll('.song-wrapper').forEach(songCard => {
-    const checkbox = songCard.querySelector('.favorite-button input[type="checkbox"], input.favorite-checkbox');
-    if (checkbox?.checked && songCard.dataset.songId) {
-      favorites.push(songCard.dataset.songId);
-    }
-  });
-  localStorage.setItem('favoriteSongs', JSON.stringify(favorites));
-}
+const FavoriteManager = {
+  favoritedIds: new Set(),
+  currentUserId: null,
+  initialized: false,
 
-function restoreFavorites() {
-  const saved = localStorage.getItem('favoriteSongs');
-  if (!saved) return;
-  
-  try {
-    const favoriteIds = JSON.parse(saved);
-    favoriteIds.forEach(songId => {
-      const songCard = document.querySelector(`[data-song-id="${songId}"]`);
-      const checkbox = songCard?.querySelector('input.favorite-checkbox');
-      if (checkbox && !checkbox.checked) {
-        checkbox.checked = true;
-        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+  async init() {
+    if (this.initialized) return;
+    try {
+      if (window.$memberstackDom) {
+        const member = await window.$memberstackDom.getCurrentMember();
+        if (member?.data?.id) {
+          this.currentUserId = member.data.id;
+        }
+      }
+      if (this.currentUserId) {
+        await this.loadFromXano();
+      }
+      this.initialized = true;
+      console.log('⭐ FavoriteManager initialized, favorites:', this.favoritedIds.size);
+    } catch (err) {
+      console.error('FavoriteManager init error:', err);
+    }
+  },
+
+  async loadFromXano() {
+    try {
+      const res = await fetch(`${XANO_FAVORITES_API}/Get_User_Favorites?user_id=${this.currentUserId}`);
+      if (!res.ok) throw new Error('Failed to load favorites');
+      const data = await res.json();
+      this.favoritedIds = new Set(data.map(r => String(r.song_id)));
+      console.log('⭐ Loaded favorites from Xano:', this.favoritedIds.size);
+    } catch (err) {
+      console.error('Failed to load favorites from Xano:', err);
+    }
+  },
+
+  isFavorited(songId) {
+    return this.favoritedIds.has(String(songId));
+  },
+
+  async toggle(songId) {
+    if (!this.currentUserId) {
+      console.warn('No user logged in, cannot toggle favorite');
+      return;
+    }
+    songId = String(songId);
+    const wasFavorited = this.favoritedIds.has(songId);
+
+    // Optimistic update
+    if (wasFavorited) {
+      this.favoritedIds.delete(songId);
+    } else {
+      this.favoritedIds.add(songId);
+    }
+    this.syncAllCards();
+
+    // Xano call
+    try {
+      if (wasFavorited) {
+        const res = await fetch(`${XANO_FAVORITES_API}/Remove_Favorite`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: this.currentUserId, song_id: songId }),
+        });
+        if (!res.ok) throw new Error('Remove failed');
+        console.log('⭐ Removed favorite:', songId);
+      } else {
+        const res = await fetch(`${XANO_FAVORITES_API}/Add_Favorite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: this.currentUserId, song_id: songId }),
+        });
+        if (!res.ok) throw new Error('Add failed');
+        console.log('⭐ Added favorite:', songId);
+      }
+    } catch (err) {
+      console.error('Favorite toggle failed, rolling back:', err);
+      // Roll back
+      if (wasFavorited) {
+        this.favoritedIds.add(songId);
+      } else {
+        this.favoritedIds.delete(songId);
+      }
+      this.syncAllCards();
+    }
+  },
+
+  syncAllCards() {
+    // Sync all song cards on the page
+    document.querySelectorAll('.song-wrapper[data-song-id]').forEach(card => {
+      const songId = String(card.dataset.songId);
+      const checkbox = card.querySelector('input.favorite-checkbox, .favorite-checkbox input[type="checkbox"], input[type="checkbox"]');
+      if (checkbox) {
+        const shouldBeChecked = this.favoritedIds.has(songId);
+        if (checkbox.checked !== shouldBeChecked) {
+          favSyncLock = true;
+          checkbox.checked = shouldBeChecked;
+          checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+          favSyncLock = false;
+        }
       }
     });
-    console.log(`✅ Restored ${favoriteIds.length} favorites`);
-  } catch (error) {
-    console.error('Error restoring favorites:', error);
-  }
-}
 
-document.addEventListener('change', function(e) {
-  if (e.target.type === 'checkbox') {
-    const inFavoriteButton = e.target.closest('.favorite-button');
-    const inSongWrapper = e.target.closest('.song-wrapper');
-    if (inFavoriteButton || inSongWrapper) {
-      saveFavorites();
-    }
-  }
-});
-
-function attemptRestoreFavorites() {
-  if (favoritesRestored) return true;
-  
-  const hasSongs = document.querySelectorAll('.song-wrapper[data-song-id]').length > 0;
-  if (hasSongs) {
-    restoreFavorites();
-    favoritesRestored = true;
-    return true;
-  }
-  return false;
-}
-
-window.addEventListener('load', function() {
-  favoritesRestored = false;
-  
-  setTimeout(() => {
-    if (!attemptRestoreFavorites()) {
-      setTimeout(() => {
-        if (!attemptRestoreFavorites()) {
-          setTimeout(attemptRestoreFavorites, 500);
+    // Sync player if current song is in view
+    const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (currentSongId) {
+      const playerInput = getPlayerInput();
+      if (playerInput) {
+        const shouldBeChecked = this.favoritedIds.has(currentSongId);
+        if (playerInput.checked !== shouldBeChecked) {
+          favSyncLock = true;
+          playerInput.checked = shouldBeChecked;
+          playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+          favSyncLock = false;
         }
-      }, 500);
-    }
-  }, 1000);
-});
-
-if (typeof barba !== 'undefined') {
-  window.addEventListener('barbaAfterTransition', function() {
-    favoritesRestored = false;
-    
-    setTimeout(() => {
-      if (!attemptRestoreFavorites()) {
-        setTimeout(() => {
-          if (!attemptRestoreFavorites()) {
-            setTimeout(attemptRestoreFavorites, 500);
-          }
-        }, 500);
       }
-    }, 1000);
-  });
-}
+    }
+  },
+};
 
-console.log('💾 localStorage persistence initialized');
+console.log('⭐ FavoriteManager defined');
 
 /**
  * ============================================================
@@ -10068,15 +10110,15 @@ document.addEventListener('change', (e) => {
   const isSong = !!input.closest('.song-wrapper');
 
      // SONG -> PLAYER (ONLY if this card is the currently playing song)
-  if (isSong) {
+ if (isSong) {
     const songId = input.closest('.song-wrapper')?.dataset?.songId;
     if (!songId) return;
 
-    const currentId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
-    if (!currentId) return;
+    // Trigger Xano toggle
+    FavoriteManager.toggle(songId);
 
-    // Not the current song → do NOT sync the player
-    if (String(songId) !== currentId) return;
+    const currentId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+    if (!currentId || String(songId) !== currentId) return;
 
     const playerInput = getPlayerInput();
     if (!playerInput) return;
