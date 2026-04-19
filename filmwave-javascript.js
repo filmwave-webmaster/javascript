@@ -3163,14 +3163,20 @@ async function displayFavoriteSongs(limit = null) {
   
   const templateWrapper = container.querySelector('.template-wrapper');
   const templateCard = templateWrapper ? templateWrapper.querySelector('.song-wrapper') : container.querySelector('.song-wrapper');
-  
+  const loadingPlaceholder = container.querySelector('.loading-placeholder');
+
   if (!templateCard) {
     console.warn('No template card found in favorite-songs-wrapper');
     return;
   }
-  
-  // Clear container but keep template
+
+  // Show loading placeholder, hide template while fetching
+  if (loadingPlaceholder) loadingPlaceholder.style.display = 'block';
+  if (templateWrapper) templateWrapper.style.display = 'none';
+
+  // Clear container but keep template and placeholder
   container.innerHTML = '';
+  if (loadingPlaceholder) container.appendChild(loadingPlaceholder);
   if (templateWrapper) container.appendChild(templateWrapper);
   
 // Always re-fetch from Xano when loading favorites page
@@ -3212,7 +3218,11 @@ async function displayFavoriteSongs(limit = null) {
   
 console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
 
-  // Sync favorite checkbox states on initial render only
+  // Hide loading placeholder, show cards
+  if (loadingPlaceholder) loadingPlaceholder.style.display = 'none';
+  if (templateWrapper) templateWrapper.style.display = '';
+
+  // Sync favorite checkbox states
   FavoriteManager.syncAllCards();
   
  // Initialize waveforms for these cards
