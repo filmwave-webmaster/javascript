@@ -3170,14 +3170,8 @@ async function displayFavoriteSongs(limit = null) {
     return;
   }
 
-  // Show loading placeholder, hide template while fetching
-  if (loadingPlaceholder) loadingPlaceholder.style.display = 'block';
+  // Hide template card while fetching, leave placeholder visible
   if (templateWrapper) templateWrapper.style.display = 'none';
-
-  // Clear container but keep template and placeholder
-  container.innerHTML = '';
-  if (loadingPlaceholder) container.appendChild(loadingPlaceholder);
-  if (templateWrapper) container.appendChild(templateWrapper);
   
 // Always re-fetch from Xano when loading favorites page
   FavoriteManager.initialized = false;
