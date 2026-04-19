@@ -10020,6 +10020,7 @@ const FavoriteManager = {
         });
         if (!res.ok) throw new Error('Remove failed');
         console.log('⭐ Removed favorite:', songId);
+        PlaylistManager.showNotification('Removed from Favorites');
       } else {
         const res = await fetch(`${XANO_FAVORITES_API}/Add_Favorite`, {
           method: 'POST',
@@ -10028,6 +10029,7 @@ const FavoriteManager = {
         });
         if (!res.ok) throw new Error('Add failed');
         console.log('⭐ Added favorite:', songId);
+        PlaylistManager.showNotification('Added to Favorites');
       }
     } catch (err) {
       console.error('Favorite toggle failed, rolling back:', err);
