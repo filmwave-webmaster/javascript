@@ -9968,7 +9968,7 @@ const FavoriteManager = {
       this.favoritedIds.add(songId);
     }
 
-    // If on favorites page and removing, remove the card from DOM immediately
+    // If on favorites page and removing, just remove the card from DOM
     const onFavoritesPage = !!document.querySelector('.favorite-songs-wrapper');
     if (onFavoritesPage && wasFavorited) {
       const card = document.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
@@ -9998,7 +9998,6 @@ const FavoriteManager = {
       }
     } catch (err) {
       console.error('Favorite toggle failed, rolling back:', err);
-      // Roll back
       if (wasFavorited) {
         this.favoritedIds.add(songId);
       } else {
@@ -10014,20 +10013,21 @@ const FavoriteManager = {
       const songId = String(card.dataset.songId);
       const checkbox = card.querySelector('input.favorite-checkbox, .favorite-checkbox input[type="checkbox"], input[type="checkbox"]');
       if (checkbox) {
-        const shouldBeChecked = this.favoritedIds.has(songId);
-        checkbox.checked = shouldBeChecked;
+        checkbox.checked = this.favoritedIds.has(songId);
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
-
     const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
     if (currentSongId) {
       const playerInput = getPlayerInput();
       if (playerInput) {
         playerInput.checked = this.favoritedIds.has(currentSongId);
+        playerInput.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
     favSyncLock = false;
-  },};
+  },
+};
 
 console.log('⭐ FavoriteManager defined');
 
