@@ -10022,12 +10022,14 @@ const FavoriteManager = {
       // Also sync the player if this is the currently playing song
       const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
       if (currentSongId === songId) {
-        const playerInput = getPlayerInput();
-        if (playerInput) {
-          favSyncLock = true;
+        const playerInput = (
+          document.querySelector('.music-player-wrapper input.player-favorite-checkbox') ||
+          document.querySelector('.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]') ||
+          document.querySelector('.music-player-wrapper input[type="checkbox"]')
+        );
+        if (playerInput && playerInput.checked) {
           playerInput.checked = false;
           playerInput.dispatchEvent(new Event('change', { bubbles: true }));
-          favSyncLock = false;
         }
       }
     } else {
