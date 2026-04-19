@@ -8794,7 +8794,15 @@ document.addEventListener('change', (e) => {
       button = songWrapper.querySelector('.favorite-button') || songWrapper;
     }
   }
-  
+
+  // For music player
+  if (!button) {
+    const playerWrapper = checkbox.closest('.music-player-wrapper');
+    if (playerWrapper) {
+      button = playerWrapper.querySelector('.favorite-button') || playerWrapper;
+    }
+  }
+
   if (!button) return;
 
   const emptyIcon = button.querySelector('.favorite-icon-empty');
