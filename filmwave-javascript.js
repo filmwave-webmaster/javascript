@@ -3170,22 +3170,25 @@ async function displayFavoriteSongs(limit = null) {
     return;
   }
 
-  // Hide template card while fetching, leave placeholder visible
+  // Hide template, show placeholder while fetching
   if (templateWrapper) templateWrapper.style.display = 'none';
-  
-// Always re-fetch from Xano when loading favorites page
+  if (loadingPlaceholder) loadingPlaceholder.style.display = 'block';
+
+  // Remove any previously rendered song cards
+  Array.from(container.children).forEach(child => {
+    if (child !== templateWrapper && child !== loadingPlaceholder) {
+      child.remove();
+    }
+  });
+
+  // Always re-fetch from Xano when loading favorites page
   FavoriteManager.initialized = false;
   await FavoriteManager.init();
-
-  console.log('⭐ favoritedIds at render time:', [...FavoriteManager.favoritedIds]);
-  console.log('⭐ MASTER_DATA length:', g.MASTER_DATA.length);
 
   // Filter to only favorited songs
   let songsToDisplay = g.MASTER_DATA.filter(song =>
     FavoriteManager.isFavorited(song.id)
   );
-
-  console.log('⭐ songsToDisplay:', songsToDisplay.length);
 
   // If limit is specified, take the most recent
   if (limit) {
@@ -3198,7 +3201,6 @@ async function displayFavoriteSongs(limit = null) {
     newCard.style.opacity = '1';
     newCard.style.position = 'relative';
     newCard.style.pointerEvents = 'auto';
-    
     populateSongCard(newCard, song);
     container.appendChild(newCard);
   });
@@ -3210,16 +3212,15 @@ async function displayFavoriteSongs(limit = null) {
     window.Webflow.require('ix2').init();
   }
   
-console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
+  console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
 
-  // Hide loading placeholder, show cards
+  // Hide placeholder once cards are rendered
   if (loadingPlaceholder) loadingPlaceholder.style.display = 'none';
-  if (templateWrapper) templateWrapper.style.display = '';
 
   // Sync favorite checkbox states
   FavoriteManager.syncAllCards();
   
- // Initialize waveforms for these cards
+  // Initialize waveforms for these cards
   setTimeout(() => {
     const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
     if (cards.length > 0) {
