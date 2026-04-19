@@ -10094,10 +10094,11 @@ const FavoriteManager = {
     // Optimistic update
     if (wasFavorited) {
       this.favoritedIds.delete(songId);
+      this.orderedIds = this.orderedIds.filter(id => id !== songId);
     } else {
       this.favoritedIds.add(songId);
+      this.orderedIds.unshift(songId);
     }
-
     // Helper to sync player icon when removed song is currently playing
     const syncPlayerIcon = (removedSongId) => {
       const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
