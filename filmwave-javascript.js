@@ -10019,6 +10019,17 @@ const FavoriteManager = {
     if (onFavoritesPage && wasFavorited) {
       const card = document.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
       if (card) card.remove();
+      // Also sync the player if this is the currently playing song
+      const currentSongId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
+      if (currentSongId === songId) {
+        const playerInput = getPlayerInput();
+        if (playerInput) {
+          favSyncLock = true;
+          playerInput.checked = false;
+          playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+          favSyncLock = false;
+        }
+      }
     } else {
       this.syncAllCards();
     }
