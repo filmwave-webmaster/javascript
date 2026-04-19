@@ -9966,7 +9966,15 @@ const FavoriteManager = {
     } else {
       this.favoritedIds.add(songId);
     }
-    this.syncAllCards();
+
+    // If on favorites page and removing, remove the card from DOM immediately
+    const onFavoritesPage = !!document.querySelector('.favorite-songs-wrapper');
+    if (onFavoritesPage && wasFavorited) {
+      const card = document.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
+      if (card) card.remove();
+    } else {
+      this.syncAllCards();
+    }
 
     // Xano call
     try {
