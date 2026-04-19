@@ -3218,6 +3218,13 @@ async function displayDashboardFavorites() {
   // Hide placeholder, show cards
   if (loadingPlaceholder) loadingPlaceholder.style.display = 'none';
 
+  // Reinitialize Webflow interactions including dropdowns
+  if (window.Webflow && window.Webflow.destroy && window.Webflow.ready) {
+    window.Webflow.destroy();
+    window.Webflow.ready();
+    window.Webflow.require('ix2').init();
+  }
+
   FavoriteManager.syncAllCards();
 
   setTimeout(() => {
