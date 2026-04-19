@@ -3173,7 +3173,8 @@ async function displayFavoriteSongs(limit = null) {
   container.innerHTML = '';
   if (templateWrapper) container.appendChild(templateWrapper);
   
-  // Ensure FavoriteManager is initialized
+// Always re-fetch from Xano when loading favorites page
+  FavoriteManager.initialized = false;
   await FavoriteManager.init();
 
   // Filter to only favorited songs
