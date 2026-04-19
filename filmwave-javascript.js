@@ -10187,6 +10187,9 @@ document.addEventListener('change', (e) => {
     const songId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
     if (!songId) return;
 
+    // Trigger Xano toggle from player
+    if (e.isTrusted) FavoriteManager.toggle(songId);
+
     const songInput = getSongInputById(songId);
     if (!songInput) return;
 
