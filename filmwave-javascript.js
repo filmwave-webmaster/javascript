@@ -3203,10 +3203,10 @@ async function displayFavoriteSongs(limit = null) {
   FavoriteManager.initialized = false;
   await FavoriteManager.init();
 
-  // Filter to only favorited songs
-  let songsToDisplay = g.MASTER_DATA.filter(song =>
-    FavoriteManager.isFavorited(song.id)
-  );
+  // Display songs in the order they were favorited (newest first)
+  let songsToDisplay = FavoriteManager.orderedIds
+    .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
+    .filter(Boolean);
 
   // If limit is specified, take the most recent
   if (limit) {
@@ -9969,6 +9969,7 @@ if (typeof barba !== 'undefined') {
 
 const FavoriteManager = {
   favoritedIds: new Set(),
+  orderedIds: [],
   currentUserId: null,
   initialized: false,
 
@@ -9996,7 +9997,10 @@ const FavoriteManager = {
       const res = await fetch(`${XANO_FAVORITES_API}/Get_User_Favorites?user_id=${this.currentUserId}`);
       if (!res.ok) throw new Error('Failed to load favorites');
       const data = await res.json();
-      this.favoritedIds = new Set(data.map(r => String(r.song_id)));
+      // Sort newest first by created_at
+      const sorted = [...data].sort((a, b) => b.created_at - a.created_at);
+      this.favoritedIds = new Set(sorted.map(r => String(r.song_id)));
+      this.orderedIds = sorted.map(r => String(r.song_id));
       console.log('⭐ Loaded favorites from Xano:', this.favoritedIds.size);
     } catch (err) {
       console.error('Failed to load favorites from Xano:', err);
