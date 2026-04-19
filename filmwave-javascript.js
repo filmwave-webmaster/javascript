@@ -648,11 +648,23 @@ function navigateStandaloneTrack(direction) {
     g.activeSongSource = 'music';
   }
 
+  const isOnFavoritesPage = path.includes('/dashboard/favorites');
+
   // PLAYLIST TEMPLATE: navigate only the songs rendered on this page (DOM order)
   if (isOnPlaylistTemplate) {
     g.activeSongSource = 'playlist';
 
     const domIds = Array.from(document.querySelectorAll('.song-wrapper[data-song-id]'))
+      .map(el => String(el.dataset.songId))
+      .filter(Boolean);
+
+    songsToNavigate = domIds
+      .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
+      .filter(Boolean);
+  } else if (isOnFavoritesPage) {
+    g.activeSongSource = 'favorites';
+
+    const domIds = Array.from(document.querySelectorAll('.favorite-songs-wrapper .song-wrapper[data-song-id]'))
       .map(el => String(el.dataset.songId))
       .filter(Boolean);
 
