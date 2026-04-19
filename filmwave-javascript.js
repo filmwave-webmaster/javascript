@@ -10027,7 +10027,7 @@ const FavoriteManager = {
           document.querySelector('.music-player-wrapper .player-favorite-checkbox input[type="checkbox"]') ||
           document.querySelector('.music-player-wrapper input[type="checkbox"]')
         );
-        if (playerInput && playerInput.checked) {
+        if (playerInput) {
           playerInput.checked = false;
           playerInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
