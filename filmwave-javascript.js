@@ -3176,7 +3176,7 @@ async function displayFavoriteSongs(limit = null) {
 
   // Hide template, show placeholder while fetching
   if (templateWrapper) templateWrapper.style.display = 'none';
-  if (loadingPlaceholder) loadingPlaceholder.style.display = 'block';
+  if (loadingPlaceholder) loadingPlaceholder.style.display = 'flex';
 
   // Remove any previously rendered song cards
   Array.from(container.children).forEach(child => {
@@ -9833,6 +9833,13 @@ if (typeof barba !== 'undefined') {
   
   barba.hooks.beforeEnter((data) => {
     console.log('📥 Barba beforeEnter hook');
+
+    // Pre-hide template-wrapper on favorites page to prevent flash
+    const favWrapper = data.next.container.querySelector('.favorite-songs-wrapper');
+    if (favWrapper) {
+      const tmpl = favWrapper.querySelector('.template-wrapper');
+      if (tmpl) tmpl.style.display = 'none';
+    }
     const savedState = localStorage.getItem('musicFilters');
     const savedPlaylist = localStorage.getItem('playlistFilter');
     console.log('Saved filters:', savedState);
