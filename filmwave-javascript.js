@@ -593,9 +593,8 @@ async function initMusicPage() {
         displayFeaturedSongs(6);
       }
       
-      if (hasFavoriteSongs) {
-        console.log('💛 Calling displayFavoriteSongs...');
-        displayFavoriteSongs();
+    if (hasFavoriteSongs) {
+        console.log('💛 [initial load] Skipping displayFavoriteSongs - handled by Barba');
       }
       
       if (hasFeaturedSongs || hasFavoriteSongs) {
@@ -3147,10 +3146,14 @@ async function displayFeaturedSongs(limit = 6) {
  * DISPLAY FAVORITE SONGS ON BACKEND PAGE
  * ============================================================
  */
+let displayFavoriteSongsRunning = false;
 async function displayFavoriteSongs(limit = null) {  
+  if (displayFavoriteSongsRunning) return;
+  displayFavoriteSongsRunning = true;
   const container = document.querySelector('.favorite-songs-wrapper');
   if (!container) {
     console.log('No favorite songs container found on this page');
+    displayFavoriteSongsRunning = false;
     return;
   }
   
@@ -3226,6 +3229,7 @@ async function displayFavoriteSongs(limit = null) {
     if (cards.length > 0) {
       loadWaveformBatch(Array.from(cards));
     }
+    displayFavoriteSongsRunning = false;
   }, 100);
 }
 
