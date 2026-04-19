@@ -12479,7 +12479,7 @@ document.querySelectorAll('.playlist-placeholder').forEach((el) => {
       return;
     }
 
-    playlistSongs.sort((a, b) => a.created_at - b.created_at);
+    playlistSongs.sort((a, b) => b.position - a.position);
 
     playlistSongs.forEach((ps) => {
       const song = g.MASTER_DATA.find((s) => s.id === ps.song_id);
