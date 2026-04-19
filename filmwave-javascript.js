@@ -709,9 +709,10 @@ function navigateStandaloneTrack(direction) {
     if (nextIndex >= songsToNavigate.length) {
       console.log('🛑 Already at last song');
       
-      // Reset border on current song wrapper
+      // Reset border on all song wrappers except the current one
+      const currentCard = document.querySelector(`.song-wrapper[data-song-id="${g.currentSongData.id}"]`);
       document.querySelectorAll('.song-wrapper').forEach(sw => {
-        sw.style.removeProperty('border');
+        if (sw !== currentCard) sw.style.removeProperty('border');
       });
       
       // Reset song card waveform
