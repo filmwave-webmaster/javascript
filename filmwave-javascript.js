@@ -10034,6 +10034,13 @@ const FavoriteManager = {
 
 console.log('⭐ FavoriteManager defined');
 
+// Initialize FavoriteManager on first load and re-sync after Barba transitions
+window.addEventListener('load', () => FavoriteManager.init().then(() => FavoriteManager.syncAllCards()));
+window.addEventListener('barbaAfterTransition', () => {
+  FavoriteManager.initialized = false;
+  FavoriteManager.init().then(() => FavoriteManager.syncAllCards());
+});
+
 /**
  * ============================================================
  * SYNC FAVORITE ICONS (Syncs Song Card and Music Player Icons)
