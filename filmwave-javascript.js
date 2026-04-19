@@ -10111,14 +10111,13 @@ document.addEventListener('change', (e) => {
   const isPlayer = !!input.closest('.music-player-wrapper');
   const isSong = !!input.closest('.song-wrapper');
 
-     // SONG -> PLAYER (ONLY if this card is the currently playing song)
+// SONG -> PLAYER (ONLY if this card is the currently playing song)
  if (isSong) {
     const songId = input.closest('.song-wrapper')?.dataset?.songId;
     if (!songId) return;
 
-    // Trigger Xano toggle
-    FavoriteManager.toggle(songId);
-
+    // Only toggle on real user interaction, not programmatic changes
+    if (e.isTrusted) FavoriteManager.toggle(songId);
     const currentId = String(window.musicPlayerPersistent?.currentSongData?.id || '');
     if (!currentId || String(songId) !== currentId) return;
 
