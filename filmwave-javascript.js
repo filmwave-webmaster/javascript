@@ -10036,10 +10036,18 @@ const FavoriteManager = {
           document.querySelector('.music-player-wrapper input[type="checkbox"]')
         );
         if (playerInput) {
-          favSyncLock = true;
-          playerInput.checked = false;
-          playerInput.dispatchEvent(new Event('change', { bubbles: true }));
-          favSyncLock = false;
+          setTimeout(() => {
+            favSyncLock = true;
+            playerInput.checked = false;
+            playerInput.dispatchEvent(new Event('change', { bubbles: true }));
+            favSyncLock = false;
+            // Also directly update the player icons
+            const playerWrapper = playerInput.closest('.music-player-wrapper') || document.querySelector('.music-player-wrapper');
+            const emptyIcon = playerWrapper?.querySelector('.favorite-icon-empty');
+            const filledIcon = playerWrapper?.querySelector('.favorite-icon-filled');
+            if (emptyIcon) emptyIcon.style.display = 'flex';
+            if (filledIcon) filledIcon.style.display = 'none';
+          }, 50);
         }
       }
     } else {
