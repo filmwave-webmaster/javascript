@@ -2914,10 +2914,10 @@ async function fetchSongs() {
     }
     
     const data = await response.json();
-    g.MASTER_DATA = data.records;
+    g.MASTER_DATA = data.records.reverse();
     
     // Cache the results
-    localStorage.setItem('filmwaveSongs', JSON.stringify(data.records));
+    localStorage.setItem('filmwaveSongs', JSON.stringify(g.MASTER_DATA));
     localStorage.setItem('filmwaveSongsTime', Date.now().toString());
     console.log('💾 Cached songs data');
     
