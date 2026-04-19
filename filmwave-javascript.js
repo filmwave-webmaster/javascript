@@ -9834,11 +9834,18 @@ if (typeof barba !== 'undefined') {
   barba.hooks.beforeEnter((data) => {
     console.log('📥 Barba beforeEnter hook');
 
-    // Pre-hide template-wrapper on favorites page to prevent flash
+    // Pre-hide favorites content to prevent flash on transition
     const favWrapper = data.next.container.querySelector('.favorite-songs-wrapper');
     if (favWrapper) {
       const tmpl = favWrapper.querySelector('.template-wrapper');
+      const placeholder = favWrapper.querySelector('.loading-placeholder');
       if (tmpl) tmpl.style.display = 'none';
+      // Remove any previously rendered song cards
+      Array.from(favWrapper.children).forEach(child => {
+        if (child !== tmpl && child !== placeholder) child.remove();
+      });
+      // Show placeholder while loading
+      if (placeholder) placeholder.style.display = 'flex';
     }
     const savedState = localStorage.getItem('musicFilters');
     const savedPlaylist = localStorage.getItem('playlistFilter');
