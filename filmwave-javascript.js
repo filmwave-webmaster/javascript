@@ -594,8 +594,7 @@ async function initMusicPage() {
       }
       
     if (hasFavoriteSongs) {
-        console.log('💛 Calling displayFavoriteSongs...');
-        displayFavoriteSongs();
+        console.log('💛 [initial load] favorites handled by Barba after hook');
       }
       
       if (hasFeaturedSongs || hasFavoriteSongs) {
