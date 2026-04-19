@@ -594,7 +594,8 @@ async function initMusicPage() {
       }
       
     if (hasFavoriteSongs) {
-        console.log('💛 [initial load] Skipping displayFavoriteSongs - handled by Barba');
+        console.log('💛 Calling displayFavoriteSongs...');
+        displayFavoriteSongs();
       }
       
       if (hasFeaturedSongs || hasFavoriteSongs) {
@@ -8561,6 +8562,7 @@ loadingPlaceholders.forEach(placeholder => {
   
   if (hasFavoriteSongs) {
     console.log('💛 [BARBA AFTER] Calling displayFavoriteSongs...');
+    displayFavoriteSongsRunning = false;
     displayFavoriteSongs();
     
     // Initialize search after favorite songs load
