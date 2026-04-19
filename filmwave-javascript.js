@@ -3204,7 +3204,10 @@ async function displayFavoriteSongs(limit = null) {
     window.Webflow.require('ix2').init();
   }
   
-  console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
+console.log(`✅ Displayed ${songsToDisplay.length} songs on favorite songs page`);
+
+  // Sync favorite checkbox states
+  setTimeout(() => FavoriteManager.syncAllCards(), 50);
   
  // Initialize waveforms for these cards
   setTimeout(() => {
