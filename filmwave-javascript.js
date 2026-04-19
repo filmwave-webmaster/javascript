@@ -613,6 +613,7 @@ async function initMusicPage() {
       initDashboardWelcome();
       initDashboardTiles();
       initDashboardPlaylists();
+      displayDashboardFavorites();
     }
   }
 }
@@ -3158,9 +3159,68 @@ async function displayFeaturedSongs(limit = 6) {
 
 /**
  * ============================================================
+ * DISPLAY FAVORITE SONGS ON DASHBOARD
+ * ============================================================
+ */
+
+async function displayDashboardFavorites() {
+  const container = document.querySelector('.dashboard-favorite-songs-wrapper');
+  if (!container) return;
+
+  const g = window.musicPlayerPersistent;
+  if (g.MASTER_DATA.length === 0) await fetchSongs();
+
+  const templateWrapper = container.querySelector('.template-wrapper');
+  const templateCard = templateWrapper?.querySelector('.song-wrapper') || container.querySelector('.song-wrapper');
+  const loadingPlaceholder = container.querySelector('.loading-placeholder');
+
+  if (!templateCard) return;
+
+  // Show placeholder while loading
+  if (templateWrapper) templateWrapper.style.display = 'none';
+  if (loadingPlaceholder) loadingPlaceholder.style.display = 'flex';
+
+  // Fetch favorites
+  await FavoriteManager.init();
+
+  // Get newest 4
+  const songsToDisplay = FavoriteManager.orderedIds
+    .slice(0, 4)
+    .map(id => g.MASTER_DATA.find(song => String(song.id) === id))
+    .filter(Boolean);
+
+  // Remove previously rendered cards
+  Array.from(container.children).forEach(child => {
+    if (child !== templateWrapper && child !== loadingPlaceholder) child.remove();
+  });
+
+  // Render cards
+  songsToDisplay.forEach(song => {
+    const newCard = templateCard.cloneNode(true);
+    newCard.style.opacity = '1';
+    newCard.style.position = 'relative';
+    newCard.style.pointerEvents = 'auto';
+    populateSongCard(newCard, song);
+    container.appendChild(newCard);
+  });
+
+  // Hide placeholder, show cards
+  if (loadingPlaceholder) loadingPlaceholder.style.display = 'none';
+
+  FavoriteManager.syncAllCards();
+
+  setTimeout(() => {
+    const cards = container.querySelectorAll('.song-wrapper:not(.template-wrapper .song-wrapper)');
+    if (cards.length > 0) loadWaveformBatch(Array.from(cards));
+  }, 100);
+}
+
+/**
+ * ============================================================
  * DISPLAY FAVORITE SONGS ON BACKEND PAGE
  * ============================================================
  */
+
 let displayFavoriteSongsRunning = false;
 async function displayFavoriteSongs(limit = null) {  
   if (displayFavoriteSongsRunning) return;
@@ -8710,6 +8770,7 @@ if (window.location.pathname.startsWith('/dashboard/')) {
   
   if (typeof revealDashboardTiles === 'function') revealDashboardTiles();
   if (typeof initDashboardPlaylists === 'function') initDashboardPlaylists();
+  if (typeof displayDashboardFavorites === 'function') displayDashboardFavorites();
   
   setTimeout(() => {
     if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
