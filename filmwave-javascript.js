@@ -3177,10 +3177,15 @@ async function displayFavoriteSongs(limit = null) {
   FavoriteManager.initialized = false;
   await FavoriteManager.init();
 
+  console.log('⭐ favoritedIds at render time:', [...FavoriteManager.favoritedIds]);
+  console.log('⭐ MASTER_DATA length:', g.MASTER_DATA.length);
+
   // Filter to only favorited songs
   let songsToDisplay = g.MASTER_DATA.filter(song =>
     FavoriteManager.isFavorited(song.id)
   );
+
+  console.log('⭐ songsToDisplay:', songsToDisplay.length);
 
   // If limit is specified, take the most recent
   if (limit) {
