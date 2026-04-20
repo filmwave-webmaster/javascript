@@ -13446,7 +13446,7 @@ function initMobileNav() {
 
   // Set up transition styles on hamburger lines
   if (line1) line1.style.transition = 'transform 0.3s ease';
-  if (line2) line2.style.transition = 'opacity 0.15s ease';
+  if (line2) line2.style.transition = 'opacity 0s';
   if (line3) line3.style.transition = 'transform 0.3s ease';
   
   let isOpen = false;
