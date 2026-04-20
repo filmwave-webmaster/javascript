@@ -640,7 +640,7 @@ function navigateStandaloneTrack(direction) {
     // Use the active song source for navigation
   let songsToNavigate;
   const path = window.location.pathname;
-  const isOnDashboard = path.startsWith('/dashboard/');
+  const isOnDashboard = path.startsWith('/user/');
   const isOnMusicPage = path === '/music' || path === '/music/';
   const isOnPlaylistTemplate = path.includes('playlist-template');
 
@@ -649,7 +649,7 @@ function navigateStandaloneTrack(direction) {
     g.activeSongSource = 'music';
   }
 
-  const isOnFavoritesPage = path.includes('/dashboard/favorites');
+  const isOnFavoritesPage = path.includes('/user/favorites');
   const isOnDashboardFavorites = !!document.querySelector('.dashboard-favorite-songs-wrapper');
 
   // PLAYLIST TEMPLATE: navigate only the songs rendered on this page (DOM order)
@@ -6973,9 +6973,9 @@ function initializePlaylistOverlay() {
           
           setTimeout(() => {
             if (typeof barba !== 'undefined') {
-              barba.go('/dashboard/playlists');
+              barba.go('/user/playlists');
             } else {
-              window.location.href = '/dashboard/playlists';
+              window.location.href = '/user/playlists';
             }
           }, 300);
           return;
@@ -7578,14 +7578,14 @@ function initUniversalSearch() {
 */
 
 function shouldForceFromPath(pathname) {
-  return (pathname || '').includes('/dashboard/playlist-template');
+  return (pathname || '').includes('/user/playlist-template');
 }
 
 let fwCurrentLockObserver = null;
 let fwCurrentLockTimer = null;
 
 function ensurePlaylistsCurrent() {
-  const links = document.querySelectorAll('a[href*="/dashboard/playlists"]');
+  const links = document.querySelectorAll('a[href*="/user/playlists"]');
   if (!links.length) return false;
 
   let changed = false;
@@ -7657,7 +7657,7 @@ if (document.readyState === 'loading') {
     
     // Show sidebar on music page on fresh load
     const path = window.location.pathname;
-    const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/' || path === '/sound-fx' || path === '/sound-fx/';
+    const shouldHaveSidebar = path.startsWith('/user/') || path === '/music' || path === '/music/' || path === '/sound-fx' || path === '/sound-fx/';
     const sidebar = document.querySelector('.sidebar-nav');
     
     if (shouldHaveSidebar && sidebar) {
@@ -7675,7 +7675,7 @@ if (document.readyState === 'loading') {
   
   // Show sidebar on music page on fresh load
   const path = window.location.pathname;
-  const shouldHaveSidebar = path.startsWith('/dashboard/') || path === '/music' || path === '/music/' || path === '/sound-fx' || path === '/sound-fx/';
+  const shouldHaveSidebar = path.startsWith('/user/') || path === '/music' || path === '/music/' || path === '/sound-fx' || path === '/sound-fx/';
   const sidebar = document.querySelector('.sidebar-nav');
   
   if (shouldHaveSidebar && sidebar) {
@@ -7851,7 +7851,7 @@ window.addEventListener('load', () => {
   initMobileNav();
   
   // Initialize dashboard filter pills and search on page load
-  if (window.location.pathname.startsWith('/dashboard/')) {
+  if (window.location.pathname.startsWith('/user/')) {
     setTimeout(() => {
       if (typeof initDashboardFilterPills === 'function') initDashboardFilterPills();
       if (typeof initDashboardSearch === 'function') initDashboardSearch();
@@ -7929,7 +7929,7 @@ if (loginForm) {
         .then(({ data: member }) => {
           console.log('✅ Login successful');
           // Get the redirect URL from member data or default to dashboard
-          const redirectUrl = member?.loginRedirect || '/dashboard/dashboard';
+          const redirectUrl = member?.loginRedirect || '/user/dashboard';
           console.log('🔀 Redirecting to:', redirectUrl);
           window.location.href = redirectUrl;
         })
@@ -8098,8 +8098,8 @@ if (typeof barba !== 'undefined') {
   // Fade out sidebar when leaving dashboard for non-dashboard page
   const leavingPath = data.current?.url?.path || window.location.pathname || '';
   const goingToPath = data.next?.url?.path || '';
-  const leavingDashboard = leavingPath.startsWith('/dashboard/');
-  const goingToDashboard = goingToPath.startsWith('/dashboard/');
+  const leavingDashboard = leavingPath.startsWith('/user/');
+  const goingToDashboard = goingToPath.startsWith('/user/');
   const goingToSongMatch = goingToPath.includes('song-match');
   const leavingSongMatch = leavingPath.includes('song-match');
 
@@ -8138,7 +8138,7 @@ if (leavingDashboard && !goingToDashboard && !goingToMusic && !goingToSfx) {
   }
      
     // Fade out ONLY the correct area (prevents random full-page fades)
-  const isDashboard = leavingPath.startsWith('/dashboard/');
+  const isDashboard = leavingPath.startsWith('/user/');
 
   const mainContent = isDashboard
     ? data.current.container.querySelector('.db-content-container')
@@ -8384,18 +8384,18 @@ if (musicArea) {
   const g = window.musicPlayerPersistent;
 
   // 🔁 Reattach dashboard waveform AFTER Barba swaps DOM
-  if (window.location.pathname.startsWith('/dashboard/')) {
+  if (window.location.pathname.startsWith('/user/')) {
     setTimeout(reattachDashboardWaveformToCurrentSong, 300);
   }      
         
 // === SIDEBAR MANAGEMENT ===
-const shouldHaveSidebar = window.location.pathname.startsWith('/dashboard/') || 
+const shouldHaveSidebar = window.location.pathname.startsWith('/user/') || 
                           window.location.pathname === '/music' || 
                           window.location.pathname === '/music/' ||
                           window.location.pathname === '/sound-fx' ||
                           window.location.pathname === '/sound-fx/';
 let sidebar = document.querySelector('.sidebar-nav');
-const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/') ||
+const cameFromDashboard = data.current?.url?.path?.startsWith('/user/') ||
                           data.current?.url?.path === '/music' ||
                           data.current?.url?.path === '/music/' ||
                           data.current?.url?.path === '/sound-fx' ||
@@ -8403,7 +8403,7 @@ const cameFromDashboard = data.current?.url?.path?.startsWith('/dashboard/') ||
 
 // Inject sidebar if it doesn't exist and we need it
 if (shouldHaveSidebar && !sidebar) {
-  fetch('/dashboard/dashboard')
+  fetch('/user/dashboard')
     .then(res => res.text())
     .then(html => {
       const parser = new DOMParser();
@@ -8776,7 +8776,7 @@ loadingPlaceholders.forEach(placeholder => {
       initDarkMode();
 
 // Dashboard Initialization
-if (window.location.pathname.startsWith('/dashboard/')) {
+if (window.location.pathname.startsWith('/user/')) {
   if (typeof initDashboardPlaceholderSwap === 'function') initDashboardPlaceholderSwap();
   
   // Only init tiles if they exist but aren't populated yet
@@ -9875,7 +9875,7 @@ window.addEventListener('load', function() {
   });
 
 // Show sidebar on dashboard pages (hard refresh)
-  if (window.location.pathname.startsWith('/dashboard/')) {
+  if (window.location.pathname.startsWith('/user/')) {
     const sidebar = document.querySelector('.sidebar-nav');
     if (sidebar) {
       sidebar.style.visibility = 'visible';
@@ -10739,7 +10739,7 @@ function FW_buildPlaylistCardFromTemplate({ template, playlist, count = 0 }) {
     });
   }
 
-  if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+  if (link) link.href = `/user/playlist-template?playlist=${playlist.id}`;
 
   card.dataset.playlistId = playlist.id;
 
@@ -11367,9 +11367,9 @@ if (playlistRow && playlistRow.dataset.playlistId) {
       
       setTimeout(() => {
         if (typeof barba !== 'undefined') {
-          barba.go('/dashboard/playlists');
+          barba.go('/user/playlists');
         } else {
-          window.location.href = '/dashboard/playlists';
+          window.location.href = '/user/playlists';
         }
       }, 300);
       return;
@@ -12401,7 +12401,7 @@ template.style.display = 'none';
           });
         }
 
-        if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+        if (link) link.href = `/user/playlist-template?playlist=${playlist.id}`;
 
         card.dataset.playlistId = playlist.id;
 
@@ -13208,7 +13208,7 @@ container.querySelectorAll('.playlist-card-template').forEach((card) => {
         });
       }
 
-      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+      if (link) link.href = `/user/playlist-template?playlist=${playlist.id}`;
 
       card.dataset.playlistId = playlist.id;
 
@@ -13363,7 +13363,7 @@ async function initPlaylistsPage() {
           image.src = playlist.cover_image_url;
         });
       }
-      if (link) link.href = `/dashboard/playlist-template?playlist=${playlist.id}`;
+      if (link) link.href = `/user/playlist-template?playlist=${playlist.id}`;
       
       card.dataset.playlistId = playlist.id;
       
