@@ -11318,10 +11318,13 @@ if (playlistRow && playlistRow.dataset.playlistId) {
       if (e.target.closest('.new-project-button')) {
         e.preventDefault();
         const wrapper = document.querySelector('.create-project-module-wrapper');
-        if (wrapper) wrapper.style.display = 'flex';
+        if (wrapper) {
+          wrapper.style.display = 'flex';
+          wrapper.style.zIndex = '10000';
+        }
         return;
       }
-
+      
       /* ----------------------------
          ADD SONG TO PLAYLIST (hover dropdown item)
          ---------------------------- */
@@ -13419,6 +13422,16 @@ function initMobileNav() {
   }
 
   openBtn.addEventListener('click', openMenu);
+
+  // Fix double-tap issue on touch devices caused by hover states
+  if ('ontouchstart' in window) {
+    document.querySelectorAll('.mobile-nav-overlay a, .mobile-nav-overlay button').forEach(el => {
+      el.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        el.click();
+      });
+    });
+  }
   if (closeBtn) closeBtn.addEventListener('click', closeMenu);
 
   // Close and lock out if resized past breakpoint
