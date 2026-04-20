@@ -13464,7 +13464,7 @@ function initMobileNav() {
   }
 
   function openMenu() {
-    overlay.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100dvh;overflow-y:auto;z-index:9999;';
+    overlay.style.cssText = 'display:flex;position:fixed;top:60px;left:0;width:100%;height:calc(100dvh - 60px);overflow-y:auto;z-index:9999;';
     document.body.style.overflow = 'hidden';
     setHamburgerOpen();
     isOpen = true;
