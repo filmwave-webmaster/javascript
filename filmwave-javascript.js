@@ -13445,25 +13445,15 @@ function initMobileNav() {
   }
 
   function openMenu() {
-    const mainContent = document.querySelector('.main-content');
     overlay.style.transform = 'translateX(0)';
     document.body.style.overflow = 'hidden';
-    if (mainContent) {
-      mainContent.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-      mainContent.style.transform = 'translateX(-30%)';
-    }
     setHamburgerOpen();
     isOpen = true;
   }
 
   function closeMenu() {
-    const mainContent = document.querySelector('.main-content');
     overlay.style.transform = 'translateX(100%)';
     document.body.style.overflow = '';
-    if (mainContent) {
-      mainContent.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-      mainContent.style.transform = '';
-    }
     setHamburgerClosed();
     isOpen = false;
   }
@@ -13583,10 +13573,9 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.style.right = '0';
         filterWrapper.style.zIndex = '999';
         
-       // Slide all content to the left with fade
+       // Hide content instantly
         contentToSlide.forEach(el => {
-          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
-          el.style.transform = 'translateX(-100%)';
+          el.style.transition = 'none';
           el.style.opacity = '0';
         });
         
@@ -13673,20 +13662,11 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Set all content to start position off-screen, fully visible, with no transition
+      // Show content instantly
       contentToSlide.forEach(el => {
         el.style.transition = 'none';
-        el.style.transform = 'translateX(-100%)';
+        el.style.transform = '';
         el.style.opacity = '1';
-      });
-      
-      // Force reflow to ensure starting positions are applied
-      void filterWrapper.offsetWidth;
-      
-      // Then animate back in
-      contentToSlide.forEach(el => {
-        el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        el.style.transform = 'translateX(0)';
       });
       
       // Clean up after animation completes
