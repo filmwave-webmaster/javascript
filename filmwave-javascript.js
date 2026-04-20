@@ -13554,144 +13554,37 @@ function initMobileFilterToggle(container = document) {
     if (musicList) musicList.style.display = '';
   }
   
+  // Prime filter for slide animation — parked off-screen to the right
+  filterWrapper.style.display = 'flex';
+  filterWrapper.style.position = 'fixed';
+  filterWrapper.style.top = 'var(--navbar--height, 60px)';
+  filterWrapper.style.left = '0';
+  filterWrapper.style.width = '100%';
+  filterWrapper.style.height = 'calc(100dvh - 60px)';
+  filterWrapper.style.overflowY = 'auto';
+  filterWrapper.style.zIndex = '999';
+  filterWrapper.style.transform = 'translateX(100%)';
+  filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+
   if (filterButton) {
     const newFilterButton = filterButton.cloneNode(true);
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
-    
+
     newFilterButton.addEventListener('click', () => {
-      g.savedScrollPosition = window.scrollY;
-      
-      const musicAreaContainer = document.querySelector('.music-area-container');
-      const contentToSlide = musicAreaContainer ? 
-        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
-      
-      if (window.innerWidth < 768) {
-        // Make filter fixed so it doesn't depend on scroll position
-        filterWrapper.style.position = 'fixed';
-        filterWrapper.style.top = 'var(--navbar--height, 60px)';
-        filterWrapper.style.left = '0';
-        filterWrapper.style.right = '0';
-        filterWrapper.style.zIndex = '999';
-        
-       // Hide content instantly
-        contentToSlide.forEach(el => {
-          el.style.transition = 'none';
-          el.style.opacity = '0';
-        });
-        
-        // Set up filter slide-in at the same time
-        filterWrapper.style.display = 'flex';
-        filterWrapper.style.transform = 'translateX(100%)';
-        filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        
-        // Restore accordion states if saved
-        if (g.filterAccordionStates) {
-          filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-            const state = g.filterAccordionStates[index];
-            if (state && state.isOpen) {
-              list.classList.add('open');
-              list.style.maxHeight = state.maxHeight;
-            }
-          });
-        }
-        
-        // Always start at top of filter wrapper
-        filterWrapper.scrollTop = 0;
-        
-        // Trigger both animations on next frame
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            filterWrapper.style.transform = 'translateX(0)';
-          });
-        });
-        
-       // After animations complete: adjust scroll, hide content, restore accordion scroll
-        const savedScroll = window.scrollY;
-        setTimeout(() => {
-          enableScrollLimit();
-          window.scrollTo(0, savedScroll);
-          
-          // Reset filter to normal positioning now that we're at top
-          filterWrapper.style.position = '';
-          filterWrapper.style.top = '';
-          filterWrapper.style.left = '';
-          filterWrapper.style.right = '';
-          filterWrapper.style.zIndex = '';
-          
-          // Restore accordion scroll positions
-          if (g.filterAccordionStates) {
-            filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-              const state = g.filterAccordionStates[index];
-              if (state && state.isOpen && state.scrollTop) {
-                list.scrollTop = state.scrollTop;
-              }
-            });
-          }
-        }, 350);
-        
-        g.mobileFilterOpen = true;
-      }
+      filterWrapper.style.transform = 'translateX(0)';
+      document.body.style.overflow = 'hidden';
+      g.mobileFilterOpen = true;
     });
   }
-  
+
   if (filterClose) {
     const newFilterClose = filterClose.cloneNode(true);
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
-    
+
     newFilterClose.addEventListener('click', () => {
-      const musicAreaContainer = document.querySelector('.music-area-container');
-      const contentToSlide = musicAreaContainer ? 
-        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
-      
-      // Save accordion states before resetting
-      g.filterAccordionStates = [];
-      filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
-        g.filterAccordionStates[index] = {
-          isOpen: list.classList.contains('open'),
-          scrollTop: list.scrollTop,
-          maxHeight: list.style.maxHeight
-        };
-      });
-      
-      // Restore scroll position while content is hidden
-      disableScrollLimit();
-      if (typeof g.savedScrollPosition === 'number') {
-        window.scrollTo(0, g.savedScrollPosition);
-      }
-      
-      // Slide filter out to right and content back in from left simultaneously
-      filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
-      
-      // Show content instantly
-      contentToSlide.forEach(el => {
-        el.style.transition = 'none';
-        el.style.transform = '';
-        el.style.opacity = '1';
-      });
-      
-      // Clean up after animation completes
-      setTimeout(() => {
-        filterWrapper.style.display = 'none';
-        filterWrapper.style.transform = '';
-        filterWrapper.style.transition = '';
-        g.mobileFilterOpen = false;
-        
-        // Reset accordion visual state
-        filterWrapper.querySelectorAll('.filter-list').forEach(list => {
-          list.scrollTop = 0;
-          list.classList.remove('open');
-          list.style.maxHeight = '';
-        });
-        filterWrapper.scrollTop = 0;
-        
-        // Clean up content transitions
-        contentToSlide.forEach(el => {
-          el.style.transform = '';
-          el.style.transition = '';
-          el.style.opacity = '';
-        });
-      }, 350);
+      document.body.style.overflow = '';
+      g.mobileFilterOpen = false;
     });
   }
   
