@@ -13605,9 +13605,11 @@ function initMobileFilterToggle(container = document) {
           });
         });
         
-        // After animations complete: adjust scroll, hide content, restore accordion scroll
+       // After animations complete: adjust scroll, hide content, restore accordion scroll
         setTimeout(() => {
+          const scrollPos = window.scrollY;
           enableScrollLimit();
+          window.scrollTo(0, scrollPos);
           
           // Reset filter to normal positioning now that we're at top
           filterWrapper.style.position = '';
