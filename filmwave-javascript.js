@@ -3681,13 +3681,13 @@ function initFilterAccordions() {
     });
   });
   
-// Close accordions when clicking outside
+// Close accordions when clicking outside (desktop only)
   document.addEventListener('click', function(e) {
+    if (window.innerWidth < 768) return;
     const clickedInsideAccordion = e.target.closest('.filter-category, .filter-header, .filter-list');
     const hasOpenAccordion = document.querySelector('.filter-list.open');
     
     if (!clickedInsideAccordion && hasOpenAccordion) {
-      // Prevent link navigation if clicking outside while accordion is open
       e.preventDefault();
       e.stopPropagation();
       
@@ -3700,7 +3700,7 @@ function initFilterAccordions() {
         arr.style.transform = 'rotate(0deg)';
       });
     }
-  }, true);  // Use capture phase to intercept before link click
+  }, true);
 }
 
 function initCheckboxTextColor() {
@@ -13493,6 +13493,7 @@ function initMobileFilterToggle(container = document) {
     filterWrapper.style.removeProperty('z-index');
     filterWrapper.style.removeProperty('transform');
     filterWrapper.style.removeProperty('transition');
+    document.body.style.overflow = '';
   }
 
   function openFilter() {
@@ -13506,6 +13507,7 @@ function initMobileFilterToggle(container = document) {
     filterWrapper.style.setProperty('z-index', '10000', 'important');
     filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
     filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
+    document.body.style.overflow = 'hidden';
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -13514,11 +13516,25 @@ function initMobileFilterToggle(container = document) {
     });
   }
 
-  function closeFilter() {
-    filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-    setTimeout(resetFilter, 350);
+  function closeFilterLists() {
+    filterWrapper.querySelectorAll('.filter-list').forEach(list => {
+      list.scrollTop = 0;
+      list.style.maxHeight = '0px';
+      list.classList.remove('open');
+    });
+    filterWrapper.querySelectorAll('.arrow-icon').forEach(arr => {
+      arr.style.transform = 'rotate(0deg)';
+    });
   }
 
+  function closeFilter() {
+    filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      closeFilterLists();
+      resetFilter();
+    }, 350);
+  }
   // Clone buttons to remove stale listeners from previous Barba transitions
   const newFilterButton = filterButton.cloneNode(true);
   filterButton.parentNode.replaceChild(newFilterButton, filterButton);
