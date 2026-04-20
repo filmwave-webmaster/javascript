@@ -7790,6 +7790,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
 barba.hooks.afterEnter((data) => { 
     runForPath(data?.next?.url?.path || ''); 
     initMobileFilterToggle(data.next.container);
+    initMobileNav();
     initUserNameDropdown();
     
     // Re-initialize audio preloader if on music page
@@ -7847,6 +7848,7 @@ window.addEventListener('load', () => {
   initPlayerCloseButton();
   initDarkMode();
   initMobileFilterToggle();
+  initMobileNav();
   
   // Initialize dashboard filter pills and search on page load
   if (window.location.pathname.startsWith('/dashboard/')) {
@@ -13392,6 +13394,39 @@ async function initPlaylistsPage() {
     sortableContainer.style.opacity = '1';
     sortableContainer.style.pointerEvents = '';
   }
+}
+
+/* ============================================================
+   MOBILE NAVIGATION
+   ============================================================ */
+
+function initMobileNav() {
+  const overlay = document.querySelector('.mobile-nav-overlay');
+  const openBtn = document.querySelector('.mobile-menu-icon');
+  const closeBtn = document.querySelector('.mobile-menu-close-icon');
+  const BREAKPOINT = 991; // adjust to match your Webflow breakpoint
+
+  if (!overlay || !openBtn) return;
+
+  function openMenu() {
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  openBtn.addEventListener('click', openMenu);
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
+  // Close and lock out if resized past breakpoint
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > BREAKPOINT) {
+      closeMenu();
+    }
+  });
 }
 
 /* ============================================================
