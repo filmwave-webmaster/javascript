@@ -13554,28 +13554,31 @@ function initMobileFilterToggle(container = document) {
     if (musicList) musicList.style.display = '';
   }
   
-  // Prime filter for slide animation on mobile only
-  if (window.innerWidth < 768) {
-    filterWrapper.style.display = 'flex';
-    filterWrapper.style.position = 'fixed';
-    filterWrapper.style.top = 'var(--navbar--height, 60px)';
-    filterWrapper.style.left = '0';
-    filterWrapper.style.width = '100%';
-    filterWrapper.style.height = 'calc(100dvh - 60px)';
-    filterWrapper.style.overflowY = 'auto';
-    filterWrapper.style.zIndex = '999';
-    filterWrapper.style.transform = 'translateX(100%)';
-    filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-  }
-
   if (filterButton) {
     const newFilterButton = filterButton.cloneNode(true);
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
 
     newFilterButton.addEventListener('click', () => {
-      filterWrapper.style.transform = 'translateX(0)';
-      document.body.style.overflow = 'hidden';
-      g.mobileFilterOpen = true;
+      if (window.innerWidth < 768) {
+        filterWrapper.style.setProperty('display', 'flex', 'important');
+        filterWrapper.style.setProperty('position', 'fixed', 'important');
+        filterWrapper.style.setProperty('top', 'var(--navbar--height, 60px)', 'important');
+        filterWrapper.style.setProperty('left', '0', 'important');
+        filterWrapper.style.setProperty('width', '100%', 'important');
+        filterWrapper.style.setProperty('height', 'calc(100dvh - 60px)', 'important');
+        filterWrapper.style.setProperty('overflow-y', 'auto', 'important');
+        filterWrapper.style.setProperty('z-index', '10000', 'important');
+        filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
+        filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
+        document.body.style.overflow = 'hidden';
+        g.mobileFilterOpen = true;
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            filterWrapper.style.setProperty('transform', 'translateX(0)', 'important');
+          });
+        });
+      }
     });
   }
 
@@ -13584,9 +13587,21 @@ function initMobileFilterToggle(container = document) {
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
 
     newFilterClose.addEventListener('click', () => {
-      filterWrapper.style.transform = 'translateX(100%)';
+      filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
       document.body.style.overflow = '';
-      g.mobileFilterOpen = false;
+      setTimeout(() => {
+        filterWrapper.style.removeProperty('display');
+        filterWrapper.style.removeProperty('position');
+        filterWrapper.style.removeProperty('top');
+        filterWrapper.style.removeProperty('left');
+        filterWrapper.style.removeProperty('width');
+        filterWrapper.style.removeProperty('height');
+        filterWrapper.style.removeProperty('overflow-y');
+        filterWrapper.style.removeProperty('z-index');
+        filterWrapper.style.removeProperty('transform');
+        filterWrapper.style.removeProperty('transition');
+        g.mobileFilterOpen = false;
+      }, 350);
     });
   }
   
