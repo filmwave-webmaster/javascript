@@ -13445,15 +13445,25 @@ function initMobileNav() {
   }
 
   function openMenu() {
+    const mainContent = document.querySelector('.main-content');
     overlay.style.transform = 'translateX(0)';
     document.body.style.overflow = 'hidden';
+    if (mainContent) {
+      mainContent.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+      mainContent.style.transform = 'translateX(-30%)';
+    }
     setHamburgerOpen();
     isOpen = true;
   }
 
   function closeMenu() {
+    const mainContent = document.querySelector('.main-content');
     overlay.style.transform = 'translateX(100%)';
     document.body.style.overflow = '';
+    if (mainContent) {
+      mainContent.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+      mainContent.style.transform = '';
+    }
     setHamburgerClosed();
     isOpen = false;
   }
