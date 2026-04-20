@@ -13452,11 +13452,11 @@ function initMobileNav() {
   let isOpen = false;
 
   function setHamburgerOpen() {
-    if (line1) line1.style.transform = 'translateY(calc(100% + 2px)) rotate(45deg)';
+    if (line1) line1.style.transform = 'translateY(7px) rotate(45deg)';
     if (line2) line2.style.opacity = '0';
-    if (line3) line3.style.transform = 'translateY(calc(-100% - 2px)) rotate(-45deg)';
+    if (line3) line3.style.transform = 'translateY(-7px) rotate(-45deg)';
   }
-
+  
   function setHamburgerClosed() {
     if (line1) line1.style.transform = '';
     if (line2) line2.style.opacity = '1';
