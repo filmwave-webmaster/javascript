@@ -13445,10 +13445,10 @@ function initMobileNav() {
   if (!overlay || !openBtn) return;
 
   // Set up transition styles on hamburger lines
-  [line1, line2, line3].forEach(line => {
-    if (line) line.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-  });
-
+  if (line1) line1.style.transition = 'transform 0.3s ease';
+  if (line2) line2.style.transition = 'opacity 0.15s ease';
+  if (line3) line3.style.transition = 'transform 0.3s ease';
+  
   let isOpen = false;
 
   function setHamburgerOpen() {
