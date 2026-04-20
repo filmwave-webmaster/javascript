@@ -13409,12 +13409,12 @@ function initMobileNav() {
   if (!overlay || !openBtn) return;
 
   function openMenu() {
-    overlay.classList.add('is-open');
+    overlay.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100dvh;overflow-y:auto;z-index:9999;';
     document.body.style.overflow = 'hidden';
   }
 
   function closeMenu() {
-    overlay.classList.remove('is-open');
+    overlay.style.display = 'none';
     document.body.style.overflow = '';
   }
 
