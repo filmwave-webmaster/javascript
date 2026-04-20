@@ -13554,17 +13554,19 @@ function initMobileFilterToggle(container = document) {
     if (musicList) musicList.style.display = '';
   }
   
-  // Prime filter for slide animation — parked off-screen to the right
-  filterWrapper.style.display = 'flex';
-  filterWrapper.style.position = 'fixed';
-  filterWrapper.style.top = 'var(--navbar--height, 60px)';
-  filterWrapper.style.left = '0';
-  filterWrapper.style.width = '100%';
-  filterWrapper.style.height = 'calc(100dvh - 60px)';
-  filterWrapper.style.overflowY = 'auto';
-  filterWrapper.style.zIndex = '999';
-  filterWrapper.style.transform = 'translateX(100%)';
-  filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+  // Prime filter for slide animation on mobile only
+  if (window.innerWidth < 768) {
+    filterWrapper.style.display = 'flex';
+    filterWrapper.style.position = 'fixed';
+    filterWrapper.style.top = 'var(--navbar--height, 60px)';
+    filterWrapper.style.left = '0';
+    filterWrapper.style.width = '100%';
+    filterWrapper.style.height = 'calc(100dvh - 60px)';
+    filterWrapper.style.overflowY = 'auto';
+    filterWrapper.style.zIndex = '999';
+    filterWrapper.style.transform = 'translateX(100%)';
+    filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+  }
 
   if (filterButton) {
     const newFilterButton = filterButton.cloneNode(true);
