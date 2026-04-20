@@ -13477,189 +13477,93 @@ function initMobileFilterToggle(container = document) {
   const filterButton = container.querySelector('.search-filter-button');
   const filterClose = container.querySelector('.search-filter-close');
   const filterWrapper = container.querySelector('.filter-wrapper');
-  
+
   if (!filterWrapper) return;
-  
-  // Use global state to persist mobile filter state across transitions
+
   const g = window.musicPlayerPersistent;
   if (typeof g.mobileFilterOpen === 'undefined') {
     g.mobileFilterOpen = false;
   }
-  
-  function getMaxScroll() {
-    const filterRect = filterWrapper.getBoundingClientRect();
-    const filterBottom = filterRect.bottom + window.scrollY;
-    return Math.max(0, filterBottom - window.innerHeight);
+
+  function openFilter() {
+    filterWrapper.style.setProperty('display', 'flex', 'important');
+    filterWrapper.style.setProperty('position', 'fixed', 'important');
+    filterWrapper.style.setProperty('top', 'var(--navbar--height, 60px)', 'important');
+    filterWrapper.style.setProperty('left', '0', 'important');
+    filterWrapper.style.setProperty('width', '100%', 'important');
+    filterWrapper.style.setProperty('height', 'calc(100dvh - 60px)', 'important');
+    filterWrapper.style.setProperty('overflow-y', 'auto', 'important');
+    filterWrapper.style.setProperty('z-index', '10000', 'important');
+    filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
+    filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
+    document.body.style.overflow = 'hidden';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        filterWrapper.style.setProperty('transform', 'translateX(0)', 'important');
+      });
+    });
+
+    g.mobileFilterOpen = true;
   }
-  
-  function limitScroll() {
-    const maxScroll = getMaxScroll();
-    if (window.scrollY > maxScroll) {
-      window.scrollTo(0, maxScroll);
+
+  function closeFilter() {
+    filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
+    document.body.style.overflow = '';
+
+    setTimeout(() => {
+      filterWrapper.style.removeProperty('display');
+      filterWrapper.style.removeProperty('position');
+      filterWrapper.style.removeProperty('top');
+      filterWrapper.style.removeProperty('left');
+      filterWrapper.style.removeProperty('width');
+      filterWrapper.style.removeProperty('height');
+      filterWrapper.style.removeProperty('overflow-y');
+      filterWrapper.style.removeProperty('z-index');
+      filterWrapper.style.removeProperty('transform');
+      filterWrapper.style.removeProperty('transition');
+      g.mobileFilterOpen = false;
+    }, 350);
+  }
+
+  function checkScreenWidth() {
+    if (window.innerWidth >= 768) {
+      filterWrapper.style.removeProperty('display');
+      filterWrapper.style.removeProperty('position');
+      filterWrapper.style.removeProperty('top');
+      filterWrapper.style.removeProperty('left');
+      filterWrapper.style.removeProperty('width');
+      filterWrapper.style.removeProperty('height');
+      filterWrapper.style.removeProperty('overflow-y');
+      filterWrapper.style.removeProperty('z-index');
+      filterWrapper.style.removeProperty('transform');
+      filterWrapper.style.removeProperty('transition');
+      document.body.style.overflow = '';
+      g.mobileFilterOpen = false;
     }
   }
-  
-  function handleTouchMove(e) {
-    const maxScroll = getMaxScroll();
-    if (window.scrollY >= maxScroll) {
-      const touch = e.touches[0];
-      const lastTouchY = g._lastTouchY || touch.clientY;
-      const deltaY = lastTouchY - touch.clientY;
-      
-      if (deltaY > 0) {
-        e.preventDefault();
-      }
-      g._lastTouchY = touch.clientY;
-    }
-  }
-  
-  function handleTouchStart(e) {
-    g._lastTouchY = e.touches[0].clientY;
-  }
-  
-  function enableScrollLimit() {
-    window.removeEventListener('scroll', g._mobileFilterScrollHandler);
-    window.removeEventListener('touchstart', g._mobileFilterTouchStart);
-    window.removeEventListener('touchmove', g._mobileFilterTouchMove);
-    
-    g._mobileFilterScrollHandler = limitScroll;
-    g._mobileFilterTouchStart = handleTouchStart;
-    g._mobileFilterTouchMove = handleTouchMove;
-    
-    window.addEventListener('scroll', limitScroll);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    
-    document.documentElement.style.overscrollBehavior = 'none';
-    document.body.style.overscrollBehavior = 'none';
-    
-    const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) musicList.style.display = 'none';
-  }
-  
-  function disableScrollLimit() {
-    if (g._mobileFilterScrollHandler) {
-      window.removeEventListener('scroll', g._mobileFilterScrollHandler);
-    }
-    if (g._mobileFilterTouchStart) {
-      window.removeEventListener('touchstart', g._mobileFilterTouchStart);
-    }
-    if (g._mobileFilterTouchMove) {
-      window.removeEventListener('touchmove', g._mobileFilterTouchMove);
-    }
-    document.documentElement.style.overscrollBehavior = '';
-    document.body.style.overscrollBehavior = '';
-    
-    const musicList = document.querySelector('.music-list-wrapper');
-    if (musicList) musicList.style.display = '';
-  }
-  
+
   if (filterButton) {
     const newFilterButton = filterButton.cloneNode(true);
     filterButton.parentNode.replaceChild(newFilterButton, filterButton);
-
     newFilterButton.addEventListener('click', () => {
-      if (window.innerWidth < 768) {
-        filterWrapper.style.setProperty('display', 'flex', 'important');
-        filterWrapper.style.setProperty('position', 'fixed', 'important');
-        filterWrapper.style.setProperty('top', 'var(--navbar--height, 60px)', 'important');
-        filterWrapper.style.setProperty('left', '0', 'important');
-        filterWrapper.style.setProperty('width', '100%', 'important');
-        filterWrapper.style.setProperty('height', 'calc(100dvh - 60px)', 'important');
-        filterWrapper.style.setProperty('overflow-y', 'auto', 'important');
-        filterWrapper.style.setProperty('z-index', '10000', 'important');
-        filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-        filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
-        document.body.style.overflow = 'hidden';
-        g.mobileFilterOpen = true;
-
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            filterWrapper.style.setProperty('transform', 'translateX(0)', 'important');
-          });
-        });
-      }
+      if (window.innerWidth < 768) openFilter();
     });
   }
 
   if (filterClose) {
     const newFilterClose = filterClose.cloneNode(true);
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
-
-    newFilterClose.addEventListener('click', () => {
-      filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-      document.body.style.overflow = '';
-      setTimeout(() => {
-        filterWrapper.style.removeProperty('display');
-        filterWrapper.style.removeProperty('position');
-        filterWrapper.style.removeProperty('top');
-        filterWrapper.style.removeProperty('left');
-        filterWrapper.style.removeProperty('width');
-        filterWrapper.style.removeProperty('height');
-        filterWrapper.style.removeProperty('overflow-y');
-        filterWrapper.style.removeProperty('z-index');
-        filterWrapper.style.removeProperty('transform');
-        filterWrapper.style.removeProperty('transition');
-        g.mobileFilterOpen = false;
-      }, 350);
-    });
+    newFilterClose.addEventListener('click', closeFilter);
   }
-  
-  function checkScreenWidth() {
-    if (window.innerWidth >= 768) {
-      // Reset filter wrapper
-      filterWrapper.style.display = 'flex';
-      filterWrapper.style.transform = '';
-      filterWrapper.style.transition = '';
-      disableScrollLimit();
 
-      // Reset all content elements that may have been hidden during mobile filter slide
-      const musicAreaContainer = document.querySelector('.music-area-container');
-      const contentToSlide = musicAreaContainer ?
-        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
-
-      contentToSlide.forEach(el => {
-        el.style.transition = 'none';
-        el.style.transform = '';
-        el.style.opacity = '';
-      });
-
-      // Also reset any individually tracked elements
-      const musicList = document.querySelector('.music-list-wrapper');
-      const mobileSearchHeader = document.querySelector('.mobile-search-header');
-      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
-      const footerContainer = document.querySelector('.footer-container');
-
-      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
-        if (el) {
-          el.style.transition = 'none';
-          el.style.opacity = '';
-          el.style.transform = '';
-        }
-      });
-
-      // Mark filter as closed so it doesn't reappear if window is scaled back down
-      g.mobileFilterOpen = false;
-
-    } else {
-      filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
-      if (g.mobileFilterOpen) {
-        enableScrollLimit();
-      } else {
-        disableScrollLimit();
-      }
-    }
-  }
-  
-  checkScreenWidth();
-  
   if (g._mobileFilterResizeHandler) {
     window.removeEventListener('resize', g._mobileFilterResizeHandler);
   }
   g._mobileFilterResizeHandler = checkScreenWidth;
   window.addEventListener('resize', g._mobileFilterResizeHandler);
-  
-  console.log('✅ Mobile filter toggle initialized');
+
+  checkScreenWidth();
 }
 
 /* ============================================================
