@@ -13725,23 +13725,40 @@ function initMobileFilterToggle(container = document) {
   
   function checkScreenWidth() {
     if (window.innerWidth >= 768) {
+      // Reset filter wrapper
       filterWrapper.style.display = 'flex';
       filterWrapper.style.transform = '';
       filterWrapper.style.transition = '';
       disableScrollLimit();
-      
+
+      // Reset all content elements that may have been hidden during mobile filter slide
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      const contentToSlide = musicAreaContainer ?
+        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
+
+      contentToSlide.forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = '';
+        el.style.opacity = '';
+      });
+
+      // Also reset any individually tracked elements
       const musicList = document.querySelector('.music-list-wrapper');
       const mobileSearchHeader = document.querySelector('.mobile-search-header');
       const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
       const footerContainer = document.querySelector('.footer-container');
-      
+
       [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
         if (el) {
+          el.style.transition = 'none';
           el.style.opacity = '';
-          el.style.transition = '';
           el.style.transform = '';
         }
       });
+
+      // Mark filter as closed so it doesn't reappear if window is scaled back down
+      g.mobileFilterOpen = false;
+
     } else {
       filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
       if (g.mobileFilterOpen) {
