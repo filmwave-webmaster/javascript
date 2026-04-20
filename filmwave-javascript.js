@@ -13607,7 +13607,6 @@ function initMobileFilterToggle(container = document) {
         
         // After animations complete: adjust scroll, hide content, restore accordion scroll
         setTimeout(() => {
-          window.scrollTo(0, 0);
           enableScrollLimit();
           
           // Reset filter to normal positioning now that we're at top
