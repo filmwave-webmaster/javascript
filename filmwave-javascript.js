@@ -13403,6 +13403,7 @@ async function initPlaylistsPage() {
    MOBILE NAVIGATION
    ============================================================ */
 
+// REPLACE:
 function initMobileNav() {
   const overlay = document.querySelector('.mobile-nav-overlay');
   const openBtn = document.querySelector('.mobile-menu-icon');
@@ -13422,19 +13423,64 @@ function initMobileNav() {
   }
 
   openBtn.addEventListener('click', openMenu);
-
-  // Fix double-tap issue on touch devices caused by hover states
-  if ('ontouchstart' in window) {
-    document.querySelectorAll('.mobile-nav-overlay a, .mobile-nav-overlay button').forEach(el => {
-      el.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        el.click();
-      });
-    });
-  }
   if (closeBtn) closeBtn.addEventListener('click', closeMenu);
 
   // Close and lock out if resized past breakpoint
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > BREAKPOINT) {
+      closeMenu();
+    }
+  });
+}
+
+// WITH:
+function initMobileNav() {
+  const overlay = document.querySelector('.mobile-nav-overlay');
+  const openBtn = document.querySelector('.mobile-menu-icon');
+  const line1 = document.querySelector('.hamburger-line-1');
+  const line2 = document.querySelector('.hamburger-line-2');
+  const line3 = document.querySelector('.hamburger-line-3');
+  const BREAKPOINT = 991;
+
+  if (!overlay || !openBtn) return;
+
+  // Set up transition styles on hamburger lines
+  [line1, line2, line3].forEach(line => {
+    if (line) line.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+  });
+
+  let isOpen = false;
+
+  function setHamburgerOpen() {
+    if (line1) line1.style.transform = 'translateY(calc(100% + 2px)) rotate(45deg)';
+    if (line2) line2.style.opacity = '0';
+    if (line3) line3.style.transform = 'translateY(calc(-100% - 2px)) rotate(-45deg)';
+  }
+
+  function setHamburgerClosed() {
+    if (line1) line1.style.transform = '';
+    if (line2) line2.style.opacity = '1';
+    if (line3) line3.style.transform = '';
+  }
+
+  function openMenu() {
+    overlay.style.cssText = 'display:flex;position:fixed;top:0;left:0;width:100%;height:100dvh;overflow-y:auto;z-index:9999;';
+    document.body.style.overflow = 'hidden';
+    setHamburgerOpen();
+    isOpen = true;
+  }
+
+  function closeMenu() {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    setHamburgerClosed();
+    isOpen = false;
+  }
+
+  openBtn.addEventListener('click', () => {
+    isOpen ? closeMenu() : openMenu();
+  });
+
   window.addEventListener('resize', () => {
     if (window.innerWidth > BREAKPOINT) {
       closeMenu();
