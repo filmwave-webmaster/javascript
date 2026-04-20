@@ -13478,78 +13478,53 @@ function initMobileFilterToggle(container = document) {
   const filterClose = container.querySelector('.search-filter-close');
   const filterWrapper = container.querySelector('.filter-wrapper');
 
-  if (!filterWrapper) return;
+  if (!filterWrapper || !filterButton) return;
 
-  const g = window.musicPlayerPersistent;
-  if (typeof g.mobileFilterOpen === 'undefined') {
-    g.mobileFilterOpen = false;
+  const BREAKPOINT = 768;
+
+  function resetFilter() {
+    filterWrapper.style.removeProperty('display');
+    filterWrapper.style.removeProperty('position');
+    filterWrapper.style.removeProperty('top');
+    filterWrapper.style.removeProperty('left');
+    filterWrapper.style.removeProperty('width');
+    filterWrapper.style.removeProperty('height');
+    filterWrapper.style.removeProperty('overflow-y');
+    filterWrapper.style.removeProperty('z-index');
+    filterWrapper.style.removeProperty('transform');
+    filterWrapper.style.removeProperty('transition');
   }
 
   function openFilter() {
     filterWrapper.style.setProperty('display', 'flex', 'important');
     filterWrapper.style.setProperty('position', 'fixed', 'important');
-    filterWrapper.style.setProperty('top', 'var(--navbar--height, 60px)', 'important');
+    filterWrapper.style.setProperty('top', '60px', 'important');
     filterWrapper.style.setProperty('left', '0', 'important');
     filterWrapper.style.setProperty('width', '100%', 'important');
     filterWrapper.style.setProperty('height', 'calc(100dvh - 60px)', 'important');
     filterWrapper.style.setProperty('overflow-y', 'auto', 'important');
     filterWrapper.style.setProperty('z-index', '10000', 'important');
-    filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
     filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-    document.body.style.overflow = 'hidden';
+    filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         filterWrapper.style.setProperty('transform', 'translateX(0)', 'important');
       });
     });
-
-    g.mobileFilterOpen = true;
   }
 
   function closeFilter() {
     filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-    document.body.style.overflow = '';
-
-    setTimeout(() => {
-      filterWrapper.style.removeProperty('display');
-      filterWrapper.style.removeProperty('position');
-      filterWrapper.style.removeProperty('top');
-      filterWrapper.style.removeProperty('left');
-      filterWrapper.style.removeProperty('width');
-      filterWrapper.style.removeProperty('height');
-      filterWrapper.style.removeProperty('overflow-y');
-      filterWrapper.style.removeProperty('z-index');
-      filterWrapper.style.removeProperty('transform');
-      filterWrapper.style.removeProperty('transition');
-      g.mobileFilterOpen = false;
-    }, 350);
+    setTimeout(resetFilter, 350);
   }
 
-  function checkScreenWidth() {
-    if (window.innerWidth >= 768) {
-      filterWrapper.style.removeProperty('display');
-      filterWrapper.style.removeProperty('position');
-      filterWrapper.style.removeProperty('top');
-      filterWrapper.style.removeProperty('left');
-      filterWrapper.style.removeProperty('width');
-      filterWrapper.style.removeProperty('height');
-      filterWrapper.style.removeProperty('overflow-y');
-      filterWrapper.style.removeProperty('z-index');
-      filterWrapper.style.removeProperty('transform');
-      filterWrapper.style.removeProperty('transition');
-      document.body.style.overflow = '';
-      g.mobileFilterOpen = false;
-    }
-  }
-
-  if (filterButton) {
-    const newFilterButton = filterButton.cloneNode(true);
-    filterButton.parentNode.replaceChild(newFilterButton, filterButton);
-    newFilterButton.addEventListener('click', () => {
-      if (window.innerWidth < 768) openFilter();
-    });
-  }
+  // Clone buttons to remove stale listeners from previous Barba transitions
+  const newFilterButton = filterButton.cloneNode(true);
+  filterButton.parentNode.replaceChild(newFilterButton, filterButton);
+  newFilterButton.addEventListener('click', () => {
+    if (window.innerWidth < BREAKPOINT) openFilter();
+  });
 
   if (filterClose) {
     const newFilterClose = filterClose.cloneNode(true);
@@ -13557,13 +13532,17 @@ function initMobileFilterToggle(container = document) {
     newFilterClose.addEventListener('click', closeFilter);
   }
 
-  if (g._mobileFilterResizeHandler) {
-    window.removeEventListener('resize', g._mobileFilterResizeHandler);
+  // Clean up previous resize listener and attach fresh one
+  if (window._fwFilterResizeHandler) {
+    window.removeEventListener('resize', window._fwFilterResizeHandler);
   }
-  g._mobileFilterResizeHandler = checkScreenWidth;
-  window.addEventListener('resize', g._mobileFilterResizeHandler);
+  window._fwFilterResizeHandler = () => {
+    if (window.innerWidth >= BREAKPOINT) resetFilter();
+  };
+  window.addEventListener('resize', window._fwFilterResizeHandler);
 
-  checkScreenWidth();
+  // Reset on init if on desktop
+  if (window.innerWidth >= BREAKPOINT) resetFilter();
 }
 
 /* ============================================================
