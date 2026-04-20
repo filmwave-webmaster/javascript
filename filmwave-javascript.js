@@ -11320,7 +11320,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
         const wrapper = document.querySelector('.create-project-module-wrapper');
         if (wrapper) {
           wrapper.style.display = 'flex';
-          wrapper.style.zIndex = '10000';
+          wrapper.style.zIndex = '9999';
         }
         return;
       }
