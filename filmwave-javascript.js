@@ -13444,6 +13444,11 @@ function initMobileNav() {
     if (line3) line3.style.transform = '';
   }
 
+  // Reset on init to handle Barba page transitions
+  setHamburgerClosed();
+  overlay.style.transform = 'translateX(100%)';
+  document.body.style.overflow = '';
+
   function openMenu() {
     overlay.style.transform = 'translateX(0)';
     document.body.style.overflow = 'hidden';
