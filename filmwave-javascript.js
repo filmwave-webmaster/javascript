@@ -3681,13 +3681,13 @@ function initFilterAccordions() {
     });
   });
   
-// Close accordions when clicking outside (desktop only)
+// Close accordions when clicking outside
   document.addEventListener('click', function(e) {
-    if (window.innerWidth < 768) return;
     const clickedInsideAccordion = e.target.closest('.filter-category, .filter-header, .filter-list');
     const hasOpenAccordion = document.querySelector('.filter-list.open');
     
     if (!clickedInsideAccordion && hasOpenAccordion) {
+      // Prevent link navigation if clicking outside while accordion is open
       e.preventDefault();
       e.stopPropagation();
       
@@ -3700,7 +3700,7 @@ function initFilterAccordions() {
         arr.style.transform = 'rotate(0deg)';
       });
     }
-  }, true);
+  }, true);  // Use capture phase to intercept before link click
 }
 
 function initCheckboxTextColor() {
@@ -13477,88 +13477,288 @@ function initMobileFilterToggle(container = document) {
   const filterButton = container.querySelector('.search-filter-button');
   const filterClose = container.querySelector('.search-filter-close');
   const filterWrapper = container.querySelector('.filter-wrapper');
-
-  if (!filterWrapper || !filterButton) return;
-
-  const BREAKPOINT = 768;
-
-  function resetFilter() {
-    filterWrapper.style.removeProperty('display');
-    filterWrapper.style.removeProperty('position');
-    filterWrapper.style.removeProperty('top');
-    filterWrapper.style.removeProperty('left');
-    filterWrapper.style.removeProperty('width');
-    filterWrapper.style.removeProperty('height');
-    filterWrapper.style.removeProperty('overflow-y');
-    filterWrapper.style.removeProperty('z-index');
-    filterWrapper.style.removeProperty('transform');
-    filterWrapper.style.removeProperty('transition');
-    document.body.style.overflow = '';
+  
+  if (!filterWrapper) return;
+  
+  // Use global state to persist mobile filter state across transitions
+  const g = window.musicPlayerPersistent;
+  if (typeof g.mobileFilterOpen === 'undefined') {
+    g.mobileFilterOpen = false;
   }
-
-  function openFilter() {
-    filterWrapper.style.setProperty('display', 'flex', 'important');
-    filterWrapper.style.setProperty('position', 'fixed', 'important');
-    filterWrapper.style.setProperty('top', '60px', 'important');
-    filterWrapper.style.setProperty('left', '0', 'important');
-    filterWrapper.style.setProperty('width', '100%', 'important');
-    filterWrapper.style.setProperty('height', 'calc(100dvh - 60px)', 'important');
-    filterWrapper.style.setProperty('overflow-y', 'auto', 'important');
-    filterWrapper.style.setProperty('z-index', '10000', 'important');
-    filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-    filterWrapper.style.setProperty('transition', 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
-    document.body.style.overflow = 'hidden';
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        filterWrapper.style.setProperty('transform', 'translateX(0)', 'important');
-      });
+  
+  function getMaxScroll() {
+    const filterRect = filterWrapper.getBoundingClientRect();
+    const filterBottom = filterRect.bottom + window.scrollY;
+    return Math.max(0, filterBottom - window.innerHeight);
+  }
+  
+  function limitScroll() {
+    const maxScroll = getMaxScroll();
+    if (window.scrollY > maxScroll) {
+      window.scrollTo(0, maxScroll);
+    }
+  }
+  
+  function handleTouchMove(e) {
+    const maxScroll = getMaxScroll();
+    if (window.scrollY >= maxScroll) {
+      const touch = e.touches[0];
+      const lastTouchY = g._lastTouchY || touch.clientY;
+      const deltaY = lastTouchY - touch.clientY;
+      
+      if (deltaY > 0) {
+        e.preventDefault();
+      }
+      g._lastTouchY = touch.clientY;
+    }
+  }
+  
+  function handleTouchStart(e) {
+    g._lastTouchY = e.touches[0].clientY;
+  }
+  
+  function enableScrollLimit() {
+    window.removeEventListener('scroll', g._mobileFilterScrollHandler);
+    window.removeEventListener('touchstart', g._mobileFilterTouchStart);
+    window.removeEventListener('touchmove', g._mobileFilterTouchMove);
+    
+    g._mobileFilterScrollHandler = limitScroll;
+    g._mobileFilterTouchStart = handleTouchStart;
+    g._mobileFilterTouchMove = handleTouchMove;
+    
+    window.addEventListener('scroll', limitScroll);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) musicList.style.display = 'none';
+  }
+  
+  function disableScrollLimit() {
+    if (g._mobileFilterScrollHandler) {
+      window.removeEventListener('scroll', g._mobileFilterScrollHandler);
+    }
+    if (g._mobileFilterTouchStart) {
+      window.removeEventListener('touchstart', g._mobileFilterTouchStart);
+    }
+    if (g._mobileFilterTouchMove) {
+      window.removeEventListener('touchmove', g._mobileFilterTouchMove);
+    }
+    document.documentElement.style.overscrollBehavior = '';
+    document.body.style.overscrollBehavior = '';
+    
+    const musicList = document.querySelector('.music-list-wrapper');
+    if (musicList) musicList.style.display = '';
+  }
+  
+  if (filterButton) {
+    const newFilterButton = filterButton.cloneNode(true);
+    filterButton.parentNode.replaceChild(newFilterButton, filterButton);
+    
+    newFilterButton.addEventListener('click', () => {
+      g.savedScrollPosition = window.scrollY;
+      
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      const contentToSlide = musicAreaContainer ? 
+        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
+      
+      if (window.innerWidth < 768) {
+        // Make filter fixed so it doesn't depend on scroll position
+        filterWrapper.style.position = 'fixed';
+        filterWrapper.style.top = 'var(--navbar--height, 60px)';
+        filterWrapper.style.left = '0';
+        filterWrapper.style.right = '0';
+        filterWrapper.style.zIndex = '999';
+        
+       // Slide all content to the left with fade
+        contentToSlide.forEach(el => {
+          el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.00s ease';
+          el.style.transform = 'translateX(-100%)';
+          el.style.opacity = '0';
+        });
+        
+        // Set up filter slide-in at the same time
+        filterWrapper.style.display = 'flex';
+        filterWrapper.style.transform = 'translateX(100%)';
+        filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        
+        // Restore accordion states if saved
+        if (g.filterAccordionStates) {
+          filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+            const state = g.filterAccordionStates[index];
+            if (state && state.isOpen) {
+              list.classList.add('open');
+              list.style.maxHeight = state.maxHeight;
+            }
+          });
+        }
+        
+        // Always start at top of filter wrapper
+        filterWrapper.scrollTop = 0;
+        
+        // Trigger both animations on next frame
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            filterWrapper.style.transform = 'translateX(0)';
+          });
+        });
+        
+        // After animations complete: adjust scroll, hide content, restore accordion scroll
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          enableScrollLimit();
+          
+          // Reset filter to normal positioning now that we're at top
+          filterWrapper.style.position = '';
+          filterWrapper.style.top = '';
+          filterWrapper.style.left = '';
+          filterWrapper.style.right = '';
+          filterWrapper.style.zIndex = '';
+          
+          // Restore accordion scroll positions
+          if (g.filterAccordionStates) {
+            filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+              const state = g.filterAccordionStates[index];
+              if (state && state.isOpen && state.scrollTop) {
+                list.scrollTop = state.scrollTop;
+              }
+            });
+          }
+        }, 350);
+        
+        g.mobileFilterOpen = true;
+      }
     });
   }
-
-  function closeFilterLists() {
-    filterWrapper.querySelectorAll('.filter-list').forEach(list => {
-      list.scrollTop = 0;
-      list.style.maxHeight = '0px';
-      list.classList.remove('open');
-    });
-    filterWrapper.querySelectorAll('.arrow-icon').forEach(arr => {
-      arr.style.transform = 'rotate(0deg)';
-    });
-  }
-
-  function closeFilter() {
-    filterWrapper.style.setProperty('transform', 'translateX(100%)', 'important');
-    document.body.style.overflow = '';
-    setTimeout(() => {
-      closeFilterLists();
-      resetFilter();
-    }, 350);
-  }
-  // Clone buttons to remove stale listeners from previous Barba transitions
-  const newFilterButton = filterButton.cloneNode(true);
-  filterButton.parentNode.replaceChild(newFilterButton, filterButton);
-  newFilterButton.addEventListener('click', () => {
-    if (window.innerWidth < BREAKPOINT) openFilter();
-  });
-
+  
   if (filterClose) {
     const newFilterClose = filterClose.cloneNode(true);
     filterClose.parentNode.replaceChild(newFilterClose, filterClose);
-    newFilterClose.addEventListener('click', closeFilter);
+    
+    newFilterClose.addEventListener('click', () => {
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      const contentToSlide = musicAreaContainer ? 
+        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
+      
+      // Save accordion states before resetting
+      g.filterAccordionStates = [];
+      filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
+        g.filterAccordionStates[index] = {
+          isOpen: list.classList.contains('open'),
+          scrollTop: list.scrollTop,
+          maxHeight: list.style.maxHeight
+        };
+      });
+      
+      // Restore scroll position while content is hidden
+      disableScrollLimit();
+      if (typeof g.savedScrollPosition === 'number') {
+        window.scrollTo(0, g.savedScrollPosition);
+      }
+      
+      // Slide filter out to right and content back in from left simultaneously
+      filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+      filterWrapper.style.transform = 'translateX(100%)';
+      
+      // Set all content to start position off-screen, fully visible, with no transition
+      contentToSlide.forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = 'translateX(-100%)';
+        el.style.opacity = '1';
+      });
+      
+      // Force reflow to ensure starting positions are applied
+      void filterWrapper.offsetWidth;
+      
+      // Then animate back in
+      contentToSlide.forEach(el => {
+        el.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+        el.style.transform = 'translateX(0)';
+      });
+      
+      // Clean up after animation completes
+      setTimeout(() => {
+        filterWrapper.style.display = 'none';
+        filterWrapper.style.transform = '';
+        filterWrapper.style.transition = '';
+        g.mobileFilterOpen = false;
+        
+        // Reset accordion visual state
+        filterWrapper.querySelectorAll('.filter-list').forEach(list => {
+          list.scrollTop = 0;
+          list.classList.remove('open');
+          list.style.maxHeight = '';
+        });
+        filterWrapper.scrollTop = 0;
+        
+        // Clean up content transitions
+        contentToSlide.forEach(el => {
+          el.style.transform = '';
+          el.style.transition = '';
+          el.style.opacity = '';
+        });
+      }, 350);
+    });
   }
+  
+  function checkScreenWidth() {
+    if (window.innerWidth >= 768) {
+      // Reset filter wrapper
+      filterWrapper.style.display = 'flex';
+      filterWrapper.style.transform = '';
+      filterWrapper.style.transition = '';
+      disableScrollLimit();
 
-  // Clean up previous resize listener and attach fresh one
-  if (window._fwFilterResizeHandler) {
-    window.removeEventListener('resize', window._fwFilterResizeHandler);
+      // Reset all content elements that may have been hidden during mobile filter slide
+      const musicAreaContainer = document.querySelector('.music-area-container');
+      const contentToSlide = musicAreaContainer ?
+        Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
+
+      contentToSlide.forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = '';
+        el.style.opacity = '';
+      });
+
+      // Also reset any individually tracked elements
+      const musicList = document.querySelector('.music-list-wrapper');
+      const mobileSearchHeader = document.querySelector('.mobile-search-header');
+      const searchBarWrapper = document.querySelector('.search-bar-wrapper.music-page');
+      const footerContainer = document.querySelector('.footer-container');
+
+      [musicList, mobileSearchHeader, searchBarWrapper, footerContainer].forEach(el => {
+        if (el) {
+          el.style.transition = 'none';
+          el.style.opacity = '';
+          el.style.transform = '';
+        }
+      });
+
+      // Mark filter as closed so it doesn't reappear if window is scaled back down
+      g.mobileFilterOpen = false;
+
+    } else {
+      filterWrapper.style.display = g.mobileFilterOpen ? 'flex' : 'none';
+      if (g.mobileFilterOpen) {
+        enableScrollLimit();
+      } else {
+        disableScrollLimit();
+      }
+    }
   }
-  window._fwFilterResizeHandler = () => {
-    if (window.innerWidth >= BREAKPOINT) resetFilter();
-  };
-  window.addEventListener('resize', window._fwFilterResizeHandler);
-
-  // Reset on init if on desktop
-  if (window.innerWidth >= BREAKPOINT) resetFilter();
+  
+  checkScreenWidth();
+  
+  if (g._mobileFilterResizeHandler) {
+    window.removeEventListener('resize', g._mobileFilterResizeHandler);
+  }
+  g._mobileFilterResizeHandler = checkScreenWidth;
+  window.addEventListener('resize', g._mobileFilterResizeHandler);
+  
+  console.log('✅ Mobile filter toggle initialized');
 }
 
 /* ============================================================
