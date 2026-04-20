@@ -13403,37 +13403,6 @@ async function initPlaylistsPage() {
    MOBILE NAVIGATION
    ============================================================ */
 
-// REPLACE:
-function initMobileNav() {
-  const overlay = document.querySelector('.mobile-nav-overlay');
-  const openBtn = document.querySelector('.mobile-menu-icon');
-  const closeBtn = document.querySelector('.mobile-menu-close-icon');
-  const BREAKPOINT = 991; // adjust to match your Webflow breakpoint
-
-  if (!overlay || !openBtn) return;
-
-  function openMenu() {
-    overlay.style.cssText = 'display:flex;position:fixed;top:60;left:0;width:100%;height:100dvh;overflow-y:auto;z-index:9999;';
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeMenu() {
-    overlay.style.display = 'none';
-    document.body.style.overflow = '';
-  }
-
-  openBtn.addEventListener('click', openMenu);
-  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
-
-  // Close and lock out if resized past breakpoint
-  window.addEventListener('resize', () => {
-    if (window.innerWidth > BREAKPOINT) {
-      closeMenu();
-    }
-  });
-}
-
-// WITH:
 function initMobileNav() {
   const overlay = document.querySelector('.mobile-nav-overlay');
   const openBtn = document.querySelector('.mobile-menu-icon');
@@ -13444,11 +13413,23 @@ function initMobileNav() {
 
   if (!overlay || !openBtn) return;
 
-  // Set up transition styles on hamburger lines
+  // Hamburger line transitions
   if (line1) line1.style.transition = 'transform 0.3s ease';
   if (line2) line2.style.transition = 'opacity 0s';
   if (line3) line3.style.transition = 'transform 0.3s ease';
-  
+
+  // Prime overlay for slide animation — parked off-screen to the right
+  overlay.style.position = 'fixed';
+  overlay.style.top = '60px';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = 'calc(100dvh - 60px)';
+  overlay.style.overflowY = 'auto';
+  overlay.style.zIndex = '9999';
+  overlay.style.display = 'flex';
+  overlay.style.transform = 'translateX(100%)';
+  overlay.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+
   let isOpen = false;
 
   function setHamburgerOpen() {
@@ -13456,7 +13437,7 @@ function initMobileNav() {
     if (line2) line2.style.opacity = '0';
     if (line3) line3.style.transform = 'translateY(-7px) rotate(-45deg)';
   }
-  
+
   function setHamburgerClosed() {
     if (line1) line1.style.transform = '';
     if (line2) line2.style.opacity = '1';
@@ -13464,14 +13445,14 @@ function initMobileNav() {
   }
 
   function openMenu() {
-    overlay.style.cssText = 'display:flex;position:fixed;top:60px;left:0;width:100%;height:calc(100dvh - 60px);overflow-y:auto;z-index:9999;';
+    overlay.style.transform = 'translateX(0)';
     document.body.style.overflow = 'hidden';
     setHamburgerOpen();
     isOpen = true;
   }
 
   function closeMenu() {
-    overlay.style.display = 'none';
+    overlay.style.transform = 'translateX(100%)';
     document.body.style.overflow = '';
     setHamburgerClosed();
     isOpen = false;
