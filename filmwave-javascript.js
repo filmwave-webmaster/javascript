@@ -11308,6 +11308,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
          ---------------------------- */
      if (e.target.closest('.new-project-x-button')) {
         const wrapper = document.querySelector('.create-project-module-wrapper');
+        const mobileNav = document.querySelector('.mobile-nav-overlay');
         if (wrapper) {
           wrapper.style.display = 'none';
           if (wrapper._originalParent) {
@@ -11316,21 +11317,25 @@ if (playlistRow && playlistRow.dataset.playlistId) {
             delete wrapper._originalNextSibling;
           }
         }
+        if (mobileNav) mobileNav.style.removeProperty('visibility');
         return;
       }
       if (e.target.classList.contains('create-project-module-wrapper')) {
+        const mobileNav = document.querySelector('.mobile-nav-overlay');
         e.target.style.display = 'none';
         if (e.target._originalParent) {
           e.target._originalParent.insertBefore(e.target, e.target._originalNextSibling || null);
           delete e.target._originalParent;
           delete e.target._originalNextSibling;
         }
+        if (mobileNav) mobileNav.style.removeProperty('visibility');
         return;
       }
-      
+
       if (e.target.closest('.new-project-button')) {
         e.preventDefault();
         const wrapper = document.querySelector('.create-project-module-wrapper');
+        const mobileNav = document.querySelector('.mobile-nav-overlay');
         if (wrapper) {
           wrapper._originalParent = wrapper.parentElement;
           wrapper._originalNextSibling = wrapper.nextSibling;
@@ -11338,7 +11343,12 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           wrapper.style.display = 'flex';
           wrapper.style.setProperty('position', 'fixed', 'important');
           wrapper.style.setProperty('z-index', '10000', 'important');
+          wrapper.style.setProperty('top', '0', 'important');
+          wrapper.style.setProperty('left', '0', 'important');
+          wrapper.style.setProperty('width', '100%', 'important');
+          wrapper.style.setProperty('height', '100%', 'important');
         }
+        if (mobileNav) mobileNav.style.setProperty('visibility', 'hidden', 'important');
         return;
       }
       
