@@ -11306,7 +11306,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
       /* ----------------------------
          CREATE PROJECT MODAL
          ---------------------------- */
-     if (e.target.closest('.new-project-x-button')) {
+    if (e.target.closest('.new-project-x-button')) {
         const wrapper = document.querySelector('.create-project-module-wrapper');
         const backdrop = document.querySelector('.modal-backdrop-overlay');
         if (wrapper) {
@@ -11317,7 +11317,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
             delete wrapper._originalNextSibling;
           }
         }
-        if (backdrop) backdrop.style.removeProperty('z-index');
+        if (backdrop) backdrop.style.removeProperty('display');
         return;
       }
       if (e.target.classList.contains('create-project-module-wrapper')) {
@@ -11328,7 +11328,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           delete e.target._originalParent;
           delete e.target._originalNextSibling;
         }
-        if (backdrop) backdrop.style.removeProperty('z-index');
+        if (backdrop) backdrop.style.removeProperty('display');
         return;
       }
 
@@ -11350,6 +11350,8 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           wrapper.style.setProperty('align-items', 'center', 'important');
           wrapper.style.setProperty('justify-content', 'center', 'important');
         }
+        const backdrop = document.querySelector('.modal-backdrop-overlay');
+        if (backdrop) backdrop.style.setProperty('display', 'none', 'important');
         return;
       }
       
