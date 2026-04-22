@@ -13446,7 +13446,7 @@ function initMobileNav() {
   const line1 = document.querySelector('.hamburger-line-1');
   const line2 = document.querySelector('.hamburger-line-2');
   const line3 = document.querySelector('.hamburger-line-3');
-  const BREAKPOINT = 991;
+  const BREAKPOINT = 768;
 
   if (!overlay || !openBtn) return;
 
