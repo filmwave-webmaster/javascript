@@ -11316,8 +11316,10 @@ if (playlistRow && playlistRow.dataset.playlistId) {
             delete wrapper._originalNextSibling;
           }
         }
-        const backdrop = document.querySelector('.modal-backdrop-overlay');
-        if (backdrop) backdrop.style.removeProperty('display');
+        setTimeout(() => {
+          const backdrop = document.querySelector('.modal-backdrop-overlay');
+          if (backdrop) backdrop.style.removeProperty('display');
+        }, 300);
         return;
       }
       if (e.target.classList.contains('create-project-module-wrapper')) {
@@ -11327,8 +11329,10 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           delete e.target._originalParent;
           delete e.target._originalNextSibling;
         }
-        const backdrop = document.querySelector('.modal-backdrop-overlay');
-        if (backdrop) backdrop.style.removeProperty('display');
+        setTimeout(() => {
+          const backdrop = document.querySelector('.modal-backdrop-overlay');
+          if (backdrop) backdrop.style.removeProperty('display');
+        }, 300);
         return;
       }
 
