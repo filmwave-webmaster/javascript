@@ -11308,20 +11308,22 @@ if (playlistRow && playlistRow.dataset.playlistId) {
          ---------------------------- */
      if (e.target.closest('.new-project-x-button')) {
         const wrapper = document.querySelector('.create-project-module-wrapper');
-        const mobileNav = document.querySelector('.mobile-nav-overlay');
-        if (wrapper) wrapper.style.display = 'none';
-        if (mobileNav && mobileNav.dataset.savedTransform !== undefined) {
-          mobileNav.style.transform = mobileNav.dataset.savedTransform;
-          delete mobileNav.dataset.savedTransform;
+        if (wrapper) {
+          wrapper.style.display = 'none';
+          if (wrapper._originalParent) {
+            wrapper._originalParent.insertBefore(wrapper, wrapper._originalNextSibling || null);
+            delete wrapper._originalParent;
+            delete wrapper._originalNextSibling;
+          }
         }
         return;
       }
       if (e.target.classList.contains('create-project-module-wrapper')) {
-        const mobileNav = document.querySelector('.mobile-nav-overlay');
         e.target.style.display = 'none';
-        if (mobileNav && mobileNav.dataset.savedTransform !== undefined) {
-          mobileNav.style.transform = mobileNav.dataset.savedTransform;
-          delete mobileNav.dataset.savedTransform;
+        if (e.target._originalParent) {
+          e.target._originalParent.insertBefore(e.target, e.target._originalNextSibling || null);
+          delete e.target._originalParent;
+          delete e.target._originalNextSibling;
         }
         return;
       }
@@ -11329,16 +11331,13 @@ if (playlistRow && playlistRow.dataset.playlistId) {
       if (e.target.closest('.new-project-button')) {
         e.preventDefault();
         const wrapper = document.querySelector('.create-project-module-wrapper');
-        const mobileNav = document.querySelector('.mobile-nav-overlay');
         if (wrapper) {
+          wrapper._originalParent = wrapper.parentElement;
+          wrapper._originalNextSibling = wrapper.nextSibling;
+          document.body.appendChild(wrapper);
           wrapper.style.display = 'flex';
           wrapper.style.setProperty('position', 'fixed', 'important');
           wrapper.style.setProperty('z-index', '10000', 'important');
-        }
-        // Remove transform from mobile nav so it doesn't create a stacking context above the modal
-        if (mobileNav) {
-          mobileNav.dataset.savedTransform = mobileNav.style.transform;
-          mobileNav.style.setProperty('transform', 'none', 'important');
         }
         return;
       }
