@@ -11308,6 +11308,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
          ---------------------------- */
      if (e.target.closest('.new-project-x-button')) {
         const wrapper = document.querySelector('.create-project-module-wrapper');
+        const backdrop = document.querySelector('.modal-backdrop-overlay');
         if (wrapper) {
           wrapper.style.display = 'none';
           if (wrapper._originalParent) {
@@ -11316,15 +11317,18 @@ if (playlistRow && playlistRow.dataset.playlistId) {
             delete wrapper._originalNextSibling;
           }
         }
+        if (backdrop) backdrop.style.removeProperty('z-index');
         return;
       }
       if (e.target.classList.contains('create-project-module-wrapper')) {
+        const backdrop = document.querySelector('.modal-backdrop-overlay');
         e.target.style.display = 'none';
         if (e.target._originalParent) {
           e.target._originalParent.insertBefore(e.target, e.target._originalNextSibling || null);
           delete e.target._originalParent;
           delete e.target._originalNextSibling;
         }
+        if (backdrop) backdrop.style.removeProperty('z-index');
         return;
       }
 
@@ -11342,8 +11346,11 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           wrapper.style.setProperty('width', '100%', 'important');
           wrapper.style.setProperty('height', '100%', 'important');
           wrapper.style.setProperty('z-index', '10000', 'important');
-          wrapper.style.setProperty('background', 'transparent', 'important');
-          wrapper.style.setProperty('align-items', 'center', 'important');
+          wrapper.style.setProperty('background', 'rgba(0,0,0,0.7)', 'important');
+        }
+        const backdrop = document.querySelector('.modal-backdrop-overlay');
+        if (backdrop) backdrop.style.setProperty('z-index', '10001', 'important');
+        wrapper.style.setProperty('align-items', 'center', 'important');
           wrapper.style.setProperty('justify-content', 'center', 'important');
         }
         return;
