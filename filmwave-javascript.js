@@ -11308,7 +11308,6 @@ if (playlistRow && playlistRow.dataset.playlistId) {
          ---------------------------- */
     if (e.target.closest('.new-project-x-button')) {
         const wrapper = document.querySelector('.create-project-module-wrapper');
-        const backdrop = document.querySelector('.modal-backdrop-overlay');
         if (wrapper) {
           wrapper.style.display = 'none';
           if (wrapper._originalParent) {
@@ -11317,17 +11316,18 @@ if (playlistRow && playlistRow.dataset.playlistId) {
             delete wrapper._originalNextSibling;
           }
         }
+        const backdrop = document.querySelector('.modal-backdrop-overlay');
         if (backdrop) backdrop.style.removeProperty('display');
         return;
       }
       if (e.target.classList.contains('create-project-module-wrapper')) {
-        const backdrop = document.querySelector('.modal-backdrop-overlay');
         e.target.style.display = 'none';
         if (e.target._originalParent) {
           e.target._originalParent.insertBefore(e.target, e.target._originalNextSibling || null);
           delete e.target._originalParent;
           delete e.target._originalNextSibling;
         }
+        const backdrop = document.querySelector('.modal-backdrop-overlay');
         if (backdrop) backdrop.style.removeProperty('display');
         return;
       }
@@ -11350,8 +11350,11 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           wrapper.style.setProperty('align-items', 'center', 'important');
           wrapper.style.setProperty('justify-content', 'center', 'important');
         }
-        const backdrop = document.querySelector('.modal-backdrop-overlay');
-        if (backdrop) backdrop.style.setProperty('display', 'none', 'important');
+        // Hide the lockScroll backdrop so it doesn't double-stack
+        setTimeout(() => {
+          const backdrop = document.querySelector('.modal-backdrop-overlay');
+          if (backdrop) backdrop.style.setProperty('display', 'none', 'important');
+        }, 50);
         return;
       }
       
