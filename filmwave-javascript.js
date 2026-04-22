@@ -7156,7 +7156,7 @@ if (existingBg && !existingBg._editOverlayClose) {
 }
 
   // Ensure overlay is above background
-  overlay.style.zIndex = '9999';
+  overlay.style.zIndex = '9901';
 
   // Slide-in animation
   overlay.style.transition = 'none';
