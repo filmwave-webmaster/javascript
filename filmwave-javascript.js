@@ -11347,10 +11347,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           wrapper.style.setProperty('height', '100%', 'important');
           wrapper.style.setProperty('z-index', '10000', 'important');
           wrapper.style.setProperty('background', 'rgba(0,0,0,0.7)', 'important');
-        }
-        const backdrop = document.querySelector('.modal-backdrop-overlay');
-        if (backdrop) backdrop.style.setProperty('z-index', '10001', 'important');
-        wrapper.style.setProperty('align-items', 'center', 'important');
+          wrapper.style.setProperty('align-items', 'center', 'important');
           wrapper.style.setProperty('justify-content', 'center', 'important');
         }
         return;
