@@ -5872,14 +5872,18 @@ function updateFilterDots() {
     
 // Show/hide dot and adjust header text padding
     const filterHeaderText = section.querySelector('.filter-header-text');
+    const filterSingleSelect = section.querySelector('.filter-single-select');
     if (isActive) {
+      if (filterSingleSelect) filterSingleSelect.style.paddingRight = '11px';
       showFilterDot(dot);
       if (filterHeaderText) filterHeaderText.style.paddingRight = '11px';
     } else {
+      if (filterSingleSelect) filterSingleSelect.style.paddingRight = '';
       hideFilterDot(dot);
       if (filterHeaderText) filterHeaderText.style.paddingRight = '';
     }
   });
+}
 
   // Also sync single-select padding (instrumental/acapella) since they use a different element
   const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
