@@ -5843,9 +5843,9 @@ function updateMusicTileSectionVisibility() {
   }
 }
 function updateFilterDots() {
-  document.querySelectorAll('[data-filter-type]').forEach(section => {
+document.querySelectorAll('[data-filter-type]').forEach(section => {
     const filterType = section.getAttribute('data-filter-type');
-    const dot = section.querySelector('.filter-dot-active');
+    const dot = section.querySelector('.filter-dot-active') || section.parentElement?.querySelector('.filter-dot-active');
     if (!dot) return;
     
     let isActive = false;
