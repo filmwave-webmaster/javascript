@@ -3885,10 +3885,10 @@ function initMutualExclusion() {
     }
     
 function updateSingleSelectPadding() {
+      const instFilterSingleSelect = instWrapper.closest('.filter-single-select') || instWrapper.querySelector('.filter-single-select') || instWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
+      const acapFilterSingleSelect = acapWrapper.closest('.filter-single-select') || acapWrapper.querySelector('.filter-single-select') || acapWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
       const instFilterCategory = instWrapper.closest('.filter-category');
       const acapFilterCategory = acapWrapper.closest('.filter-category');
-      const instFilterSingleSelect = instFilterCategory?.querySelector('.filter-single-select');
-      const acapFilterSingleSelect = acapFilterCategory?.querySelector('.filter-single-select');
       const instDot = instFilterCategory?.querySelector('.filter-dot-active');
       const acapDot = acapFilterCategory?.querySelector('.filter-dot-active');
 
