@@ -3897,6 +3897,7 @@ function updateSingleSelectPadding() {
       if (instDot) instInput.checked ? showFilterDot(instDot) : hideFilterDot(instDot);
       if (acapDot) acapInput.checked ? showFilterDot(acapDot) : hideFilterDot(acapDot);
     }
+    window._updateSingleSelectPadding = updateSingleSelectPadding;
     
     instInput.addEventListener('change', function() {
       if (this.checked) clearOther(acapInput, acapWrapper);
@@ -5882,7 +5883,11 @@ function updateFilterDots() {
       hideFilterDot(dot);
       if (filterHeaderText) filterHeaderText.style.paddingRight = '';
     }
-  });
+ });
+
+  if (typeof window._updateSingleSelectPadding === 'function') {
+    window._updateSingleSelectPadding();
+  }
 }
 
 // START OF INIT BPM FILTER
