@@ -3885,15 +3885,17 @@ function initMutualExclusion() {
     }
     
 function updateSingleSelectPadding() {
-      const instFilterSingleSelect = instWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
-      const acapFilterSingleSelect = acapWrapper.closest('.filter-category')?.querySelector('.filter-single-select');
-      
-      if (instFilterSingleSelect) {
-        instFilterSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
-      }
-      if (acapFilterSingleSelect) {
-        acapFilterSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
-      }
+      const instFilterCategory = instWrapper.closest('.filter-category');
+      const acapFilterCategory = acapWrapper.closest('.filter-category');
+      const instFilterSingleSelect = instFilterCategory?.querySelector('.filter-single-select');
+      const acapFilterSingleSelect = acapFilterCategory?.querySelector('.filter-single-select');
+      const instDot = instFilterCategory?.querySelector('.filter-dot-active');
+      const acapDot = acapFilterCategory?.querySelector('.filter-dot-active');
+
+      if (instFilterSingleSelect) instFilterSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
+      if (acapFilterSingleSelect) acapFilterSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
+      if (instDot) instInput.checked ? showFilterDot(instDot) : hideFilterDot(instDot);
+      if (acapDot) acapInput.checked ? showFilterDot(acapDot) : hideFilterDot(acapDot);
     }
     
     instInput.addEventListener('change', function() {
