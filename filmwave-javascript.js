@@ -5878,6 +5878,16 @@ function updateFilterDots() {
       if (filterHeaderText) filterHeaderText.style.paddingRight = '';
     }
   });
+
+  // Also sync single-select padding (instrumental/acapella) since they use a different element
+  const instWrapper = document.querySelector('[data-exclusive="instrumental"]');
+  const acapWrapper = document.querySelector('[data-exclusive="acapella"]');
+  const instInput = instWrapper?.querySelector('input[type="checkbox"]');
+  const acapInput = acapWrapper?.querySelector('input[type="checkbox"]');
+  const instSingleSelect = instWrapper?.closest('.filter-category')?.querySelector('.filter-single-select');
+  const acapSingleSelect = acapWrapper?.closest('.filter-category')?.querySelector('.filter-single-select');
+  if (instSingleSelect) instSingleSelect.style.paddingRight = instInput?.checked ? '11px' : '';
+  if (acapSingleSelect) acapSingleSelect.style.paddingRight = acapInput?.checked ? '11px' : '';
 }
 
 // START OF INIT BPM FILTER
