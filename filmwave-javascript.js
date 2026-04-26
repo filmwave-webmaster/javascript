@@ -3568,6 +3568,17 @@ function applyTheme(theme) {
     
     // Update music player and searchbar for theme
     positionMasterPlayer(theme);
+
+    // Show/hide player background based on theme
+    const playerScope = document.querySelector('.master-player-wrapper') || document.querySelector('.music-player-wrapper');
+    if (playerScope) {
+      const bgContainer = playerScope.querySelector('.player-bg-container');
+      if (theme === 'dark') {
+        if (bgContainer) bgContainer.style.display = '';
+      } else {
+        if (bgContainer) bgContainer.style.display = 'none';
+      }
+    }
   }
   
   // Check if user is logged in before applying theme
