@@ -6409,14 +6409,18 @@ document.addEventListener('change', function(e) {
 });
 
 // Initial dot update
-// Set title tooltips on sidebar project links
+setTimeout(updateFilterDots, 500);
+}
+
+// Set title tooltips on sidebar project links only when text is truncated
 setTimeout(() => {
   document.querySelectorAll('.db-sidebar-projects-link').forEach(el => {
-    el.title = el.textContent.trim();
-    el.parentElement.title = el.textContent.trim();
+    if (el.scrollWidth > el.offsetWidth) {
+      el.title = el.textContent.trim();
+      el.parentElement.title = el.textContent.trim();
+    }
   });
 }, 1000);
-}
 
 // Call this function after your other filter initializations
 // Add this line in your initMusicPage() function after initKeyFilterSystem();
