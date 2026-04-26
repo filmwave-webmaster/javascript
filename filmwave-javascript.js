@@ -262,12 +262,6 @@ async function initDashboardWelcome() {
   } catch (error) {
     console.error('❌ Error:', error);
   }
-
-  // Set title attribute on project links so full name shows on hover
-  document.querySelectorAll('.db-sidebar-projects-link').forEach(el => {
-  el.title = el.textContent.trim();
-  el.parentElement.title = el.textContent.trim();
-});
 }
 
 /**
@@ -6415,7 +6409,13 @@ document.addEventListener('change', function(e) {
 });
 
 // Initial dot update
-setTimeout(updateFilterDots, 500);
+// Set title tooltips on sidebar project links
+setTimeout(() => {
+  document.querySelectorAll('.db-sidebar-projects-link').forEach(el => {
+    el.title = el.textContent.trim();
+    el.parentElement.title = el.textContent.trim();
+  });
+}, 1000);
 }
 
 // Call this function after your other filter initializations
