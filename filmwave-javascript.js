@@ -265,8 +265,9 @@ async function initDashboardWelcome() {
 
   // Set title attribute on project links so full name shows on hover
   document.querySelectorAll('.db-sidebar-projects-link').forEach(el => {
-    el.title = el.textContent.trim();
-  });
+  el.title = el.textContent.trim();
+  el.parentElement.title = el.textContent.trim();
+});
 }
 
 /**
