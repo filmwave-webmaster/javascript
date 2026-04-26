@@ -6404,7 +6404,7 @@ window.restoreBPMState = restoreBPMState;
 // Update filter dots when any filter changes
 document.addEventListener('change', function(e) {
   if (e.target.matches('[data-filter-group]')) {
-    setTimeout(updateFilterDots, 50);
+    updateFilterDots();
   }
 });
 
