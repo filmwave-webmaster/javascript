@@ -3889,13 +3889,9 @@ function updateSingleSelectPadding() {
       const acapFilterCategory = acapWrapper?.closest('.filter-category');
       const instFilterSingleSelect = instFilterCategory?.querySelector('.filter-single-select');
       const acapFilterSingleSelect = acapFilterCategory?.querySelector('.filter-single-select');
-      const instDot = instFilterCategory?.parentElement?.querySelector('.filter-dot-active');
-      const acapDot = acapFilterCategory?.parentElement?.querySelector('.filter-dot-active');
 
       if (instFilterSingleSelect) instFilterSingleSelect.style.paddingRight = instInput.checked ? '11px' : '';
       if (acapFilterSingleSelect) acapFilterSingleSelect.style.paddingRight = acapInput.checked ? '11px' : '';
-      if (instDot) instInput.checked ? showFilterDot(instDot) : hideFilterDot(instDot);
-      if (acapDot) acapInput?.checked ? showFilterDot(acapDot) : hideFilterDot(acapDot);
     }
     window._updateSingleSelectPadding = updateSingleSelectPadding;
     
@@ -5885,9 +5881,6 @@ document.querySelectorAll('[data-filter-type]').forEach(section => {
     }
  });
 
-  if (typeof window._updateSingleSelectPadding === 'function') {
-    window._updateSingleSelectPadding();
-  }
 }
 
 // START OF INIT BPM FILTER
