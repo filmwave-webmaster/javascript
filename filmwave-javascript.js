@@ -1063,8 +1063,9 @@ function updateMasterPlayerInfo(song, wavesurfer) {
     masterCoverArt.src = fields['Cover Art'][0].url;
   }
   
-  // START of Music Player Wrapper Backgorund
-  if (fields['Cover Art']) {
+ // START of Music Player Wrapper Backgorund
+  const isDarkMode = localStorage.getItem('filmwaveTheme') === 'dark';
+  if (isDarkMode && fields['Cover Art']) {
     const coverUrl = fields['Cover Art'][0].url;
     let bgContainer = playerScope.querySelector('.player-bg-container');
     
@@ -1131,10 +1132,13 @@ function updateMasterPlayerInfo(song, wavesurfer) {
     });
     
     playerScope._bgActiveLayer = nextLayer;
+  } else if (!isDarkMode) {
+    // Hide background container in light mode
+    const bgContainer = playerScope.querySelector('.player-bg-container');
+    if (bgContainer) bgContainer.style.display = 'none';
   }
   
   if (masterKey) masterKey.textContent = fields['Key'] || '-';
-
 // END of Music Player Wrapper Backgorund
   
   if (masterBpm) masterBpm.textContent = fields['BPM'] ? fields['BPM'] + ' BPM' : '-';
