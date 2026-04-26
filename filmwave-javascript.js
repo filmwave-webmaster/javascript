@@ -7373,7 +7373,7 @@ function initUniversalSearch() {
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0);
-    z-index: 9998;
+    z-index: 9900;
     pointer-events: auto;
     transition: background-color 0.25s ease;
     cursor: default;
