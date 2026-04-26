@@ -3574,7 +3574,16 @@ function applyTheme(theme) {
     if (playerScope) {
       const bgContainer = playerScope.querySelector('.player-bg-container');
       if (theme === 'dark') {
-        if (bgContainer) bgContainer.style.display = '';
+        const coverUrl = g?.currentSongData?.fields?.['Cover Art']?.[0]?.url;
+        if (coverUrl) {
+          if (bgContainer) {
+            bgContainer.style.display = '';
+            const layers = bgContainer.querySelectorAll('.player-bg-image');
+            const activeLayer = playerScope._bgActiveLayer || 0;
+            layers[activeLayer].style.backgroundImage = `url("${coverUrl}")`;
+            layers[activeLayer].style.opacity = '0.15';
+          }
+        }
       } else {
         if (bgContainer) bgContainer.style.display = 'none';
       }
