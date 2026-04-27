@@ -13645,24 +13645,20 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Make filter fixed so it doesn't depend on scroll position
-        filterWrapper.style.position = 'fixed';
-        filterWrapper.style.top = 'var(--navbar--height, 60px)';
-        filterWrapper.style.left = '0';
-        filterWrapper.style.right = '0';
-        filterWrapper.style.zIndex = '999';
-        
-       // Hide content instantly
+        // Hide content instantly
         contentToSlide.forEach(el => {
           el.style.transition = 'none';
           el.style.opacity = '0';
         });
-        
-        // Set up filter slide-in at the same time
+
+        // Scroll to top before animation so fixed panel is correctly positioned
+        window.scrollTo(0, 0);
+
+        // Set up filter slide-in (position is fixed via CSS)
         filterWrapper.style.display = 'flex';
         filterWrapper.style.transform = 'translateX(100%)';
         filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
-        
+
         // Restore accordion states if saved
         if (g.filterAccordionStates) {
           filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
@@ -13673,30 +13669,21 @@ function initMobileFilterToggle(container = document) {
             }
           });
         }
-        
+
         // Always start at top of filter wrapper
         filterWrapper.scrollTop = 0;
-        
-        // Trigger both animations on next frame
+
+        // Trigger slide-in animation
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             filterWrapper.style.transform = 'translateX(0)';
           });
         });
-        
-        // After animations complete: adjust scroll, hide content, restore accordion scroll
+
+        // After animation: enable scroll limit and restore accordion scroll positions
         setTimeout(() => {
-          window.scrollTo(0, 0);
           enableScrollLimit();
-          
-          // Reset filter to normal positioning now that we're at top
-          filterWrapper.style.position = '';
-          filterWrapper.style.top = '';
-          filterWrapper.style.left = '';
-          filterWrapper.style.right = '';
-          filterWrapper.style.zIndex = '';
-          
-          // Restore accordion scroll positions
+
           if (g.filterAccordionStates) {
             filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
               const state = g.filterAccordionStates[index];
@@ -13706,7 +13693,7 @@ function initMobileFilterToggle(container = document) {
             });
           }
         }, 350);
-        
+
         g.mobileFilterOpen = true;
       }
     });
