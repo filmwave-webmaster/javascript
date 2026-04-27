@@ -13674,9 +13674,9 @@ function initMobileFilterToggle(container = document) {
           });
         });
 
-        // After animation: enable scroll limit and restore accordion scroll positions
+        // After animation: lock body scroll and restore accordion scroll positions
         setTimeout(() => {
-          enableScrollLimit();
+          document.body.style.overflow = 'hidden';
 
           if (g.filterAccordionStates) {
             filterWrapper.querySelectorAll('.filter-list').forEach((list, index) => {
@@ -13713,7 +13713,7 @@ function initMobileFilterToggle(container = document) {
       });
       
       // Restore scroll position while content is hidden
-      disableScrollLimit();
+      document.body.style.overflow = '';
       if (typeof g.savedScrollPosition === 'number') {
         window.scrollTo(0, g.savedScrollPosition);
       }
