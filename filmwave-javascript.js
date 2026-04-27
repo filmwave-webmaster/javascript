@@ -13737,8 +13737,12 @@ function initMobileFilterToggle(container = document) {
         filterWrapper.querySelectorAll('.filter-list').forEach(list => {
           list.scrollTop = 0;
           list.classList.remove('open');
-          list.style.maxHeight = '';
+          list.style.maxHeight = '0px';
         });
+        filterWrapper.querySelectorAll('.arrow-icon').forEach(arr => {
+          arr.style.transform = 'rotate(0deg)';
+        });
+        
         filterWrapper.scrollTop = 0;
         
         // Clean up content transitions
