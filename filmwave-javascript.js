@@ -13647,8 +13647,6 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Scroll to top before animation so fixed panel is correctly positioned
-        window.scrollTo(0, 0);
 
         // Set up filter slide-in (position is fixed via CSS)
         filterWrapper.style.display = 'flex';
