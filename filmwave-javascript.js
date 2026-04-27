@@ -3705,8 +3705,10 @@ function initFilterAccordions() {
     });
   });
   
-// Close accordions when clicking outside
+// Close accordions when clicking outside (disabled on mobile)
   document.addEventListener('click', function(e) {
+    if (window.innerWidth < 768) return;
+
     const clickedInsideAccordion = e.target.closest('.filter-category, .filter-header, .filter-list');
     const hasOpenAccordion = document.querySelector('.filter-list.open');
     
