@@ -13645,12 +13645,6 @@ function initMobileFilterToggle(container = document) {
         Array.from(musicAreaContainer.children).filter(el => !el.classList.contains('filter-wrapper')) : [];
       
       if (window.innerWidth < 768) {
-        // Hide content instantly
-        contentToSlide.forEach(el => {
-          el.style.transition = 'none';
-          el.style.opacity = '0';
-        });
-
         // Scroll to top before animation so fixed panel is correctly positioned
         window.scrollTo(0, 0);
 
@@ -13728,13 +13722,8 @@ function initMobileFilterToggle(container = document) {
       filterWrapper.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
       filterWrapper.style.transform = 'translateX(100%)';
       
-      // Show content instantly
-      contentToSlide.forEach(el => {
-        el.style.transition = 'none';
-        el.style.transform = '';
-        el.style.opacity = '1';
-      });
-      
+      // (content always visible, no need to restore opacity)
+     
       // Clean up after animation completes
       setTimeout(() => {
         filterWrapper.style.display = 'none';
