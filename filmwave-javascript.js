@@ -5990,16 +5990,50 @@ function initBPMFilter() {
 
   const wrapper = handle.closest('.slider-range-wrapper, .slider-exact-wrapper');
   const track = wrapper?.querySelector('.slider-track');
-  const parent = handle.offsetParent || wrapper;
 
-  if (!wrapper || !track || !parent) return;
-  if (getComputedStyle(wrapper).display === 'none') return; // don’t measure hidden
+  if (!wrapper || !track) return;
+
+  // Temporarily force any collapsed ancestors open so we can measure real dimensions
+  const clipped = [];
+  let el = wrapper.parentElement;
+  while (el) {
+    const cs = getComputedStyle(el);
+    if (cs.maxHeight === '0px' || cs.overflow === 'hidden') {
+      clipped.push({ el, maxHeight: el.style.maxHeight, overflow: el.style.overflow, visibility: el.style.visibility });
+      el.style.maxHeight = '9999px';
+      el.style.overflow = 'visible';
+      el.style.visibility = 'hidden'; // expand but don't flash
+    }
+    el = el.parentElement;
+  }
+
+  // Also temporarily show the slider wrapper if it's display:none
+  const wrapperDisplay = wrapper.style.display;
+  const wrapperWasHidden = getComputedStyle(wrapper).display === 'none';
+  if (wrapperWasHidden) {
+    wrapper.style.visibility = 'hidden';
+    wrapper.style.display = 'block';
+  }
 
   const trackRect = track.getBoundingClientRect();
+  const parent = handle.offsetParent || wrapper;
   const parentRect = parent.getBoundingClientRect();
 
   const trackLeft = trackRect.left - parentRect.left;
   const trackWidth = trackRect.width;
+
+  // Restore everything
+  if (wrapperWasHidden) {
+    wrapper.style.display = wrapperDisplay;
+    wrapper.style.visibility = '';
+  }
+  clipped.forEach(({ el, maxHeight, overflow, visibility }) => {
+    el.style.maxHeight = maxHeight;
+    el.style.overflow = overflow;
+    el.style.visibility = visibility;
+  });
+
+  if (!trackWidth) return; // still can't measure, bail
 
   const handleWidth = handle.offsetWidth || 10;
   const minLeft = trackLeft + handleWidth / 2;
