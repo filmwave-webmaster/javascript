@@ -9458,10 +9458,10 @@ if (!filterState.filters.length && !filterState.searchQuery) {
     }
     
     // Also restore playlist filter tag if it exists
-    const savedPlaylist = localStorage.getItem('playlistFilter');
-    if (savedPlaylist && tagsContainer) {
+    const savedPlaylistForTag = localStorage.getItem('playlistFilter');
+    if (savedPlaylistForTag && tagsContainer) {
       try {
-        const playlistData = JSON.parse(savedPlaylist);
+        const playlistData = JSON.parse(savedPlaylistForTag);
         if (playlistData && playlistData.id && playlistData.name) {
           // Check if playlist tag already exists
           if (!document.querySelector('[data-playlist-filter-tag]')) {
