@@ -5651,52 +5651,17 @@ function restoreBPMState() {
     if (!exactToggle || !rangeToggle) return;
     
     // Helper: Update handle position
-    function updateHandlePosition(handle, bpm, retryCount = 0) {
+    function updateHandlePosition(handle, bpm) {
   if (!handle) return;
 
   const value = Math.max(MIN_BPM, Math.min(MAX_BPM, Number(bpm)));
   const ratio = (value - MIN_BPM) / BPM_RANGE;
 
-  const wrapper = handle.closest('.slider-range-wrapper, .slider-exact-wrapper');
-  const track = wrapper?.querySelector('.slider-track');
-  const parent = handle.offsetParent || wrapper;
-
-  if (!wrapper || !track || !parent) return;
-
-  // Temporarily make wrapper visible for measurement if hidden
-  const wrapperDisplay = getComputedStyle(wrapper).display;
-  const wasHidden = wrapperDisplay === 'none';
-  if (wasHidden) {
-    wrapper.style.visibility = 'hidden';
-    wrapper.style.display = 'block';
-  }
-
-  const trackRect = track.getBoundingClientRect();
-  const parentRect = parent.getBoundingClientRect();
-
-  const trackLeft = trackRect.left - parentRect.left;
-  const trackWidth = trackRect.width || track.offsetWidth;
-
-  if (wasHidden) {
-    wrapper.style.display = '';
-    wrapper.style.visibility = '';
-  }
-
-  // If still no width, retry up to 5 times with increasing delay
-  if (!trackWidth && retryCount < 5) {
-    setTimeout(() => updateHandlePosition(handle, bpm, retryCount + 1), 50 * (retryCount + 1));
-    return;
-  }
-
-  const handleWidth = handle.offsetWidth || 10;
-  const minLeft = trackLeft + handleWidth / 2;
-  const maxLeft = trackLeft + trackWidth - handleWidth / 2;
-
-  const rawLeft = trackLeft + ratio * trackWidth;
-  const clampedLeft = Math.max(minLeft, Math.min(maxLeft, rawLeft));
+  // Use known fixed track width — avoids all measurement/timing/visibility issues
+  const left = ratio * SLIDER_WIDTH;
 
   handle.style.position = 'absolute';
-  handle.style.left = `${clampedLeft}px`;
+  handle.style.left = `${left}px`;
   handle.style.top = '50%';
   handle.style.transform = 'translate(-50%, -50%)';
 }
