@@ -5651,7 +5651,7 @@ function restoreBPMState() {
     if (!exactToggle || !rangeToggle) return;
     
     // Helper: Update handle position
-    function updateHandlePosition(handle, bpm) {
+    function updateHandlePosition(handle, bpm, retryCount = 0) {
   if (!handle) return;
 
   const value = Math.max(MIN_BPM, Math.min(MAX_BPM, Number(bpm)));
@@ -5662,13 +5662,31 @@ function restoreBPMState() {
   const parent = handle.offsetParent || wrapper;
 
   if (!wrapper || !track || !parent) return;
-  if (getComputedStyle(wrapper).display === 'none') return; // don’t measure hidden
+
+  // Temporarily make wrapper visible for measurement if hidden
+  const wrapperDisplay = getComputedStyle(wrapper).display;
+  const wasHidden = wrapperDisplay === 'none';
+  if (wasHidden) {
+    wrapper.style.visibility = 'hidden';
+    wrapper.style.display = 'block';
+  }
 
   const trackRect = track.getBoundingClientRect();
   const parentRect = parent.getBoundingClientRect();
 
   const trackLeft = trackRect.left - parentRect.left;
-  const trackWidth = trackRect.width;
+  const trackWidth = trackRect.width || track.offsetWidth;
+
+  if (wasHidden) {
+    wrapper.style.display = '';
+    wrapper.style.visibility = '';
+  }
+
+  // If still no width, retry up to 5 times with increasing delay
+  if (!trackWidth && retryCount < 5) {
+    setTimeout(() => updateHandlePosition(handle, bpm, retryCount + 1), 50 * (retryCount + 1));
+    return;
+  }
 
   const handleWidth = handle.offsetWidth || 10;
   const minLeft = trackLeft + handleWidth / 2;
