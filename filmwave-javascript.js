@@ -1791,6 +1791,27 @@ function populateSongCard(cardElement, song) {
   const coverArt = cardElement.querySelector('.cover-art');
   if (coverArt && fields['Cover Art']) {
     coverArt.src = fields['Cover Art'][0].url;
+    coverArt.onerror = async function() {
+      if (this._retrying) return;
+      this._retrying = true;
+      try {
+        const recordId = cardElement.getAttribute('data-airtable-id');
+        if (!recordId) return;
+        const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}/${recordId}`, {
+          headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const freshUrl = data.fields?.['Cover Art']?.[0]?.url;
+        if (freshUrl) {
+          this.src = freshUrl;
+          // Update MASTER_DATA cache so future renders use the fresh URL
+          const g = window.musicPlayerPersistent;
+          const cached = g.MASTER_DATA.find(s => s.id === recordId);
+          if (cached) cached.fields['Cover Art'][0].url = freshUrl;
+        }
+      } catch(e) {}
+    };
   }
   const songName = cardElement.querySelector('.song-name');
   if (songName) songName.textContent = fields['Song Title'] || 'Untitled';
