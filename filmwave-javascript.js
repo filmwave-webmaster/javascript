@@ -5768,14 +5768,14 @@ setTimeout(() => {
     const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
     if (existingTag) existingTag.remove();
     
-    // Get current values
+    // Get current values directly from saved state — avoids timing issues with input values
     let tagText = '';
     if (mode === 'exact') {
-      const exact = exactInput?.value;
+      const exact = bpmState.exact;
       if (exact) tagText = `${exact} BPM`;
     } else {
-      const low = lowInput?.value;
-      const high = highInput?.value;
+      const low = bpmState.low;
+      const high = bpmState.high;
       if (low && high) tagText = `${low}-${high} BPM`;
       else if (low) tagText = `${low}+ BPM`;
       else if (high) tagText = `≤${high} BPM`;
