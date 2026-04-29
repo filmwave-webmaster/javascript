@@ -5861,11 +5861,17 @@ document.querySelectorAll('[data-filter-type]').forEach(section => {
     
     // Check based on filter type
     if (filterType === 'bpm') {
-      // Check if BPM has values
-      const lowInput = document.querySelector('.bpm-input-field-low');
-      const highInput = document.querySelector('.bpm-input-field-high');
-      const exactInput = document.querySelector('.bpm-input-field');
-      isActive = !!(lowInput?.value || highInput?.value || exactInput?.value);
+      // Check localStorage directly — inputs may not be populated yet at call time
+      try {
+        const saved = localStorage.getItem('musicFilters');
+        const bpm = saved ? JSON.parse(saved)?.bpm : null;
+        isActive = !!(bpm?.low || bpm?.high || bpm?.exact);
+      } catch(e) {
+        const lowInput = document.querySelector('.bpm-input-field-low');
+        const highInput = document.querySelector('.bpm-input-field-high');
+        const exactInput = document.querySelector('.bpm-input-field');
+        isActive = !!(lowInput?.value || highInput?.value || exactInput?.value);
+      }
       
     } else if (filterType === 'key') {
       // Check if any key filter is checked
