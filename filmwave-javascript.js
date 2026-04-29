@@ -7901,7 +7901,7 @@ barba.hooks.afterEnter((data) => {
       
       // Initialize music page filter pills after Barba transition
       if (typeof initMusicPageFilterPills === 'function') {
-        setTimeout(initMusicPageFilterPills, 300);
+        initMusicPageFilterPills();
       }
     }
     
@@ -7941,9 +7941,7 @@ window.addEventListener('load', () => {
   
   // Initialize music page filter pills
   if (window.location.pathname === '/music' || window.location.pathname === '/music/') {
-    setTimeout(() => {
-      if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
-    }, 300);
+    if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
   }
   
   // Initialize Memberstack handlers on initial page load
