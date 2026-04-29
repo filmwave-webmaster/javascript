@@ -5452,8 +5452,17 @@ checkbox.addEventListener('change', () => {
     g.playlistFilterPopulated = false;
   }
   
-  const isLoggedIn = await initVisibility();
+  // Skip async Memberstack check if PlaylistManager already has a userId (Barba transition)
+  const isLoggedIn = PlaylistManager.currentUserId 
+    ? true 
+    : await initVisibility();
   if (!isLoggedIn) return;
+
+  // Show section immediately if we know user is logged in
+  if (PlaylistManager.currentUserId) {
+    playlistSection.style.display = '';
+    playlistSection.style.opacity = '1';
+  }
     
     updateActivePlaylistDisplay();
     await populatePlaylistFilter();
