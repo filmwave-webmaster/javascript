@@ -5708,8 +5708,8 @@ requestAnimationFrame(() => {
     
     console.log('✅ BPM state restored:', bpmState);
     
-// Apply filter after a short delay to ensure songs are loaded
-setTimeout(() => {
+// Apply filter immediately — songs are already loaded by the time restoreBPMState is called
+(() => {
   let minBPM = null;
   let maxBPM = null;
   
@@ -5806,7 +5806,7 @@ setTimeout(() => {
       clearButton.style.display = hasAnyFilters ? 'flex' : 'none';
     }
   }
-}, 200);
+})();
     
   } catch (e) {
     console.error('Error restoring BPM state:', e);
