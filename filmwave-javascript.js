@@ -9706,7 +9706,7 @@ if (filterState.keyState) {
     musicList.style.transition = 'opacity 0.3s ease-in-out';
   }
   console.log('✨ Songs faded in');
-}, 800); // Increased from 150 to 800 to wait for filtering
+}, 100);
 
 // Restore BPM filter state
 if (filterState.bpm && typeof restoreBPMState === 'function') {
