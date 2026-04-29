@@ -3775,6 +3775,8 @@ function initDynamicTagging() {
       const tag = document.createElement('div');
       tag.className = 'filter-tag';
       if (radioName) tag.dataset.radioName = radioName;
+      tag.dataset.filterGroup = input.getAttribute('data-filter-group') || '';
+      tag.dataset.filterValue = input.value || labelText;
       
       tag.innerHTML = `
         <span class="filter-tag-text">${labelText}</span>
@@ -3827,13 +3829,17 @@ function initDynamicTagging() {
           }
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
+          const filterGroup = this.getAttribute('data-filter-group') || '';
+          const filterValue = this.value || labelText;
           const tags = tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])');
-tags.forEach(tag => {
-  const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
-  if (tagText === labelText) {
-    tag.remove();
-  }
-});
+          tags.forEach(tag => {
+            const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
+            const tagGroup = tag.dataset.filterGroup || '';
+            const tagValue = tag.dataset.filterValue || '';
+            if (tagText === labelText && tagGroup === filterGroup && tagValue === filterValue) {
+              tag.remove();
+            }
+          });
 
           // Sync db-filter-pill if matching
           const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
@@ -9599,8 +9605,9 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
             const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
             const isPlaylistTag = tag.hasAttribute('data-playlist-filter-tag');
-            // Create unique key combining text and type to allow same name for playlist vs generic
-            const key = `${text}|${isPlaylistTag ? 'playlist' : 'generic'}`;
+            const group = tag.dataset.filterGroup || '';
+            const value = tag.dataset.filterValue || '';
+            const key = `${text}|${isPlaylistTag ? 'playlist' : 'generic'}|${group}|${value}`;
             if (key) {
               if (seen.has(key)) {
                 tagsToRemove.push(tag);
