@@ -9168,6 +9168,18 @@ function initMusicPageFilterPills() {
     });
   });
   
+// Sync pill active state with currently restored filters
+  document.querySelectorAll('.db-filter-pill').forEach(pill => {
+    const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
+    const isActive = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).some(tag =>
+      tag.querySelector('.filter-tag-text')?.textContent?.trim() === filterValue
+    );
+    if (isActive) {
+      pill.classList.add('is-active');
+      pill.style.color = 'var(--color-2)';
+    }
+  });
+
   console.log('✅ Music page filter pills initialized');
 }
 
