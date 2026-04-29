@@ -568,6 +568,8 @@ async function initMusicPage() {
     displaySongs(songs);
     initShuffleSongs();
     initMasterPlayer();
+    // Attempt filter restore immediately after songs are rendered
+    if (typeof attemptRestore === 'function') attemptRestore();
     
     setTimeout(() => {
       positionMasterPlayer();
@@ -10081,20 +10083,14 @@ if (typeof barba !== 'undefined') {
       }
     }, 2000);
     
-    setTimeout(() => {
-      console.log('Attempting restore at 100ms');
-      if (!attemptRestore()) {
-        setTimeout(() => {
-          console.log('Attempting restore at 200ms');
-          if (!attemptRestore()) {
-            setTimeout(() => {
-              console.log('Attempting restore at 400ms');
-              attemptRestore();
-            }, 200);
-          }
-        }, 100);
-      }
-    }, 100);
+    // Fallback restore in case initMusicPage restore didn't fire (non-music pages, edge cases)
+    if (!attemptRestore()) {
+      setTimeout(() => {
+        if (!attemptRestore()) {
+          setTimeout(attemptRestore, 200);
+        }
+      }, 100);
+    }
   });
 }
 
