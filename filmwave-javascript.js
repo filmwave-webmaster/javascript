@@ -6454,7 +6454,7 @@ document.addEventListener('change', function(e) {
 });
 
 // Initial dot update
-setTimeout(updateFilterDots, 500);
+updateFilterDots();
 }
 
 // Set title tooltips on sidebar project links only when text is truncated
