@@ -5705,6 +5705,8 @@ requestAnimationFrame(() => {
       highInput.value = bpmState.high;
       updateHandlePosition(sliderHandleHigh, parseInt(bpmState.high, 10));
     }
+
+    if (typeof updateFilterDots === 'function') updateFilterDots();
   });
 });
     
