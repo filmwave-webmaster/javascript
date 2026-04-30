@@ -3787,7 +3787,11 @@ function initFilterItemBackground() {
 function initDynamicTagging() {
   setTimeout(function() {
     const tagsContainer = document.querySelector('.filter-tags-container');
-    if (!tagsContainer) return;
+    if (!tagsContainer) {
+      // Retry if container not ready yet
+      setTimeout(initDynamicTagging, 100);
+      return;
+    }
     
     const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
     const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
@@ -3940,7 +3944,7 @@ function initDynamicTagging() {
         }, 50);
       });
     });
-  }, 1000);
+  }, 0);
 }
 
 function initMutualExclusion() {
