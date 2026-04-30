@@ -10021,6 +10021,10 @@ function doRestore() {
 const sharpButton = buttons[0];
 const flatButton = buttons[1];
 
+// Pre-set majMin state before clicking sharp/flat so showSharpFlat renders correctly
+if (typeof sharpMajMin !== 'undefined') sharpMajMin = keyState.sharpMajMin || null;
+if (typeof flatMajMin !== 'undefined') flatMajMin = keyState.flatMajMin || null;
+
 // Restore Sharp/Flat selection
 if (keyState.sharpFlat === 'flat' && flatButton) {
   flatButton.click();
