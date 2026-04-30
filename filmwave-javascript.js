@@ -3840,13 +3840,16 @@ function initDynamicTagging() {
           const tag = createTag(this, labelText);
           tagsContainer.insertBefore(tag, tagsContainer.firstChild);
           
-          // Sync db-filter-pill if matching
-          const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
-            pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
-          );
-          if (matchingPill) {
-            matchingPill.classList.add('is-active');
-            matchingPill.style.color = 'var(--color-2)';
+          // Sync db-filter-pill only for Genre filters
+          const filterGroupForPill = this.getAttribute('data-filter-group') || '';
+          if (filterGroupForPill.toLowerCase() === 'genre') {
+            const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
+              pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
+            );
+            if (matchingPill) {
+              matchingPill.classList.add('is-active');
+              matchingPill.style.color = 'var(--color-2)';
+            }
           }
         } else {
           if (wrapper) wrapper.classList.remove('is-active');
@@ -3862,13 +3865,15 @@ function initDynamicTagging() {
             }
           });
 
-          // Sync db-filter-pill if matching
-          const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
-            pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
-          );
-          if (matchingPill) {
-            matchingPill.classList.remove('is-active');
-            matchingPill.style.color = '';
+          // Sync db-filter-pill only for Genre filters
+          if (filterGroup.toLowerCase() === 'genre') {
+            const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill => 
+              pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
+            );
+            if (matchingPill) {
+              matchingPill.classList.remove('is-active');
+              matchingPill.style.color = '';
+            }
           }
         }
       });
