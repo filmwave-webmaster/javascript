@@ -6491,6 +6491,7 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
   
   updateBPMTag();
   updateFilterDots();
+  if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
   
   // Update clear all button visibility
   const mainClearButton = document.querySelector('.circle-x');
