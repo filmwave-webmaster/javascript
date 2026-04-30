@@ -6062,8 +6062,9 @@ requestAnimationFrame(() => {
     }
   });
     
-    console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
-  }
+   console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+  if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
+}
   
   // Update tag - need to access the function from initBPMFilter scope
   const tagsContainer = document.querySelector('.filter-tags-container');
