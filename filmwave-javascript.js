@@ -6146,17 +6146,17 @@ function updateMusicTileSectionVisibility() {
   const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
   const isShuffled = g.isShuffled;
   const hasBPM = (() => {
-    try {
-      const saved = localStorage.getItem('musicFilters');
-      const bpm = saved ? JSON.parse(saved)?.bpm : null;
-      if (!bpm) return false;
-      if (bpm.exact) return true;
-      const low = parseInt(bpm.low);
-      const high = parseInt(bpm.high);
-      // Neutral range (1-300) = no active filter
-      const isNeutral = (isNaN(low) || low <= 1) && (isNaN(high) || high >= 300);
-      return !isNeutral && !!(bpm.low || bpm.high);
-    } catch(e) { return false; }
+    // Check live input values directly — avoids localStorage timing issues
+    const exactInput = document.querySelector('.bpm-input-field');
+    const lowInput = document.querySelector('.bpm-input-field-low');
+    const highInput = document.querySelector('.bpm-input-field-high');
+    const exact = parseInt(exactInput?.value);
+    const low = parseInt(lowInput?.value);
+    const high = parseInt(highInput?.value);
+    if (!isNaN(exact) && exact > 0) return true;
+    // Neutral range is low=1, high=300 — not an active filter
+    const isNeutral = (isNaN(low) || low <= 1) && (isNaN(high) || high >= 300);
+    return !isNeutral && (!isNaN(low) || !isNaN(high));
   })();
   
   if (hasSearch || hasFilters || hasPlaylistFilter || isShuffled || hasBPM) {
