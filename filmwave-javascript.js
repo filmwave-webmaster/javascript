@@ -4880,6 +4880,10 @@ allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 
 console.log('✅ Key Filter System initialized');
 window.keyFilterSystemReady = true;
+window.setKeyMajMinState = function(sharpMaj, flatMaj) {
+  sharpMajMin = sharpMaj || null;
+  flatMajMin = flatMaj || null;
+};
 // Clear button handling for Key filter - attach to document to catch all clears
 document.addEventListener('click', (e) => {
   if (e.target.matches('.circle-x, .circle-x *')) {
@@ -10024,6 +10028,11 @@ const flatButton = buttons[1];
 // Pre-set majMin state before clicking sharp/flat so showSharpFlat renders correctly
 if (typeof sharpMajMin !== 'undefined') sharpMajMin = keyState.sharpMajMin || null;
 if (typeof flatMajMin !== 'undefined') flatMajMin = keyState.flatMajMin || null;
+
+// Pre-set majMin state before clicking sharp/flat so showSharpFlat renders correctly
+if (typeof window.setKeyMajMinState === 'function') {
+  window.setKeyMajMinState(keyState.sharpMajMin, keyState.flatMajMin);
+}
 
 // Restore Sharp/Flat selection
 if (keyState.sharpFlat === 'flat' && flatButton) {
