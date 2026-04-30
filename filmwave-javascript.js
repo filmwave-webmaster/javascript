@@ -9833,6 +9833,29 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       }
     }
     
+   // Re-add BPM tag if BPM filter is active (was wiped by innerHTML = '')
+    if (filterState.bpm) {
+      const bpm = filterState.bpm;
+      let bpmTagText = '';
+      if (bpm.mode === 'exact') {
+        if (bpm.exact) bpmTagText = `${bpm.exact} BPM`;
+      } else {
+        if (bpm.low && bpm.high) bpmTagText = `${bpm.low}-${bpm.high} BPM`;
+        else if (bpm.low) bpmTagText = `${bpm.low}+ BPM`;
+        else if (bpm.high) bpmTagText = `≤${bpm.high} BPM`;
+      }
+      if (bpmTagText && !tagsContainer.querySelector('[data-bpm-tag]')) {
+        const bpmTag = document.createElement('div');
+        bpmTag.className = 'filter-tag filter-tag-playlist';
+        bpmTag.setAttribute('data-bpm-tag', 'true');
+        bpmTag.innerHTML = `<span class="filter-tag-text">${bpmTagText}</span><span class="filter-tag-remove x-button-style">×</span>`;
+        bpmTag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+          document.querySelector('.bpm-clear')?.click();
+        });
+        tagsContainer.appendChild(bpmTag);
+      }
+    }
+
    // Don't dispatch change events - we already created the tags manually
     // Dispatching would cause Webflow to create duplicate tags
     console.log('⏭️ Skipping change events to prevent duplicate tags');
