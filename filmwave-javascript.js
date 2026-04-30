@@ -9665,6 +9665,17 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       musicList.style.pointerEvents = 'auto';
     }
   }
+  // Show tags container and clear button (hidden in beforeEnter)
+  const tagsContainer = document.querySelector('.filter-tags-container');
+  const clearButton = document.querySelector('.circle-x');
+  if (tagsContainer) {
+    tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
+    tagsContainer.style.opacity = '1';
+  }
+  if (clearButton) {
+    clearButton.style.transition = 'opacity 0.3s ease-in-out';
+    clearButton.style.opacity = '1';
+  }
   return true;
 }
     
