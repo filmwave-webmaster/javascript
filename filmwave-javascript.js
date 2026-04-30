@@ -6596,6 +6596,7 @@ function applyBPMFilter() {
   });
   
   console.log(`🎵 BPM filter applied: ${minBPM || 'any'} - ${maxBPM || 'any'}`);
+  if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
 }
 
 function updateBPMTag() {
