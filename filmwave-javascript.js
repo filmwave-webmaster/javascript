@@ -6768,36 +6768,30 @@ initializeSliders();
 setupEventListeners();
 setMode('range', false); // Start in range mode
 
-// Re-apply BPM filter whenever any other filter changes
-document.addEventListener('change', function(e) {
-  if (e.target.matches('[data-filter-group]') && !window._keyFilterRestoring) {
-    // Skip during filter restore to avoid clearing BPM tag before inputs are populated
-    if (window._bpmFilterRestoring) return;
+// Re-apply BPM filter whenever any other filter changes (de-duplicated across Barba transitions)
+if (!window._bpmFilterChangeListenerAttached) {
+  window._bpmFilterChangeListenerAttached = true;
+  document.addEventListener('change', function(e) {
+    if (e.target.matches('[data-filter-group]') && !window._keyFilterRestoring) {
+      if (window._bpmFilterRestoring) return;
+      document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
+        song.removeAttribute('data-hidden-by-bpm');
+      });
+      setTimeout(() => {
+        if (typeof applyBPMFilter === 'function') applyBPMFilter();
+        setTimeout(() => { if (typeof updateBPMTag === 'function') updateBPMTag(); }, 100);
+      }, 0);
+    }
+    if (e.target.matches('[data-filter-group]')) {
+      if (typeof updateFilterDots === 'function') updateFilterDots();
+    }
+  });
+}
 
-    // Clear BPM marks first - other filters will hide their songs
-    document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
-      song.removeAttribute('data-hidden-by-bpm');
-    });
-    
-    // Wait for other filters to finish, then re-apply BPM
-    setTimeout(() => {
-      applyBPMFilter();
-      setTimeout(updateBPMTag, 100);
-    }, 0);
-  }
-});
-  
 console.log('✅ BPM Filter System initialized');
-  
+
 // Expose restore function globally
 window.restoreBPMState = restoreBPMState;
-
-// Update filter dots when any filter changes
-document.addEventListener('change', function(e) {
-  if (e.target.matches('[data-filter-group]')) {
-    updateFilterDots();
-  }
-});
 
 // Initial dot update
 updateFilterDots();
