@@ -6623,14 +6623,23 @@ function updateBPMTag() {
   const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
   if (existingTag) existingTag.remove();
   
-  // Get current values
+// Get current values — fall back to localStorage if inputs are empty (timing issues)
   let tagText = '';
+  let low = lowInput?.value;
+  let high = highInput?.value;
+  let exact = exactInput?.value;
+
+  if (!low && !high && !exact) {
+    try {
+      const saved = localStorage.getItem('musicFilters');
+      const bpm = saved ? JSON.parse(saved)?.bpm : null;
+      if (bpm) { low = bpm.low; high = bpm.high; exact = bpm.exact; }
+    } catch(e) {}
+  }
+
   if (currentMode === 'exact') {
-    const exact = exactInput?.value;
     if (exact) tagText = `${exact} BPM`;
   } else {
-    const low = lowInput?.value;
-    const high = highInput?.value;
     if (low && high) tagText = `${low}-${high} BPM`;
     else if (low) tagText = `${low}+ BPM`;
     else if (high) tagText = `≤${high} BPM`;
