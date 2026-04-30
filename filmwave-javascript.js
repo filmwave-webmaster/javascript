@@ -6571,6 +6571,7 @@ function applyBPMFilter() {
       song.removeAttribute('data-hidden-by-bpm');
       song.style.display = '';
     });
+    if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
     return;
   }
   
