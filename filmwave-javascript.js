@@ -6619,11 +6619,7 @@ function updateBPMTag() {
   const tagsContainer = document.querySelector('.filter-tags-container');
   if (!tagsContainer) return;
   
-  // Remove existing BPM tag
-  const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
-  if (existingTag) existingTag.remove();
-  
-// Get current values — fall back to localStorage if inputs are empty (timing issues)
+  // Get current values — fall back to localStorage if inputs are empty (timing issues)
   let tagText = '';
   let low = lowInput?.value;
   let high = highInput?.value;
@@ -6644,6 +6640,11 @@ function updateBPMTag() {
     else if (low) tagText = `${low}+ BPM`;
     else if (high) tagText = `≤${high} BPM`;
   }
+
+  // Only remove existing tag if we have something to replace it with, or BPM is truly cleared
+  const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
+  if (existingTag && !tagText) return; // BPM still active but can't determine text — keep existing tag
+  if (existingTag) existingTag.remove();
   
   // Create tag if we have text
   if (tagText) {
