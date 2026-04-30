@@ -4944,6 +4944,46 @@ document.addEventListener('click', (e) => {
     }, 100);
   }
 });
+
+// Key Clear button
+document.addEventListener('click', (e) => {
+  if (e.target.matches('.key-clear, .key-clear *')) {
+    // Uncheck all Key radios
+    document.querySelectorAll('[data-filter-group="Key"]').forEach(radio => {
+      radio.checked = false;
+    });
+
+    // Remove all is-active states and inline colors from Key section
+    document.querySelectorAll('[data-filter-type="key"] .is-active').forEach(el => {
+      el.classList.remove('is-active');
+      const label = el.querySelector('.filter-text, .w-form-label, .radio-button-label');
+      if (label) label.style.color = '';
+    });
+
+    // Reset state variables
+    sharpMajMin = null;
+    flatMajMin = null;
+
+    // Remove Key-related tags
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (tagsContainer) {
+      Array.from(tagsContainer.querySelectorAll('.filter-tag')).forEach(tag => {
+        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+        if (text && (text.length <= 3 || text === 'Major' || text === 'Minor')) {
+          tag.remove();
+        }
+      });
+    }
+
+    // Update filter dot, clear button, and re-apply filters
+    if (typeof updateFilterDots === 'function') updateFilterDots();
+    if (typeof toggleClearButton === 'function') toggleClearButton();
+    if (typeof saveFilterState === 'function') saveFilterState();
+    document.querySelectorAll('[data-filter-group="Key"]').forEach(r => {
+      r.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+});
 }
   
 function toggleClearButton() {
