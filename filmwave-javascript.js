@@ -5213,6 +5213,15 @@ function initSearchAndFilters() {
           return String(recVal).toLowerCase().endsWith('min');
         }
       }
+
+      // Duration range filter
+      if (filter.group === 'Duration' && filter.value) {
+        const seconds = parseFloat(recVal);
+        if (isNaN(seconds)) return false;
+        if (filter.value === '240+') return seconds >= 240;
+        const [min, max] = filter.value.split('-').map(Number);
+        return seconds >= min && seconds < max;
+      }
       
       if (filter.value) {
         if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
