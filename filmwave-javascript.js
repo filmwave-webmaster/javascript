@@ -5201,7 +5201,10 @@ function initSearchAndFilters() {
              allText.includes(normalized + 's');
     });
     
-    const matchesAttributes = selectedFilters.every(filter => {
+    const durationFilters = selectedFilters.filter(f => f.group === 'Duration');
+    const otherFilters = selectedFilters.filter(f => f.group !== 'Duration');
+
+    const matchesOtherAttributes = otherFilters.every(filter => {
       let recVal = fields[filter.group];
       if (recVal === undefined || recVal === null) return false;
       
@@ -5213,15 +5216,6 @@ function initSearchAndFilters() {
           return String(recVal).toLowerCase().endsWith('min');
         }
       }
-
-      // Duration range filter
-      if (filter.group === 'Duration' && filter.value) {
-        const seconds = parseFloat(recVal);
-        if (isNaN(seconds)) return false;
-        if (filter.value === '240+') return seconds >= 240;
-        const [min, max] = filter.value.split('-').map(Number);
-        return seconds >= min && seconds < max;
-      }
       
       if (filter.value) {
         if (Array.isArray(recVal)) return recVal.some(v => String(v).toLowerCase() === filter.value);
@@ -5230,6 +5224,16 @@ function initSearchAndFilters() {
       
       return false;
     });
+
+    const matchesDuration = durationFilters.length === 0 || durationFilters.some(filter => {
+      const seconds = parseFloat(fields['Duration']);
+      if (isNaN(seconds)) return false;
+      if (filter.value === '240+') return seconds >= 240;
+      const [min, max] = filter.value.split('-').map(Number);
+      return seconds >= min && seconds < max;
+    });
+
+    const matchesAttributes = matchesOtherAttributes && matchesDuration;
 
     return matchesSearch && matchesAttributes;
   }).map(r => r.id);
