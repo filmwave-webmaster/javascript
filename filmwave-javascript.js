@@ -4123,7 +4123,6 @@ function injectKeyFilterCSS() {
     .key-clear {
       position: relative;
       z-index: 10;
-      margin-top: 8px;
     }
     .key-button-wrapper {
       position: relative;
