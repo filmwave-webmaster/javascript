@@ -6454,16 +6454,22 @@ function stopDrag() {
     // Update input from slider and clear if at extremes
     if (lastHandle === sliderHandleLow && lowInput) {
       updateInputFromSlider(lastHandle, lowInput);
-      // Clear if at minimum
       if (lowInput.value === '1') lowInput.value = '';
     } else if (lastHandle === sliderHandleHigh && highInput) {
       updateInputFromSlider(lastHandle, highInput);
-      // Clear if at maximum
       if (highInput.value === '300') highInput.value = '';
     } else if (lastHandle === sliderHandleExact && exactInput) {
       updateInputFromSlider(lastHandle, exactInput);
     }
-    
+
+    // Check if both handles are at neutral — if so clear both inputs before saving
+    const lowVal = parseInt(lowInput?.value);
+    const highVal = parseInt(highInput?.value);
+    if ((isNaN(lowVal) || lowVal <= 1) && (isNaN(highVal) || highVal >= 300)) {
+      if (lowInput) lowInput.value = '';
+      if (highInput) highInput.value = '';
+    }
+
     saveBPMState();
     applyBPMFilter();
     updateBPMTag();
