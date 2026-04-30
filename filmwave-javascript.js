@@ -4563,16 +4563,18 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Remove old Major/Minor tags before toggling
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (tagsContainer) {
-      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-      oldTags.forEach(tag => {
-        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-        if (text === 'Major' || text === 'Minor') {
-          tag.remove();
-        }
-      });
+    // Remove old Major/Minor tags before toggling (skip during restore)
+    if (!window._keyFilterRestoring) {
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      if (tagsContainer) {
+        const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        oldTags.forEach(tag => {
+          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          if (text === 'Major' || text === 'Minor') {
+            tag.remove();
+          }
+        });
+      }
     }
     
     const currentKey = getCurrentlySelectedKey();
@@ -4620,16 +4622,18 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Remove old Major/Minor tags before toggling
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (tagsContainer) {
-      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-      oldTags.forEach(tag => {
-        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-        if (text === 'Major' || text === 'Minor') {
-          tag.remove();
-        }
-      });
+    // Remove old Major/Minor tags before toggling (skip during restore)
+    if (!window._keyFilterRestoring) {
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      if (tagsContainer) {
+        const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        oldTags.forEach(tag => {
+          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          if (text === 'Major' || text === 'Minor') {
+            tag.remove();
+          }
+        });
+      }
     }
     
     const currentKey = getCurrentlySelectedKey();
@@ -4679,16 +4683,18 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Remove old Major/Minor tags before toggling
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (tagsContainer) {
-      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-      oldTags.forEach(tag => {
-        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-        if (text === 'Major' || text === 'Minor') {
-          tag.remove();
-        }
-      });
+    // Remove old Major/Minor tags before toggling (skip during restore)
+    if (!window._keyFilterRestoring) {
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      if (tagsContainer) {
+        const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        oldTags.forEach(tag => {
+          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          if (text === 'Major' || text === 'Minor') {
+            tag.remove();
+          }
+        });
+      }
     }
     
     const currentKey = getCurrentlySelectedKey();
@@ -4736,16 +4742,18 @@ function showSharpFlat(which) {
     e.preventDefault();
     e.stopPropagation();
     
-    // Remove old Major/Minor tags before toggling
-    const tagsContainer = document.querySelector('.filter-tags-container');
-    if (tagsContainer) {
-      const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-      oldTags.forEach(tag => {
-        const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-        if (text === 'Major' || text === 'Minor') {
-          tag.remove();
-        }
-      });
+    // Remove old Major/Minor tags before toggling (skip during restore)
+    if (!window._keyFilterRestoring) {
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      if (tagsContainer) {
+        const oldTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        oldTags.forEach(tag => {
+          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          if (text === 'Major' || text === 'Minor') {
+            tag.remove();
+          }
+        });
+      }
     }
     
     const currentKey = getCurrentlySelectedKey();
@@ -9978,7 +9986,11 @@ if (filterState.keyState) {
     }
   }
 
-  setTimeout(() => restoreKeyFilterState(filterState.keyState), 500);
+  window._keyFilterRestoring = true;
+  setTimeout(() => {
+    restoreKeyFilterState(filterState.keyState);
+    setTimeout(() => { window._keyFilterRestoring = false; }, 800);
+  }, 500);
 }
     
     // Ensure clear button state is correct after restore
