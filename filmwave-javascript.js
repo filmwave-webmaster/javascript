@@ -3907,10 +3907,24 @@ function initDynamicTagging() {
             });
             radio.dispatchEvent(new Event('change', { bubbles: true }));
           } else {
+            // Clear is-active from same-name radios AND across all key columns
             document.querySelectorAll(`input[name="${radioName}"]`).forEach(r => {
               const otherWrapper = r.closest('.radio-wrapper, .w-radio');
               if (otherWrapper) otherWrapper.classList.remove('is-active');
             });
+            // If this is a Key filter, also clear is-active and inline color in all other key columns
+            if (radio.getAttribute('data-filter-group') === 'Key' && radio.getAttribute('data-filter-value')) {
+              document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(r => {
+                if (r !== radio) {
+                  const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+                  if (otherWrapper) {
+                    otherWrapper.classList.remove('is-active');
+                    const otherLabel = otherWrapper.querySelector('.filter-text, .w-form-label, .radio-button-label');
+                    if (otherLabel) otherLabel.style.color = '';
+                  }
+                }
+              });
+            }
             
             this.classList.add('is-active');
             
@@ -10070,6 +10084,19 @@ if (keyState.sharpFlat === 'flat' && flatButton) {
         if (flatMinorInput) {
           console.log('🎯 Clicking Flat Minor input');
           flatMinorInput.click();
+        }
+      }
+
+      // Restore individual key in flat column if flat is active
+      if (keyState.sharpFlat === 'flat') {
+        const savedKey = filterState.filters?.find(f => f.group === 'Key' && f.value);
+        if (savedKey?.value) {
+          setTimeout(() => {
+            const flatKeyRadio = keyAccordion.querySelector(`.flat-key-column input[data-filter-value="${savedKey.value}"]`);
+            if (flatKeyRadio && !flatKeyRadio.checked) {
+              flatKeyRadio.click();
+            }
+          }, 60);
         }
       }
     }, 100);
