@@ -4036,9 +4036,9 @@ function injectKeyFilterCSS() {
     .min-wrapper.is-active .radio-button-label,
     .maj-wrapper .w-radio.is-active .radio-button-label,
     .min-wrapper .w-radio.is-active .radio-button-label {
-      color: #ffffff !important;
-      background-color: #191919 !important;
-      border-color: #191919 !important;
+      color: var(--color-1) !important;
+      background-color: var(--color-2) !important;
+      border-color: var(--color-2) !important;
     }
     .maj-min-wrapper {
       display: flex !important;
@@ -4068,6 +4068,14 @@ function injectKeyFilterCSS() {
       cursor: pointer;
       pointer-events: all;
       transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .maj-key-column .is-active .radio-button-label,
+    .min-key-column .is-active .radio-button-label,
+    .maj-key-column .w-radio.is-active .radio-button-label,
+    .min-key-column .w-radio.is-active .radio-button-label {
+      color: var(--color-1) !important;
+      background-color: var(--color-2) !important;
+      border-color: var(--color-2) !important;
     }
     .maj-key-column,
     .min-key-column {
