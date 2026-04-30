@@ -6149,7 +6149,13 @@ function updateMusicTileSectionVisibility() {
     try {
       const saved = localStorage.getItem('musicFilters');
       const bpm = saved ? JSON.parse(saved)?.bpm : null;
-      return !!(bpm?.low || bpm?.high || bpm?.exact);
+      if (!bpm) return false;
+      if (bpm.exact) return true;
+      const low = parseInt(bpm.low);
+      const high = parseInt(bpm.high);
+      // Neutral range (1-300) = no active filter
+      const isNeutral = (isNaN(low) || low <= 1) && (isNaN(high) || high >= 300);
+      return !isNeutral && !!(bpm.low || bpm.high);
     } catch(e) { return false; }
   })();
   
