@@ -4112,7 +4112,18 @@ function injectKeyFilterCSS() {
     .key-column-wrapper {
       position: relative;
       width: 100%;
-      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+    }
+    .key-column-wrapper::before {
+      content: '';
+      display: block;
+      min-height: var(--key-column-height, 160px);
+    }
+    .key-clear {
+      position: relative;
+      z-index: 10;
+      margin-top: 8px;
     }
     .key-button-wrapper {
       position: relative;
@@ -4894,6 +4905,16 @@ allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 
 console.log('✅ Key Filter System initialized');
 window.keyFilterSystemReady = true;
+
+// Set key-column-wrapper height based on tallest column
+requestAnimationFrame(() => {
+  const colWrapper = keyAccordion.querySelector('.key-column-wrapper');
+  const sharpCol = keyAccordion.querySelector('.sharp-key-column');
+  if (colWrapper && sharpCol) {
+    const h = sharpCol.scrollHeight || sharpCol.offsetHeight;
+    if (h > 0) colWrapper.style.setProperty('--key-column-height', `${h}px`);
+  }
+});
 window.setKeyMajMinState = function(sharpMaj, flatMaj) {
   sharpMajMin = sharpMaj || null;
   flatMajMin = flatMaj || null;
