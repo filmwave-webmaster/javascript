@@ -3970,9 +3970,157 @@ function updateSingleSelectPadding() {
 /**
  * ============================================================
  * KEY FILTER SYSTEM
- * Handles Sharp/Flat toggle, Major/Minor toggle, and key selection
  * ============================================================
  */
+function injectKeyFilterCSS() {
+  if (document.getElementById('key-filter-css')) return;
+  const style = document.createElement('style');
+  style.id = 'key-filter-css';
+  style.textContent = `
+    .sharp-flat-toggle-wrapper .radio-button-label {
+      transition: color 0.2s ease, border-bottom 0.2s ease, background-color 0.2s ease;
+      border-bottom: 3px solid transparent;
+    }
+    .sharp-key-column,
+    .flat-key-column {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .flat-key-column {
+      display: none;
+      visibility: hidden;
+      opacity: 0;
+    }
+    .sharp-key-column {
+      display: block;
+      visibility: visible;
+      opacity: 1;
+    }
+    .key-button-wrapper .maj-key-column,
+    .key-button-wrapper .min-key-column {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .maj-key-column,
+    .min-key-column {
+      display: none;
+      visibility: hidden;
+      opacity: 0;
+    }
+    .key-button-wrapper.no-key-transitions *,
+    .key-radio-wrapper.no-key-transitions *,
+    .sharp-key-column.no-key-transitions *,
+    .flat-key-column.no-key-transitions * {
+      transition: none !important;
+    }
+    .maj-wrapper input[type="radio"],
+    .min-wrapper input[type="radio"] {
+      opacity: 0;
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+    .maj-wrapper .radio-button-label,
+    .min-wrapper .radio-button-label {
+      cursor: pointer;
+      pointer-events: all;
+    }
+    .maj-wrapper.is-active .radio-button-label,
+    .min-wrapper.is-active .radio-button-label,
+    .maj-wrapper .w-radio.is-active .radio-button-label,
+    .min-wrapper .w-radio.is-active .radio-button-label {
+      color: #ffffff !important;
+      background-color: #191919 !important;
+      border-color: #191919 !important;
+    }
+    .maj-min-wrapper {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .maj-wrapper,
+    .min-wrapper {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .maj-wrapper .radio-button-label,
+    .min-wrapper .radio-button-label {
+      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .maj-key-column input[type="radio"],
+    .min-key-column input[type="radio"] {
+      opacity: 0;
+      position: absolute;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+    .maj-key-column .radio-button-label,
+    .min-key-column .radio-button-label {
+      cursor: pointer;
+      pointer-events: all;
+      transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .maj-key-column,
+    .min-key-column {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .maj-key-column[style*="display: flex"],
+    .maj-key-column[style*="display: block"] {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .min-key-column[style*="display: flex"],
+    .min-key-column[style*="display: block"] {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .key-column-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 100px;
+    }
+    .key-button-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 65px;
+    }
+    .maj-min-wrapper {
+      position: relative;
+      z-index: 10;
+      margin-bottom: 1rem;
+    }
+    .sharp-key-column,
+    .flat-key-column {
+      z-index: 1;
+    }
+    .sharp-key-column[style*="display: block"] {
+      z-index: 2;
+    }
+    .flat-key-column[style*="display: block"] {
+      z-index: 2;
+    }
+    .maj-key-column[style*="display: flex"],
+    .min-key-column[style*="display: flex"] {
+      z-index: 2;
+    }
+  `;
+  document.head.appendChild(style);
+}
+injectKeyFilterCSS();
+
 function initKeyFilterSystem() {
   console.log('🎹 Initializing Key Filter System');
   
