@@ -9877,7 +9877,8 @@ if (filterState.keyState) {
       
       if (hasSpecificKey && tagsContainer && filterState.keyState) {
         // Check if major/minor INPUT is checked (not wrapper class)
-        if (filterState.keyState.sharpMajMin === 'major' || filterState.keyState.flatMajMin === 'major') {
+        const existingMajor = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(t => t.querySelector('.filter-tag-text')?.textContent?.trim() === 'Major');
+        if (!existingMajor && (filterState.keyState.sharpMajMin === 'major' || filterState.keyState.flatMajMin === 'major')) {
           const majorInput = document.querySelector('[data-key-group="major"]:checked');
           if (majorInput) {
             const tag = document.createElement('div');
@@ -9891,7 +9892,8 @@ if (filterState.keyState) {
           }
         }
         
-        if (filterState.keyState.sharpMajMin === 'minor' || filterState.keyState.flatMajMin === 'minor') {
+        const existingMinor = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(t => t.querySelector('.filter-tag-text')?.textContent?.trim() === 'Minor');
+        if (!existingMinor && (filterState.keyState.sharpMajMin === 'minor' || filterState.keyState.flatMajMin === 'minor')) {
           const minorInput = document.querySelector('[data-key-group="minor"]:checked');
           if (minorInput) {
             const tag = document.createElement('div');
