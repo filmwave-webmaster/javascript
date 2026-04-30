@@ -6144,8 +6144,15 @@ function updateMusicTileSectionVisibility() {
   const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked')).length > 0;
   const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
   const isShuffled = g.isShuffled;
+  const hasBPM = (() => {
+    try {
+      const saved = localStorage.getItem('musicFilters');
+      const bpm = saved ? JSON.parse(saved)?.bpm : null;
+      return !!(bpm?.low || bpm?.high || bpm?.exact);
+    } catch(e) { return false; }
+  })();
   
-  if (hasSearch || hasFilters || hasPlaylistFilter || isShuffled) {
+  if (hasSearch || hasFilters || hasPlaylistFilter || isShuffled || hasBPM) {
     musicTileSection.style.display = 'none';
   } else {
     musicTileSection.style.display = '';
