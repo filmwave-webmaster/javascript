@@ -10449,10 +10449,7 @@ if (typeof barba !== 'undefined') {
   
   barba.hooks.after((data) => {
     console.log('✅ Barba after hook');
-    // Only reset if we're navigating to the music page - non-music pages need fresh restore on return
-    const nextPath = data?.next?.url?.path || '';
-    const isMusicPage = nextPath === '/music' || nextPath === '/music/';
-    if (!isMusicPage) filtersRestored = false;
+    filtersRestored = false;
     
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
