@@ -9449,6 +9449,8 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         if (input && input.checked) {
           const tag = document.createElement('div');
           tag.className = 'filter-tag';
+          tag.dataset.filterGroup = savedFilter.group || '';
+          tag.dataset.filterValue = savedFilter.value || '';
           
           let tagText;
           
