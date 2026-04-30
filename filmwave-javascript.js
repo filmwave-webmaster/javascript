@@ -9947,47 +9947,38 @@ if (!filterState.filters.length && !filterState.searchQuery) {
     
    // Restore Key filter UI state - wait longer for Key Filter System to initialize
 if (filterState.keyState) {
-  setTimeout(() => {
-    restoreKeyFilterState(filterState.keyState);
-    
-    // Manually create major/minor tags after restore completes
-    setTimeout(() => {
-      const hasSpecificKey = filterState.filters.some(f => f.group === 'Key' && f.value);
-      
-      if (hasSpecificKey && tagsContainer && filterState.keyState) {
-        // Check if major/minor INPUT is checked (not wrapper class)
-        const existingMajor = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(t => t.querySelector('.filter-tag-text')?.textContent?.trim() === 'Major');
-        if (!existingMajor && (filterState.keyState.sharpMajMin === 'major' || filterState.keyState.flatMajMin === 'major')) {
-          const majorInput = document.querySelector('[data-key-group="major"]:checked');
-          if (majorInput) {
-            const tag = document.createElement('div');
-            tag.className = 'filter-tag';
-            tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
-            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-              majorInput.click();
-              tag.remove();
-            });
-            tagsContainer.appendChild(tag);
-          }
-        }
-        
-        const existingMinor = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(t => t.querySelector('.filter-tag-text')?.textContent?.trim() === 'Minor');
-        if (!existingMinor && (filterState.keyState.sharpMajMin === 'minor' || filterState.keyState.flatMajMin === 'minor')) {
-          const minorInput = document.querySelector('[data-key-group="minor"]:checked');
-          if (minorInput) {
-            const tag = document.createElement('div');
-            tag.className = 'filter-tag';
-            tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
-            tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-              minorInput.click();
-              tag.remove();
-            });
-            tagsContainer.appendChild(tag);
-          }
-        }
+  // Create major/minor tag immediately from saved state — no need to wait for inputs
+  const hasSpecificKey = filterState.filters.some(f => f.group === 'Key' && f.value);
+  if (hasSpecificKey && tagsContainer) {
+    const majMin = filterState.keyState.sharpMajMin || filterState.keyState.flatMajMin;
+    if (majMin === 'major') {
+      const existing = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(t => t.querySelector('.filter-tag-text')?.textContent?.trim() === 'Major');
+      if (!existing) {
+        const tag = document.createElement('div');
+        tag.className = 'filter-tag';
+        tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
+        tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+          document.querySelector('[data-key-group="major"]:checked')?.click();
+          tag.remove();
+        });
+        tagsContainer.appendChild(tag);
       }
-    }, 200);
-  }, 500);
+    } else if (majMin === 'minor') {
+      const existing = Array.from(tagsContainer.querySelectorAll('.filter-tag')).find(t => t.querySelector('.filter-tag-text')?.textContent?.trim() === 'Minor');
+      if (!existing) {
+        const tag = document.createElement('div');
+        tag.className = 'filter-tag';
+        tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
+        tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+          document.querySelector('[data-key-group="minor"]:checked')?.click();
+          tag.remove();
+        });
+        tagsContainer.appendChild(tag);
+      }
+    }
+  }
+
+  setTimeout(() => restoreKeyFilterState(filterState.keyState), 500);
 }
     
     // Ensure clear button state is correct after restore
