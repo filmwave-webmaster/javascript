@@ -9138,7 +9138,7 @@ function initMusicPageFilterPills() {
       // Check if this filter is already active (tag exists)
       const existingTag = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
         const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
-        return tagText === filterValue;
+        return tagText === filterValue && (tag.dataset.filterGroup || '').toLowerCase() === 'genre';
       });
       
       if (existingTag) {
@@ -9187,11 +9187,12 @@ function initMusicPageFilterPills() {
     });
   });
   
-// Sync pill active state with currently restored filters
+// Sync pill active state with currently restored Genre filters only
   document.querySelectorAll('.db-filter-pill').forEach(pill => {
     const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
     const isActive = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).some(tag =>
-      tag.querySelector('.filter-tag-text')?.textContent?.trim() === filterValue
+      tag.querySelector('.filter-tag-text')?.textContent?.trim() === filterValue &&
+      (tag.dataset.filterGroup || '').toLowerCase() === 'genre'
     );
     if (isActive) {
       pill.classList.add('is-active');
