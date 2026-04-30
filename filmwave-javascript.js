@@ -5989,6 +5989,7 @@ function restoreBPMState() {
     }
     
    // Restore values (after DOM paints the correct slider mode)
+window._bpmFilterRestoring = true;
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     if (bpmState.exact && exactInput && sliderHandleExact) {
@@ -6007,6 +6008,7 @@ requestAnimationFrame(() => {
     }
 
     if (typeof updateFilterDots === 'function') updateFilterDots();
+    window._bpmFilterRestoring = false;
   });
 });
     
@@ -6758,7 +6760,10 @@ setMode('range', false); // Start in range mode
 
 // Re-apply BPM filter whenever any other filter changes
 document.addEventListener('change', function(e) {
-  if (e.target.matches('[data-filter-group]')) {
+  if (e.target.matches('[data-filter-group]') && !window._keyFilterRestoring) {
+    // Skip during filter restore to avoid clearing BPM tag before inputs are populated
+    if (window._bpmFilterRestoring) return;
+
     // Clear BPM marks first - other filters will hide their songs
     document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
       song.removeAttribute('data-hidden-by-bpm');
