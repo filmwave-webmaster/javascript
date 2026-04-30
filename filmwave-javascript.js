@@ -9850,6 +9850,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         else if (bpm.low) bpmTagText = `${bpm.low}+ BPM`;
         else if (bpm.high) bpmTagText = `≤${bpm.high} BPM`;
       }
+      console.log('🎵 BPM tag recreation check:', { bpmTagText, existingTag: !!tagsContainer.querySelector('[data-bpm-tag]') });
       if (bpmTagText && !tagsContainer.querySelector('[data-bpm-tag]')) {
         const bpmTag = document.createElement('div');
         bpmTag.className = 'filter-tag filter-tag-playlist';
