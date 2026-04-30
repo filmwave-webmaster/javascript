@@ -4290,9 +4290,9 @@ function initKeyFilterSystem() {
     
     // For standard buttons, style the button element directly
     if (isActive) {
-      button.style.color = '#191919';
-      button.style.borderBottom = '3px solid #191919';
-      button.style.backgroundColor = ''; // Remove any background
+      button.style.color = 'var(--color-2)';
+      button.style.borderBottom = '3px solid var(--color-2)';
+      button.style.backgroundColor = '';
     } else {
       button.style.color = '';
       button.style.borderBottom = '';
