@@ -3581,11 +3581,11 @@ document.querySelectorAll('.waveform').forEach((wf) => {
   const lightIcons = document.querySelectorAll('.light-mode-icon');
   
   darkIcons.forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
+    icon.style.setProperty('display', 'flex', 'important');
   });
   
   lightIcons.forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+    icon.style.setProperty('display', 'flex', 'important');
   });
 }
   
@@ -8702,19 +8702,12 @@ if (leavingDashboard && !goingToDashboard && !goingToMusic && !goingToSfx) {
   }     
   
   // Update icons in incoming container
-  data.next.container.querySelectorAll('.dark-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
-  });
-  data.next.container.querySelectorAll('.light-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  data.next.container.querySelectorAll('.dark-mode-icon, .light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', 'flex', 'important');
   });
   
-  // Also update icons in sidebar (persists outside container)
-  document.querySelectorAll('.sidebar-nav .dark-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
-  });
-  document.querySelectorAll('.sidebar-nav .light-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  document.querySelectorAll('.sidebar-nav .dark-mode-icon, .sidebar-nav .light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', 'flex', 'important');
   });
 
        // Reset opacity on main content
@@ -8900,11 +8893,8 @@ if (shouldHaveSidebar && !sidebar) {
   
   // Apply correct theme icon visibility to injected sidebar
   const theme = localStorage.getItem('filmwaveTheme') || 'light';
-  newSidebar.querySelectorAll('.dark-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'none' : 'flex', 'important');
-  });
-  newSidebar.querySelectorAll('.light-mode-icon').forEach(icon => {
-    icon.style.setProperty('display', theme === 'dark' ? 'flex' : 'none', 'important');
+  newSidebar.querySelectorAll('.dark-mode-icon, .light-mode-icon').forEach(icon => {
+    icon.style.setProperty('display', 'flex', 'important');
   });
 
   // Set volume slider position on injected sidebar
