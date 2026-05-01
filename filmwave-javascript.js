@@ -5086,6 +5086,9 @@ const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter 
 }
 
 function clearAllFilters() {
+  // Always clear BPM
+  if (typeof clearBPM === 'function') clearBPM();
+  
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
@@ -6848,7 +6851,7 @@ if (!window._bpmTagObserver) {
       tag.setAttribute('data-bpm-tag', 'true');
       tag.innerHTML = `<span class="filter-tag-text">${tagText}</span><span class="filter-tag-remove x-button-style">×</span>`;
       tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
-        document.querySelector('.bpm-clear')?.click();
+         if (typeof clearBPM === 'function') clearBPM();
       });
       tagsContainer.appendChild(tag);
     } catch(e) {}
@@ -9939,7 +9942,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         bpmTag.setAttribute('data-bpm-tag', 'true');
         bpmTag.innerHTML = `<span class="filter-tag-text">${bpmTagText}</span><span class="filter-tag-remove x-button-style">×</span>`;
         bpmTag.querySelector('.filter-tag-remove').addEventListener('click', function() {
-          document.querySelector('.bpm-clear')?.click();
+          if (typeof clearBPM === 'function') clearBPM();
         });
         tagsContainer.appendChild(bpmTag);
       }
