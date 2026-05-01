@@ -569,6 +569,7 @@ async function initMusicPage() {
 
     // Re-apply shuffled order if shuffle was active before Barba navigation
     const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
+    console.log('🔀 Shuffle check:', { wasShuffled, filteredSongIds: g.filteredSongIds?.length, isShuffled: g.isShuffled, localStorage: localStorage.getItem('filmwaveShuffled') });
     if (wasShuffled && g.filteredSongIds && g.filteredSongIds.length) {
       const container = document.querySelector('.music-list-wrapper');
       if (container) {
