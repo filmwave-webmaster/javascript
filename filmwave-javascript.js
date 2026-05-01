@@ -5006,26 +5006,18 @@ window.keyFilterSystemReady = true;
   flatMajMin = flatMaj || null;
 };
 
-// Key Clear button
-document.addEventListener('click', (e) => {
-  if (e.target.matches('.key-clear, .key-clear *')) {
-    // Uncheck all Key radios
+// Expose clear function globally so the one-time document listener can access closure vars
+  window._clearKeyFilter = function() {
     document.querySelectorAll('[data-filter-group="Key"]').forEach(radio => {
       radio.checked = false;
     });
-
-    // Remove all is-active states and inline colors from Key section
     document.querySelectorAll('[data-filter-type="key"] .is-active').forEach(el => {
       el.classList.remove('is-active');
       const label = el.querySelector('.filter-text, .w-form-label, .radio-button-label');
       if (label) label.style.color = '';
     });
-
-    // Reset state variables
     sharpMajMin = null;
     flatMajMin = null;
-
-    // Remove Key-related tags
     const tagsContainer = document.querySelector('.filter-tags-container');
     if (tagsContainer) {
       Array.from(tagsContainer.querySelectorAll('.filter-tag')).forEach(tag => {
@@ -5035,16 +5027,23 @@ document.addEventListener('click', (e) => {
         }
       });
     }
-
-    // Update filter dot, clear button, and re-apply filters
     if (typeof updateFilterDots === 'function') updateFilterDots();
     if (typeof toggleClearButton === 'function') toggleClearButton();
     if (typeof saveFilterState === 'function') saveFilterState();
     document.querySelectorAll('[data-filter-group="Key"]').forEach(r => {
       r.dispatchEvent(new Event('change', { bubbles: true }));
     });
-  }
-});
+  };
+}
+
+// Key Clear button — registered once outside initKeyFilterSystem to avoid duplicate listeners
+if (!window._keyClearListenerAttached) {
+  window._keyClearListenerAttached = true;
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('.key-clear, .key-clear *')) {
+      if (typeof window._clearKeyFilter === 'function') window._clearKeyFilter();
+    }
+  });
 }
   
 function toggleClearButton() {
