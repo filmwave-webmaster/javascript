@@ -4134,7 +4134,6 @@ function injectKeyFilterCSS() {
       width: 100%;
       display: flex;
       flex-direction: column;
-      min-height: 130px;
     }
     .key-column-wrapper::before {
       content: '';
