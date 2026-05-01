@@ -4629,6 +4629,19 @@ function showSharpFlat(which) {
         sharpMajorButton.checked = true;
         sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
+      // Create Major tag
+      if (!window._keyFilterRestoring) {
+        const tagsContainer = document.querySelector('.filter-tags-container');
+if (tagsContainer && !Array.from(tagsContainer.querySelectorAll('.filter-tag-text')).some(el => el.textContent === 'Major')) {
+    const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
+          tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+            (sharpMajorWrapper || sharpMajorButton).click();
+          });
+          tagsContainer.appendChild(tag);
+        }
+      }
     }
   }, true);
 }
@@ -4691,6 +4704,18 @@ function showSharpFlat(which) {
         sharpMinorButton.checked = true;
         sharpMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
+      if (!window._keyFilterRestoring) {
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        if (tagsContainer && !tagsContainer.querySelector('[data-filter-tag-text="Minor"]')) {
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
+          tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+            (sharpMinorWrapper || sharpMinorButton).click();
+          });
+          tagsContainer.appendChild(tag);
+        }
+      }
     }
   }, true);
 }
@@ -4751,6 +4776,18 @@ function showSharpFlat(which) {
         flatMajorButton.checked = true;
         flatMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
       }
+      if (!window._keyFilterRestoring) {
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        if (tagsContainer && !tagsContainer.querySelector('[data-filter-tag-text="Major"]')) {
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          tag.innerHTML = `<span class="filter-tag-text">Major</span><span class="filter-tag-remove x-button-style">×</span>`;
+          tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+            (flatMajorWrapper || flatMajorButton).click();
+          });
+          tagsContainer.appendChild(tag);
+        }
+      }
     }
   }, true);
 }
@@ -4810,6 +4847,18 @@ function showSharpFlat(which) {
       } else {
         flatMinorButton.checked = true;
         flatMinorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (!window._keyFilterRestoring) {
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        if (tagsContainer && !tagsContainer.querySelector('[data-filter-tag-text="Minor"]')) {
+          const tag = document.createElement('div');
+          tag.className = 'filter-tag';
+          tag.innerHTML = `<span class="filter-tag-text">Minor</span><span class="filter-tag-remove x-button-style">×</span>`;
+          tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+            (flatMinorWrapper || flatMinorButton).click();
+          });
+          tagsContainer.appendChild(tag);
+        }
       }
     }
   }, true);
