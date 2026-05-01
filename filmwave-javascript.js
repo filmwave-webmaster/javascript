@@ -6487,6 +6487,8 @@ function stopDrag() {
  * Clear all BPM values
  */
 function clearBPM() {
+  window._bpmTagSuppressed = true;
+  setTimeout(() => { window._bpmTagSuppressed = false; }, 500);
   // Reset inputs
   if (exactInput) exactInput.value = '';
   if (lowInput) lowInput.value = '';
@@ -6794,6 +6796,49 @@ console.log('✅ BPM Filter System initialized');
 
 // Expose restore function globally
 window.restoreBPMState = restoreBPMState;
+
+// Watch for BPM tag being removed and recreate it if BPM still active
+if (!window._bpmTagObserver) {
+  window._bpmTagObserver = new MutationObserver(() => {
+    const tagsContainer = document.querySelector('.filter-tags-container');
+    if (!tagsContainer) return;
+    if (tagsContainer.querySelector('[data-bpm-tag]')) return; // tag exists, fine
+    if (window._bpmTagSuppressed) return; // intentionally cleared
+    
+    // Check if BPM is still active in localStorage
+    try {
+      const saved = localStorage.getItem('musicFilters');
+      const bpm = saved ? JSON.parse(saved)?.bpm : null;
+      if (!bpm) return;
+      
+      let tagText = '';
+      if (bpm.mode === 'exact') {
+        if (bpm.exact) tagText = `${bpm.exact} BPM`;
+      } else {
+        if (bpm.low && bpm.high) tagText = `${bpm.low}-${bpm.high} BPM`;
+        else if (bpm.low) tagText = `${bpm.low}+ BPM`;
+        else if (bpm.high) tagText = `≤${bpm.high} BPM`;
+      }
+      if (!tagText) return;
+      
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag filter-tag-playlist';
+      tag.setAttribute('data-bpm-tag', 'true');
+      tag.innerHTML = `<span class="filter-tag-text">${tagText}</span><span class="filter-tag-remove x-button-style">×</span>`;
+      tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
+        document.querySelector('.bpm-clear')?.click();
+      });
+      tagsContainer.appendChild(tag);
+    } catch(e) {}
+  });
+}
+
+// Attach observer to current tagsContainer (re-attach on each init since DOM changes on Barba)
+const _tagsContainerForObserver = document.querySelector('.filter-tags-container');
+if (_tagsContainerForObserver) {
+  window._bpmTagObserver.disconnect();
+  window._bpmTagObserver.observe(_tagsContainerForObserver, { childList: true });
+}
 
 // Initial dot update
 updateFilterDots();
