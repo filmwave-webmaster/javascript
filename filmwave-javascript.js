@@ -5054,9 +5054,12 @@ function toggleClearButton() {
     }
   } catch (e) {}
 
-  // On non-music pages, don't touch the button if we have saved filters
+  // On non-music pages, always hide the clear button
   const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (!isMusicPage && (hasSavedFilters || hasSavedPlaylistFilter || hasSavedBPMFilter)) return;
+  if (!isMusicPage) {
+    clearBtn.style.display = 'none';
+    return;
+  }
 
   // Show button if active filters OR saved playlist/BPM filter (for music page during restore)
 const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter || isShuffled ||
@@ -9707,6 +9710,12 @@ if (!hasActiveFilters) {
 // Restore BPM even if no other filters
 if (filterState.bpm && typeof restoreBPMState === 'function') {
   restoreBPMState();
+}
+
+// Restore shuffle tag if shuffle is still active
+const g = window.musicPlayerPersistent;
+if (g && g.isShuffled && typeof createShuffleTag === 'function') {
+  createShuffleTag();
 }
 
 // If only BPM was active, show songs and return (unless playlist filter pending)
