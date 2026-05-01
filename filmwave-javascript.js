@@ -6661,7 +6661,8 @@ function updateBPMTag() {
     `;
     
     tag.querySelector('.filter-tag-remove').addEventListener('click', clearBPM);
-    tagsContainer.insertBefore(tag, tagsContainer.firstChild);
+    const playlistTag = tagsContainer.querySelector('[data-playlist-filter-tag]');
+    playlistTag ? tagsContainer.insertBefore(tag, playlistTag) : tagsContainer.appendChild(tag);
   }
   
   // Update clear button visibility
