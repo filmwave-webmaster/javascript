@@ -4572,7 +4572,8 @@ function showSharpFlat(which) {
 // SHARP MAJOR
   
   if (sharpMajorButton) {
-  sharpMajorButton.addEventListener('click', (e) => {
+  const sharpMajorWrapper = sharpMajorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+  (sharpMajorWrapper || sharpMajorButton).addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4596,11 +4597,11 @@ function showSharpFlat(which) {
       sharpMajMin = null;
       styleMajMinButton(sharpMajorButton, false);
       sharpMajorButton.checked = false;
-      // Clear any inline color set during restore
       const majWrapper = sharpMajorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
       const majLabel = majWrapper?.querySelector('.filter-text, .w-form-label, .radio-button-label');
       if (majLabel) majLabel.style.color = '';
       sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
+      if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
     } else {
       sharpMajMin = 'major';
       styleMajMinButton(sharpMajorButton, true);
@@ -4635,7 +4636,8 @@ function showSharpFlat(which) {
 // SHARP MINOR
   
   if (sharpMinorButton) {
-  sharpMinorButton.addEventListener('click', (e) => {
+  const sharpMinorWrapper = sharpMinorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+  (sharpMinorWrapper || sharpMinorButton).addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4696,7 +4698,8 @@ function showSharpFlat(which) {
 // FLAT MAJOR
   
   if (flatMajorButton) {
-  flatMajorButton.addEventListener('click', (e) => {
+  const flatMajorWrapper = flatMajorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+  (flatMajorWrapper || flatMajorButton).addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4755,7 +4758,8 @@ function showSharpFlat(which) {
 // FLAT MINOR
   
   if (flatMinorButton) {
-  flatMinorButton.addEventListener('click', (e) => {
+  const flatMinorWrapper = flatMinorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+  (flatMinorWrapper || flatMinorButton).addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
