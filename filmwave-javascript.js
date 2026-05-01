@@ -578,6 +578,7 @@ async function initMusicPage() {
       }
       g.isShuffled = true;
       updateMusicTileSectionVisibility();
+      document.querySelectorAll('.shuffle-icon').forEach(el => el.style.color = '#ddff43');
     }
     initShuffleSongs();
     initMasterPlayer();
@@ -3075,6 +3076,7 @@ function initShuffleSongs() {
     // Mark as shuffled
     g.isShuffled = true;
     localStorage.setItem('filmwaveShuffled', 'true');
+    document.querySelectorAll('.shuffle-icon').forEach(el => el.style.color = '#ddff43');
     
     // Hide music tile section
     const musicTileSection = document.querySelector('.music-tile-section');
@@ -3142,9 +3144,10 @@ function undoShuffle() {
   // Clear shuffle state
   g.isShuffled = false;
   g.originalSongOrder = null;
+  g.isShuffled = false;
+  g.originalSongOrder = null;
   localStorage.removeItem('filmwaveShuffled');
-  g.originalWaveformData = null;
-  g.originalAllWavesurfers = null;
+  document.querySelectorAll('.shuffle-icon').forEach(el => el.style.color = '');
   
   // Show music tile section if no other filters active
   updateMusicTileSectionVisibility();
