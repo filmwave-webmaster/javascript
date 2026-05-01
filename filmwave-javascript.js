@@ -8098,6 +8098,11 @@ if (typeof barba !== 'undefined' && barba.hooks) {
       g.playlistFilterPopulated = false;
       g.filtersInitialized = false; // Allow re-initialization on new page
     }
+
+    // Clear _dynamicTaggingInit flags so initDynamicTagging re-attaches listeners on new DOM
+    document.querySelectorAll('[data-filter-group], .filter-list label.radio-wrapper, .filter-list .w-radio').forEach(el => {
+      delete el._dynamicTaggingInit;
+    });
   });
   barba.hooks.beforeEnter((data) => {
     runForPath(data?.next?.url?.path || '');
