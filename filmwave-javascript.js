@@ -4135,11 +4135,6 @@ function injectKeyFilterCSS() {
       display: flex;
       flex-direction: column;
     }
-    .key-column-wrapper::before {
-      content: '';
-      display: block;
-      min-height: var(--key-column-height, 0px);
-    }
     .key-clear {
       position: relative;
       z-index: 10;
@@ -4147,12 +4142,10 @@ function injectKeyFilterCSS() {
     .key-button-wrapper {
       position: relative;
       width: 100%;
-      min-height: 65px;
     }
     .maj-min-wrapper {
       position: relative;
       z-index: 10;
-      margin-bottom: 1rem;
     }
     .sharp-key-column,
     .flat-key-column {
