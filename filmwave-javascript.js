@@ -6897,6 +6897,22 @@ setTimeout(() => {
   });
 }, 1000);
 
+// Show/hide .projects-edit on hover of its parent .db-sidebar-link-projects
+function initProjectsEditHover() {
+  document.querySelectorAll('.db-sidebar-link-projects').forEach(link => {
+    const editBtn = link.querySelector('.projects-edit');
+    if (!editBtn) return;
+    link.addEventListener('mouseenter', () => {
+      editBtn.style.display = 'flex';
+    });
+    link.addEventListener('mouseleave', () => {
+      editBtn.style.display = 'none';
+    });
+  });
+}
+initProjectsEditHover();
+window.initProjectsEditHover = initProjectsEditHover;
+
 // Call this function after your other filter initializations
 // Add this line in your initMusicPage() function after initKeyFilterSystem();
 // initBPMFilter();
