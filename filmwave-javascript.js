@@ -578,8 +578,6 @@ async function initMusicPage() {
       }
       g.isShuffled = true;
       updateMusicTileSectionVisibility();
-      // Shuffle tag creation deferred to barba.hooks.after to avoid being wiped by DOM swaps
-      window._pendingShuffleTagRestore = true;
     }
     initShuffleSongs();
     initMasterPlayer();
@@ -9672,6 +9670,10 @@ if (flatMajorInput?.checked) {
     if (existing.bpm) filterState.bpm = existing.bpm;
   } catch(e) {}
 
+  // Save shuffle state
+  const g = window.musicPlayerPersistent;
+  if (g?.isShuffled) filterState.shuffled = true;
+
   localStorage.setItem('musicFilters', JSON.stringify(filterState));
   console.log('💾 Saved filter state (with Key state):', filterState);
 }
@@ -10534,16 +10536,12 @@ if (typeof barba !== 'undefined') {
   barba.hooks.after((data) => {
     console.log('✅ Barba after hook');
     
-    // Restore shuffle tag if pending (deferred from initMusicPage to avoid DOM swap wiping it)
-    if (window._pendingShuffleTagRestore) {
-      window._pendingShuffleTagRestore = false;
-      const nextPath = data?.next?.url?.path || window.location.pathname;
-      if (nextPath === '/music' || nextPath === '/music/') {
-        createShuffleTag();
-        const tagsContainer = document.querySelector('.filter-tags-container');
-        const clearButton = document.querySelector('.circle-x');
-        if (tagsContainer) { tagsContainer.style.transition = 'opacity 0.3s ease-in-out'; tagsContainer.style.opacity = '1'; }
-        if (clearButton) { clearButton.style.transition = 'opacity 0.3s ease-in-out'; clearButton.style.opacity = '1'; }
+    // Rebuild shuffle tag after Barba DOM swap (tags container is inside Barba container and gets destroyed)
+    const _nextPath = data?.next?.url?.path || window.location.pathname;
+    if (_nextPath === '/music' || _nextPath === '/music/') {
+      const g = window.musicPlayerPersistent;
+      if (g?.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true') {
+        setTimeout(() => createShuffleTag(), 50);
       }
     }
     filtersRestored = false;
