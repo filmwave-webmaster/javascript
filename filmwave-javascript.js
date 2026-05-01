@@ -566,7 +566,25 @@ async function initMusicPage() {
     
     const songs = await fetchSongs();
     displaySongs(songs);
-
+const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
+    if (wasShuffled && g.filteredSongIds && g.filteredSongIds.length) {
+      const container = document.querySelector('.music-list-wrapper');
+      if (container) {
+        g.filteredSongIds.forEach(songId => {
+          const card = container.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
+          if (card) container.appendChild(card);
+        });
+      }
+      g.isShuffled = true;
+      createShuffleTag();
+      updateMusicTileSectionVisibility();
+      // Reveal tags container and clear button — restoreFilterState won't do this for shuffle-only state
+      const tagsContainer = document.querySelector('.filter-tags-container');
+      const clearButton = document.querySelector('.circle-x');
+      if (tagsContainer) { tagsContainer.style.transition = 'opacity 0.3s ease-in-out'; tagsContainer.style.opacity = '1'; }
+      if (clearButton) { clearButton.style.transition = 'opacity 0.3s ease-in-out'; clearButton.style.opacity = '1'; }
+    }
+    
     // Re-apply shuffled order if shuffle was active before Barba navigation
     const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
     console.log('🔀 Shuffle check:', { wasShuffled, filteredSongIds: g.filteredSongIds?.length, isShuffled: g.isShuffled, localStorage: localStorage.getItem('filmwaveShuffled') });
