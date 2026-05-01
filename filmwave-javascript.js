@@ -4019,9 +4019,7 @@ function injectKeyFilterCSS() {
     }
     .sharp-key-column,
     .flat-key-column {
-      position: absolute;
-      top: 0;
-      left: 0;
+      position: relative;
       width: 100%;
       transition: opacity 0.3s ease, visibility 0.3s ease;
     }
@@ -4160,12 +4158,6 @@ function injectKeyFilterCSS() {
     .sharp-key-column,
     .flat-key-column {
       z-index: 1;
-    }
-    .sharp-key-column[style*="display: block"] {
-      z-index: 2;
-    }
-    .flat-key-column[style*="display: block"] {
-      z-index: 2;
     }
     .maj-key-column[style*="display: flex"],
     .min-key-column[style*="display: flex"] {
