@@ -6093,7 +6093,7 @@ requestAnimationFrame(() => {
     // Create tag if we have text
     if (tagText) {
       const tag = document.createElement('div');
-      tag.className = 'filter-tag filter-tag-playlist';
+      tag.className = 'filter-tag';
       tag.setAttribute('data-bpm-tag', 'true');
       tag.innerHTML = `
         <span class="filter-tag-text">${tagText}</span>
@@ -6653,7 +6653,7 @@ function updateBPMTag() {
   // Create tag if we have text
   if (tagText) {
     const tag = document.createElement('div');
-    tag.className = 'filter-tag filter-tag-playlist';
+    tag.className = 'filter-tag';
     tag.setAttribute('data-bpm-tag', 'true');
     tag.innerHTML = `
       <span class="filter-tag-text">${tagText}</span>
@@ -6822,7 +6822,7 @@ if (!window._bpmTagObserver) {
       if (!tagText) return;
       
       const tag = document.createElement('div');
-      tag.className = 'filter-tag filter-tag-playlist';
+      tag.className = 'filter-tag';
       tag.setAttribute('data-bpm-tag', 'true');
       tag.innerHTML = `<span class="filter-tag-text">${tagText}</span><span class="filter-tag-remove x-button-style">×</span>`;
       tag.querySelector('.filter-tag-remove').addEventListener('click', () => {
@@ -9905,7 +9905,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       }
       if (bpmTagText && !tagsContainer.querySelector('[data-bpm-tag]')) {
         const bpmTag = document.createElement('div');
-        bpmTag.className = 'filter-tag filter-tag-playlist';
+        bpmTag.className = 'filter-tag';
         bpmTag.setAttribute('data-bpm-tag', 'true');
         bpmTag.innerHTML = `<span class="filter-tag-text">${bpmTagText}</span><span class="filter-tag-remove x-button-style">×</span>`;
         bpmTag.querySelector('.filter-tag-remove').addEventListener('click', function() {
