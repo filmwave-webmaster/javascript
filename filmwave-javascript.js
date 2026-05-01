@@ -9791,6 +9791,11 @@ if (!filterState.filters.length && !filterState.searchQuery) {
           `;
           
           tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+            // For Key filters, use _clearKeyFilter to fully reset visual + state
+            if (input.getAttribute('data-filter-group') === 'Key') {
+              if (typeof window._clearKeyFilter === 'function') window._clearKeyFilter();
+              return;
+            }
             input.checked = false;
             input.dispatchEvent(new Event('change', { bubbles: true }));
             tag.remove();
