@@ -9397,16 +9397,12 @@ function initMusicPageFilterPills() {
       e.preventDefault();
       e.stopPropagation();
 
+      // Ignore clicks before page is fully ready
+      const g = window.musicPlayerPersistent;
+      if (!g?.filtersInitialized) return;
+      
       const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
       if (!filterValue) return;
-
-      // If page not ready yet, queue the click for after load
-      const g = window.musicPlayerPersistent;
-      if (!g?.filtersInitialized) {
-        window._pendingPillClick = filterValue;
-        console.log('⏳ Pill click queued:', filterValue);
-        return;
-      }
       
       // Check if this filter is already active (tag exists)
       const existingTag = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
