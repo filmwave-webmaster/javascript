@@ -577,12 +577,9 @@ async function initMusicPage() {
         });
       }
       g.isShuffled = true;
-      createShuffleTag();
       updateMusicTileSectionVisibility();
-      const tagsContainer = document.querySelector('.filter-tags-container');
-      const clearButton = document.querySelector('.circle-x');
-      if (tagsContainer) { tagsContainer.style.transition = 'opacity 0.3s ease-in-out'; tagsContainer.style.opacity = '1'; }
-      if (clearButton) { clearButton.style.transition = 'opacity 0.3s ease-in-out'; clearButton.style.opacity = '1'; }
+      // Shuffle tag creation deferred to barba.hooks.after to avoid being wiped by DOM swaps
+      window._pendingShuffleTagRestore = true;
     }
     initShuffleSongs();
     initMasterPlayer();
@@ -10536,6 +10533,19 @@ if (typeof barba !== 'undefined') {
   
   barba.hooks.after((data) => {
     console.log('✅ Barba after hook');
+    
+    // Restore shuffle tag if pending (deferred from initMusicPage to avoid DOM swap wiping it)
+    if (window._pendingShuffleTagRestore) {
+      window._pendingShuffleTagRestore = false;
+      const nextPath = data?.next?.url?.path || window.location.pathname;
+      if (nextPath === '/music' || nextPath === '/music/') {
+        createShuffleTag();
+        const tagsContainer = document.querySelector('.filter-tags-container');
+        const clearButton = document.querySelector('.circle-x');
+        if (tagsContainer) { tagsContainer.style.transition = 'opacity 0.3s ease-in-out'; tagsContainer.style.opacity = '1'; }
+        if (clearButton) { clearButton.style.transition = 'opacity 0.3s ease-in-out'; clearButton.style.opacity = '1'; }
+      }
+    }
     filtersRestored = false;
     
     setTimeout(() => {
