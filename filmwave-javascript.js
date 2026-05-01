@@ -566,6 +566,20 @@ async function initMusicPage() {
     
     const songs = await fetchSongs();
     displaySongs(songs);
+
+    // Re-apply shuffled order if shuffle was active before Barba navigation
+    if (g.isShuffled && g.filteredSongIds && g.filteredSongIds.length) {
+      const container = document.querySelector('.music-list-wrapper');
+      if (container) {
+        g.filteredSongIds.forEach(songId => {
+          const card = container.querySelector(`.song-wrapper[data-song-id="${songId}"]`);
+          if (card) container.appendChild(card);
+        });
+      }
+      createShuffleTag();
+      updateMusicTileSectionVisibility();
+    }
+
     initShuffleSongs();
     initMasterPlayer();
     // Attempt filter restore immediately after songs are rendered
@@ -9712,11 +9726,7 @@ if (filterState.bpm && typeof restoreBPMState === 'function') {
   restoreBPMState();
 }
 
-// Restore shuffle tag if shuffle is still active
-const g = window.musicPlayerPersistent;
-if (g && g.isShuffled && typeof createShuffleTag === 'function') {
-  createShuffleTag();
-}
+// (shuffle tag handled in initMusicPage)
 
 // If only BPM was active, show songs and return (unless playlist filter pending)
 if (!filterState.filters.length && !filterState.searchQuery) {
