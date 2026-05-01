@@ -6044,8 +6044,7 @@ requestAnimationFrame(() => {
     // Update clear button visibility
     const clearButton = document.querySelector('.circle-x');
     if (clearButton) {
-      const hasAnyFilters = tagsContainer.querySelectorAll('.filter-tag').length > 0;
-      clearButton.style.display = hasAnyFilters ? 'flex' : 'none';
+      toggleClearButton();
     }
   }
 })();
@@ -6618,8 +6617,7 @@ function updateBPMTag() {
   // Update clear button visibility
   const clearButton = document.querySelector('.circle-x');
   if (clearButton) {
-    const hasAnyFilters = tagsContainer.querySelectorAll('.filter-tag').length > 0;
-    clearButton.style.display = hasAnyFilters ? 'flex' : 'none';
+    toggleClearButton();
   }
 }
 
