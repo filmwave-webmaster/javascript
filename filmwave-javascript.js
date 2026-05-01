@@ -6542,11 +6542,12 @@ function applyBPMFilter() {
       song.style.display = 'none';
       song.setAttribute('data-hidden-by-bpm', 'true');
     } else {
-      // Song passes BPM filter - unhide if BPM hid it
-      if (song.getAttribute('data-hidden-by-bpm') === 'true') {
+      song.removeAttribute('data-hidden-by-bpm');
+      // Only show if not hidden by other filters
+      if (song.getAttribute('data-hidden-by-other') !== 'true' && 
+          song.getAttribute('data-hidden-by-playlist') !== 'true') {
         song.style.display = '';
       }
-      song.removeAttribute('data-hidden-by-bpm');
     }
   });
   
@@ -9941,7 +9942,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         });
         
         return Object.entries(filterGroups).every(([group, filters]) => {
-  return filters.every(f => {
+  return filters.filter(f => f.value !== null || f.keyGroup !== null).every(f => {
             if (group === 'Key' && f.keyGroup) {
               const keyField = fields['Key'] || fields['key'] || '';
               const isMinor = keyField.toLowerCase().includes('minor') || keyField.toLowerCase().includes('min');
@@ -9982,6 +9983,10 @@ if (!filterState.filters.length && !filterState.searchQuery) {
       });
       
       console.log('✅ Manual filter application complete');
+      // Apply BPM filter on top of other filters
+      if (typeof applyBPMFilter === 'function') {
+        setTimeout(() => applyBPMFilter(), 10);
+      }
     }, 50);
       
      setTimeout(() => {
