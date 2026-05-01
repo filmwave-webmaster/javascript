@@ -6670,9 +6670,18 @@ function updateBPMTag() {
     else if (high) tagText = `≤${high} BPM`;
   }
 
-  // Only remove existing tag if we have something to replace it with, or BPM is truly cleared
   const existingTag = tagsContainer.querySelector('[data-bpm-tag]');
-  if (existingTag && !tagText) return; // BPM still active but can't determine text — keep existing tag
+  // Only keep existing tag if inputs are empty BUT localStorage still has real BPM values
+  // (timing issue during restore). If localStorage is also empty, remove the tag.
+  if (existingTag && !tagText) {
+    try {
+      const saved = localStorage.getItem('musicFilters');
+      const bpm = saved ? JSON.parse(saved)?.bpm : null;
+      const hasSavedBPM = !!(bpm?.low || bpm?.high || bpm?.exact);
+      if (!hasSavedBPM) existingTag.remove(); // truly cleared — remove it
+    } catch(e) { existingTag.remove(); }
+    return;
+  }
   if (existingTag) existingTag.remove();
   
   // Create tag if we have text
