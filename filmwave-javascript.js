@@ -6113,6 +6113,16 @@ document.querySelectorAll('[data-filter-type]').forEach(section => {
     }
  });
 
+  // Show/hide mobile filter dot based on any active filter (not search)
+  const mobileFilterDot = document.querySelector('.mobile-filter-dot');
+  if (mobileFilterDot) {
+    const hasActiveFilters =
+      Array.from(document.querySelectorAll('[data-filter-group]:checked, [data-key-group]:checked')).length > 0 ||
+      !!document.querySelector('[data-bpm-tag]') ||
+      !!document.querySelector('[data-shuffle-tag]') ||
+      !!document.querySelector('[data-playlist-filter-tag]');
+    mobileFilterDot.style.display = hasActiveFilters ? 'block' : 'none';
+  }
 }
 
 // START OF INIT BPM FILTER
