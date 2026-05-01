@@ -5124,7 +5124,8 @@ function initSearchAndFilters() {
     });
     
     const durationFilters = selectedFilters.filter(f => f.group === 'Duration');
-    const otherFilters = selectedFilters.filter(f => f.group !== 'Duration');
+    // Skip entries with no value AND no keyGroup — they can't match anything
+    const otherFilters = selectedFilters.filter(f => f.group !== 'Duration' && (f.value !== null || f.keyGroup !== null));
 
     const matchesOtherAttributes = otherFilters.every(filter => {
       let recVal = fields[filter.group];
