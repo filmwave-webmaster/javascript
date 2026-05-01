@@ -3582,10 +3582,12 @@ document.querySelectorAll('.waveform').forEach((wf) => {
   
   darkIcons.forEach(icon => {
     icon.style.setProperty('display', 'flex', 'important');
+    icon.style.backgroundColor = theme === 'dark' ? '#fb8f61' : '';
   });
   
   lightIcons.forEach(icon => {
     icon.style.setProperty('display', 'flex', 'important');
+    icon.style.backgroundColor = theme === 'light' ? '#ddff43' : '';
   });
 }
   
