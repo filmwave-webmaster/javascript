@@ -5084,151 +5084,19 @@ function toggleClearButton() {
   const searchBar = document.querySelector('[data-filter-search="true"]');
   if (!clearBtn) return;
 
-  const g = window.musicPlayerPersistent;
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-  const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
-  const hasBPMFilter = document.querySelector('[data-bpm-tag]') !== null;
-  const isShuffled = g && g.isShuffled;
-  
-  // Check if we have saved filters (includes playlist filter and BPM)
-  let hasSavedFilters = false;
-  let hasSavedPlaylistFilter = false;
-  let hasSavedBPMFilter = false;
-  try {
-    const saved = localStorage.getItem('musicFilters');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      hasSavedFilters = parsed.filters && parsed.filters.length > 0;
-      // Check for BPM in saved state
-      if (parsed.bpm) {
-        const bpm = parsed.bpm;
-        hasSavedBPMFilter = !!(bpm.exact || bpm.low || bpm.high);
-      }
-    }
-    const savedPlaylist = localStorage.getItem('playlistFilter');
-    if (savedPlaylist) {
-      const parsedPlaylist = JSON.parse(savedPlaylist);
-      hasSavedPlaylistFilter = !!(parsedPlaylist && parsedPlaylist.id);
-    }
-  } catch (e) {}
-
-  // On non-music pages, always hide the clear button
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (!isMusicPage) {
-    clearBtn.style.display = 'none';
-    return;
-  }
-
-  // Show button if active filters OR saved playlist/BPM filter (for music page during restore)
-const shouldShow = hasSearch || hasFilters || hasPlaylistFilter || hasBPMFilter || isShuffled ||
-                     (isMusicPage && (hasSavedPlaylistFilter || hasSavedBPMFilter));
-  clearBtn.style.display = shouldShow ? 'flex' : 'none';
+  clearBtn.style.display = hasSearch ? 'flex' : 'none';
 }
 
 function clearAllFilters() {
-  // Always clear BPM
-  if (typeof clearBPM === 'function') clearBPM();
-  
-  const g = window.musicPlayerPersistent;
+  // Only clear the search bar — individual filter tags have their own × buttons
   const searchBar = document.querySelector('[data-filter-search="true"]');
-  const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]')).some(input => input.checked);
-  const hasPlaylistFilter = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked') !== null;
-  const isShuffled = g && g.isShuffled;
-  
-  if (!hasSearch && !hasFilters && !hasPlaylistFilter && !isShuffled) {
-    return;
-  }
-  
-  if (searchBar && hasSearch) {
+  if (searchBar && searchBar.value.trim().length > 0) {
     searchBar.value = '';
     searchBar.dispatchEvent(new Event('input', { bubbles: true }));
   }
-  
-  // Clear checkbox filters
-  const tagRemoveButtons = document.querySelectorAll('.filter-tag-remove');
-  if (tagRemoveButtons.length > 0) {
-    tagRemoveButtons.forEach((btn) => btn.click());
-  } else {
-    document.querySelectorAll('[data-filter-group]').forEach(input => {
-      if (input.checked) {
-        input.checked = false;
-        const wrapper = input.closest('.w-checkbox, .w-radio, .checkbox-single-select-wrapper, .radio-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    });
-  }
-  
-  // Clear playlist filter
-const playlistCheckbox = document.querySelector('.filter-category.playlists input[type="checkbox"]:checked');
-if (playlistCheckbox) {
-  playlistCheckbox.checked = false;
-  const wrapper = playlistCheckbox.closest('.filter-item');
-  if (wrapper) {
-    wrapper.classList.remove('is-selected');
-    const textEl = wrapper.querySelector('.filter-text');
-    if (textEl) textEl.style.color = '';
-  }
-  // Reset checkbox icon state
-  const checkboxIcon = playlistCheckbox.closest('.w-checkbox')?.querySelector('.w-checkbox-input');
-  if (checkboxIcon) {
-    checkboxIcon.classList.remove('w--redirected-checked');
-  }
-  playlistCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-}
-  
-  // Remove playlist filter tag
-  const playlistTag = document.querySelector('[data-playlist-filter-tag]');
-  if (playlistTag) playlistTag.remove();
-
-// Remove shuffle tag and undo shuffle
-  const shuffleTag = document.querySelector('[data-shuffle-tag]');
-  if (shuffleTag) {
-    shuffleTag.remove();
-    undoShuffle();
-    localStorage.removeItem('filmwaveShuffled');
-  }
-  // Clear playlist filter from localStorage
-if (typeof window.clearPlaylistFilterStorage === 'function') {
-  window.clearPlaylistFilterStorage();
-}
-
-  // Reset search placeholder
-  updateSearchPlaceholder(null);
-  
-  // Show all songs and clear filter attributes
-  document.querySelectorAll('.song-wrapper').forEach(song => {
-    song.removeAttribute('data-hidden-by-other');
-    song.removeAttribute('data-hidden-by-playlist');
-    song.style.display = '';
-  });
-  
-  // Save empty state
-  localStorage.setItem('musicFilters', JSON.stringify({
-    filters: [],
-    searchQuery: ''
-  }));
-  
   toggleClearButton();
-  updateMusicTileSectionVisibility();
-  
-  if (typeof applyFilters === 'function') {
-    applyFilters();
-  }
-  
-  updateFilterDots();
-
-  const isMusicPage = !!document.querySelector('.music-list-wrapper');
-  if (isMusicPage && typeof initSearchAndFilters === 'function') {
-    console.log('🔄 Reinitializing search after clear');
-    setTimeout(() => {
-      initSearchAndFilters();
-    }, 100);
-  }
 }
-
 function initSearchAndFilters() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
