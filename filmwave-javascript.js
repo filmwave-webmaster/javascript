@@ -4596,6 +4596,10 @@ function showSharpFlat(which) {
       sharpMajMin = null;
       styleMajMinButton(sharpMajorButton, false);
       sharpMajorButton.checked = false;
+      // Clear any inline color set during restore
+      const majWrapper = sharpMajorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+      const majLabel = majWrapper?.querySelector('.filter-text, .w-form-label, .radio-button-label');
+      if (majLabel) majLabel.style.color = '';
       sharpMajorButton.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
       sharpMajMin = 'major';
@@ -6154,7 +6158,7 @@ function updateMusicTileSectionVisibility() {
   const g = window.musicPlayerPersistent;
   const searchBar = document.querySelector('[data-filter-search="true"]');
   const hasSearch = searchBar && searchBar.value.trim().length > 0;
-  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked')).length > 0;
+  const hasFilters = Array.from(document.querySelectorAll('[data-filter-group]:checked, [data-key-group]:checked')).length > 0;
   const hasPlaylistFilter = !!localStorage.getItem('playlistFilter');
   const isShuffled = g.isShuffled;
   const hasBPM = (() => {
