@@ -5024,7 +5024,7 @@ window.keyFilterSystemReady = true;
 
 // Expose clear function globally so the one-time document listener can access closure vars
   window._clearKeyFilter = function() {
-    document.querySelectorAll('[data-filter-group="Key"]').forEach(radio => {
+    document.querySelectorAll('[data-filter-group="Key"], [data-key-group]').forEach(radio => {
       radio.checked = false;
     });
     document.querySelectorAll('[data-filter-type="key"] .is-active').forEach(el => {
@@ -5046,7 +5046,7 @@ window.keyFilterSystemReady = true;
     if (typeof updateFilterDots === 'function') updateFilterDots();
     if (typeof toggleClearButton === 'function') toggleClearButton();
     if (typeof saveFilterState === 'function') saveFilterState();
-    document.querySelectorAll('[data-filter-group="Key"]').forEach(r => {
+    document.querySelectorAll('[data-filter-group="Key"], [data-key-group]').forEach(r => {
       r.dispatchEvent(new Event('change', { bubbles: true }));
     });
   };
