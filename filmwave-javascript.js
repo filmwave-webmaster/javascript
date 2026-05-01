@@ -6718,10 +6718,11 @@ if (!window._bpmFilterChangeListenerAttached) {
       document.querySelectorAll('[data-hidden-by-bpm]').forEach(song => {
         song.removeAttribute('data-hidden-by-bpm');
       });
-      setTimeout(() => {
+      clearTimeout(window._bpmFilterDebounce);
+      window._bpmFilterDebounce = setTimeout(() => {
         if (typeof applyBPMFilter === 'function') applyBPMFilter();
         setTimeout(() => { if (typeof updateBPMTag === 'function') updateBPMTag(); }, 100);
-      }, 0);
+      }, 150);
     }
     if (e.target.matches('[data-filter-group]')) {
       if (typeof updateFilterDots === 'function') updateFilterDots();
