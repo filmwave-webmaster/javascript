@@ -8090,7 +8090,6 @@ if (document.readyState === 'loading') {
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.before(() => {
     sessionStorage.setItem('isBarbaNavigation', 'true');
-    window._keyFilterRestoreComplete = false; // Reset for new navigation
     window._isFreshPageLoad = false;
     
     // Reset filter initialization flags since DOM will be replaced
@@ -10145,8 +10144,6 @@ if (filterState.bpm && typeof restoreBPMState === 'function') {
  */
 function restoreKeyFilterState(keyState) {
   if (!keyState) return;
-  if (window._keyFilterRestoreComplete) return; // already restored this navigation
-  window._keyFilterRestoreComplete = true;
   
   console.log('🎹 Restoring Key filter state:', keyState);
   
@@ -10223,33 +10220,41 @@ if (keyState.sharpFlat === 'flat' && flatButton) {
     // Wait for Sharp/Flat to render, then restore Major/Minor
     setTimeout(() => {
       // Restore Sharp section Major/Minor - click the actual INPUT
+      // Restore maj/min by directly setting state — do NOT click (would toggle off if already set)
       if (keyState.sharpMajMin === 'major') {
         const sharpMajorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="major"]');
-        if (sharpMajorInput) {
-          console.log('🎯 Clicking Sharp Major input');
-          sharpMajorInput.click();
+        if (sharpMajorInput && !sharpMajorInput.checked) {
+          sharpMajorInput.checked = true;
+          sharpMajorInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
+        const w = sharpMajorInput?.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+        if (w) w.classList.add('is-active');
       } else if (keyState.sharpMajMin === 'minor') {
         const sharpMinorInput = keyAccordion.querySelector('.sharp-key-column [data-key-group="minor"]');
-        if (sharpMinorInput) {
-          console.log('🎯 Clicking Sharp Minor input');
-          sharpMinorInput.click();
+        if (sharpMinorInput && !sharpMinorInput.checked) {
+          sharpMinorInput.checked = true;
+          sharpMinorInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
+        const w = sharpMinorInput?.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+        if (w) w.classList.add('is-active');
       }
-      
-      // Restore Flat section Major/Minor - click the actual INPUT
+
       if (keyState.flatMajMin === 'major') {
         const flatMajorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="major"]');
-        if (flatMajorInput) {
-          console.log('🎯 Clicking Flat Major input');
-          flatMajorInput.click();
+        if (flatMajorInput && !flatMajorInput.checked) {
+          flatMajorInput.checked = true;
+          flatMajorInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
+        const w = flatMajorInput?.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+        if (w) w.classList.add('is-active');
       } else if (keyState.flatMajMin === 'minor') {
         const flatMinorInput = keyAccordion.querySelector('.flat-key-column [data-key-group="minor"]');
-        if (flatMinorInput) {
-          console.log('🎯 Clicking Flat Minor input');
-          flatMinorInput.click();
+        if (flatMinorInput && !flatMinorInput.checked) {
+          flatMinorInput.checked = true;
+          flatMinorInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
+        const w = flatMinorInput?.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
+        if (w) w.classList.add('is-active');
       }
 
       // Restore individual key in flat column if flat is active
