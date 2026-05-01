@@ -6545,20 +6545,8 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
     // Add or update BPM in filters
     filterState.bpm = state;
     
-    // Preserve BPM state — managed separately by saveBPMState, must not be overwritten
-  try {
-    const existing = JSON.parse(localStorage.getItem('musicFilters') || '{}');
-    if (existing.bpm) filterState.bpm = existing.bpm;
-  } catch(e) {}
-
-  // Preserve BPM state — managed separately by saveBPMState, must not be overwritten
-  try {
-    const existing = JSON.parse(localStorage.getItem('musicFilters') || '{}');
-    if (existing.bpm) filterState.bpm = existing.bpm;
-  } catch(e) {}
-
-  localStorage.setItem('musicFilters', JSON.stringify(filterState));
-  console.log('💾 Saved filter state (with Key state):', filterState);
+    localStorage.setItem('musicFilters', JSON.stringify(filterState));
+  console.log('💾 BPM state saved:', state);
 }
   
   /**
@@ -9657,6 +9645,12 @@ if (flatMajorInput?.checked) {
   filterState.keyState.flatMajMin = 'minor';
 }
   
+  // Preserve BPM state — saveBPMState manages it separately, saveFilterState must not overwrite it
+  try {
+    const existing = JSON.parse(localStorage.getItem('musicFilters') || '{}');
+    if (existing.bpm) filterState.bpm = existing.bpm;
+  } catch(e) {}
+
   localStorage.setItem('musicFilters', JSON.stringify(filterState));
   console.log('💾 Saved filter state (with Key state):', filterState);
 }
