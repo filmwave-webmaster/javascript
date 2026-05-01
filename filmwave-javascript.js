@@ -3829,9 +3829,26 @@ function initDynamicTagging() {
       tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
         input.checked = false;
         const wrapper = input.closest('.radio-wrapper, .w-radio, .checkbox-single-select-wrapper');
-        if (wrapper) wrapper.classList.remove('is-active');
+        if (wrapper) {
+          wrapper.classList.remove('is-active');
+          const label = wrapper.querySelector('.filter-text, .w-form-label, .radio-button-label');
+          if (label) label.style.color = '';
+        }
+        // For Key radios, also clear all other key column active states
+        if (input.getAttribute('data-filter-group') === 'Key') {
+          document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEach(r => {
+            const otherWrapper = r.closest('.radio-wrapper, .w-radio');
+            if (otherWrapper) {
+              otherWrapper.classList.remove('is-active');
+              const otherLabel = otherWrapper.querySelector('.filter-text, .w-form-label, .radio-button-label');
+              if (otherLabel) otherLabel.style.color = '';
+            }
+          });
+        }
         input.dispatchEvent(new Event('change', { bubbles: true }));
         tag.remove();
+        if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
+        if (typeof saveFilterState === 'function') saveFilterState();
       });
       
       return tag;
