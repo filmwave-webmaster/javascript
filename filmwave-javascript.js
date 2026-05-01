@@ -9763,11 +9763,13 @@ if (!filterState.filters.length && !filterState.searchQuery) {
     const tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     
-    if (tagsContainer) {
+    // Don't hide tags if shuffle tag already exists (shuffle restore handles its own reveal)
+    const hasShuffleTag = tagsContainer?.querySelector('[data-shuffle-tag]');
+    if (tagsContainer && !hasShuffleTag) {
       tagsContainer.style.opacity = '0';
       tagsContainer.style.transition = 'none';
     }
-    if (clearButton) {
+    if (clearButton && !hasShuffleTag) {
       clearButton.style.opacity = '0';
       clearButton.style.transition = 'none';
     }
