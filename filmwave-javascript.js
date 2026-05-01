@@ -6510,7 +6510,7 @@ function stopDrag() {
 /**
  * Clear all BPM values
  */
-function clearBPM() {
+window.clearBPM = function clearBPM() {
   window._bpmTagSuppressed = true;
   setTimeout(() => { window._bpmTagSuppressed = false; }, 500);
   // Reset inputs
@@ -6540,8 +6540,9 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
   if (mainClearButton) {
     const hasOtherFilters = document.querySelector('.filter-tags-container')?.querySelectorAll('.filter-tag:not([data-bpm-tag])').length > 0;
     mainClearButton.style.display = hasOtherFilters ? 'flex' : 'none';
-  }
+ }
 }
+window.clearBPM = clearBPM;
   
   /**
    * Save BPM state to localStorage
