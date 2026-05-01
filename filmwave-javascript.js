@@ -4876,14 +4876,17 @@ document.querySelectorAll('[data-filter-group="Key"][data-filter-value]').forEac
     if (radio.checked) {
       const tagsContainer = document.querySelector('.filter-tags-container');
       if (tagsContainer) {
-        const allKeyTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-        allKeyTags.forEach(tag => {
+        // Only remove tags that are key-specific (not Mood, Genre, etc.)
+        const allTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
+        allTags.forEach(tag => {
           const tagText = tag.querySelector('.filter-tag-text')?.textContent.trim();
+          const tagGroup = tag.dataset.filterGroup || '';
           const matchingRadio = document.querySelector(`[data-filter-group="Key"][data-filter-value]:checked`);
           const matchingLabel = matchingRadio?.closest('.w-radio, .radio-wrapper')?.querySelector('label');
           const currentKeyText = matchingLabel?.textContent.trim();
           
-          if (tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
+          // Only remove Key group tags (not Mood, Genre, BPM, etc.)
+          if (tagGroup === 'Key' && tagText && tagText !== currentKeyText && tagText !== 'Major' && tagText !== 'Minor') {
             tag.remove();
           }
         });
