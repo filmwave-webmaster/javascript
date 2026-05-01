@@ -11912,7 +11912,7 @@ if (playlistRow && playlistRow.dataset.playlistId) {
           wrapper.style.setProperty('width', '100%', 'important');
           wrapper.style.setProperty('height', '100%', 'important');
           wrapper.style.setProperty('z-index', '10000', 'important');
-          wrapper.style.setProperty('background', 'rgba(0,0,0,0.7)', 'important');
+          wrapper.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
           wrapper.style.setProperty('align-items', 'center', 'important');
           wrapper.style.setProperty('justify-content', 'center', 'important');
         }
