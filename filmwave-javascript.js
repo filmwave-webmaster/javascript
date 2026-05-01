@@ -4167,6 +4167,15 @@ function injectKeyFilterCSS() {
 }
 injectKeyFilterCSS();
 
+// Prevent filter tag text from wrapping
+(function() {
+  if (document.getElementById('filter-tag-nowrap')) return;
+  const s = document.createElement('style');
+  s.id = 'filter-tag-nowrap';
+  s.textContent = '.filter-tag { white-space: nowrap; }';
+  document.head.appendChild(s);
+})();
+
 function initKeyFilterSystem() {
   console.log('🎹 Initializing Key Filter System');
   
