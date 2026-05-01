@@ -6513,15 +6513,23 @@ function stopDrag() {
 window.clearBPM = function clearBPM() {
   window._bpmTagSuppressed = true;
   setTimeout(() => { window._bpmTagSuppressed = false; }, 500);
-  // Reset inputs
-  if (exactInput) exactInput.value = '';
-  if (lowInput) lowInput.value = '';
-  if (highInput) highInput.value = '';
+  // Always query fresh from DOM — closure vars may be stale after Barba navigation
+  const _exactInput = document.querySelector('.bpm-input-field');
+  const _lowInput = document.querySelector('.bpm-input-field-low');
+  const _highInput = document.querySelector('.bpm-input-field-high');
+  const _exactHandle = document.querySelector('.slider-handle-exact');
+  const _lowHandle = document.querySelector('.slider-handle-low');
+  const _highHandle = document.querySelector('.slider-handle-high');
+  const _track = document.querySelector('.slider-range-wrapper .slider-track');
+  const _sliderWidth = _track?.offsetWidth || SLIDER_WIDTH;
+
+  if (_exactInput) _exactInput.value = '';
+  if (_lowInput) _lowInput.value = '';
+  if (_highInput) _highInput.value = '';
   
-  // Reset slider positions
-  if (sliderHandleExact) sliderHandleExact.style.left = '0px';
-  if (sliderHandleLow) sliderHandleLow.style.left = '0px';
-  if (sliderHandleHigh) sliderHandleHigh.style.left = `${SLIDER_WIDTH}px`;
+  if (_exactHandle) _exactHandle.style.left = '0px';
+  if (_lowHandle) _lowHandle.style.left = '0px';
+  if (_highHandle) _highHandle.style.left = `${_sliderWidth}px`;
   
   saveBPMState();
   
@@ -6648,11 +6656,11 @@ function updateBPMTag() {
   const tagsContainer = document.querySelector('.filter-tags-container');
   if (!tagsContainer) return;
   
-  // Get current values — fall back to localStorage if inputs are empty (timing issues)
+  // Always query fresh from DOM — closure vars may be stale after Barba navigation
   let tagText = '';
-  let low = lowInput?.value;
-  let high = highInput?.value;
-  let exact = exactInput?.value;
+  let low = document.querySelector('.bpm-input-field-low')?.value;
+  let high = document.querySelector('.bpm-input-field-high')?.value;
+  let exact = document.querySelector('.bpm-input-field')?.value;
 
   if (!low && !high && !exact) {
     try {
@@ -6661,7 +6669,6 @@ function updateBPMTag() {
       if (bpm) { low = bpm.low; high = bpm.high; exact = bpm.exact; }
     } catch(e) {}
   }
-
   if (currentMode === 'exact') {
     if (exact) tagText = `${exact} BPM`;
   } else {
