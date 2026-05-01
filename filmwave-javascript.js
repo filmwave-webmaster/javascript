@@ -568,7 +568,8 @@ async function initMusicPage() {
     displaySongs(songs);
 
     // Re-apply shuffled order if shuffle was active before Barba navigation
-    if (g.isShuffled && g.filteredSongIds && g.filteredSongIds.length) {
+    const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
+    if (wasShuffled && g.filteredSongIds && g.filteredSongIds.length) {
       const container = document.querySelector('.music-list-wrapper');
       if (container) {
         g.filteredSongIds.forEach(songId => {
@@ -576,6 +577,7 @@ async function initMusicPage() {
           if (card) container.appendChild(card);
         });
       }
+      g.isShuffled = true;
       createShuffleTag();
       updateMusicTileSectionVisibility();
     }
@@ -3075,6 +3077,7 @@ function initShuffleSongs() {
     
     // Mark as shuffled
     g.isShuffled = true;
+    localStorage.setItem('filmwaveShuffled', 'true');
     
     // Hide music tile section
     const musicTileSection = document.querySelector('.music-tile-section');
@@ -3142,6 +3145,7 @@ function undoShuffle() {
   // Clear shuffle state
   g.isShuffled = false;
   g.originalSongOrder = null;
+  localStorage.removeItem('filmwaveShuffled');
   g.originalWaveformData = null;
   g.originalAllWavesurfers = null;
   
@@ -5140,8 +5144,8 @@ if (playlistCheckbox) {
   if (shuffleTag) {
     shuffleTag.remove();
     undoShuffle();
+    localStorage.removeItem('filmwaveShuffled');
   }
-
   // Clear playlist filter from localStorage
 if (typeof window.clearPlaylistFilterStorage === 'function') {
   window.clearPlaylistFilterStorage();
