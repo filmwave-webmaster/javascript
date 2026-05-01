@@ -4991,52 +4991,6 @@ window.keyFilterSystemReady = true;
   sharpMajMin = sharpMaj || null;
   flatMajMin = flatMaj || null;
 };
-// Clear button handling for Key filter - attach to document to catch all clears
-document.addEventListener('click', (e) => {
-  if (e.target.matches('.circle-x, .circle-x *')) {
-    console.log('🧹 Clear button clicked, cleaning Key filters...');
-    setTimeout(() => {
-      // Uncheck all Key radios
-      const allKeyRadios = document.querySelectorAll('[data-filter-group="Key"]');
-      console.log('Found Key radios to clear:', allKeyRadios.length);
-      allKeyRadios.forEach(radio => {
-        radio.checked = false;
-      });
-      
-      // Remove ALL active states from Key section
-      const activeInKey = document.querySelectorAll('[data-filter-type="key"] .is-active');
-      console.log('Found active wrappers to clear:', activeInKey.length);
-      activeInKey.forEach(el => {
-        el.classList.remove('is-active');
-      });
-      
-      // Reset state variables
-      sharpMajMin = null;
-      flatMajMin = null;
-      
-      console.log('✅ Cleared Key filter states');
-
-      // Also remove all Key-related tags from container
-      const tagsContainer = document.querySelector('.filter-tags-container');
-      if (tagsContainer) {
-        const allTags = Array.from(tagsContainer.querySelectorAll('.filter-tag'));
-        allTags.forEach(tag => {
-          const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
-          // Remove any tag that looks like a key (single letter) or Major/Minor
-          if (text && (text.length <= 3 || text === 'Major' || text === 'Minor')) {
-            tag.remove();
-          }
-        });
-      }
-      
-      // ✅ ALSO CALL clearAllFilters to handle search and other filters
-      if (typeof clearAllFilters === 'function') {
-        clearAllFilters();
-      }
-      
-    }, 100);
-  }
-});
 
 // Key Clear button
 document.addEventListener('click', (e) => {
@@ -6631,12 +6585,6 @@ function setupEventListeners() {
   
   // Clear button
   clearButton?.addEventListener('click', clearBPM);
-
-  // Clear all button (circle-x) also clears BPM
-  const mainClearButton = document.querySelector('.circle-x');
-  if (mainClearButton) {
-    mainClearButton.addEventListener('click', clearBPM);
-  }
     
   // Slider handles - mousedown events
   sliderHandleLow?.addEventListener('mousedown', (e) => startDrag(e, sliderHandleLow));
