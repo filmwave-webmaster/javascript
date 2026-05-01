@@ -963,7 +963,7 @@ audio.addEventListener('timeupdate', () => {
   // Get computed CSS variable values
   const styles = getComputedStyle(document.body);
   const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
-  const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+  const progressColor = styles.getPropertyValue('--').trim() || '#191919';
   
   const tempWavesurfer = WaveSurfer.create({
     container: tempContainer,
@@ -1256,7 +1256,7 @@ function drawMasterWaveform(peaks, progress) {
   ctx.clearRect(0, 0, displayWidth, displayHeight);
 
   const styles = getComputedStyle(document.body);
-  const progressColor = styles.getPropertyValue('--color-2').trim() || '#191919';
+  const progressColor = styles.getPropertyValue('--').trim() || '#191919';
   const waveColor = styles.getPropertyValue('--color-8').trim() || '#e2e2e2';
 
   const centerY = displayHeight / 2;
@@ -2360,7 +2360,7 @@ const waveColor =
 
 const progressColor =
   styles.getPropertyValue('--waveform-progress-color').trim() ||
-  styles.getPropertyValue('--color-2').trim() ||
+  styles.getPropertyValue('--').trim() ||
   '#ffffff';
 
 
@@ -2643,7 +2643,7 @@ if (waveformContainer._wavesurfer) {
     // Get computed CSS variable values
     const styles = getComputedStyle(document.body);
     const waveColor = styles.getPropertyValue('--color-8').trim();
-    const progressColor = styles.getPropertyValue('--color-2').trim();
+    const progressColor = styles.getPropertyValue('--').trim();
 
     let wavesurfer;
 
@@ -3478,7 +3478,8 @@ function initDarkMode() {
     '--color-17': 'rgba(255, 255, 255, 0.2)',
     '--color-18': 'rgba(255, 255, 255, 0.2)',
     '--color-19': '#3d3d3d',
-    '--color-20': '#141414'
+    '--color-20': '#141414',
+    '--color-21': '#242424'
   };
   
   // Update waveform colors function
