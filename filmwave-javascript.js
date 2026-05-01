@@ -228,6 +228,25 @@ window.navCache = {
   }
 })();
 
+// Remove hover states on touch devices for specific filter elements
+(function() {
+  if (document.getElementById('touch-filter-no-hover')) return;
+  const s = document.createElement('style');
+  s.id = 'touch-filter-no-hover';
+  s.textContent = `@media (hover: none) and (pointer: coarse) {
+    .filter-header:hover,
+    .filter-item:hover {
+      background-color: unset !important;
+      color: unset !important;
+      opacity: unset !important;
+      transform: unset !important;
+      box-shadow: unset !important;
+      border-color: unset !important;
+    }
+  }`;
+  document.head.appendChild(s);
+})();
+
 /* ============================================================
    DASHBOARD WELCOME TEXT - GENERATE FROM MEMBERSTACK
    ============================================================ */
