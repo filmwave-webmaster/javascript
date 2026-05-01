@@ -3675,11 +3675,16 @@ function applyTheme(theme) {
       e.preventDefault();
       e.stopPropagation();
       
-      // No theme toggle on home page
+      // No theme change on home page
       const isHomePage = window.location.pathname === '/' || window.location.pathname === '';
-      if (isHomePage) {
-        return;
-      }
+      if (isHomePage) return;
+      
+      // Determine which icon was clicked
+      const clickedDark = e.target.closest('.dark-mode-icon');
+      const clickedLight = e.target.closest('.light-mode-icon');
+      if (!clickedDark && !clickedLight) return;
+      
+      const newTheme = clickedDark ? 'dark' : 'light';
       
       // Check if user is logged in
       let isLoggedIn = false;
@@ -3690,13 +3695,7 @@ function applyTheme(theme) {
         }
       } catch (e) {}
       
-      // Only allow theme toggle if logged in
-      if (!isLoggedIn) {
-        return; // Do nothing for logged out users
-      }
-      
-      const currentTheme = localStorage.getItem('filmwaveTheme') || 'light';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      if (!isLoggedIn) return;
       
       localStorage.setItem('filmwaveTheme', newTheme);
       localStorage.setItem('filmwaveThemePreference', newTheme);
