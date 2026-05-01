@@ -4136,6 +4136,7 @@ function injectKeyFilterCSS() {
       width: 100%;
       display: flex;
       flex-direction: column;
+      min-height: 130px;
     }
     .key-column-wrapper::before {
       content: '';
@@ -4938,19 +4939,6 @@ allWrappers.forEach(wrapper => wrapper.classList.remove('is-active'));
 console.log('✅ Key Filter System initialized');
 window.keyFilterSystemReady = true;
 
-// Set key-column-wrapper height based on tallest column
-requestAnimationFrame(() => {
-  const colWrapper = keyAccordion.querySelector('.key-column-wrapper');
-  const sharpCol = keyAccordion.querySelector('.sharp-key-column');
-  if (colWrapper && sharpCol) {
-    // Temporarily show to measure real height
-    const wasHidden = sharpCol.style.display === 'none';
-    if (wasHidden) { sharpCol.style.visibility = 'hidden'; sharpCol.style.display = 'block'; }
-    const h = sharpCol.scrollHeight;
-    if (wasHidden) { sharpCol.style.display = 'none'; sharpCol.style.visibility = ''; }
-    if (h > 0) colWrapper.style.minHeight = `${h}px`;
-  }
-});
   window.setKeyMajMinState = function(sharpMaj, flatMaj) {
   sharpMajMin = sharpMaj || null;
   flatMajMin = flatMaj || null;
