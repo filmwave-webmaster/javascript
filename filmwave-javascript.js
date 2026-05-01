@@ -4587,7 +4587,10 @@ function showSharpFlat(which) {
   
   if (sharpMajorButton) {
   const sharpMajorWrapper = sharpMajorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
-  (sharpMajorWrapper || sharpMajorButton).addEventListener('click', (e) => {
+  const _smajTarget = sharpMajorWrapper || sharpMajorButton;
+  if (!_smajTarget._majMinListenerAttached) {
+    _smajTarget._majMinListenerAttached = true;
+  _smajTarget.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4658,13 +4661,17 @@ if (tagsContainer && !Array.from(tagsContainer.querySelectorAll('.filter-tag-tex
       }
     }
   }, true);
+  } // end _majMinListenerAttached guard
 }
 
 // SHARP MINOR
   
   if (sharpMinorButton) {
   const sharpMinorWrapper = sharpMinorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
-  (sharpMinorWrapper || sharpMinorButton).addEventListener('click', (e) => {
+  const _sminTarget = sharpMinorWrapper || sharpMinorButton;
+  if (!_sminTarget._majMinListenerAttached) {
+    _sminTarget._majMinListenerAttached = true;
+  _sminTarget.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4732,13 +4739,17 @@ if (tagsContainer && !Array.from(tagsContainer.querySelectorAll('.filter-tag-tex
       }
     }
   }, true);
+  } // end _majMinListenerAttached guard
 }
 
 // FLAT MAJOR
   
   if (flatMajorButton) {
   const flatMajorWrapper = flatMajorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
-  (flatMajorWrapper || flatMajorButton).addEventListener('click', (e) => {
+  const _fmajTarget = flatMajorWrapper || flatMajorButton;
+  if (!_fmajTarget._majMinListenerAttached) {
+    _fmajTarget._majMinListenerAttached = true;
+  _fmajTarget.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4804,13 +4815,17 @@ if (tagsContainer && !Array.from(tagsContainer.querySelectorAll('.filter-tag-tex
       }
     }
   }, true);
+  } // end _majMinListenerAttached guard
 }
 
 // FLAT MINOR
   
   if (flatMinorButton) {
   const flatMinorWrapper = flatMinorButton.closest('.maj-wrapper, .min-wrapper, .w-radio, .radio-wrapper');
-  (flatMinorWrapper || flatMinorButton).addEventListener('click', (e) => {
+  const _fminTarget = flatMinorWrapper || flatMinorButton;
+  if (!_fminTarget._majMinListenerAttached) {
+    _fminTarget._majMinListenerAttached = true;
+  _fminTarget.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -4876,6 +4891,7 @@ if (tagsContainer && !Array.from(tagsContainer.querySelectorAll('.filter-tag-tex
       }
     }
   }, true);
+  } // end _majMinListenerAttached guard
 }
 
   
