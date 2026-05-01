@@ -8090,6 +8090,7 @@ if (document.readyState === 'loading') {
 if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.before(() => {
     sessionStorage.setItem('isBarbaNavigation', 'true');
+    window._keyFilterRestoreComplete = false; // Reset for new navigation
     window._isFreshPageLoad = false;
     
     // Reset filter initialization flags since DOM will be replaced
@@ -10144,6 +10145,8 @@ if (filterState.bpm && typeof restoreBPMState === 'function') {
  */
 function restoreKeyFilterState(keyState) {
   if (!keyState) return;
+  if (window._keyFilterRestoreComplete) return; // already restored this navigation
+  window._keyFilterRestoreComplete = true;
   
   console.log('🎹 Restoring Key filter state:', keyState);
   
