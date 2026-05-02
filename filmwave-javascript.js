@@ -10793,6 +10793,18 @@ if (typeof barba !== 'undefined') {
             }
           } catch (e) {}
         }
+        // No saved filters — clear the flag so songs show normally
+        if (!savedState || !JSON.parse(savedState || '{}')?.filters?.length) {
+          if (window._awaitingFilterStability) {
+            window._awaitingFilterStability = false;
+            const ml = document.querySelector('.music-list-wrapper');
+            if (ml) {
+              ml.style.opacity = '1';
+              ml.style.visibility = 'visible';
+              ml.style.pointerEvents = 'auto';
+            }
+          }
+        }
         // Re-attach listeners once after Webflow settles (check 2 = 600ms)
         if (_tagChecks >= 2 && !_listenersReattached) {
           _listenersReattached = true;
