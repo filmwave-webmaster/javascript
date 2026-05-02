@@ -10611,6 +10611,7 @@ if (typeof barba !== 'undefined') {
     const _isMusic = (_nextPath === '/music' || _nextPath === '/music/');
     if (_isMusic) {
       let _tagChecks = 0;
+      let _listenersReattached = false;
       const _tagPoller = setInterval(() => {
         _tagChecks++;
         const tc = document.querySelector('.filter-tags-container');
@@ -10623,10 +10624,16 @@ if (typeof barba !== 'undefined') {
             if (hasFilters && !hasTags) {
               filtersRestored = false;
               attemptRestore();
-              // Re-sync genre pill active states with restored tags
               if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
+              _listenersReattached = false; // force re-attach on next check
             }
           } catch (e) {}
+        }
+        // Re-attach listeners once after Webflow settles (check 2 = 600ms)
+        if (_tagChecks >= 2 && !_listenersReattached) {
+          _listenersReattached = true;
+          initDynamicTagging();
+          if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
         }
         if (_tagChecks >= 5) clearInterval(_tagPoller);
       }, 300);
