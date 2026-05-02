@@ -10073,11 +10073,12 @@ if (!filterState.filters.length && !filterState.searchQuery) {
     }, 50);
       
      setTimeout(() => {
-        if (tagsContainer) {
+        const liveTagsContainer = document.querySelector('.filter-tags-container');
+        if (liveTagsContainer) {
           const seen = new Set();
           const tagsToRemove = [];
           
-          tagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
+          liveTagsContainer.querySelectorAll('.filter-tag').forEach(tag => {
             const text = tag.querySelector('.filter-tag-text')?.textContent.trim();
             const isPlaylistTag = tag.hasAttribute('data-playlist-filter-tag');
             const group = tag.dataset.filterGroup || '';
@@ -10102,13 +10103,15 @@ if (!filterState.filters.length && !filterState.searchQuery) {
         // Use requestAnimationFrame for smoother fade-in
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            if (tagsContainer) {
-              tagsContainer.style.transition = 'opacity 0.3s ease-in-out';
-              tagsContainer.style.opacity = '1';
+            const liveTagsContainer2 = document.querySelector('.filter-tags-container');
+            const liveClearButton = document.querySelector('.circle-x');
+            if (liveTagsContainer2) {
+              liveTagsContainer2.style.transition = 'opacity 0.3s ease-in-out';
+              liveTagsContainer2.style.opacity = '1';
             }
-            if (clearButton) {
-              clearButton.style.transition = 'opacity 0.3s ease-in-out';
-              clearButton.style.opacity = '1';
+            if (liveClearButton) {
+              liveClearButton.style.transition = 'opacity 0.3s ease-in-out';
+              liveClearButton.style.opacity = '1';
             }
             console.log('✨ Tags and clear button faded in');
           });
