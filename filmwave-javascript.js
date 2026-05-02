@@ -6529,7 +6529,6 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
     mainClearButton.style.display = hasOtherFilters ? 'flex' : 'none';
  }
 }
-}
   
   /**
    * Save BPM state to localStorage
