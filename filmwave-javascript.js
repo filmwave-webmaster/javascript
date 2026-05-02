@@ -3836,17 +3836,26 @@ function initDynamicTagging() {
       return;
     }
     
-    // Forward clicks on the whole single-select button to its checkbox
+    // Make entire single-select button area clickable including text
     document.querySelectorAll('.filter-category.single-select').forEach(btn => {
       if (btn._singleSelectClickInit) return;
       btn._singleSelectClickInit = true;
-      btn.addEventListener('click', (e) => {
+
+      // Ensure text is pointer-events enabled so touch works
+      const text = btn.querySelector('.filter-single-select-text');
+      if (text) text.style.pointerEvents = 'auto';
+
+      // Use touchend for mobile, click for desktop
+      const handler = (e) => {
         const checkbox = btn.querySelector('input[type="checkbox"]');
         if (!checkbox) return;
-        // Only forward if click didn't come from the checkbox itself
         if (e.target === checkbox) return;
+        e.preventDefault();
         checkbox.click();
-      });
+      };
+
+      btn.addEventListener('click', handler);
+      btn.addEventListener('touchend', handler, { passive: false });
     });
     
     function createTag(input, labelText, radioName = null) {
