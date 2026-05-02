@@ -8175,6 +8175,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
   barba.hooks.before(() => {
     sessionStorage.setItem('isBarbaNavigation', 'true');
     window._isFreshPageLoad = false;
+    filtersRestored = false; // Reset before each navigation so restore runs fresh
     
     // Reset filter initialization flags since DOM will be replaced
     const g = window.musicPlayerPersistent;
@@ -10580,7 +10581,6 @@ if (typeof barba !== 'undefined') {
         setTimeout(() => createShuffleTag(), 50);
       }
     }
-    filtersRestored = false;
     
     setTimeout(() => {
       const musicList = document.querySelector('.music-list-wrapper');
