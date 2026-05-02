@@ -8156,8 +8156,9 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     }
 
     // Clear _dynamicTaggingInit flags so initDynamicTagging re-attaches listeners on new DOM
-    document.querySelectorAll('[data-filter-group], .filter-list label.radio-wrapper, .filter-list .w-radio').forEach(el => {
+document.querySelectorAll('[data-filter-group], .filter-list label.radio-wrapper, .filter-list .w-radio, .filter-category.single-select').forEach(el => {
       delete el._dynamicTaggingInit;
+      delete el._singleSelectClickInit;
     });
   });
   barba.hooks.beforeEnter((data) => {
