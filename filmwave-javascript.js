@@ -3911,6 +3911,8 @@ function initDynamicTagging() {
     checkboxes.forEach(checkbox => {
   // Skip playlist filter checkboxes - they have their own tag system
   if (checkbox.closest('.filter-category.playlists')) return;
+  // Skip single-select checkboxes - handled by document-level delegation (immune to Webflow DOM rebuilds)
+  if (checkbox.closest('.checkbox-single-select-wrapper')) return;
   
   // Skip if already initialized
   if (checkbox._dynamicTaggingInit) return;
@@ -6778,6 +6780,58 @@ initializeSliders();
 setupEventListeners();
 setMode('range', false); // Start in range mode
 
+// Document-level delegated handler for single-select checkbox tag management
+// Immune to Webflow DOM rebuilds since listener is on document, not on the element
+if (!window._singleSelectDelegateInit) {
+  window._singleSelectDelegateInit = true;
+  document.addEventListener('change', function(e) {
+    const checkbox = e.target;
+    if (checkbox.type !== 'checkbox') return;
+    if (!checkbox.closest('.checkbox-single-select-wrapper')) return;
+
+    const wrapper = checkbox.closest('.checkbox-single-select-wrapper');
+    const label = wrapper?.querySelector('.filter-single-select-text');
+    const labelText = label ? label.textContent.trim() : 'Filter';
+    const tc = document.querySelector('.filter-tags-container');
+    if (!tc) return;
+
+    const filterGroup = checkbox.getAttribute('data-filter-group') || '';
+    const filterValue = checkbox.value || labelText;
+
+    if (checkbox.checked) {
+      if (wrapper) wrapper.classList.add('is-active');
+      // Create tag
+      const tag = document.createElement('div');
+      tag.className = 'filter-tag';
+      tag.dataset.filterGroup = filterGroup;
+      tag.dataset.filterValue = filterValue;
+      tag.innerHTML = `
+        <span class="filter-tag-text">${labelText}</span>
+        <span class="filter-tag-remove x-button-style">×</span>
+      `;
+      tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      tc.insertBefore(tag, tc.firstChild);
+    } else {
+      if (wrapper) wrapper.classList.remove('is-active');
+      // Remove matching tag
+      tc.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])').forEach(tag => {
+        const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
+        const tagGroup = tag.dataset.filterGroup || '';
+        if (tagText === labelText && tagGroup === filterGroup) {
+          tag.remove();
+        }
+      });
+    }
+
+    if (typeof saveFilterState === 'function') saveFilterState();
+    if (typeof updateFilterDots === 'function') updateFilterDots();
+    if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
+  });
+}
+  
 // Re-apply BPM filter whenever any other filter changes (de-duplicated across Barba transitions)
 if (!window._bpmFilterChangeListenerAttached) {
   window._bpmFilterChangeListenerAttached = true;
