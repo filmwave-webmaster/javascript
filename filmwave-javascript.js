@@ -234,8 +234,8 @@ window.navCache = {
   const s = document.createElement('style');
   s.id = 'touch-filter-no-hover';
   s.textContent = `@media (hover: none) and (pointer: coarse) {
-    .filter-header:hover,
-    .filter-item:hover {
+    .filter-header:hover:not(:active):not(.is-active):not(:focus),
+    .filter-item:hover:not(:active):not(.is-active):not(:focus) {
       background-color: unset !important;
       color: unset !important;
       opacity: unset !important;
