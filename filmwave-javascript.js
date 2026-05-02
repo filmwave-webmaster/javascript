@@ -8180,7 +8180,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     }
 
     // Clear _dynamicTaggingInit flags so initDynamicTagging re-attaches listeners on new DOM
-document.querySelectorAll('[data-filter-group], .filter-list label.radio-wrapper, .filter-list .w-radio, .filter-category.single-select').forEach(el => {
+document.querySelectorAll('[data-filter-group], .filter-list label.radio-wrapper, .filter-list .w-radio, .filter-category.single-select, .filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]').forEach(el => {
       delete el._dynamicTaggingInit;
       delete el._singleSelectClickInit;
     });
