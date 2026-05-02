@@ -9880,9 +9880,11 @@ if (!filterState.filters.length && !filterState.searchQuery) {
               if (typeof window._clearKeyFilter === 'function') window._clearKeyFilter();
               return;
             }
+            console.log('🗑️ Removing tag:', tag.querySelector('.filter-tag-text')?.textContent, '| input connected:', document.contains(input), '| tag connected:', document.contains(tag));
             input.checked = false;
             input.dispatchEvent(new Event('change', { bubbles: true }));
             tag.remove();
+            console.log('🗑️ After remove — tag still in DOM:', document.contains(tag));
             saveFilterState();
           });
           
