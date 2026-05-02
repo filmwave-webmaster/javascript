@@ -10632,6 +10632,8 @@ if (typeof barba !== 'undefined') {
             if (hasFilters && !hasTags) {
               filtersRestored = false;
               attemptRestore();
+              // Re-sync genre pill active states with restored tags
+              if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
             }
           } catch (e) {}
         }
