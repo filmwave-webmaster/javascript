@@ -3943,7 +3943,8 @@ function initDynamicTagging() {
         if (this.checked) {
           if (wrapper) wrapper.classList.add('is-active');
           const tag = createTag(this, labelText);
-          tagsContainer.insertBefore(tag, tagsContainer.firstChild);
+          const currentTagsContainer = document.querySelector('.filter-tags-container');
+          (currentTagsContainer || tagsContainer).insertBefore(tag, (currentTagsContainer || tagsContainer).firstChild);
           
           // Sync db-filter-pill only for Genre filters
           const filterGroupForPill = this.getAttribute('data-filter-group') || '';
@@ -3960,7 +3961,9 @@ function initDynamicTagging() {
           if (wrapper) wrapper.classList.remove('is-active');
           const filterGroup = this.getAttribute('data-filter-group') || '';
           const filterValue = this.value || labelText;
-          const tags = tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])');
+          // Always query fresh — closure tagsContainer may be stale after Barba navigation
+          const currentTagsContainer = document.querySelector('.filter-tags-container');
+          const tags = (currentTagsContainer || tagsContainer).querySelectorAll('.filter-tag:not([data-playlist-filter-tag])');
           tags.forEach(tag => {
             const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
             const tagGroup = tag.dataset.filterGroup || '';
