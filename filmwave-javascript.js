@@ -1,1 +1,1 @@
-$(cat /home/claude/filmwave-javascript.js | base64)
+$(cat /home/claude/filmwave-javascript.js)
