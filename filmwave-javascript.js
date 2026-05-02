@@ -3911,8 +3911,8 @@ function initDynamicTagging() {
     checkboxes.forEach(checkbox => {
   // Skip playlist filter checkboxes - they have their own tag system
   if (checkbox.closest('.filter-category.playlists')) return;
-  // Skip single-select checkboxes - handled by document-level delegation (immune to Webflow DOM rebuilds)
-  if (checkbox.closest('.checkbox-single-select-wrapper')) return;
+  // Skip ALL filter checkboxes - handled by document-level delegation (immune to Webflow DOM rebuilds)
+  return;
   
   // Skip if already initialized
   if (checkbox._dynamicTaggingInit) return;
@@ -6824,6 +6824,103 @@ if (!window._singleSelectDelegateInit) {
           tag.remove();
         }
       });
+    }
+
+    if (typeof saveFilterState === 'function') saveFilterState();
+    if (typeof updateFilterDots === 'function') updateFilterDots();
+    if (typeof updateMusicTileSectionVisibility === 'function') updateMusicTileSectionVisibility();
+  });
+}
+
+// Document-level delegated handler for ALL filter checkbox tag management
+// Immune to Webflow DOM rebuilds since listener is on document, not on elements
+if (!window._filterCheckboxDelegateInit) {
+  window._filterCheckboxDelegateInit = true;
+  document.addEventListener('change', function(e) {
+    const checkbox = e.target;
+    if (checkbox.type !== 'checkbox') return;
+    if (checkbox.closest('.filter-category.playlists')) return;
+    if (!checkbox.closest('.filter-list, .checkbox-single-select-wrapper')) return;
+
+    const isSingleSelect = !!checkbox.closest('.checkbox-single-select-wrapper');
+    const wrapper = checkbox.closest('.checkbox-single-select-wrapper, .checkbox-include, .checkbox-exclude, .w-checkbox');
+    let label;
+    if (isSingleSelect) {
+      label = wrapper?.querySelector('.filter-single-select-text');
+    } else {
+      label = wrapper?.querySelector('.w-form-label, .filter-text');
+    }
+    const labelText = label ? label.textContent.trim() : 'Filter';
+    const tc = document.querySelector('.filter-tags-container');
+    if (!tc) return;
+
+    const filterGroup = checkbox.getAttribute('data-filter-group') || '';
+    const filterValue = checkbox.value || labelText;
+
+    if (checkbox.checked) {
+      if (wrapper) wrapper.classList.add('is-active');
+      const filterItem = checkbox.closest('.filter-item');
+      if (filterItem) filterItem.classList.add('is-selected');
+
+      // Avoid duplicate tags
+      const existingTag = Array.from(tc.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
+        const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
+        return tagText === labelText && (tag.dataset.filterGroup || '') === filterGroup;
+      });
+      if (!existingTag) {
+        const tag = document.createElement('div');
+        tag.className = 'filter-tag';
+        tag.dataset.filterGroup = filterGroup;
+        tag.dataset.filterValue = filterValue;
+        tag.innerHTML = `
+          <span class="filter-tag-text">${labelText}</span>
+          <span class="filter-tag-remove x-button-style">×</span>
+        `;
+        tag.querySelector('.filter-tag-remove').addEventListener('click', function() {
+          if (filterGroup === 'Key') {
+            if (typeof window._clearKeyFilter === 'function') window._clearKeyFilter();
+            return;
+          }
+          checkbox.checked = false;
+          checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        tc.insertBefore(tag, tc.firstChild);
+      }
+
+      // Sync genre pill
+      if (filterGroup.toLowerCase() === 'genre') {
+        const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill =>
+          pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
+        );
+        if (matchingPill) {
+          matchingPill.classList.add('is-active');
+          matchingPill.style.color = 'var(--color-2)';
+        }
+      }
+    } else {
+      if (wrapper) wrapper.classList.remove('is-active');
+      const filterItem = checkbox.closest('.filter-item');
+      if (filterItem) filterItem.classList.remove('is-selected');
+
+      // Remove matching tag
+      tc.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])').forEach(tag => {
+        const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
+        const tagGroup = tag.dataset.filterGroup || '';
+        if (tagText === labelText && tagGroup === filterGroup) {
+          tag.remove();
+        }
+      });
+
+      // Sync genre pill
+      if (filterGroup.toLowerCase() === 'genre') {
+        const matchingPill = Array.from(document.querySelectorAll('.db-filter-pill')).find(pill =>
+          pill.textContent.trim().replace(/\u00A0/g, ' ').toLowerCase() === labelText.toLowerCase()
+        );
+        if (matchingPill) {
+          matchingPill.classList.remove('is-active');
+          matchingPill.style.color = '';
+        }
+      }
     }
 
     if (typeof saveFilterState === 'function') saveFilterState();
