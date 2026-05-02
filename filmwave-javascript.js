@@ -8314,6 +8314,7 @@ if (typeof barba !== 'undefined' && barba.hooks) {
     sessionStorage.setItem('isBarbaNavigation', 'true');
     window._isFreshPageLoad = false;
     filtersRestored = false;
+    window._awaitingFilterStability = true; // Keep songs hidden until poller confirms filters stable
     
     // Reset filter initialization flags since DOM will be replaced
     const g = window.musicPlayerPersistent;
@@ -10336,13 +10337,14 @@ if (filterState.keyState) {
     
     setTimeout(() => {
   const musicList = document.querySelector('.music-list-wrapper');
-  if (musicList) {
+  // Don't reveal songs yet if Barba filter stability check is pending
+  if (musicList && !window._awaitingFilterStability) {
     musicList.style.opacity = '1';
     musicList.style.visibility = 'visible';
     musicList.style.pointerEvents = 'auto';
     musicList.style.transition = 'opacity 0.3s ease-in-out';
+    console.log('✨ Songs faded in');
   }
-  console.log('✨ Songs faded in');
 }, 100);
 
 // Restore BPM filter state
@@ -10730,7 +10732,7 @@ if (typeof barba !== 'undefined') {
         console.log('Music list opacity:', musicList.style.opacity);
         // Don't force visible if playlist filter is still pending
         const savedPlaylist = localStorage.getItem('playlistFilter');
-        if ((musicList.style.opacity === '0' || musicList.style.opacity === '') && !savedPlaylist) {
+        if ((musicList.style.opacity === '0' || musicList.style.opacity === '') && !savedPlaylist && !window._awaitingFilterStability) {
           console.log('⚡ Forcing songs visible after 500ms');
           musicList.style.opacity = '1';
           musicList.style.visibility = 'visible';
@@ -10776,7 +10778,18 @@ if (typeof barba !== 'undefined') {
               filtersRestored = false;
               attemptRestore();
               if (typeof initMusicPageFilterPills === 'function') initMusicPageFilterPills();
-              _listenersReattached = false; // force re-attach on next check
+              _listenersReattached = false;
+            }
+            // Once tags are confirmed stable, reveal songs
+            if (hasFilters && hasTags && window._awaitingFilterStability) {
+              window._awaitingFilterStability = false;
+              const ml = document.querySelector('.music-list-wrapper');
+              if (ml) {
+                ml.style.transition = 'opacity 0.3s ease-in-out';
+                ml.style.opacity = '1';
+                ml.style.visibility = 'visible';
+                ml.style.pointerEvents = 'auto';
+              }
             }
           } catch (e) {}
         }
