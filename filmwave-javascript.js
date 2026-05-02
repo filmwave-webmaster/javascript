@@ -3869,25 +3869,13 @@ function initDynamicTagging() {
       if (btn._singleSelectClickInit) return;
       btn._singleSelectClickInit = true;
 
-      // Ensure text is pointer-events enabled so touch works
+      // Force pointer-events: none on text so clicks pass through to parent
       const text = btn.querySelector('.filter-single-select-text');
-      if (text) text.style.pointerEvents = 'auto';
-
-      let _touched = false;
-
-      btn.addEventListener('touchend', (e) => {
-        const checkbox = btn.querySelector('input[type="checkbox"]');
-        if (!checkbox || e.target === checkbox) return;
-        e.preventDefault();
-        _touched = true;
-        checkbox.click();
-        setTimeout(() => { _touched = false; }, 300);
-      }, { passive: false });
+      if (text) text.style.pointerEvents = 'none';
 
       btn.addEventListener('click', (e) => {
-        if (_touched) return; // already handled by touchend
         const checkbox = btn.querySelector('input[type="checkbox"]');
-        if (!checkbox || e.target === checkbox) return;
+        if (!checkbox || e.target === checkbox || e.target.closest('label')) return;
         checkbox.click();
       });
     });
