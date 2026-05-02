@@ -6505,7 +6505,7 @@ document.querySelectorAll('.song-wrapper[data-hidden-by-bpm="true"]').forEach(so
     mainClearButton.style.display = hasOtherFilters ? 'flex' : 'none';
  }
 }
-window.clearBPM = clearBPM;
+}
   
   /**
    * Save BPM state to localStorage
@@ -9723,8 +9723,6 @@ if (!hasActiveFilters) {
 if (filterState.bpm && typeof restoreBPMState === 'function') {
   restoreBPMState();
 }
-
-// (shuffle tag handled in initMusicPage)
 
 // If only BPM was active, show songs and return (unless playlist filter pending)
 if (!filterState.filters.length && !filterState.searchQuery) {
