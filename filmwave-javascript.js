@@ -3845,17 +3845,23 @@ function initDynamicTagging() {
       const text = btn.querySelector('.filter-single-select-text');
       if (text) text.style.pointerEvents = 'auto';
 
-      // Use touchend for mobile, click for desktop
-      const handler = (e) => {
-        const checkbox = btn.querySelector('input[type="checkbox"]');
-        if (!checkbox) return;
-        if (e.target === checkbox) return;
-        e.preventDefault();
-        checkbox.click();
-      };
+      let _touched = false;
 
-      btn.addEventListener('click', handler);
-      btn.addEventListener('touchend', handler, { passive: false });
+      btn.addEventListener('touchend', (e) => {
+        const checkbox = btn.querySelector('input[type="checkbox"]');
+        if (!checkbox || e.target === checkbox) return;
+        e.preventDefault();
+        _touched = true;
+        checkbox.click();
+        setTimeout(() => { _touched = false; }, 300);
+      }, { passive: false });
+
+      btn.addEventListener('click', (e) => {
+        if (_touched) return; // already handled by touchend
+        const checkbox = btn.querySelector('input[type="checkbox"]');
+        if (!checkbox || e.target === checkbox) return;
+        checkbox.click();
+      });
     });
     
     function createTag(input, labelText, radioName = null) {
