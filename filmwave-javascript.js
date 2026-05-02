@@ -614,12 +614,12 @@ async function initMusicPage() {
     // Always re-init dynamic tagging — checkboxes are new DOM elements after each Barba navigation
     initDynamicTagging();
     
-    // Restore filters BEFORE displaySongs — displaySongs clears music-list-wrapper innerHTML
-    // which may contain filter-tags-container, making tags detached
-    if (typeof attemptRestore === 'function') attemptRestore();
-
     const songs = await fetchSongs();
     displaySongs(songs);
+    // Restore filters AFTER displaySongs — Webflow.ready() inside displaySongs rebuilds
+    // the .search-bar.w-form DOM, replacing filter-tags-container with a fresh empty one
+    filtersRestored = false;
+    if (typeof attemptRestore === 'function') attemptRestore();
 // Re-apply shuffled order if shuffle was active before Barba navigation
     const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
     if (wasShuffled && g.filteredSongIds && g.filteredSongIds.length) {
