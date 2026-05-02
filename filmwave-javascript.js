@@ -9779,7 +9779,7 @@ if (!filterState.filters.length && !filterState.searchQuery) {
     
     console.log('📂 Restoring filter state:', filterState);
     
-    const tagsContainer = document.querySelector('.filter-tags-container');
+    let tagsContainer = document.querySelector('.filter-tags-container');
     const clearButton = document.querySelector('.circle-x');
     
     // Don't hide tags if shuffle tag already exists (shuffle restore handles its own reveal)
@@ -9888,11 +9888,12 @@ if (!filterState.filters.length && !filterState.searchQuery) {
             saveFilterState();
           });
           
+          tagsContainer = document.querySelector('.filter-tags-container') || tagsContainer;
           tagsContainer.appendChild(tag);
         }
       });
       
-      console.log(`✅ Created ${tagsContainer.children.length} filter tags`);
+      console.log(`✅ Created ${(document.querySelector('.filter-tags-container') || tagsContainer).children.length} filter tags`);
     }
     
     // Also restore playlist filter tag if it exists
