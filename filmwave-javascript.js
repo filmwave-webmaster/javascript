@@ -616,12 +616,7 @@ async function initMusicPage() {
     
     const songs = await fetchSongs();
     displaySongs(songs);
-    // Restore filters AFTER displaySongs — Webflow.ready() inside displaySongs rebuilds
-    // the .search-bar.w-form DOM, replacing filter-tags-container with a fresh empty one
-    if (typeof attemptRestore === 'function') {
-      filtersRestored = false;
-      attemptRestore();
-    }
+    
 // Re-apply shuffled order if shuffle was active before Barba navigation
     const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
     if (wasShuffled && g.filteredSongIds && g.filteredSongIds.length) {
@@ -10619,13 +10614,38 @@ if (typeof barba !== 'undefined') {
       }
     }, 2000);
     
-    // Fallback restore in case initMusicPage restore didn't fire (non-music pages, edge cases)
-    if (!attemptRestore()) {
-      setTimeout(() => {
-        if (!attemptRestore()) {
-          setTimeout(attemptRestore, 200);
+    // Restore filters after Webflow reinit settles
+    // Webflow.ready() + ix2.init() calls at 0-800ms can rebuild .w-form, wiping filter-tags-container
+    // Poll to detect and repair until tags are stable
+    const _isMusic = (_nextPath === '/music' || _nextPath === '/music/');
+    if (_isMusic) {
+      let _tagChecks = 0;
+      const _tagPoller = setInterval(() => {
+        _tagChecks++;
+        const tc = document.querySelector('.filter-tags-container');
+        const savedState = localStorage.getItem('musicFilters');
+        if (tc && savedState) {
+          try {
+            const state = JSON.parse(savedState);
+            const hasFilters = state.filters?.length > 0;
+            const hasTags = tc.querySelectorAll('.filter-tag').length > 0;
+            if (hasFilters && !hasTags) {
+              filtersRestored = false;
+              attemptRestore();
+            }
+          } catch (e) {}
         }
-      }, 100);
+        if (_tagChecks >= 5) clearInterval(_tagPoller);
+      }, 300);
+    } else {
+      // Non-music pages — just try the fallback restore
+      if (!attemptRestore()) {
+        setTimeout(() => {
+          if (!attemptRestore()) {
+            setTimeout(attemptRestore, 200);
+          }
+        }, 100);
+      }
     }
   });
 }
