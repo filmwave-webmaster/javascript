@@ -618,8 +618,10 @@ async function initMusicPage() {
     displaySongs(songs);
     // Restore filters AFTER displaySongs — Webflow.ready() inside displaySongs rebuilds
     // the .search-bar.w-form DOM, replacing filter-tags-container with a fresh empty one
-    filtersRestored = false;
-    if (typeof attemptRestore === 'function') attemptRestore();
+    if (typeof attemptRestore === 'function') {
+      filtersRestored = false;
+      attemptRestore();
+    }
 // Re-apply shuffled order if shuffle was active before Barba navigation
     const wasShuffled = g.isShuffled || localStorage.getItem('filmwaveShuffled') === 'true';
     if (wasShuffled && g.filteredSongIds && g.filteredSongIds.length) {
@@ -8846,12 +8848,6 @@ if (musicArea) {
       }
     }, 100);
   }
-        
-        if (window.Webflow) {
-          setTimeout(() => {
-            window.Webflow.ready();
-          }, 50);
-        }
         
         return initMusicPage();
       },
