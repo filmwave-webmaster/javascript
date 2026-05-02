@@ -235,11 +235,13 @@ window.navCache = {
   s.id = 'touch-filter-no-hover';
   s.textContent = `@media (hover: none) and (pointer: coarse) {
     .filter-header,
-    .filter-item {
-      transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    .filter-item,
+    .filter-category.single-select {
+      transition: background-color 0.4s ease, color 0.4s ease, opacity 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease !important;
     }
     .filter-header:hover:not(:active):not(.is-active):not(:focus),
-    .filter-item:hover:not(:active):not(.is-active):not(:focus) {
+    .filter-item:hover:not(:active):not(.is-active):not(:focus),
+    .filter-category.single-select:hover:not(:active):not(.is-active):not(:focus) {
       background-color: unset !important;
       color: unset !important;
       opacity: unset !important;
