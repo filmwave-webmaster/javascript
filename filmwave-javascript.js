@@ -600,11 +600,10 @@ async function initMusicPage() {
       searchForm.addEventListener('submit', (e) => { e.preventDefault(); e.stopPropagation(); return false; });
     }
     
-    if (!g.filtersInitialized) {
+   if (!g.filtersInitialized) {
       initFilterAccordions();
       initCheckboxTextColor();
       initFilterItemBackground();
-      initDynamicTagging();
       initMutualExclusion();
       initKeyFilterSystem();
       initBPMFilter();
@@ -612,6 +611,8 @@ async function initMusicPage() {
       initPlaylistFilter();
       g.filtersInitialized = true;
     }
+    // Always re-init dynamic tagging — checkboxes are new DOM elements after each Barba navigation
+    initDynamicTagging();
     
     const songs = await fetchSongs();
     displaySongs(songs);
