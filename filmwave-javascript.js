@@ -9513,7 +9513,8 @@ function initMusicPageFilterPills() {
       }
       
       // Check if this filter is already active (tag exists)
-      const existingTag = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
+      const liveTagsContainer = document.querySelector('.filter-tags-container') || tagsContainer;
+      const existingTag = Array.from(liveTagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).find(tag => {
         const tagText = tag.querySelector('.filter-tag-text')?.textContent?.trim();
         return tagText === filterValue && (tag.dataset.filterGroup || '').toLowerCase() === 'genre';
       });
@@ -9554,7 +9555,8 @@ function initMusicPageFilterPills() {
             if (typeof toggleClearButton === 'function') toggleClearButton();
           });
           
-          tagsContainer.insertBefore(tag, tagsContainer.firstChild);
+          const liveTC = document.querySelector('.filter-tags-container') || tagsContainer;
+          liveTC.insertBefore(tag, liveTC.firstChild);
           pill.classList.add('is-active');
           if (typeof applyFilters === 'function') applyFilters();
           if (typeof toggleClearButton === 'function') toggleClearButton();
@@ -9567,7 +9569,8 @@ function initMusicPageFilterPills() {
 // Sync pill active state with currently restored Genre filters only
   document.querySelectorAll('.db-filter-pill').forEach(pill => {
     const filterValue = pill.textContent.trim().replace(/\u00A0/g, ' ');
-    const isActive = Array.from(tagsContainer.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).some(tag =>
+    const syncTC = document.querySelector('.filter-tags-container') || tagsContainer;
+    const isActive = Array.from(syncTC.querySelectorAll('.filter-tag:not([data-playlist-filter-tag])')).some(tag =>
       tag.querySelector('.filter-tag-text')?.textContent?.trim() === filterValue &&
       (tag.dataset.filterGroup || '').toLowerCase() === 'genre'
     );
