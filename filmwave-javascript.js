@@ -3836,18 +3836,16 @@ function initDynamicTagging() {
       return;
     }
     
-    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
-    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
-
     // Forward clicks on the whole single-select button to its checkbox
     document.querySelectorAll('.filter-category.single-select').forEach(btn => {
       if (btn._singleSelectClickInit) return;
       btn._singleSelectClickInit = true;
       btn.addEventListener('click', (e) => {
         const checkbox = btn.querySelector('input[type="checkbox"]');
-        if (checkbox && e.target !== checkbox && !e.target.closest('input')) {
-          checkbox.click();
-        }
+        if (!checkbox) return;
+        // Only forward if click didn't come from the checkbox itself
+        if (e.target === checkbox) return;
+        checkbox.click();
       });
     });
     
