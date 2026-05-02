@@ -3836,6 +3836,9 @@ function initDynamicTagging() {
       return;
     }
     
+    const checkboxes = document.querySelectorAll('.filter-list input[type="checkbox"], .checkbox-single-select-wrapper input[type="checkbox"]');
+    const radioWrappers = document.querySelectorAll('.filter-list label.radio-wrapper, .filter-list .w-radio');
+
     // Make entire single-select button area clickable including text
     document.querySelectorAll('.filter-category.single-select').forEach(btn => {
       if (btn._singleSelectClickInit) return;
