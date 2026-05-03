@@ -12524,8 +12524,9 @@ this.pendingCoverImageBase64 = null;
     const modal = document.querySelector('.create-playlist-module-wrapper');
     if (!modal) return;
 
-    modal.style.display = 'flex';
-
+modal.style.display = 'flex';
+    modal.style.zIndex = '10000';
+    
     setTimeout(() => {
       const input = modal.querySelector('.playlist-text-field-1');
       if (input) input.focus();
@@ -12776,8 +12777,9 @@ _renderAddToPlaylistSelectedSongUI() {
   const modal = document.querySelector('.add-to-playlist-module-wrapper');
   if (!modal) return;
 
-  modal.style.display = 'flex';
-
+modal.style.display = 'flex';
+  modal.style.zIndex = '10000';
+    
   // ✅ Paint the selected song into the modal immediately
   this._renderAddToPlaylistSelectedSongUI();
 
