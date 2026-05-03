@@ -12524,20 +12524,31 @@ this.pendingCoverImageBase64 = null;
     const modal = document.querySelector('.create-playlist-module-wrapper');
     if (!modal) return;
 
-modal.style.display = 'flex';
-    modal.style.zIndex = '9999';
+    // Move to body to escape stacking context constraints
+    if (modal.parentElement !== document.body) {
+      modal._originalParent = modal.parentElement;
+      modal._originalNextSibling = modal.nextSibling;
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '10001';
     
     setTimeout(() => {
       const input = modal.querySelector('.playlist-text-field-1');
       if (input) input.focus();
     }, 100);
   },
-
-  closeCreatePlaylistModal() {
+closeCreatePlaylistModal() {
     const modal = document.querySelector('.create-playlist-module-wrapper');
     if (!modal) return;
 
     modal.style.display = 'none';
+    // Restore to original position in DOM
+    if (modal._originalParent) {
+      modal._originalParent.insertBefore(modal, modal._originalNextSibling || null);
+      delete modal._originalParent;
+      delete modal._originalNextSibling;
+    }
     if (window.__FW_resetCreatePlaylistDropUI) window.__FW_resetCreatePlaylistDropUI(modal);
 
     const titleInput = modal.querySelector('.playlist-text-field-1');
@@ -12770,15 +12781,21 @@ _renderAddToPlaylistSelectedSongUI() {
 },
   
   // Open Add to Playlist Module
-  openAddToPlaylistModal(songId) {
+openAddToPlaylistModal(songId) {
   this.currentSongForPlaylist = songId;
   this.selectedPlaylistIds = [];
 
   const modal = document.querySelector('.add-to-playlist-module-wrapper');
   if (!modal) return;
 
-modal.style.display = 'flex';
-  modal.style.zIndex = '9999';
+  // Move to body to escape stacking context constraints
+  if (modal.parentElement !== document.body) {
+    modal._originalParent = modal.parentElement;
+    modal._originalNextSibling = modal.nextSibling;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  modal.style.zIndex = '10001';
     
   // ✅ Paint the selected song into the modal immediately
   this._renderAddToPlaylistSelectedSongUI();
@@ -12787,10 +12804,17 @@ modal.style.display = 'flex';
 },
   //End
 
-  closeAddToPlaylistModal() {
+closeAddToPlaylistModal() {
   const modal = document.querySelector('.add-to-playlist-module-wrapper');
-  if (modal) modal.style.display = 'none';
-
+  if (!modal) return;
+  modal.style.display = 'none';
+  // Restore to original position in DOM
+  if (modal._originalParent) {
+    modal._originalParent.insertBefore(modal, modal._originalNextSibling || null);
+    delete modal._originalParent;
+    delete modal._originalNextSibling;
+  }
+  
   this.currentSongForPlaylist = null;
   this.selectedPlaylistIds = [];
   this.originalPlaylistIds = [];
