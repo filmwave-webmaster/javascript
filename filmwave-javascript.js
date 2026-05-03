@@ -12525,7 +12525,7 @@ this.pendingCoverImageBase64 = null;
     if (!modal) return;
 
 modal.style.display = 'flex';
-    modal.style.zIndex = '10000';
+    modal.style.zIndex = '9999';
     
     setTimeout(() => {
       const input = modal.querySelector('.playlist-text-field-1');
@@ -12778,7 +12778,7 @@ _renderAddToPlaylistSelectedSongUI() {
   if (!modal) return;
 
 modal.style.display = 'flex';
-  modal.style.zIndex = '10000';
+  modal.style.zIndex = '9999';
     
   // ✅ Paint the selected song into the modal immediately
   this._renderAddToPlaylistSelectedSongUI();
